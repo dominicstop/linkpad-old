@@ -1,7 +1,9 @@
 import React from 'react';
-import { StyleSheet, Text, View, Dimensions } from 'react-native';
+import { StyleSheet, Text, View, Dimensions, Image } from 'react-native';
 
-import Carousel from 'react-native-snap-carousel';
+import { LinearGradient, NativeLinearGradient } from 'expo';
+
+import  Carousel, { ParallaxImage }  from 'react-native-snap-carousel';
 
 export class TopicsScreen extends React.Component {
 
@@ -20,28 +22,34 @@ export class TopicsScreen extends React.Component {
         },
         {
           title: 'Test',
-          uri: '',
+          uri: 'https://i.ytimg.com/vi/bGtTTJNLAws/maxresdefault.jpg',
         }
       ],
     }
+
   }
 
-  _renderItem ({item, index}) {
+  _renderItem ({item, index} ,parallaxProps) {
+    const containerHeight = 150;
+
     return (
-        <View style={{ flexDirection: 'row', alignItems: 'stretch', backgroundColor: 'grey', borderRadius: 12, height: 150, shadowOffset:{  width: 5,  height: 5}, shadowColor: 'black', shadowOpacity: 0.25,}}>
-          <View style={{width: 150, height: 150, backgroundColor: 'yellow'}}>
-          
-          </View>
-          <View style={{flex: 1}}>
-            <Text>{index}</Text>
-          </View>
+      <View style={{height: containerHeight, shadowOffset:{  width: 5,  height: 5}, shadowColor: 'black', shadowOpacity: 0.4, shadowRadius: 13,}}>
+        <View style={{ flexDirection: 'row', backgroundColor: 'grey', borderRadius: 12,}} overflow='hidden'>    
+          <ParallaxImage
+            source={{uri: item.uri}}
+            containerStyle={{height: containerHeight, width: containerHeight, backgroundColor: 'blue'}}
+            
+            parallaxFactor={0.05}
+            {...parallaxProps}
+          />
         </View>
+      </View>
     );
   }
 
   render () {
     const sliderWidth = Dimensions.get('window').width;
-    const itemWidth = sliderWidth - 30;
+    const itemWidth = sliderWidth - 25;
 
       return (
           <Carousel
@@ -50,12 +58,12 @@ export class TopicsScreen extends React.Component {
             data={this.state.data}
             renderItem={this._renderItem}
             sliderWidth={sliderWidth}
-            sliderHeight={500}
             itemWidth={itemWidth}
             activeSlideAlignment={'center'}
             layout={'tinder'}
             layoutCardOffset={8}
             enableSnap={true}
+            hasParallaxImages={true}
             
             
           />
