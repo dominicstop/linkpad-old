@@ -1,96 +1,70 @@
 import PropTypes from 'prop-types';
 import React, {Component} from 'react';
-import {StyleSheet, StatusBar, Dimensions, View, Animated, Easing} from 'react-native';
+import {StyleSheet, StatusBar, Dimensions, View, Animated, Easing, Text, processColor} from 'react-native';
 
 // const {height, width} = Dimensions.get('window');
 
-import * as Animatable from 'react-native-animatable';
 import Chroma from 'chroma-js'
 import { LinearGradient } from 'expo';
 
-export class GradientWrapper extends React.Component {
-  render(){
-    const { colors } = this.props;
-    const hex = colors.map((c) => Chroma(JSON.stringify(c)).hex());
-    return <View
-      style={{width: '100%', height: '100%', backgroundColor: hex[1]}}
-    />
-  }
-}
-
-Animated.LinearGradient = Animated.createAnimatedComponent(GradientWrapper);
-
 export class AnimatedGradient extends React.Component {
-  static propTypes = {
+  static proptypes = {
+    speed       : PropTypes.number,
+    numOfInterps: PropTypes.number,
+    //gradient colors
     colorsTop   : PropTypes.arrayOf(PropTypes.string),
     colorsBottom: PropTypes.arrayOf(PropTypes.string),
-    speed: PropTypes.number,
   }
 
   static defaultProps = {
-    colorsTop   : ['red' , 'orange', 'yellow'],
-    colorsBottom: ['blue', 'cyan'  , 'purple'],
-    speed: 10000,
+    speed       : 1000,
+    numOfInterps: 500 ,
+    //gradient colors
+    colorsTop   : ['red'  , 'pink', 'orange', 'yellow'],
+    colorsBottom: ['pink' , 'red' , 'cyan'  , 'green' ],
   }
 
   constructor(props){
     super(props);
-
-    this.state = {
-      //keep track of the current index of colors to use
-      colorIndexTop   : new Animated.Value(0),
-      colorIndexBottom: new Animated.Value(0),
-    }
+    //keep track of the current index
+    this.colorIndex = 0;
+    this.isReverse  = false;
+    //unwrap props
+    const {colorsTop, colorsBottom, numOfInterps} = props;
+    //interpolate colors
+    this.colorsTop    = Chroma.scale(colorsTop   ).colors(numOfInterps);
+    this.colorsBottom = Chroma.scale(colorsBottom).colors(numOfInterps);
   }
 
-  startAnimation = () => {
-    const { colorIndexTop, colorIndexBottom } = this.state;
-    const { colorsTop, colorsBottom, speed } = this.props;
+  nextColors(){
+    const { colorsTop, colorsBottom, colorIndex } = this;
 
-    //init. so that it starts at index 0
-    [colorIndexTop, colorIndexBottom].forEach(color => color.setValue(0));
-
-    //run animations all at once
-    Animated.parallel(
-      [colorIndexTop, colorIndexBottom].map(colorIndex => {
-        let length = colorsTop.length;
-        //from 0 to the last element in the array
-        return Animated.timing(colorIndex, {
-          toValue : length,
-          duration: speed ,
-          easing  : Easing.linear 
-        })
-      })
-    ).start(this.startAnimation);
-
-  };
+    //decrement on reach end and vice versa
+    if (colorIndex == colorsTop.length-1 ) this.isReverse = true ;
+    if (colorIndex == 0                  ) this.isReverse = false;
+    
+    this.isReverse ? this.colorIndex-- :  this.colorIndex++;
+    return [colorsTop[colorIndex], colorsBottom[colorIndex]];
+  }
 
   componentDidMount(){
-    this.startAnimation();
+    this.gradientInterval = setInterval( () => {
+      //update gradient colors
+      this.linearGradientRef.setNativeProps({
+        //convert colors before assigning
+        colors: this.nextColors().map(processColor)
+      });
+    }, 250);
   }
 
   render(){
-    const { colorsTop, colorsBottom } = this.props;
-    const { colorIndexTop, colorIndexBottom } = this.state;
-
-    const interpColorsTop = colorIndexTop.interpolate({
-      inputRange : Array.from({length: colorsTop.length}, (item, index) => index),
-      outputRange: colorsTop,
-    });
-
-    const interpColorsBottom = colorIndexBottom.interpolate({
-      inputRange : Array.from({length: colorsBottom.length}, (item, index) => index),
-      outputRange: colorsBottom,
-    });
-
-    
-
+    const { colorsTop, colorsBottom } = this;
     return(
-      <Animated.LinearGradient 
-        colors={[interpColorsTop, interpColorsBottom]}
-      >
-      
-      </Animated.LinearGradient>
+      <LinearGradient
+        style={{width: '100%', height: '100%'}}
+        colors={[colorsTop[0], colorsBottom[1]]}
+        ref={r => this.linearGradientRef = r}
+      />
     );
   }
 }
