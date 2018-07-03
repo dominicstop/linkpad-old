@@ -2,14 +2,12 @@ import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { TopicsScreen } from './screens/topicsScreen'
-import { AnimatedGradient }  from './components/animatedGradient'
+import { CardList, CardGroup } from './components/cards';
 
 export default class App extends React.Component {
   render() {
     return (
-      <View>
-        <AnimatedGradient/>
-      </View>
+      <CardList/>
     );
   }
 }

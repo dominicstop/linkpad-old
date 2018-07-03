@@ -8,7 +8,7 @@ import Chroma from 'chroma-js'
 import { LinearGradient } from 'expo';
 
 export class AnimatedGradient extends React.Component {
-  static proptypes = {
+  static propTypes = {
     speed       : PropTypes.number,
     numOfInterps: PropTypes.number,
     //gradient colors
@@ -18,7 +18,7 @@ export class AnimatedGradient extends React.Component {
 
   static defaultProps = {
     speed       : 1000,
-    numOfInterps: 500 ,
+    numOfInterps: 200 ,
     //gradient colors
     colorsTop   : ['red'  , 'pink', 'orange', 'yellow'],
     colorsBottom: ['pink' , 'red' , 'cyan'  , 'green' ],
@@ -42,26 +42,38 @@ export class AnimatedGradient extends React.Component {
     //decrement on reach end and vice versa
     if (colorIndex == colorsTop.length-1 ) this.isReverse = true ;
     if (colorIndex == 0                  ) this.isReverse = false;
-    
+
     this.isReverse ? this.colorIndex-- :  this.colorIndex++;
     return [colorsTop[colorIndex], colorsBottom[colorIndex]];
   }
 
-  componentDidMount(){
+  start(){
+    const { speed } = this.props;
     this.gradientInterval = setInterval( () => {
       //update gradient colors
       this.linearGradientRef.setNativeProps({
         //convert colors before assigning
         colors: this.nextColors().map(processColor)
       });
-    }, 250);
+    }, speed);
+  }
+
+  stop(){
+    if(this.gradientInterval){
+      clearInterval(this.gradientInterval);
+      this.gradientInterval = undefined;
+    }
+  }
+
+  componentDidMount(){
+    this.start();
   }
 
   render(){
     const { colorsTop, colorsBottom } = this;
     return(
       <LinearGradient
-        style={{width: '100%', height: '100%'}}
+        {...this.props}
         colors={[colorsTop[0], colorsBottom[1]]}
         ref={r => this.linearGradientRef = r}
       />
