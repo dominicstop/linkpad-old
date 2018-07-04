@@ -1,44 +1,104 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { StyleSheet, Text, View, Dimensions, Image, ScrollView, TouchableOpacity, ViewPropTypes } from 'react-native';
+import { StyleSheet, Text, View, Dimensions, Image, FlatList, TouchableOpacity, ViewPropTypes } from 'react-native';
 
 import { AnimatedGradient }  from './animatedGradient';
 import { IconText } from './views';
+import { IconButton } from './buttons';
+import { GaugeChart } from './charts';
+
 
 import  Carousel, { ParallaxImage }  from 'react-native-snap-carousel';
+import * as Animatable from 'react-native-animatable';
 
-export class CardItemPicture extends React.Component {
+const cardGroupHeight = 150;
+
+
+
+export const subjectProps = {
+  subjectID  : PropTypes.string,
+  subjectName: PropTypes.string,
+  subjectDesc: PropTypes.string,
+}
+
+export const moduleProps = {
+  moduleID  : PropTypes.string,
+  moduleName: PropTypes.string,
+  moduleDesc: PropTypes.string,
+  subjects  : PropTypes.arrayOf(
+    PropTypes.shape(subjectProps)
+  ),
+}
+
+export class SubjectProgress extends React.PureComponent {
   static propTypes = {
-    size: PropTypes.number
+  }
+
+  constructor(props){
+    super(props);
+    this.state = {
+      showPercent: true,
+    }
+  }
+
+  _onPressChart = () => {
+    const { showPercent } = this.state;
+    this.chartView.zoomOut(100).then(() => {
+      this.setState({ showPercent: !showPercent }, () => {
+        this.chartView.bounceIn(500)
+      });
+    });
   }
 
   render(){
     const {size} = this.props;
-    return(
-      <View style={{height: size, width: size, backgroundColor: 'grey'}}
-        onLayout={(event) => console.log(event.height)}
+    const { showPercent } = this.state;
+
+    //ui computations
+    const margin      = 15;
+    const chartRadius = 50;
+    const chartSize   = chartRadius * 2;
+    const viewWidth   = chartSize + margin;
+  
+    const chart = <GaugeChart 
+      percent={50}
+      radius={chartRadius}
+      thickness={10}
+    />
+
+    const text = <View
+      style={{backgroundColor: 'lightgrey', width: chartSize, height: chartSize, alignItems: 'center', justifyContent: 'center', borderRadius: chartSize}}  
+    >
+      <Text
+      style={{fontSize: 20, }}
       >
-      
-      </View>
+      50/100
+    </Text>
+    </View>
+ 
+    return(
+      <TouchableOpacity 
+        style={{paddingHorizontal: 15, width: viewWidth, alignItems: 'center', justifyContent: 'center'}}
+        onPress={this._onPressChart}
+      >
+        <Animatable.View
+          ref={(r) => this.chartView = r}
+          useNativeDriver={true}
+        >
+          {showPercent ? chart : text}
+        </Animatable.View>
+      </TouchableOpacity>
     );
   }
 }
 
-export class CardItemDetails extends React.Component {
+//subject title and desc 
+export class SubjectDetails extends React.Component {
   static propTypes = {
-    data: PropTypes.shape({
-      topic      : PropTypes.string,
-      description: PropTypes.string,
-    }),
-    containerStyle: ViewPropTypes.style,
-    onPress: PropTypes.func,
+    subjectData: PropTypes.shape(subjectProps),
   }
 
   static defaultProps = {
-    data: {
-      topic      : 'Topic Name',
-      description: 'Lorum ipsum sit amit topic description',
-    },
     onPress: () => alert(),
   }
 
@@ -47,38 +107,39 @@ export class CardItemDetails extends React.Component {
   }
 
   render() {
-    const { data, onPress, containerStyle } = this.props;
-    const { topic, description } = data;
+    const { subjectData, onPress, containerStyle } = this.props;
     return(
       <TouchableOpacity 
-        style={[{ padding: 10 }, containerStyle]} 
-        onPress={() => onPress(data)}
+        style={[{ padding: 10, marginRight: 100 }, containerStyle]} 
+        onPress={() => onPress(subjectData)}
         activeOpacity={0.7}
       >
         {/*Title*/}
         <IconText
-          text={topic}
+          text={subjectData.subjectName}
           textStyle={{fontSize: 20, fontWeight: '500'}}
           iconColor='darkgrey'
           iconName='heart'
           iconType='entypo'
           iconSize={22}
         />
-        <Text style={{flex: 1, fontSize: 16, fontWeight: '100', marginTop: 3,}}>
-          {description}
+        <Text style={{flex: 1, fontSize: 16, fontWeight: '100', marginTop: 3}}>
+          {subjectData.subjectDesc}
         </Text>
       </TouchableOpacity>
     );
   }
 }
 
-export class CardItem extends React.Component {
+//shows a single subject card and holds SubjectDetails and
+export class SubjectItem extends React.Component {
   static propTypes = {
-    cardHeight: PropTypes.number
+    subjectData: PropTypes.shape(subjectProps),
+    height     : PropTypes.number,
   }
 
   static defaultProps = {
-    cardHeight: 150
+    height: 200,
   }
 
   constructor() {
@@ -86,122 +147,110 @@ export class CardItem extends React.Component {
   }
 
   render() {
-    const { cardHeight } = this.props;
-
+    const { subjectData, height } = this.props;
     return(
-      <View style={{ height: cardHeight, shadowOffset:{  width: 5,  height: 5}, shadowColor: 'black', shadowOpacity: 0.4, shadowRadius: 13,}}>
+      <View style={{ height: height, paddingTop: 20, paddingBottom: 50, shadowOffset:{  width: 5,  height: 5}, shadowColor: 'black', shadowOpacity: 0.4, shadowRadius: 13,}} overflow='visible'>
         <View style={{ height: '100%', flexDirection: 'row', backgroundColor: 'white', borderRadius: 12,}} overflow='hidden'>    
-          {/*Left*/}
-          <CardItemPicture size={cardHeight}/>
-          {/*Right*/}
-          <CardItemDetails/>
+          <SubjectProgress
+          />
+          <SubjectDetails
+            subjectData={subjectData}
+          />
         </View>
       </View>
     );
   }
 }
 
-export class CardCarousel extends React.Component {
-  constructor(props){
-    super(props);
 
-    this.state = {
-      data: [
-        {
-          title: 'Hello',
-          uri: 'https://images.pexels.com/photos/36764/marguerite-daisy-beautiful-beauty.jpg?auto=compress&cs=tinysrgb&h=350',
-        },
-        {
-          title: 'World',
-          uri: 'https://images.pexels.com/photos/813269/pexels-photo-813269.jpeg?auto=compress&cs=tinysrgb&h=350',
-        },
-        {
-          title: 'Test',
-          uri: 'https://i.ytimg.com/vi/bGtTTJNLAws/maxresdefault.jpg',
-        }
-      ],
-    }
-
+//displays a single module item and a list of subjects
+export class ModuleGroup extends React.Component {
+  static propTypes = {
+    moduleData    : PropTypes.shape(moduleProps).isRequired,
+    onPressAllSubj: PropTypes.func,
   }
 
-  _renderItem ({item, index} ,parallaxProps) {
+  static defaultProps = {
+    onPressAllSubj: () => alert(),
+  }
 
-    return (
-      <CardItem
-
+  //renders a single subject item
+  _renderItem = ({item, index}) => {
+    return(
+      <SubjectItem 
+        subjectData={item}
       />
     );
   }
 
-  render () {
+  render() {
+    const { moduleData, onPressAllSubj } = this.props;
+
+    //ui values
     const sliderWidth = Dimensions.get('window').width;
     const itemWidth = sliderWidth - 20;
 
-    return (
-      <Carousel
-        containerCustomStyle={{marginTop: 10}}
-        ref={(c) => { this._carousel = c; }}
-        data={this.state.data}
-        renderItem={this._renderItem}
-        sliderWidth={sliderWidth}
-        itemWidth={itemWidth}
-        activeSlideAlignment={'center'}
-        layout={'tinder'}
-        layoutCardOffset={12}
-        enableSnap={true}
-
-      />
-    );
-  }
-}
-
-export class CardHeader extends React.Component {
-  constructor() {
-    super();
-  }
-
-  render() {
-    return(null);
-  }
-}
-
-export class CardGroup extends React.Component {
-  constructor() {
-    super();
-  }
-
-  render() {
-    const cardGroupHeight = 250;
-
     return(
-      <View style={{alignSelf: 'stretch', height: cardGroupHeight, backgroundColor: 'blue'}}>
-        {/*Background*/}
-        <AnimatedGradient
-          style={{alignSelf: 'stretch', height: cardGroupHeight}}
-          colorsTop   ={['red'  , 'orange', 'yellow']}
-          colorsBottom={['blue' , 'purple' , 'violet' ]}
-          speed={1000}
-          numOfInterps={60}
+      <View style={{justifyContent: 'center'}}>
+        {/*Header*/}
+        <TouchableOpacity 
+          style={{paddingHorizontal: 12}} 
+          onPress={() => onPressAllSubj(moduleData)}
+        >
+          <IconText
+            text={moduleData.moduleName}
+            textStyle={{fontSize: 20, fontWeight: '500', color: 'black', alignSelf: 'flex-start'}}
+            iconColor='grey'
+            iconName ='heart'
+            iconType ='entypo'
+            iconSize ={25}
+          />
+          <Text style={{fontSize: 16}}>
+            {moduleData.moduleDesc}
+          </Text>
+        </TouchableOpacity>
+        {/*Subject List*/}
+        <Carousel
+          containerCustomStyle={{marginTop: -5}}
+          ref={(c) => { this._carousel = c; }}
+          data={moduleData.subjects}
+          renderItem={this._renderItem}
+          sliderWidth={sliderWidth}
+          itemWidth={itemWidth}
+          activeSlideAlignment={'center'}
+          layout={'tinder'}
+          layoutCardOffset={12}
+          enableSnap={true}
         />
-        {/*Foreground*/}
-        <View style={{position: 'absolute', height: cardGroupHeight, paddingTop:20, justifyContent: 'center'}}>
-          <CardCarousel/>
-        </View>
       </View>
     );
   }
 }
 
-export const Data = {
-
-}
-
-export class CardList extends React.Component {
-  render(){
+//displays the list of modules
+export class ModuleList extends React.Component {
+  static propTypes = {
+    moduleList: PropTypes.arrayOf(
+      PropTypes.shape(moduleProps)
+    ).isRequired,
+    containerStyle: ViewPropTypes.style,
+  }
+  
+  _renderItem = ({item}, index) => {
     return(
-      <ScrollView>
-        <CardGroup/>
-      </ScrollView>
+      <ModuleGroup moduleData={item}/>
+    );
+  }
+
+  render(){
+    const { moduleList, containerStyle, } = this.props;
+    return(
+      <FlatList
+        style       ={containerStyle}
+        data        ={moduleList}
+        keyExtractor={(item) => item.moduleID }
+        renderItem  ={this._renderItem }
+      />
     );
   }
   

@@ -10,6 +10,7 @@ export class IconButton extends React.PureComponent {
       PropTypes.string,
       PropTypes.number,
     ]),
+    onPress: PropTypes.func,
     //icon props
     iconName : PropTypes.string,
     iconColor: PropTypes.string,
