@@ -1,6 +1,9 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { StyleSheet, Text, View, ViewPropTypes, TextProps } from 'react-native';
+
+import { IconText } from './views';
+
 import Pie from 'react-native-pie'
 
 
@@ -31,12 +34,73 @@ export class GaugeChart extends React.PureComponent {
         <Pie
           radius={radius}
           innerRadius={radius-thickness}
-          series={[percent, 100-percent]}
-          colors={[color, 'red']}
+          series={[percent]}
+          colors={[color]}
           backgroundColor={backgroundColor}
         />
         <View style={[styles.gauge]}>
           <Text style={[styles.gaugeText, textStyle]}>{percent}%</Text>
+        </View>
+      </View>
+    );
+  }
+}
+
+export class GradeDougnut extends React.PureComponent {
+  static propTypes = {
+    mistakes: PropTypes.number,
+    correct : PropTypes.number,
+    colors: PropTypes.arrayOf(
+      PropTypes.string
+    ),
+    thickness: PropTypes.number,
+    radius: PropTypes.number,
+    //styles
+    containerStyle: ViewPropTypes.style,
+    textStyle     : ViewPropTypes.style,
+  }
+
+  static defaultProps = {
+    percent: 0,
+    color: 'blue',
+    backgroundColor: '#ddd',
+    thickness: 5,
+    radius: 50,
+  }
+
+  render(){
+    const { mistakes, correct, colors, thickness, radius, textStyle, containerStyle } = this.props;
+    return(
+      <View style={containerStyle}>
+        <Pie
+          radius     ={radius}
+          innerRadius={radius-thickness}
+          series     ={[correct, mistakes]}
+          colors     ={colors}
+        />
+        <View style={[styles.gauge, ]}>
+          <View style={styles.gradeTextContainer}>
+            <IconText
+              textStyle={styles.gradeText}
+              iconName='check'
+              iconType='feather'
+              iconSize={18}
+            />
+            <Text style={styles.gradeText}>
+              {correct}%
+            </Text>
+          </View>
+          <View style={styles.gradeTextContainer}>
+            <IconText
+              textStyle={styles.gradeText}
+              iconName='x'
+              iconType='feather'
+              iconSize={18}
+            />
+            <Text style={styles.gradeText}>
+              {mistakes}%
+            </Text>
+          </View>
         </View>
       </View>
     );
@@ -61,4 +125,12 @@ const styles = StyleSheet.create({
     color: '#000',
     fontSize: 24,
   },
+  gradeTextContainer: {
+    flexDirection : 'row',
+    justifyContent: 'flex-start',
+  },
+  gradeText: {
+    marginLeft: 3,
+    fontWeight: '100',
+  }
 })

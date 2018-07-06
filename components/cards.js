@@ -5,11 +5,12 @@ import { StyleSheet, Text, View, Dimensions, Image, FlatList, TouchableOpacity, 
 import { AnimatedGradient }  from './animatedGradient';
 import { IconText } from './views';
 import { IconButton } from './buttons';
-import { GaugeChart } from './charts';
+import { GaugeChart, GradeDougnut } from './charts';
 
-
-import  Carousel, { ParallaxImage }  from 'react-native-snap-carousel';
+import Chroma from 'chroma-js'
+import Carousel, { ParallaxImage }  from 'react-native-snap-carousel';
 import * as Animatable from 'react-native-animatable';
+import { LinearGradient } from 'expo'
 
 const cardGroupHeight = 150;
 
@@ -30,62 +31,107 @@ export const moduleProps = {
   ),
 }
 
+export const progressProps = {
+  mistakes  : PropTypes.number,
+  correct   : PropTypes.number,
+  questions : PropTypes.number,
+}
+
+//shows a the progress in a pie chart
 export class SubjectProgress extends React.PureComponent {
   static propTypes = {
+    progressData: PropTypes.shape(progressProps),
   }
 
   constructor(props){
     super(props);
     this.state = {
-      showPercent: true,
+      mode: 0,
     }
   }
 
-  _onPressChart = () => {
-    const { showPercent } = this.state;
-    this.chartView.zoomOut(100).then(() => {
-      this.setState({ showPercent: !showPercent }, () => {
+  toggle(callback){
+    const { mode } = this.state;
+    this.setState({
+      mode: (mode == 2) ? 0 : mode+1 
+    }, callback());
+  }
+
+  _animateChartZoomout = () => {
+    this.chartView.fadeOut(100).then(() => {
+      this.toggle(() => {
         this.chartView.bounceIn(500)
       });
     });
   }
 
+  _animateChartFade = () => {
+    this.chartView.fadeOut(100).then(() => {
+      this.toggle(() => {
+        this.chartView.fadeIn(500)
+      });
+    });
+  }
+
+  _onPressChart = () => {
+    const { mode } = this.state;
+    if (mode == 0) this._animateChartFade   ();
+    else           this._animateChartZoomout();
+  }
+
   render(){
-    const {size} = this.props;
-    const { showPercent } = this.state;
+    const { size, progressData, color, backgroundColor } = this.props;
+    const { mode } = this.state;
+
+    //const { correct, questions } = progressData;
 
     //ui computations
     const margin      = 15;
     const chartRadius = 50;
     const chartSize   = chartRadius * 2;
     const viewWidth   = chartSize + margin;
-  
-    const chart = <GaugeChart 
-      percent={50}
+
+    //grade computations
+    const answher = (progressData.correct + progressData.mistakes) 
+    const percent = answher / progressData.questions * 100;
+
+    const progress = <GaugeChart 
+      percent={percent}
       radius={chartRadius}
+      thickness={10}
+      color={color}
+      backgroundColor={backgroundColor}
+    />
+
+    const mistakes = <GradeDougnut
+      mistakes={progressData.mistakes}
+      correct ={progressData.correct }
+      colors={['green', 'red']}
+      radius={50}
       thickness={10}
     />
 
-    const text = <View
+    const fraction = <View
       style={{backgroundColor: 'lightgrey', width: chartSize, height: chartSize, alignItems: 'center', justifyContent: 'center', borderRadius: chartSize}}  
     >
-      <Text
-      style={{fontSize: 20, }}
-      >
-      50/100
-    </Text>
+      <Text style={{fontSize: 20, }}>
+        {answher}/{progressData.questions}
+      </Text>
     </View>
+
+    const comp = [progress, mistakes, fraction];
  
     return(
       <TouchableOpacity 
         style={{paddingHorizontal: 15, width: viewWidth, alignItems: 'center', justifyContent: 'center'}}
         onPress={this._onPressChart}
+        activeOpacity={0.9}
       >
         <Animatable.View
           ref={(r) => this.chartView = r}
           useNativeDriver={true}
         >
-          {showPercent ? chart : text}
+          {comp[mode]}
         </Animatable.View>
       </TouchableOpacity>
     );
@@ -107,18 +153,19 @@ export class SubjectDetails extends React.Component {
   }
 
   render() {
-    const { subjectData, onPress, containerStyle } = this.props;
+    const { subjectData, onPress, containerStyle, color } = this.props;
     return(
       <TouchableOpacity 
-        style={[{ padding: 10, marginRight: 100 }, containerStyle]} 
+        style={[{flex: 1, alignItems: 'stretch', padding: 10}, containerStyle]} 
         onPress={() => onPress(subjectData)}
         activeOpacity={0.7}
+        onPressIn={() => {}}
       >
         {/*Title*/}
         <IconText
           text={subjectData.subjectName}
           textStyle={{fontSize: 20, fontWeight: '500'}}
-          iconColor='darkgrey'
+          iconColor={color}
           iconName='heart'
           iconType='entypo'
           iconSize={22}
@@ -131,7 +178,7 @@ export class SubjectDetails extends React.Component {
   }
 }
 
-//shows a single subject card and holds SubjectDetails and
+//shows a single subject card and holds SubjectDetails and subject progess
 export class SubjectItem extends React.Component {
   static propTypes = {
     subjectData: PropTypes.shape(subjectProps),
@@ -148,13 +195,25 @@ export class SubjectItem extends React.Component {
 
   render() {
     const { subjectData, height } = this.props;
+    const color = subjectData.graidentBG[1];
+
     return(
-      <View style={{ height: height, paddingTop: 20, paddingBottom: 50, shadowOffset:{  width: 5,  height: 5}, shadowColor: 'black', shadowOpacity: 0.4, shadowRadius: 13,}} overflow='visible'>
-        <View style={{ height: '100%', flexDirection: 'row', backgroundColor: 'white', borderRadius: 12,}} overflow='hidden'>    
-          <SubjectProgress
+      <View style={{ height: height, paddingTop: 20, paddingBottom: 50, shadowOffset:{  width: 3,  height: 3}, shadowColor: 'black', shadowOpacity: 0.35, shadowRadius: 10,}} overflow='visible'>
+        <View style={{flex: 1,  height: '100%', flexDirection: 'row', backgroundColor: 'white', borderRadius: 12,}} overflow='hidden'>    
+          <LinearGradient
+            style={{position: 'absolute', width: '100%', height: '100%'}}
+            colors={subjectData.graidentBG}
+            start={{x: 0, y: 0}} 
+            end={{x: 1, y: 1}} 
           />
-          <SubjectDetails
+          <SubjectProgress 
+            progressData={subjectData.progress} 
+            color={Chroma(color).saturate(2).hex()}         
+            backgroundColor={Chroma(color).brighten(2).hex()}         
+          />
+          <SubjectDetails 
             subjectData={subjectData}
+            color={Chroma(color).darken().hex()}
           />
         </View>
       </View>
@@ -219,7 +278,7 @@ export class ModuleGroup extends React.Component {
           itemWidth={itemWidth}
           activeSlideAlignment={'center'}
           layout={'tinder'}
-          layoutCardOffset={12}
+          layoutCardOffset={14}
           enableSnap={true}
         />
       </View>
@@ -246,10 +305,11 @@ export class ModuleList extends React.Component {
     const { moduleList, containerStyle, } = this.props;
     return(
       <FlatList
-        style       ={containerStyle}
+        style       ={[containerStyle]}
         data        ={moduleList}
         keyExtractor={(item) => item.moduleID }
         renderItem  ={this._renderItem }
+        ListFooterComponent={<View style={{padding: 20}}/>}
       />
     );
   }
