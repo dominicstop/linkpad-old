@@ -32,9 +32,9 @@ export const moduleProps = {
 }
 
 export const progressProps = {
-  mistakes  : PropTypes.number,
-  correct   : PropTypes.number,
-  questions : PropTypes.number,
+  mistakes : PropTypes.number,
+  correct  : PropTypes.number,
+  questions: PropTypes.number,
 }
 
 //shows a the progress in a pie chart
@@ -186,7 +186,7 @@ export class SubjectItem extends React.PureComponent {
   }
 
   static defaultProps = {
-    height: 190,
+    height: 180,
   }
 
   constructor() {
@@ -220,7 +220,6 @@ export class SubjectItem extends React.PureComponent {
     );
   }
 }
-
 
 //displays a single module item and a list of subjects
 export class ModuleGroup extends React.Component {

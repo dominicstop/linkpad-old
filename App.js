@@ -1,8 +1,8 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { TopicsScreen } from './screens/topicsScreen'
-import { ModuleList } from './components/cards';
+import { TopicsScreen } from './src/screens/topicsScreen'
+import { ModuleList } from './src/components/cards';
 
 
 const cardsData = [
