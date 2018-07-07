@@ -86,7 +86,7 @@ export class SubjectProgress extends React.PureComponent {
     //const { correct, questions } = progressData;
 
     //ui computations
-    const margin      = 15;
+    const margin      = 10;
     const chartRadius = 50;
     const chartSize   = chartRadius * 2;
     const viewWidth   = chartSize + margin;
@@ -123,7 +123,7 @@ export class SubjectProgress extends React.PureComponent {
  
     return(
       <TouchableOpacity 
-        style={{paddingHorizontal: 15, width: viewWidth, alignItems: 'center', justifyContent: 'center'}}
+        style={{marginLeft: margin, width: viewWidth, alignItems: 'center', justifyContent: 'center'}}
         onPress={this._onPressChart}
         activeOpacity={0.9}
       >
@@ -139,7 +139,7 @@ export class SubjectProgress extends React.PureComponent {
 }
 
 //subject title and desc 
-export class SubjectDetails extends React.Component {
+export class SubjectDetails extends React.PureComponent {
   static propTypes = {
     subjectData: PropTypes.shape(subjectProps),
   }
@@ -179,14 +179,14 @@ export class SubjectDetails extends React.Component {
 }
 
 //shows a single subject card and holds SubjectDetails and subject progess
-export class SubjectItem extends React.Component {
+export class SubjectItem extends React.PureComponent {
   static propTypes = {
     subjectData: PropTypes.shape(subjectProps),
     height     : PropTypes.number,
   }
 
   static defaultProps = {
-    height: 200,
+    height: 190,
   }
 
   constructor() {
@@ -198,7 +198,7 @@ export class SubjectItem extends React.Component {
     const color = subjectData.graidentBG[1];
 
     return(
-      <View style={{ height: height, paddingTop: 20, paddingBottom: 50, shadowOffset:{  width: 3,  height: 3}, shadowColor: 'black', shadowOpacity: 0.35, shadowRadius: 10,}} overflow='visible'>
+      <View style={{ height: height, paddingTop: 15, paddingBottom: 35, shadowOffset:{  width: 3,  height: 3}, shadowColor: 'black', shadowOpacity: 0.35, shadowRadius: 10,}}>
         <View style={{flex: 1,  height: '100%', flexDirection: 'row', backgroundColor: 'white', borderRadius: 12,}} overflow='hidden'>    
           <LinearGradient
             style={{position: 'absolute', width: '100%', height: '100%'}}
@@ -247,7 +247,7 @@ export class ModuleGroup extends React.Component {
 
     //ui values
     const sliderWidth = Dimensions.get('window').width;
-    const itemWidth = sliderWidth - 20;
+    const itemWidth = sliderWidth - 30;
 
     return(
       <View style={{justifyContent: 'center'}}>
@@ -270,7 +270,7 @@ export class ModuleGroup extends React.Component {
         </TouchableOpacity>
         {/*Subject List*/}
         <Carousel
-          containerCustomStyle={{marginTop: -5}}
+          //containerCustomStyle={{marginTop: -5}}
           ref={(c) => { this._carousel = c; }}
           data={moduleData.subjects}
           renderItem={this._renderItem}
@@ -278,8 +278,9 @@ export class ModuleGroup extends React.Component {
           itemWidth={itemWidth}
           activeSlideAlignment={'center'}
           layout={'tinder'}
-          layoutCardOffset={14}
+          layoutCardOffset={10}
           enableSnap={true}
+          removeClippedSubviews={false}
         />
       </View>
     );
@@ -310,6 +311,8 @@ export class ModuleList extends React.Component {
         keyExtractor={(item) => item.moduleID }
         renderItem  ={this._renderItem }
         ListFooterComponent={<View style={{padding: 20}}/>}
+        scrollEventThrottle={200}
+        directionalLockEnabled={true}
       />
     );
   }
