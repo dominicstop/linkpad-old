@@ -1,7 +1,7 @@
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View, StatusBar } from 'react-native';
 
-import { createStackNavigator } from 'react-navigation';
+import { createStackNavigator, } from 'react-navigation';
 
 import Homescreen        from './src/screens/homescreen';
 import SubjectListScreen from './src/screens/subjectListScreen';
@@ -12,14 +12,20 @@ const TopLevelNavigator = createStackNavigator({
       screen: Homescreen
     },
     SubjectListRoute: {
-      screen: SubjectListScreen
+      screen: SubjectListScreen,
     }
   },{
-    headerMode: 'none',
+    headerMode: 'float',
+    headerTransitionPreset: 'uikit',
+    headerTransparent: true,
   }
 );
 
 export default class App extends React.Component {
+  componentDidMount(){
+    StatusBar.setBarStyle('light-content');
+  }
+
   render() {
     return (
       <TopLevelNavigator

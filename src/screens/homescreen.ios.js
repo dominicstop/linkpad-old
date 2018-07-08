@@ -1,9 +1,11 @@
 import React from 'react';
-import { StyleSheet, Text, View, TabBarIOS, Platform } from 'react-native';
+import { StyleSheet, Text, View, TabBarIOS, Platform, NavigatorIOS } from 'react-native';
 
-import { ModuleList } from '../components/cards';
+import { ModuleList   } from '../components/cards';
+import { CustomHeader } from '../components/Header'
 
 import { BlurView } from 'expo';
+import { Header } from 'react-navigation';
 
 const cardsData = [
   {
@@ -872,7 +874,26 @@ const cardsData = [
   },
 ];
 
+const ModulesHeader = (props) => <CustomHeader {...props}
+  iconName='briefcase'
+  iconType='simple-line-icon'
+  iconSize={22}
+/>
+
 export default class Homescreen extends React.Component {
+  static navigationOptions = {
+    title: 'Modules',
+    headerTitle: ModulesHeader,
+    headerTransparent: true,
+    headerTintColor: 'white',
+    headerStyle: {
+      backgroundColor: 'rgba(48, 0, 247, 0.75)'
+    },
+    headerTitleStyle: {
+      fontWeight: 'bold',
+      color: 'white',
+    },
+  };
 
   constructor(props) {
     super(props);
@@ -883,7 +904,7 @@ export default class Homescreen extends React.Component {
     this.setState({selectedTab: tabId});
   }
 
-  _renderiOS(){
+  render(){
     return (
       <TabBarIOS
         barStyle='default'
@@ -895,33 +916,21 @@ export default class Homescreen extends React.Component {
         >
           <View style={{flex: 1}}>
             <ModuleList 
-              containerStyle={{paddingTop: 64, backgroundColor: 'white'}}
+              containerStyle={{paddingTop: Header.HEIGHT - 5, backgroundColor: 'white'}}
               moduleList={cardsData}
               onPressModule ={(moduleData ) => this.props.navigation.navigate('SubjectListRoute')}
               onPressSubject={(subjectData) => alert('navigate to: ' + subjectData.subjectName)}
             />
             <BlurView 
-              style={{position: 'absolute', width: '100%', height: 64}}
+              style={{position: 'absolute', width: '100%', height: Header.HEIGHT}}
               intensity={100}
-              tint={'light'}
+              tint='default'
             />
           </View>
         </TabBarIOS.Item>
       </TabBarIOS>
     );
   }
-
-  _renderAndroid(){
-
-  }
-
-  render() {
-    return Platform.select({
-      ios    : this._renderiOS    (),
-      android: this._renderAndroid(),
-    })
-  }
-
 }
 
 var styles = StyleSheet.create({
