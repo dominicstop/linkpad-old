@@ -145,6 +145,7 @@ export class SubjectProgress extends React.PureComponent {
 export class SubjectDetails extends React.PureComponent {
   static propTypes = {
     subjectData: PropTypes.shape(subjectProps),
+    onPress: PropTypes.func,
   }
 
   static defaultProps = {
@@ -162,7 +163,6 @@ export class SubjectDetails extends React.PureComponent {
         style={[{flex: 1, alignItems: 'stretch', padding: 10}, containerStyle]} 
         onPress={() => onPress(subjectData)}
         activeOpacity={0.7}
-        onPressIn={() => {}}
       >
         {/*Title*/}
         <IconText
@@ -186,6 +186,8 @@ export class SubjectItem extends React.PureComponent {
   static propTypes = {
     subjectData: PropTypes.shape(subjectProps),
     height     : PropTypes.number,
+    //callbacks
+    onPressSubject: PropTypes.func,
   }
 
   static defaultProps = {
@@ -197,11 +199,11 @@ export class SubjectItem extends React.PureComponent {
   }
 
   render() {
-    const { subjectData, height } = this.props;
+    const { subjectData, height, onPressSubject } = this.props;
     const color = subjectData.graidentBG[1];
 
     return(
-      <View style={{ height: height, paddingTop: 10, paddingBottom: 35, shadowOffset:{  width: 3,  height: 10}, shadowColor: '#686868', shadowOpacity: 0.35, shadowRadius: 5}}>
+      <View style={{ height: height, paddingTop: 10, paddingBottom: 35, shadowOffset:{  width: 3,  height: 10}, shadowColor: '#686868', shadowOpacity: 0.35, shadowRadius: 5}} removeClippedSubviews={true}>
         <View style={{flex: 1,  height: '100%', flexDirection: 'row', backgroundColor: 'white', borderRadius: 12}} overflow='hidden'>    
           <LinearGradient
             style={{position: 'absolute', width: '100%', height: '100%'}}
@@ -216,6 +218,7 @@ export class SubjectItem extends React.PureComponent {
           />
           <SubjectDetails 
             subjectData={subjectData}
+            onPress={onPressSubject}
             color={Chroma(color).darken().hex()}
           />
         </View>
@@ -228,11 +231,9 @@ export class SubjectItem extends React.PureComponent {
 export class ModuleGroup extends React.Component {
   static propTypes = {
     moduleData    : PropTypes.shape(moduleProps).isRequired,
-    onPressAllSubj: PropTypes.func,
-  }
-
-  static defaultProps = {
-    onPressAllSubj: () => alert(),
+    //callbacks
+    onPressSubject: PropTypes.func,
+    onPressModule : PropTypes.func,
   }
 
   //renders a single subject item
@@ -240,12 +241,13 @@ export class ModuleGroup extends React.Component {
     return(
       <SubjectItem 
         subjectData={item}
+        onPressSubject={this.props.onPressSubject}
       />
     );
   }
 
   render() {
-    const { moduleData, onPressAllSubj } = this.props;
+    const { moduleData, onPressModule } = this.props;
 
     //ui values
     const sliderWidth = Dimensions.get('window').width;
@@ -256,7 +258,7 @@ export class ModuleGroup extends React.Component {
         {/*Header*/}
         <TouchableOpacity 
           style={{paddingHorizontal: 12}} 
-          onPress={() => onPressAllSubj(moduleData)}
+          onPress={() => onPressModule(moduleData)}
         >
           <IconText
             text={moduleData.moduleName}
@@ -295,12 +297,20 @@ export class ModuleList extends React.Component {
     moduleList: PropTypes.arrayOf(
       PropTypes.shape(moduleProps)
     ).isRequired,
+    //callbacks
+    onPressSubject: PropTypes.func,
+    onPressModule : PropTypes.func,
+    //style
     containerStyle: ViewPropTypes.style,
   }
   
   _renderItem = ({item}, index) => {
     return(
-      <ModuleGroup moduleData={item}/>
+      <ModuleGroup 
+        moduleData={item}
+        onPressSubject={this.props.onPressSubject}
+        onPressModule ={this.props.onPressModule }
+      />
     );
   }
 

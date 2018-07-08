@@ -896,7 +896,10 @@ export default class Homescreen extends React.Component {
           <View style={{flex: 1}}>
             <ModuleList 
               containerStyle={{paddingTop: 64, backgroundColor: 'white'}}
-              moduleList={cardsData}/>
+              moduleList={cardsData}
+              onPressModule ={(moduleData ) => this.props.navigation.navigate('SubjectListRoute')}
+              onPressSubject={(subjectData) => alert('navigate to: ' + subjectData.subjectName)}
+            />
             <BlurView 
               style={{position: 'absolute', width: '100%', height: 64}}
               intensity={100}
