@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { StyleSheet, Text, View, Dimensions, Image, FlatList, TouchableOpacity, ViewPropTypes } from 'react-native';
+import { StyleSheet, Text, View, Dimensions, Image, FlatList, TouchableOpacity, ViewPropTypes, Platform } from 'react-native';
 
 import { AnimatedGradient }  from './animatedGradient';
 import { IconText } from './views';
@@ -11,6 +11,8 @@ import Chroma from 'chroma-js'
 import Carousel, { ParallaxImage }  from 'react-native-snap-carousel';
 import * as Animatable from 'react-native-animatable';
 import { LinearGradient } from 'expo'
+import { material, human, systemWeights } from 'react-native-typography'
+
 
 const cardGroupHeight = 150;
 
@@ -112,10 +114,11 @@ export class SubjectProgress extends React.PureComponent {
     />
 
     const fraction = <View
-      style={{backgroundColor: 'lightgrey', width: chartSize, height: chartSize, alignItems: 'center', justifyContent: 'center', borderRadius: chartSize}}  
+      style={{borderColor: color,  borderWidth: 3, width: chartSize, height: chartSize, alignItems: 'center', justifyContent: 'center', borderRadius: chartSize,}}  
     >
-      <Text style={{fontSize: 20, }}>
-        {answher}/{progressData.questions}
+      <Text>
+        <Text style={{fontSize: 24, fontWeight: '900'}}>{answher}</Text>
+        <Text style={{fontSize: 18, fontWeight: '100'}}>/{progressData.questions}</Text>
       </Text>
     </View>
 
@@ -164,13 +167,13 @@ export class SubjectDetails extends React.PureComponent {
         {/*Title*/}
         <IconText
           text={subjectData.subjectName}
-          textStyle={{fontSize: 20, fontWeight: '500'}}
+          textStyle={styles.subjectTitle}
           iconColor={color}
           iconName='heart'
           iconType='entypo'
           iconSize={22}
         />
-        <Text style={{flex: 1, fontSize: 16, fontWeight: '100', marginTop: 3}}>
+        <Text style={[{flex: 1, marginTop: 2}, styles.subjectSubtitle]}>
           {subjectData.subjectDesc}
         </Text>
       </TouchableOpacity>
@@ -178,7 +181,7 @@ export class SubjectDetails extends React.PureComponent {
   }
 }
 
-//shows a single subject card and holds SubjectDetails and subject progess
+//shows a single subject card and holds SubjectDetails and SubjectProgess
 export class SubjectItem extends React.PureComponent {
   static propTypes = {
     subjectData: PropTypes.shape(subjectProps),
@@ -198,8 +201,8 @@ export class SubjectItem extends React.PureComponent {
     const color = subjectData.graidentBG[1];
 
     return(
-      <View style={{ height: height, paddingTop: 15, paddingBottom: 35, shadowOffset:{  width: 3,  height: 3}, shadowColor: 'black', shadowOpacity: 0.35, shadowRadius: 10,}}>
-        <View style={{flex: 1,  height: '100%', flexDirection: 'row', backgroundColor: 'white', borderRadius: 12,}} overflow='hidden'>    
+      <View style={{ height: height, paddingTop: 10, paddingBottom: 35, shadowOffset:{  width: 3,  height: 10}, shadowColor: '#686868', shadowOpacity: 0.35, shadowRadius: 5}}>
+        <View style={{flex: 1,  height: '100%', flexDirection: 'row', backgroundColor: 'white', borderRadius: 12}} overflow='hidden'>    
           <LinearGradient
             style={{position: 'absolute', width: '100%', height: '100%'}}
             colors={subjectData.graidentBG}
@@ -246,7 +249,7 @@ export class ModuleGroup extends React.Component {
 
     //ui values
     const sliderWidth = Dimensions.get('window').width;
-    const itemWidth = sliderWidth - 30;
+    const itemWidth = sliderWidth - 25;
 
     return(
       <View style={{justifyContent: 'center'}}>
@@ -257,13 +260,13 @@ export class ModuleGroup extends React.Component {
         >
           <IconText
             text={moduleData.moduleName}
-            textStyle={{fontSize: 20, fontWeight: '500', color: 'black', alignSelf: 'flex-start'}}
+            textStyle={styles.title}
             iconColor='grey'
             iconName ='heart'
             iconType ='entypo'
-            iconSize ={25}
+            iconSize ={20}
           />
-          <Text style={{fontSize: 16}}>
+          <Text style={styles.subtitle}>
             {moduleData.moduleDesc}
           </Text>
         </TouchableOpacity>
@@ -277,7 +280,7 @@ export class ModuleGroup extends React.Component {
           itemWidth={itemWidth}
           activeSlideAlignment={'center'}
           layout={'tinder'}
-          layoutCardOffset={10}
+          layoutCardOffset={12}
           enableSnap={true}
           removeClippedSubviews={false}
         />
@@ -315,5 +318,35 @@ export class ModuleList extends React.Component {
       />
     );
   }
-  
 }
+
+const styles = StyleSheet.create({
+  title: {
+    ...systemWeights.boldObject,
+    ...Platform.select({
+      ios    : human.title2Object,
+      android: material.headlineObject,
+    }),
+  },
+  subtitle: {
+    ...systemWeights.thinObject,
+    ...Platform.select({
+      ios    : human.bodyObject,
+      android: material.subheadingObject,
+    }),
+  },
+  subjectTitle: {
+    ...systemWeights.semiboldObject,
+    ...Platform.select({
+      ios    : human.title3Object,
+      android: material.display1Object,
+    }),
+  },
+  subjectSubtitle: {
+    ...systemWeights.thinObject,
+    ...Platform.select({
+      ios    : human.subheadObject,
+      android: material.subheadingObject,
+    }),
+  }
+});
