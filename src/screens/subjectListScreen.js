@@ -20,15 +20,16 @@ export default class SubjectListScreen extends React.Component {
     const { navigation} = this.props;
     const moduleData = navigation.getParam('moduleData', null);
     return(
-      <View style={{marginHorizontal: 20}}>
+      <View style={{marginHorizontal: 20, paddingBottom: 10}}>
         <ExpandCollapse 
           collapseHeight={100}
           colors={['rgba(255, 255, 255, 0)', 'rgb(233, 232, 239)']}
         >
-          <ModuleHeader moduleData={moduleData}/>
+          <ModuleHeader 
+            moduleData={moduleData}
+            detailedView={true}
+          />
         </ExpandCollapse>
-        <Divider style={{marginTop: 10, marginBottom: 15, height: 1, backgroundColor: 'grey', opacity: 0.5, zIndex: 0}}/>
-
       </View>
     );
   }
@@ -40,7 +41,7 @@ export default class SubjectListScreen extends React.Component {
     return(
       <ViewWithBlurredHeader>
         <SubjectList
-          containerStyle={{paddingTop: Header.HEIGHT + 15}}
+          containerStyle={{paddingTop: Header.HEIGHT + 10}}
           ListHeaderComponent={this._renderHeader}
           subjectListData={moduleData.subjects}
         />

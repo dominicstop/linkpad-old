@@ -142,9 +142,6 @@ export class ExpandCollapse extends React.PureComponent {
 
     if(!checkHeight) return;
 
-    console.log('collapsableHeight: ' + collapseHeight);
-    console.log('height: ' + height);
-
     const shouldCollapse = height >= collapseHeight
     this.setState({
       collapsable: shouldCollapse,

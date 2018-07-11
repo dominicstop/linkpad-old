@@ -166,6 +166,7 @@ const cardsData = [
       },
     ],
   },
+  /*
   {
     moduleID  : 'mod:005',
     moduleName: 'Lorum Module',
@@ -874,6 +875,7 @@ const cardsData = [
       },
     ],
   },
+  */
 ];
 
 const ModulesHeader = (props) => <CustomHeader {...props}

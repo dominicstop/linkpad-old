@@ -20,15 +20,18 @@ export class IconText extends React.PureComponent {
     iconSize : PropTypes.number,
     //style
     containerStyle: ViewPropTypes.style ,
+    wrapperStyle  : ViewPropTypes.style ,
     textStyle     : Text.propTypes.style,
   }
 
   render(){
-    const {text, iconName, iconColor, iconType, iconSize, containerStyle, textStyle} = this.props;
-    return(
+    const {text, iconName, iconColor, iconType, iconSize, containerStyle, textStyle, wrapperStyle, ...viewProps} = this.props;
+    const childrenCount = React.Children.count(this.props.children);
+
+    const IconText = (
       <View
         style={[{flexDirection: 'row', alignItems: 'center'}, containerStyle]}
-        {...this.props}
+        {...viewProps}
       >
         <Icon
           name ={iconName }
@@ -36,10 +39,25 @@ export class IconText extends React.PureComponent {
           type ={iconType }
           size ={iconSize }
         />
-        <Text style={[{marginLeft: 7}, textStyle]}>
+        <Text 
+          style={[{marginLeft: 7}, textStyle]}
+          numberOfLines={1}
+          ellipsizeMode='tail'
+        >
           {text}
         </Text>
       </View>
+    );
+
+    const Wrapper = (
+      <View style={wrapperStyle}>
+        {IconText}
+        {this.props.children}
+      </View>
+    );
+
+    return(
+      childrenCount == 0 ? IconText : Wrapper
     );
   }
 }

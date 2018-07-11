@@ -9,7 +9,9 @@ import Chroma from 'chroma-js'
 import Carousel from 'react-native-snap-carousel';
 import * as Animatable from 'react-native-animatable';
 import { LinearGradient } from 'expo';
-import { material, human, systemWeights } from 'react-native-typography'
+import { material, human, systemWeights } from 'react-native-typography';
+import ProgressBar from 'react-native-progress/Bar';
+import { Bar } from 'react-native-progress';
 
 
 const cardGroupHeight = 150;
@@ -172,7 +174,7 @@ export class SubjectDetails extends React.PureComponent {
           iconSize={22}
         />
         <Text 
-          style={[{flex: 1, marginTop: 2}, styles.subjectSubtitle]} 
+          style={[{flex: 1, marginTop: 2, textAlign: 'justify'}, styles.subjectSubtitle]} 
           numberOfLines={numberOfLinesDesc}
           ellipsizeMode={'tail'} 
           lineBreakMode={'tail'}
@@ -235,26 +237,32 @@ export class SubjectItem extends React.PureComponent {
   }
 }
 
+//displays the title and other details about the module
 export class ModuleHeader extends React.PureComponent {
   static propTypes = {
-    moduleData: PropTypes.shape(moduleProps).isRequired,
+    moduleData  : PropTypes.shape(moduleProps).isRequired,
+    detailedView: PropTypes.bool,
   }
 
   render(){
-    const { moduleData } = this.props;  
+    const { moduleData, detailedView } = this.props;  
     return(
       <View>
         <IconText
+          textStyle={detailedView? styles.titleLarge : styles.title}
+          iconSize ={detailedView? 25 : 20 }
           text={moduleData.moduleName}
-          textStyle={styles.title}
           iconColor='grey'
           iconName ='heart'
           iconType ='entypo'
-          iconSize ={20}
-        />
-        <Text style={styles.subtitle}>
-          {moduleData.moduleDesc}
-        </Text>
+        >
+          <Text 
+            style={[{textAlign: 'justify'}, styles.subtitle]}
+            numberOfLines={ detailedView? undefined : 2}
+          >
+            {moduleData.moduleDesc}
+          </Text>
+        </IconText>
       </View>
     );
   }
@@ -295,7 +303,10 @@ export class ModuleGroup extends React.Component {
           style={{paddingHorizontal: 12}} 
           onPress={() => onPressModule(moduleData)}
         >
-          <ModuleHeader moduleData={moduleData}/>
+          <ModuleHeader 
+            moduleData={moduleData}
+            detailedView={false}
+          />
         </TouchableOpacity>
         {/*Subject List*/}
         <Carousel
@@ -404,6 +415,13 @@ const styles = StyleSheet.create({
     ...systemWeights.boldObject,
     ...Platform.select({
       ios    : human.title2Object,
+      android: material.headlineObject,
+    }),
+  },
+  titleLarge: {
+    ...systemWeights.boldObject,
+    ...Platform.select({
+      ios    : human.title1Object,
       android: material.headlineObject,
     }),
   },
