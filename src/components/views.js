@@ -3,6 +3,8 @@ import { Text, View, ViewPropTypes, TextProps } from 'react-native';
 import { Icon } from 'react-native-elements';
 import PropTypes from 'prop-types';
 
+import { Header } from 'react-navigation';
+import { BlurView } from 'expo';
 
 //icon and text
 export class IconText extends React.PureComponent {
@@ -37,6 +39,21 @@ export class IconText extends React.PureComponent {
         <Text style={[{marginLeft: 7}, textStyle]}>
           {text}
         </Text>
+      </View>
+    );
+  }
+}
+
+export class ViewWithBlurredHeader extends React.Component {
+  render(){
+    return(
+      <View style={{flex: 1}}>
+        {this.props.children}
+        <BlurView 
+          style={{position: 'absolute', width: '100%', height: Header.HEIGHT}}
+          intensity={100}
+          tint='default'
+        />
       </View>
     );
   }

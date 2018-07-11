@@ -7,9 +7,21 @@ import Homescreen        from './src/screens/homescreen';
 import SubjectListScreen from './src/screens/subjectListScreen';
 import NavigationService from './src/NavigationService';
 
+const HeaderProps = {
+  headerTransparent: true,
+  headerTintColor: 'white',
+  headerTitleStyle: {
+    fontWeight: 'bold',
+    color: 'white'
+  },
+  headerStyle: {
+    backgroundColor: 'rgba(48, 0, 247, 0.7)'    
+  },
+}
+
 const TopLevelNavigator = createStackNavigator({
     HomeRoute: {
-      screen: Homescreen
+      screen: Homescreen,
     },
     SubjectListRoute: {
       screen: SubjectListScreen,
@@ -18,6 +30,7 @@ const TopLevelNavigator = createStackNavigator({
     headerMode: 'float',
     headerTransitionPreset: 'uikit',
     headerTransparent: true,
+    navigationOptions: HeaderProps,
   }
 );
 

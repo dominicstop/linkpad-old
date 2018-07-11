@@ -1,7 +1,12 @@
 import React from 'react';
-import { Text, TouchableOpacity, ViewPropTypes, TextProps } from 'react-native';
+import { Text, TouchableOpacity, ViewPropTypes, TextProps, UIManager, LayoutAnimation } from 'react-native';
 import { Icon } from 'react-native-elements';
 import PropTypes from 'prop-types';
+
+import { LinearGradient } from 'expo';
+
+UIManager.setLayoutAnimationEnabledExperimental && UIManager.setLayoutAnimationEnabledExperimental(true);
+
 
 //icon and text
 export class IconButton extends React.PureComponent {
@@ -90,6 +95,96 @@ export class ToggleButton extends React.PureComponent {
         iconSize={iconSize}
         activeOpacity={0.5}
       />
+    );
+  }
+}
+
+//touch to expand or collapse
+export class ExpandCollapse extends React.PureComponent {
+  static propTypes = {
+    collapseHeight: PropTypes.number ,
+    colors        : PropTypes.arrayOf(PropTypes.string), 
+  }
+
+  static defaultProps = {
+    collapseHeight: 200,
+    colors        : ['rgba(255, 255, 255, 0)', 'white'], 
+  }
+
+  constructor(props){
+    super(props);
+    this.state = {
+      height      : null,
+      collapsable : true,
+      checkHeight : true,
+      layoutHeight: null,
+    }
+  }
+
+  componentDidMount(){
+    
+  }
+
+  toggle(){
+    const { collapseHeight      } = this.props;
+    const { height, collapsable } = this.state;
+    if(!collapsable) return;
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    this.setState({
+      height: height == collapseHeight ? undefined : collapseHeight 
+    });
+  }
+
+  _onLayout = (event) => {
+    const { collapseHeight } = this.props;
+    const { checkHeight    } = this.state;
+    const { height         } = event.nativeEvent.layout;
+
+    if(!checkHeight) return;
+
+    console.log('collapsableHeight: ' + collapseHeight);
+    console.log('height: ' + height);
+
+    const shouldCollapse = height >= collapseHeight
+    this.setState({
+      collapsable: shouldCollapse,
+      height     : shouldCollapse? collapseHeight : undefined,
+      checkHeight: false,
+    });
+  }
+
+  render(){
+    const { collapseHeight, colors } = this.props;
+    const { height } = this.state;
+
+    const isCollapsed = height == collapseHeight;
+    const transparent = 'rgba(255, 255, 255, 0)';
+    const lastColor   = colors[colors.length-1]; 
+
+    const Collapsed = (
+      <LinearGradient
+        overflow='hidden'
+        colors={colors}
+      >
+        {this.props.children}
+        <LinearGradient
+          style={{position: 'absolute', width: '100%', height: '100%'}}
+          colors={[transparent, isCollapsed? lastColor : transparent ]}
+          locations={[0.4, 0.9]}
+        />
+      </LinearGradient>
+    );
+    
+    return(
+      <TouchableOpacity
+        style={{maxHeight: this.state.height}}
+        overflow='hidden'
+        onPress={() => this.toggle()}
+        activeOpacity={1}
+        onLayout={this._onLayout}
+      >
+        {isCollapsed? Collapsed : this.props.children}
+      </TouchableOpacity>
     );
   }
 }

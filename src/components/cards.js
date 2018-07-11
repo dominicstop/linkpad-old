@@ -2,21 +2,17 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { StyleSheet, Text, View, Dimensions, Image, FlatList, TouchableOpacity, ViewPropTypes, Platform } from 'react-native';
 
-import { AnimatedGradient }  from './animatedGradient';
 import { IconText } from './views';
-import { IconButton } from './buttons';
 import { GaugeChart, GradeDougnut } from './charts';
 
 import Chroma from 'chroma-js'
-import Carousel, { ParallaxImage }  from 'react-native-snap-carousel';
+import Carousel from 'react-native-snap-carousel';
 import * as Animatable from 'react-native-animatable';
-import { LinearGradient } from 'expo'
+import { LinearGradient } from 'expo';
 import { material, human, systemWeights } from 'react-native-typography'
 
 
 const cardGroupHeight = 150;
-
-
 
 export const subjectProps = {
   subjectID  : PropTypes.string,
@@ -88,7 +84,7 @@ export class SubjectProgress extends React.PureComponent {
     //const { correct, questions } = progressData;
 
     //ui computations
-    const margin      = 10;
+    const margin      = 0;
     const chartRadius = 50;
     const chartSize   = chartRadius * 2;
     const viewWidth   = chartSize + margin;
@@ -114,7 +110,7 @@ export class SubjectProgress extends React.PureComponent {
     />
 
     const fraction = <View
-      style={{borderColor: color,  borderWidth: 3, width: chartSize, height: chartSize, alignItems: 'center', justifyContent: 'center', borderRadius: chartSize,}}  
+      style={{borderColor: color, borderWidth: 3, width: chartSize, height: chartSize, alignItems: 'center', justifyContent: 'center', borderRadius: chartSize,}}  
     >
       <Text>
         <Text style={{fontSize: 24, fontWeight: '900'}}>{answher}</Text>
@@ -146,6 +142,8 @@ export class SubjectDetails extends React.PureComponent {
   static propTypes = {
     subjectData: PropTypes.shape(subjectProps),
     onPress: PropTypes.func,
+    numberOfLinesDesc: PropTypes.number,
+    containerStyle: ViewPropTypes.style,
   }
 
   static defaultProps = {
@@ -157,10 +155,10 @@ export class SubjectDetails extends React.PureComponent {
   }
 
   render() {
-    const { subjectData, onPress, containerStyle, color } = this.props;
+    const { subjectData, onPress, containerStyle, color, numberOfLinesDesc } = this.props;
     return(
       <TouchableOpacity 
-        style={[{flex: 1, alignItems: 'stretch', padding: 10}, containerStyle]} 
+        style={[{flex: 1, alignItems: 'stretch'}, containerStyle]} 
         onPress={() => onPress(subjectData)}
         activeOpacity={0.7}
       >
@@ -173,7 +171,12 @@ export class SubjectDetails extends React.PureComponent {
           iconType='entypo'
           iconSize={22}
         />
-        <Text style={[{flex: 1, marginTop: 2}, styles.subjectSubtitle]}>
+        <Text 
+          style={[{flex: 1, marginTop: 2}, styles.subjectSubtitle]} 
+          numberOfLines={numberOfLinesDesc}
+          ellipsizeMode={'tail'} 
+          lineBreakMode={'tail'}
+        >
           {subjectData.subjectDesc}
         </Text>
       </TouchableOpacity>
@@ -185,9 +188,12 @@ export class SubjectDetails extends React.PureComponent {
 export class SubjectItem extends React.PureComponent {
   static propTypes = {
     subjectData: PropTypes.shape(subjectProps),
-    height     : PropTypes.number,
+    height: PropTypes.number,
+    numberOfLinesDesc: PropTypes.number,
     //callbacks
     onPressSubject: PropTypes.func,
+    //styles
+    containerStyle: ViewPropTypes.style,
   }
 
   static defaultProps = {
@@ -199,29 +205,56 @@ export class SubjectItem extends React.PureComponent {
   }
 
   render() {
-    const { subjectData, height, onPressSubject } = this.props;
+    const { subjectData, height, onPressSubject, containerStyle } = this.props;
     const color = subjectData.graidentBG[1];
 
     return(
-      <View style={{ height: height, paddingTop: 10, paddingBottom: 35, shadowOffset:{  width: 3,  height: 10}, shadowColor: '#686868', shadowOpacity: 0.35, shadowRadius: 5}} removeClippedSubviews={true}>
-        <View style={{flex: 1,  height: '100%', flexDirection: 'row', backgroundColor: 'white', borderRadius: 12}} overflow='hidden'>    
-          <LinearGradient
-            style={{position: 'absolute', width: '100%', height: '100%'}}
-            colors={subjectData.graidentBG}
-            start={{x: 0, y: 0}} 
-            end={{x: 1, y: 1}} 
-          />
+      <View style={[{ height: height, paddingTop: 10, paddingBottom: 35, shadowOffset:{  width: 3,  height: 10}, shadowColor: '#686868', shadowOpacity: 0.35, shadowRadius: 5}, containerStyle]} removeClippedSubviews={false}>
+        <LinearGradient
+          style={{flex: 1, height: '100%', borderRadius: 15, flexDirection: 'row', paddingHorizontal: 15, paddingVertical: 15}}
+          colors={subjectData.graidentBG}
+          start={{x: 0, y: 0}} 
+          end={{x: 1, y: 1}}
+          overflow='hidden' 
+        >
           <SubjectProgress 
             progressData={subjectData.progress} 
             color={Chroma(color).saturate(2).hex()}         
             backgroundColor={Chroma(color).brighten(2).hex()}         
           />
-          <SubjectDetails 
+          <SubjectDetails
+            numberOfLinesDesc={this.props.numberOfLinesDesc}
+            containerStyle={{marginLeft: 13}}
             subjectData={subjectData}
             onPress={onPressSubject}
             color={Chroma(color).darken().hex()}
           />
-        </View>
+        </LinearGradient>
+      </View>
+    );
+  }
+}
+
+export class ModuleHeader extends React.PureComponent {
+  static propTypes = {
+    moduleData: PropTypes.shape(moduleProps).isRequired,
+  }
+
+  render(){
+    const { moduleData } = this.props;  
+    return(
+      <View>
+        <IconText
+          text={moduleData.moduleName}
+          textStyle={styles.title}
+          iconColor='grey'
+          iconName ='heart'
+          iconType ='entypo'
+          iconSize ={20}
+        />
+        <Text style={styles.subtitle}>
+          {moduleData.moduleDesc}
+        </Text>
       </View>
     );
   }
@@ -230,7 +263,8 @@ export class SubjectItem extends React.PureComponent {
 //displays a single module item and a list of subjects
 export class ModuleGroup extends React.Component {
   static propTypes = {
-    moduleData    : PropTypes.shape(moduleProps).isRequired,
+    moduleData       : PropTypes.shape(moduleProps).isRequired,
+    numberOfLinesDesc: PropTypes.number,
     //callbacks
     onPressSubject: PropTypes.func,
     onPressModule : PropTypes.func,
@@ -242,6 +276,7 @@ export class ModuleGroup extends React.Component {
       <SubjectItem 
         subjectData={item}
         onPressSubject={this.props.onPressSubject}
+        numberOfLinesDesc={this.props.numberOfLinesDesc}
       />
     );
   }
@@ -260,17 +295,7 @@ export class ModuleGroup extends React.Component {
           style={{paddingHorizontal: 12}} 
           onPress={() => onPressModule(moduleData)}
         >
-          <IconText
-            text={moduleData.moduleName}
-            textStyle={styles.title}
-            iconColor='grey'
-            iconName ='heart'
-            iconType ='entypo'
-            iconSize ={20}
-          />
-          <Text style={styles.subtitle}>
-            {moduleData.moduleDesc}
-          </Text>
+          <ModuleHeader moduleData={moduleData}/>
         </TouchableOpacity>
         {/*Subject List*/}
         <Carousel
@@ -297,6 +322,7 @@ export class ModuleList extends React.Component {
     moduleList: PropTypes.arrayOf(
       PropTypes.shape(moduleProps)
     ).isRequired,
+    flatListProps: PropTypes.object,
     //callbacks
     onPressSubject: PropTypes.func,
     onPressModule : PropTypes.func,
@@ -310,12 +336,13 @@ export class ModuleList extends React.Component {
         moduleData={item}
         onPressSubject={this.props.onPressSubject}
         onPressModule ={this.props.onPressModule }
+        numberOfLinesDesc={3}
       />
     );
   }
 
   render(){
-    const { moduleList, containerStyle, } = this.props;
+    const { moduleList, containerStyle, flatListProps} = this.props;
     return(
       <FlatList
         style       ={[containerStyle]}
@@ -325,6 +352,48 @@ export class ModuleList extends React.Component {
         ListFooterComponent={<View style={{padding: 20}}/>}
         scrollEventThrottle={200}
         directionalLockEnabled={true}
+        removeClippedSubviews={false}
+        {...flatListProps}
+      />
+    );
+  }
+}
+
+export class SubjectList extends React.Component {
+  static propTypes = {
+    subjectListData: PropTypes.arrayOf(
+      PropTypes.shape(subjectProps)
+    ).isRequired,
+    //callbacks
+    onPressSubject: PropTypes.func,
+    //style
+    containerStyle: ViewPropTypes.style,
+  }
+  
+  _renderItem = ({item}, index) => {
+    return(
+      <SubjectItem
+        containerStyle={{height: null, marginHorizontal: 13, paddingTop: 0, paddingBottom: 20}}
+        numberOfLinesDesc={6}
+        subjectData={item}
+        onPressSubject={this.props.onPressSubject}
+      />
+    );
+  }
+
+  render(){
+    const { subjectListData, containerStyle, ...flatListProps} = this.props;
+    return(
+      <FlatList
+        style={[containerStyle]}
+        data={subjectListData}
+        keyExtractor={(item) => item.subjectID }
+        renderItem ={this._renderItem }
+        ListFooterComponent={<View style={{padding: 20}}/>}
+        scrollEventThrottle={200}
+        directionalLockEnabled={true}
+        removeClippedSubviews={true}
+        {...flatListProps}
       />
     );
   }

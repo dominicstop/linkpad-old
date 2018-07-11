@@ -1,19 +1,17 @@
 import React from 'react';
-import { StyleSheet, Text, View, TabBarIOS, Platform, NavigatorIOS, TouchableOpacity, LayoutAnimation, UIManager } from 'react-native';
+import { StyleSheet, Text, View, TabBarIOS, Platform, NavigatorIOS } from 'react-native';
 
-import { ModuleList            } from '../components/cards'  ;
-import { CustomHeader          } from '../components/Header' ;
-import { ViewWithBlurredHeader } from '../components/views'  ;
-import { ExpandCollapse        } from '../components/buttons';
+import { ModuleList            } from '../components/cards';
+import { CustomHeader          } from '../components/Header';
+import { ViewWithBlurredHeader } from '../components/views';
 
 import { Header } from 'react-navigation';
-
 
 const cardsData = [
   {
     moduleID  : 'mod:002',
     moduleName: 'Lorum Module',
-    moduleDesc: 'subject description here lorum ipsum very long here lorum ipsum sit amit very long here subject description here lorum ipsum very long here lorum ipsum sit amit very long here subject description here lorum ipsum very long here lorum ipsum sit amit very long here',
+    moduleDesc: 'subject description here lorum ipsum',
     subjects: [
       {
         subjectID  : 'subj:001',
@@ -888,62 +886,15 @@ export default class Homescreen extends React.Component {
     headerTitle: ModulesHeader,
   };
 
-  constructor(props) {
-    super(props);
-    this.state = {selectedTab: 'tabFavorites'};
-  }
-
-  componentDidMount(){
-    //this._navigateToModule(cardsData[0]);
-  }
-
-  setTab(tabId) {
-    this.setState({selectedTab: tabId});
-  }
-
   _navigateToModule = (moduleData) => {
     this.props.navigation.navigate('SubjectListRoute', {
-      moduleData: moduleData,
+      moduleData: moduleData
     })
-  }
-
-  _render(){
-    
-    return(
-      <View style={{padding: 15, marginTop: 70}}>
-        <ExpandCollapse collapseHeight={100}>
-          <Text style={{margin: 10, fontSize: 14}}>
-            Lorum ipsum sit amit dolor aspicing abc def lorum ipsum test text
-            Lorum ipsum sit amit dolor aspicing abc def lorum ipsum test text
-            Lorum ipsum sit amit dolor aspicing abc def lorum ipsum test text
-            Lorum ipsum sit amit dolor aspicing abc def lorum ipsum test text
-            Lorum ipsum sit amit dolor aspicing abc def lorum ipsum test text
-          </Text>
-        </ExpandCollapse>
-      </View>
-    );
   }
 
   render(){
     return (
-      <TabBarIOS
-        barStyle='default'
-      >
-        <TabBarIOS.Item
-          systemIcon="bookmarks"
-          selected={this.state.selectedTab === 'tabFavorites'}
-          onPress={() => this.setTab('tabFavorites')}
-        >
-          <ViewWithBlurredHeader>
-            <ModuleList 
-              containerStyle={{paddingTop: Header.HEIGHT - 5, backgroundColor: 'white'}}
-              moduleList={cardsData}
-              onPressModule ={this._navigateToModule}
-              onPressSubject={(subjectData) => alert('navigate to: ' + subjectData.subjectName)}
-            />
-          </ViewWithBlurredHeader>
-        </TabBarIOS.Item>
-      </TabBarIOS>
+      null
     );
   }
 }
