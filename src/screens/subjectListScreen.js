@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, Text, View, TabBarIOS, Platform } from 'react-native';
+import { Text, View } from 'react-native';
 
 import { SubjectList, ModuleHeader } from '../components/cards'  ;
 import { ViewWithBlurredHeader     } from '../components/views'  ;
@@ -7,8 +7,9 @@ import { ExpandCollapse            } from '../components/buttons';
 
 import { Header  } from 'react-navigation';
 import { Divider, colors } from 'react-native-elements' ;
+import * as Animatable from 'react-native-animatable';
 
-const getModuleTitle = (moduleData) => moduleData != null ? moduleData.moduleName : 'Module Name';
+const getModuleTitle = (moduleData) => moduleData != null ? moduleData.moduleName : 'View Module';
 
 
 export default class SubjectListScreen extends React.Component {
@@ -19,17 +20,39 @@ export default class SubjectListScreen extends React.Component {
   _renderHeader = () => {
     const { navigation} = this.props;
     const moduleData = navigation.getParam('moduleData', null);
+    const subjectCount = moduleData.subjects.length;
     return(
       <View style={{marginHorizontal: 20, paddingBottom: 10}}>
-        <ExpandCollapse 
-          collapseHeight={100}
-          colors={['rgba(255, 255, 255, 0)', 'rgb(233, 232, 239)']}
+        <Animatable.View 
+          animation='fadeInRight'
+          easing='ease-in-out'
+          duration={500}
+          useNativeDriver={true}
         >
-          <ModuleHeader 
-            moduleData={moduleData}
-            detailedView={true}
-          />
-        </ExpandCollapse>
+          <ExpandCollapse 
+            collapseHeight={100}
+            colors={['rgba(255, 255, 255, 0)', 'rgb(233, 232, 239)']}
+          >
+            <ModuleHeader 
+              moduleData={moduleData}
+              detailedView={true}
+            />
+          </ExpandCollapse>
+        </Animatable.View>
+        <Animatable.View
+          animation='fadeInRight'
+          easing='ease-in-out'
+          duration={500}
+          delay={100}
+          useNativeDriver={true}
+        >
+          <Text style={{fontSize: 26, fontWeight: '900', marginTop: 15}}>
+            {subjectCount + ' '}
+            <Text style={{fontSize: 26, fontWeight: '300', marginTop: 20, textAlignVertical: 'center'}}>
+              {subjectCount > 1? 'Subjects' : 'Subject'}
+            </Text>
+          </Text>
+        </Animatable.View>
       </View>
     );
   }

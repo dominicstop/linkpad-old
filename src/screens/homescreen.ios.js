@@ -909,23 +909,6 @@ export default class Homescreen extends React.Component {
     })
   }
 
-  _render(){
-    
-    return(
-      <View style={{padding: 15, marginTop: 70}}>
-        <ExpandCollapse collapseHeight={100}>
-          <Text style={{margin: 10, fontSize: 14}}>
-            Lorum ipsum sit amit dolor aspicing abc def lorum ipsum test text
-            Lorum ipsum sit amit dolor aspicing abc def lorum ipsum test text
-            Lorum ipsum sit amit dolor aspicing abc def lorum ipsum test text
-            Lorum ipsum sit amit dolor aspicing abc def lorum ipsum test text
-            Lorum ipsum sit amit dolor aspicing abc def lorum ipsum test text
-          </Text>
-        </ExpandCollapse>
-      </View>
-    );
-  }
-
   render(){
     return (
       <TabBarIOS

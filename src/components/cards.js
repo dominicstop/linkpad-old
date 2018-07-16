@@ -381,14 +381,22 @@ export class SubjectList extends React.Component {
     containerStyle: ViewPropTypes.style,
   }
   
-  _renderItem = ({item}, index) => {
+  _renderItem = ({item, index}) => {
     return(
-      <SubjectItem
-        containerStyle={{height: null, marginHorizontal: 13, paddingTop: 0, paddingBottom: 20}}
-        numberOfLinesDesc={6}
-        subjectData={item}
-        onPressSubject={this.props.onPressSubject}
-      />
+      <Animatable.View
+        delay={(index+1) * 100 + 200}
+        duration={500}
+        animation='fadeInUp'
+        easing='ease-in-out'
+        useNativeDriver={true}
+      >
+        <SubjectItem
+          containerStyle={{height: null, marginHorizontal: 13, paddingTop: 0, paddingBottom: 20}}
+          numberOfLinesDesc={6}
+          subjectData={item}
+          onPressSubject={this.props.onPressSubject}
+        />
+      </Animatable.View>
     );
   }
 
