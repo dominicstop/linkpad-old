@@ -27,11 +27,11 @@ export class IconButton extends React.PureComponent {
   }
 
   render(){
-    const {text, iconName, iconColor, iconType, iconSize, containerStyle, textStyle} = this.props;
+    const {text, iconName, iconColor, iconType, iconSize, containerStyle, textStyle, children, ...otherProps} = this.props;
     return(
       <TouchableOpacity
         style={[{flexDirection: 'row', alignItems: 'center'}, containerStyle]}
-        {...this.props}
+        {...otherProps}
       >
         <Icon
           name ={iconName }
@@ -39,9 +39,10 @@ export class IconButton extends React.PureComponent {
           type ={iconType }
           size ={iconSize }
         />
-        <Text style={[{marginLeft: 8}, textStyle]}>
+        <Text style={[{marginLeft: 8, flex: 1}, textStyle]}>
           {text}
         </Text>
+        {this.props.children}        
       </TouchableOpacity>
     );
   }
@@ -81,12 +82,13 @@ export class ToggleButton extends React.PureComponent {
       //iconprops
       iconNameActive, iconNameInactive, iconColorActive, iconColorInactive, iconType, iconSize,
       //textprops
-      textStyle,textStyleActive, textStyleInactive
+      textStyle,textStyleActive, textStyleInactive,
+      ...otherProps
     } = this.props;
 
     return(
       <IconButton
-        {...this.props}
+        {...otherProps}
         text={text}
         textStyle={[textStyle, isToggled ? textStyleActive : textStyleInactive ]}
         iconName={isToggled ? iconNameActive : iconNameInactive }

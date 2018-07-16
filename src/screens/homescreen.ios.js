@@ -3,45 +3,34 @@ import { StyleSheet, Text, View, TabBarIOS, Platform, NavigatorIOS, TouchableOpa
 
 import { ViewWithBlurredHeader } from '../components/views'  ;
 import { ModuleListStack } from './ModuleListScreen';
+import { SettingsStack   } from './SettingsScreen'  ;
 
 import { createBottomTabNavigator } from 'react-navigation';
 //TODO: fork on github, export BottomTabBar and npm install
 //import {  } from 'react-navigation-tabs/dist/views/BottomTabBar';
 import { Icon } from 'react-native-elements';
 
-
-
-//show a list of modules
-export class SettingsScreen extends React.Component {
-  static navigationOptions = {
-    tabBarLabel: 'Modules',
-    tabBarIcon: ({ focused, tintColor }) => {
-      const iconName = focused? 'ios-settings' : 'ios-settings-outline';
-      return <Icon name={iconName} size={25} color={tintColor} type='ionicon'/>;
-    }
-  }
-
-  render(){
-    return(
-      <ViewWithBlurredHeader hasTabBar={true}>
-
-      </ViewWithBlurredHeader>
-    );
-  }
-}
-
 const TabNavigation = createBottomTabNavigator({
-  ModuleListRoute: {
-    screen: ModuleListStack,
-    navigationOptions: {
-      tabBarLabel: 'Modules',
-      tabBarIcon: ({ focused, tintColor }) => {
-        const iconName = focused? 'ios-albums' : 'ios-albums-outline';
-        return <Icon name={iconName} size={25} color={tintColor} type='ionicon'/>;
+    ModuleListRoute: {
+      screen: ModuleListStack,
+      navigationOptions: {
+        tabBarLabel: 'Modules',
+        tabBarIcon: ({ focused, tintColor }) => {
+          const iconName = focused? 'ios-albums' : 'ios-albums-outline';
+          return <Icon name={iconName} size={25} color={tintColor} type='ionicon'/>;
+        }
       }
-    }
-  },
-  SettingsRoute  : SettingsScreen ,
+    },
+    SettingsRoute: {
+      screen: SettingsStack,
+      navigationOptions: {
+        tabBarLabel: 'Modules',
+        tabBarIcon: ({ focused, tintColor }) => {
+          const iconName = focused? 'ios-settings' : 'ios-settings-outline';
+          return <Icon name={iconName} size={25} color={tintColor} type='ionicon'/>;
+        }
+      }
+    },
   }, {
     tabBarOptions: {
       activeTintColor: 'rgba(255, 255, 255, 0.8)',

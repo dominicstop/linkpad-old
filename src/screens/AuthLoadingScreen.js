@@ -11,6 +11,8 @@ export default class AuthLoadingScreen extends React.Component {
     this._authenticate();
   }
 
+
+
   _authenticate =  async () => {
     const userToken = await AsyncStorage.getItem('userToken');
 

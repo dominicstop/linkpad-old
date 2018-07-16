@@ -86,7 +86,7 @@ export class ViewWithBlurredHeader extends React.Component {
     />
 
     return(
-      <View style={{flex: 1,}}>
+      <View style={{flex: 1}}>
         {this.props.children}
         <BlurView 
           style={{position: 'absolute', width: '100%', height: Header.HEIGHT}}

@@ -7,7 +7,6 @@ import { ViewWithBlurredHeader } from '../components/views'  ;
 import   SubjectListScreen       from './subjectListScreen'  ;
 
 import { Header, createStackNavigator } from 'react-navigation';
-import { Icon } from 'react-native-elements';
 
 const HeaderProps = {
   headerTransparent: true,
@@ -953,10 +952,6 @@ const ModulesHeader = (props) => <CustomHeader {...props}
 
 //show a list of modules
 export class ModuleListScreen extends React.Component {
-  //static navigationOptions = ({navigation}) => ({
-  //  title: getModuleTitle(navigation.getParam('moduleData', null)),
-  //});
-
   static navigationOptions = {
     title: 'Modules',
     headerTitle: ModulesHeader,
@@ -972,7 +967,7 @@ export class ModuleListScreen extends React.Component {
     return(
       <ViewWithBlurredHeader hasTabBar={true}>
         <ModuleList 
-          containerStyle={{paddingTop: Header.HEIGHT + 15, backgroundColor: 'white'}}
+          containerStyle={{paddingTop: Header.HEIGHT + 15}}
           moduleList={cardsData}
           onPressModule ={this._navigateToModule}
           onPressSubject={(subjectData) => alert('navigate to: ' + subjectData.subjectName)}

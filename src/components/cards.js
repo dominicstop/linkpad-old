@@ -295,7 +295,7 @@ export class ModuleGroup extends React.Component {
 
     //ui values
     const sliderWidth = Dimensions.get('window').width;
-    const itemWidth = sliderWidth - 25;
+    const itemWidth   = sliderWidth - 25;
 
     return(
       <View style={{justifyContent: 'center'}}>

@@ -9,24 +9,12 @@ import LoginScreen       from './src/screens/LoginScreen';
 import Homescreen        from './src/screens/homescreen';
 import NavigationService from './src/NavigationService';
 
-const HeaderProps = {
-  headerTransparent: true,
-  headerTintColor: 'white',
-  headerTitleStyle: {
-    fontWeight: 'bold',
-    color: 'white'
-  },
-  headerStyle: {
-    backgroundColor: 'rgba(48, 0, 247, 0.7)',
-  },
-}
-
 const AppStack = createStackNavigator({
     HomeRoute: {
       screen: Homescreen,
     },
   },{
-    headerMode: 'hidden'
+    headerMode: 'hidden',
   }
 );
 
