@@ -4,6 +4,7 @@ import { StyleSheet, Text, View, Dimensions, Image, FlatList, TouchableOpacity, 
 
 import { IconText } from './views';
 import { GaugeChart, GradeDougnut } from './charts';
+import { AnimatedListItem } from './views'
 
 import Chroma from 'chroma-js'
 import Carousel from 'react-native-snap-carousel';
@@ -341,14 +342,22 @@ export class ModuleList extends React.Component {
     containerStyle: ViewPropTypes.style,
   }
   
-  _renderItem = ({item}, index) => {
+  _renderItem = ({item, index}) => {
     return(
-      <ModuleGroup 
-        moduleData={item}
-        onPressSubject={this.props.onPressSubject}
-        onPressModule ={this.props.onPressModule }
-        numberOfLinesDesc={3}
-      />
+      <AnimatedListItem
+        index={index+1}
+        delay={0}
+        duration={1500}
+        multiplier={300}
+        animation='bounceInUp'
+      >
+        <ModuleGroup 
+          moduleData={item}
+          onPressSubject={this.props.onPressSubject}
+          onPressModule ={this.props.onPressModule }
+          numberOfLinesDesc={3}
+        />
+      </AnimatedListItem>
     );
   }
 
@@ -360,7 +369,7 @@ export class ModuleList extends React.Component {
         data        ={moduleList}
         keyExtractor={(item) => item.moduleID }
         renderItem  ={this._renderItem }
-        ListFooterComponent={<View style={{padding: 20}}/>}
+        ListFooterComponent={<View style={{padding: 100}}/>}
         scrollEventThrottle={200}
         directionalLockEnabled={true}
         removeClippedSubviews={false}
@@ -383,12 +392,10 @@ export class SubjectList extends React.Component {
   
   _renderItem = ({item, index}) => {
     return(
-      <Animatable.View
-        delay={(index+1) * 100 + 200}
+      <AnimatedListItem
+        index={index}
+        delay={150}
         duration={500}
-        animation='fadeInUp'
-        easing='ease-in-out'
-        useNativeDriver={true}
       >
         <SubjectItem
           containerStyle={{height: null, marginHorizontal: 13, paddingTop: 0, paddingBottom: 20}}
@@ -396,7 +403,7 @@ export class SubjectList extends React.Component {
           subjectData={item}
           onPressSubject={this.props.onPressSubject}
         />
-      </Animatable.View>
+      </AnimatedListItem>
     );
   }
 

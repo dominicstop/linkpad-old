@@ -1,17 +1,31 @@
 import React from 'react';
-import { StyleSheet, Text, View, TabBarIOS, Platform, NavigatorIOS } from 'react-native';
+import { StyleSheet, Text, View, TabBarIOS, Platform, NavigatorIOS, TouchableOpacity, LayoutAnimation, UIManager } from 'react-native';
 
-import { ModuleList            } from '../components/cards';
-import { CustomHeader          } from '../components/Header';
-import { ViewWithBlurredHeader } from '../components/views';
+import { ModuleList            } from '../components/cards'  ;
+import { CustomHeader          } from '../components/Header' ;
+import { ViewWithBlurredHeader } from '../components/views'  ;
+import   SubjectListScreen       from './subjectListScreen'  ;
 
-import { Header } from 'react-navigation';
+import { Header, createStackNavigator } from 'react-navigation';
+import { Icon } from 'react-native-elements';
+
+const HeaderProps = {
+  headerTransparent: true,
+  headerTintColor: 'white',
+  headerTitleStyle: {
+    fontWeight: 'bold',
+    color: 'white'
+  },
+  headerStyle: {
+    backgroundColor: 'rgba(48, 0, 247, 0.7)',
+  },
+}
 
 const cardsData = [
   {
     moduleID  : 'mod:002',
     moduleName: 'Lorum Module',
-    moduleDesc: 'subject description here lorum ipsum',
+    moduleDesc: 'subject description here lorum ipsum very long here lorum ipsum sit amit very long here subject description here lorum ipsum very long here lorum ipsum sit amit very long here subject description here lorum ipsum very long here lorum ipsum sit amit very long here',
     subjects: [
       {
         subjectID  : 'subj:001',
@@ -49,6 +63,61 @@ const cardsData = [
       },
       {
         subjectID  : 'subj:004',
+        subjectName: 'Lorum Subject',
+        subjectDesc: 'Lorum Ipsum Description',
+        progress   : {
+          correct  : 30,
+          mistakes : 10,
+          questions: 100,
+        },
+        graidentBG : ['white', '#80d0c7'],
+      },
+      {
+        subjectID  : 'subj:003.5',
+        subjectName: 'Lorum Subject',
+        subjectDesc: 'Lorum Ipsum Description',
+        progress   : {
+          correct  : 30,
+          mistakes : 10,
+          questions: 100,
+        },
+        graidentBG : ['white', '#80d0c7'],
+      },
+      {
+        subjectID  : 'subj:005',
+        subjectName: 'Lorum Subject',
+        subjectDesc: 'Lorum Ipsum Description',
+        progress   : {
+          correct  : 30,
+          mistakes : 10,
+          questions: 100,
+        },
+        graidentBG : ['white', '#80d0c7'],
+      },
+      {
+        subjectID  : 'subj:006',
+        subjectName: 'Lorum Subject',
+        subjectDesc: 'Lorum Ipsum Description',
+        progress   : {
+          correct  : 30,
+          mistakes : 10,
+          questions: 100,
+        },
+        graidentBG : ['white', '#80d0c7'],
+      },
+      {
+        subjectID  : 'subj:007',
+        subjectName: 'Lorum Subject',
+        subjectDesc: 'Lorum Ipsum Description',
+        progress   : {
+          correct  : 30,
+          mistakes : 10,
+          questions: 100,
+        },
+        graidentBG : ['white', '#80d0c7'],
+      },
+      {
+        subjectID  : 'subj:008',
         subjectName: 'Lorum Subject',
         subjectDesc: 'Lorum Ipsum Description',
         progress   : {
@@ -164,6 +233,7 @@ const cardsData = [
       },
     ],
   },
+  /*
   {
     moduleID  : 'mod:005',
     moduleName: 'Lorum Module',
@@ -872,6 +942,7 @@ const cardsData = [
       },
     ],
   },
+  */
 ];
 
 const ModulesHeader = (props) => <CustomHeader {...props}
@@ -880,7 +951,12 @@ const ModulesHeader = (props) => <CustomHeader {...props}
   iconSize={22}
 />
 
-export default class Homescreen extends React.Component {
+//show a list of modules
+export class ModuleListScreen extends React.Component {
+  //static navigationOptions = ({navigation}) => ({
+  //  title: getModuleTitle(navigation.getParam('moduleData', null)),
+  //});
+
   static navigationOptions = {
     title: 'Modules',
     headerTitle: ModulesHeader,
@@ -888,13 +964,35 @@ export default class Homescreen extends React.Component {
 
   _navigateToModule = (moduleData) => {
     this.props.navigation.navigate('SubjectListRoute', {
-      moduleData: moduleData
+      moduleData: moduleData,
     })
   }
 
   render(){
-    return (
-      null
+    return(
+      <ViewWithBlurredHeader hasTabBar={true}>
+        <ModuleList 
+          containerStyle={{paddingTop: Header.HEIGHT + 15, backgroundColor: 'white'}}
+          moduleList={cardsData}
+          onPressModule ={this._navigateToModule}
+          onPressSubject={(subjectData) => alert('navigate to: ' + subjectData.subjectName)}
+        />
+      </ViewWithBlurredHeader>
     );
   }
 }
+
+export const ModuleListStack = createStackNavigator({
+    ModuleListRoute: {
+      screen: ModuleListScreen,
+    },
+    SubjectListRoute: {
+      screen: SubjectListScreen,
+    }, 
+  }, {
+    headerMode: 'float',
+    headerTransitionPreset: 'uikit',
+    headerTransparent: true,
+    navigationOptions: HeaderProps,
+  }
+);

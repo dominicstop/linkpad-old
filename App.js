@@ -7,7 +7,6 @@ import { createSwitchNavigator, createStackNavigator } from 'react-navigation';
 import AuthLoadingScreen from './src/screens/AuthLoadingScreen';
 import LoginScreen       from './src/screens/LoginScreen';
 import Homescreen        from './src/screens/homescreen';
-import SubjectListScreen from './src/screens/subjectListScreen';
 import NavigationService from './src/NavigationService';
 
 const HeaderProps = {
@@ -18,7 +17,7 @@ const HeaderProps = {
     color: 'white'
   },
   headerStyle: {
-    backgroundColor: 'rgba(48, 0, 247, 0.7)'    
+    backgroundColor: 'rgba(48, 0, 247, 0.7)',
   },
 }
 
@@ -26,14 +25,8 @@ const AppStack = createStackNavigator({
     HomeRoute: {
       screen: Homescreen,
     },
-    SubjectListRoute: {
-      screen: SubjectListScreen,
-    }
   },{
-    headerMode: 'float',
-    headerTransitionPreset: 'uikit',
-    headerTransparent: true,
-    navigationOptions: HeaderProps,
+    headerMode: 'hidden'
   }
 );
 

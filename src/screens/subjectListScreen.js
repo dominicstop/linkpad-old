@@ -11,7 +11,6 @@ import * as Animatable from 'react-native-animatable';
 
 const getModuleTitle = (moduleData) => moduleData != null ? moduleData.moduleName : 'View Module';
 
-
 export default class SubjectListScreen extends React.Component {
   static navigationOptions = ({navigation}) => ({
     title: getModuleTitle(navigation.getParam('moduleData', null)),
@@ -23,22 +22,15 @@ export default class SubjectListScreen extends React.Component {
     const subjectCount = moduleData.subjects.length;
     return(
       <View style={{marginHorizontal: 20, paddingBottom: 10}}>
-        <Animatable.View 
-          animation='fadeInRight'
-          easing='ease-in-out'
-          duration={500}
-          useNativeDriver={true}
+        <ExpandCollapse 
+          collapseHeight={100}
+          colors={['rgba(255, 255, 255, 0)', 'rgb(233, 232, 239)']}
         >
-          <ExpandCollapse 
-            collapseHeight={100}
-            colors={['rgba(255, 255, 255, 0)', 'rgb(233, 232, 239)']}
-          >
-            <ModuleHeader 
-              moduleData={moduleData}
-              detailedView={true}
-            />
-          </ExpandCollapse>
-        </Animatable.View>
+          <ModuleHeader 
+            moduleData={moduleData}
+            detailedView={true}
+          />
+        </ExpandCollapse>
         <Animatable.View
           animation='fadeInRight'
           easing='ease-in-out'
@@ -62,7 +54,7 @@ export default class SubjectListScreen extends React.Component {
     const moduleData = navigation.getParam('moduleData', null);
 
     return(
-      <ViewWithBlurredHeader>
+      <ViewWithBlurredHeader hasTabBar={true}>
         <SubjectList
           containerStyle={{paddingTop: Header.HEIGHT + 10}}
           ListHeaderComponent={this._renderHeader}
