@@ -52,34 +52,34 @@ export default class LoginScreen extends React.Component {
               <Text style={{fontSize: 40, fontWeight: '900', color: 'white'}}>
                 SIGN IN
               </Text>
-              <Text style={{fontSize: 18, fontWeight: '100', color: 'white', marginBottom: 20}}>
+              <Text style={{fontSize: 18, fontWeight: '100', color: 'white'}}>
                 Please sign in to continue
               </Text>
 
-              <View style={{flexDirection: 'row'}}>
+              <View style={styles.textinputContainer}>
                 <Icon
-                  containerStyle={{width: 30}}
+                  containerStyle={styles.textInputIcon}
                   name='ios-mail-outline'
                   type='ionicon'
                   color='white'
                   size={40}
                 />
                 <TextInput
-                  style={{flex: 1, alignSelf: 'center', fontSize: 22, marginLeft: 15, height: 35, borderColor: 'transparent', borderBottomColor: 'white', borderWidth: 1, paddingHorizontal: 5, color: 'white'}}
+                  style={styles.textinput}
                   placeholder='E-mail address'
                   placeholderTextColor='rgba(255, 255, 255, 0.7)'
                 />
               </View>
-              <View style={{flexDirection: 'row', marginTop: 25}}>
+              <View style={styles.textinputContainer}>
                 <Icon
-                  containerStyle={{width: 30}}
+                  containerStyle={styles.textInputIcon}
                   name='ios-lock-outline'
                   type='ionicon'
                   color='white'
                   size={35}
                 />
                 <TextInput
-                  style={{flex: 1, alignSelf: 'center', fontSize: 22, marginLeft: 15, height: 35, borderColor: 'transparent', borderBottomColor: 'white', borderWidth: 1, paddingHorizontal: 5, color: 'white'}}
+                  style={styles.textinput}
                   placeholder='Password'
                   placeholderTextColor='rgba(255, 255, 255, 0.7)'
                 />
@@ -103,11 +103,42 @@ export default class LoginScreen extends React.Component {
                 /> 
               </IconButton>
 
+              <TouchableOpacity>
+                <Text 
+                  style={{fontSize: 16, fontWeight: '100', color: 'white', textAlign: 'center', textDecorationLine: 'underline', marginTop: 7, marginBottom: 10}}
+                  numberOfLines={1}
+                  ellipsizeMode='tail'
+                >
+                  Don't have an acoount? Sign Up
+                </Text>
+              </TouchableOpacity>
+
             </View>
           </View>
         </AnimatedGradient>
-
       </View>
     );
   }
 }
+
+const styles = StyleSheet.create({
+  textinputContainer: {
+    flexDirection: 'row', 
+    marginTop: 25,
+  },
+  textInputIcon: {
+    width: 30
+  },
+  textinput: {
+    flex: 1, 
+    alignSelf: 'center', 
+    fontSize: 22, 
+    marginLeft: 15, 
+    height: 35, 
+    borderColor: 'transparent', 
+    borderBottomColor: 'white', 
+    borderWidth: 1,
+    paddingHorizontal: 5, 
+    color: 'white'
+  }
+});
