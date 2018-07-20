@@ -7,7 +7,6 @@ import { LinearGradient } from 'expo';
 
 UIManager.setLayoutAnimationEnabledExperimental && UIManager.setLayoutAnimationEnabledExperimental(true);
 
-
 //icon and text
 export class IconButton extends React.PureComponent {
   static propTypes = {
@@ -21,13 +20,14 @@ export class IconButton extends React.PureComponent {
     iconColor: PropTypes.string,
     iconType : PropTypes.string,
     iconSize : PropTypes.number,
+    iconProps: PropTypes.object,
     //style
     containerStyle: ViewPropTypes.style ,
     textStyle     : Text.propTypes.style,
   }
 
   render(){
-    const {text, iconName, iconColor, iconType, iconSize, containerStyle, textStyle, children, ...otherProps} = this.props;
+    const {text, iconName, iconColor, iconType, iconSize, containerStyle, textStyle, children, iconProps, ...otherProps} = this.props;
     return(
       <TouchableOpacity
         style={[{flexDirection: 'row', alignItems: 'center'}, containerStyle]}
@@ -38,6 +38,7 @@ export class IconButton extends React.PureComponent {
           color={iconColor}
           type ={iconType }
           size ={iconSize }
+          {...iconProps}
         />
         <Text style={[{marginLeft: 8, flex: 1}, textStyle]}>
           {text}

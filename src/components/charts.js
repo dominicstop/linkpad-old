@@ -31,7 +31,7 @@ export class GaugeChart extends React.PureComponent {
     const { percent, color, backgroundColor, thickness, radius, containerStyle, textStyle } = this.props;
     return(
       <View style={containerStyle}>
-        <Pie
+        <Pie 
           radius={radius}
           innerRadius={radius-thickness}
           series={[percent]}

@@ -24,7 +24,7 @@ export default class SubjectListScreen extends React.Component {
       <View style={{marginHorizontal: 20, paddingBottom: 10}}>
         <ExpandCollapse 
           collapseHeight={100}
-          colors={['rgba(255, 255, 255, 0)', 'rgb(233, 232, 239)']}
+          colors={['rgba(255, 255, 255, 0)', 'white']}
         >
           <ModuleHeader 
             moduleData={moduleData}
@@ -56,7 +56,7 @@ export default class SubjectListScreen extends React.Component {
     return(
       <ViewWithBlurredHeader hasTabBar={true}>
         <SubjectList
-          containerStyle={{paddingTop: Header.HEIGHT + 10}}
+          containerStyle={{paddingTop: Header.HEIGHT + 10, backgroundColor: 'white'}}
           ListHeaderComponent={this._renderHeader}
           subjectListData={moduleData.subjects}
         />

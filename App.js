@@ -27,8 +27,17 @@ const AuthStack = createStackNavigator({
   }
 );
 
-export class App extends React.Component {
-  static router = AppStack.router;
+export const RootNavigator = createSwitchNavigator({
+    AuthLoading: AuthLoadingScreen,
+    AppRoute   : AppStack ,
+    AuthRoute  : AuthStack,
+  }, {
+    initialRouteName: 'AuthLoading',
+  }
+);
+
+export default class App extends React.Component {
+  static router = RootNavigator.router;
 
   componentDidMount(){
     StatusBar.setBarStyle('light-content');
@@ -36,7 +45,7 @@ export class App extends React.Component {
 
   render() {
     return (
-      <AppStack
+      <RootNavigator
         navigation={this.props.navigation}
         ref={navigatorRef => {
           NavigationService.setTopLevelNavigator(navigatorRef);
@@ -45,13 +54,3 @@ export class App extends React.Component {
     );
   }
 }
-
-export default createSwitchNavigator({
-    AuthLoading: AuthLoadingScreen,
-    AppRoute   : App      ,
-    AuthRoute  : AuthStack,
-  }, {
-    initialRouteName: 'AuthLoading',
-  }
-);
-

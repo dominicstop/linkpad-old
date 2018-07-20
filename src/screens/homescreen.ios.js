@@ -1,7 +1,7 @@
 import React from 'react';
 import { StyleSheet, Text, View, TabBarIOS, Platform, NavigatorIOS, TouchableOpacity, LayoutAnimation, UIManager } from 'react-native';
 
-import { ViewWithBlurredHeader } from '../components/views'  ;
+import { NAV_BGCOLOR     } from '../Constants';
 import { ModuleListStack } from './ModuleListScreen';
 import { SettingsStack   } from './SettingsScreen'  ;
 
@@ -36,7 +36,7 @@ const TabNavigation = createBottomTabNavigator({
       activeTintColor: 'rgba(255, 255, 255, 0.8)',
       inactiveTintColor: 'rgba(255, 255, 255, 0.5)',
       style: {
-        backgroundColor: 'rgba(48, 0, 247, 0.7)',
+        backgroundColor: NAV_BGCOLOR,
         position: 'absolute',
         left: 0,
         right: 0,
@@ -50,10 +50,6 @@ const TabNavigation = createBottomTabNavigator({
 //container for tab navigation
 export default class Homescreen extends React.Component {
   static router = TabNavigation.router;
-
-  componentDidMount(){
-    //this._navigateToModule(cardsData[0]);
-  }
 
   render(){
     return (

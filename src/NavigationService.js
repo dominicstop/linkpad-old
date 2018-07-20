@@ -1,5 +1,6 @@
 import { NavigationActions } from 'react-navigation';
 
+let _rootNavigator;
 let _navigator;
 
 function setTopLevelNavigator(navigatorRef) {
@@ -7,7 +8,22 @@ function setTopLevelNavigator(navigatorRef) {
 }
 
 function navigate(routeName, params) {
+  console.log('Navigating');
   _navigator.dispatch(
+    NavigationActions.navigate({
+      routeName,
+      params,
+    })
+  );
+}
+
+function setRootNavigator(navigatorRef) {
+  _navigator = navigatorRef;
+}
+
+
+function navigateRoot(routeName, params) {
+  _rootNavigator.dispatch(
     NavigationActions.navigate({
       routeName,
       params,
@@ -20,4 +36,7 @@ function navigate(routeName, params) {
 export default {
   navigate,
   setTopLevelNavigator,
+  setRootNavigator,
+  navigateRoot,
+
 };

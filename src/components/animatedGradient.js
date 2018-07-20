@@ -1,13 +1,13 @@
 import PropTypes from 'prop-types';
-import React, {Component} from 'react';
-import {StyleSheet, StatusBar, Dimensions, View, Animated, Easing, Text, processColor} from 'react-native';
+import React from 'react';
+import { processColor } from 'react-native';
 
 // const {height, width} = Dimensions.get('window');
 
 import Chroma from 'chroma-js'
 import { LinearGradient } from 'expo';
 
-export class AnimatedGradient extends React.Component {
+export class AnimatedGradient extends React.PureComponent {
   static propTypes = {
     speed       : PropTypes.number,
     numOfInterps: PropTypes.number,
@@ -43,7 +43,7 @@ export class AnimatedGradient extends React.Component {
     if (colorIndex == colorsTop.length-1 ) this.isReverse = true ;
     if (colorIndex == 0                  ) this.isReverse = false;
 
-    this.isReverse ? this.colorIndex-- :  this.colorIndex++;
+    this.isReverse ? this.colorIndex-- : this.colorIndex++;
     return [colorsTop[colorIndex], colorsBottom[colorIndex]];
   }
 
@@ -69,14 +69,20 @@ export class AnimatedGradient extends React.Component {
     this.start();
   }
 
+  componentWillUnmount(){
+    this.stop();
+  }
+
   render(){
     const { colorsTop, colorsBottom } = this;
     return(
       <LinearGradient
         {...this.props}
         colors={[colorsTop[0], colorsBottom[1]]}
-        ref={r => this.linearGradientRef = r}
-      />
+        ref={ref => this.linearGradientRef = ref}
+      >
+        {this.props.children}
+      </LinearGradient>
     );
   }
 }

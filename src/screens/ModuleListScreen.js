@@ -1,6 +1,7 @@
 import React from 'react';
 import { StyleSheet, Text, View, TabBarIOS, Platform, NavigatorIOS, TouchableOpacity, LayoutAnimation, UIManager } from 'react-native';
 
+import { HEADER_PROPS          } from '../Constants';
 import { ModuleList            } from '../components/cards'  ;
 import { CustomHeader          } from '../components/Header' ;
 import { ViewWithBlurredHeader } from '../components/views'  ;
@@ -8,51 +9,29 @@ import   SubjectListScreen       from './subjectListScreen'  ;
 
 import { Header, createStackNavigator } from 'react-navigation';
 
-const HeaderProps = {
-  headerTransparent: true,
-  headerTintColor: 'white',
-  headerTitleStyle: {
-    fontWeight: 'bold',
-    color: 'white'
-  },
-  headerStyle: {
-    backgroundColor: 'rgba(48, 0, 247, 0.7)',
-  },
-}
+import Chroma from 'chroma-js';
 
 const cardsData = [
   {
     moduleID  : 'mod:002',
-    moduleName: 'Lorum Module',
+    moduleName: 'Mathematics',
     moduleDesc: 'subject description here lorum ipsum very long here lorum ipsum sit amit very long here subject description here lorum ipsum very long here lorum ipsum sit amit very long here subject description here lorum ipsum very long here lorum ipsum sit amit very long here',
     subjects: [
       {
-        subjectID  : 'subj:001',
-        subjectName: 'Lorum Subject',
-        subjectDesc: 'Lorum Ipsum Description here this subject is about lorum isoum sit amit dolor aspicing long text here lorum ipsum sit amit dolor aspicing description sample text here very long',
-        progress   : {
-          correct  : 50,
-          mistakes : 20, 
-          questions: 100,
-        },
-        graidentBG : ['white', '#baffc9'],
-
-      },
-      {
         subjectID  : 'subj:002',
         subjectName: 'Lorum Subject',
-        subjectDesc: 'Lorum Ipsum Description',
+        subjectDesc: 'Lorum Ipsum Description this subject is about lorum ipsum long description here',
         progress   : {
           correct  : 20,
           mistakes : 20,
           questions: 100,
         },
-        graidentBG : ['white', '#a1c4fd'],
+        graidentBG : ['white', '#F48FB1'],
       },
       {
         subjectID  : 'subj:003',
-        subjectName: 'Lorum Subject',
-        subjectDesc: 'Lorum Ipsum Description',
+        subjectName: 'Social Sciences',
+        subjectDesc: 'lorumplaceholder description sample lorum ipsum sit amit dolor aspicing',
         progress   : {
           correct  : 90,
           mistakes : 0,
@@ -62,75 +41,75 @@ const cardsData = [
       },
       {
         subjectID  : 'subj:004',
-        subjectName: 'Lorum Subject',
+        subjectName: 'Mental Health',
         subjectDesc: 'Lorum Ipsum Description',
         progress   : {
-          correct  : 30,
+          correct  : 20,
           mistakes : 10,
           questions: 100,
         },
-        graidentBG : ['white', '#80d0c7'],
+        graidentBG : ['white', '#CE93D8'],
       },
       {
         subjectID  : 'subj:003.5',
-        subjectName: 'Lorum Subject',
-        subjectDesc: 'Lorum Ipsum Description',
+        subjectName: 'Integral Calculus',
+        subjectDesc: 'Integrate integrals and the like and lorum ipsum sit amit dolor aspcing',
         progress   : {
-          correct  : 30,
-          mistakes : 10,
+          correct  : 80,
+          mistakes : 20,
           questions: 100,
         },
         graidentBG : ['white', '#80d0c7'],
       },
       {
         subjectID  : 'subj:005',
-        subjectName: 'Lorum Subject',
-        subjectDesc: 'Lorum Ipsum Description',
+        subjectName: 'Linear Algebra',
+        subjectDesc: 'Math and stuff lorum ipsum short description',
         progress   : {
-          correct  : 30,
-          mistakes : 10,
+          correct  : 46,
+          mistakes : 25,
           questions: 100,
         },
-        graidentBG : ['white', '#80d0c7'],
+        graidentBG : ['white', '#B39DDB'],
       },
       {
         subjectID  : 'subj:006',
-        subjectName: 'Lorum Subject',
-        subjectDesc: 'Lorum Ipsum Description',
+        subjectName: 'Basic Statistics',
+        subjectDesc: 'average lorum description stats stuff',
         progress   : {
           correct  : 30,
-          mistakes : 10,
+          mistakes : 50,
           questions: 100,
         },
-        graidentBG : ['white', '#80d0c7'],
+        graidentBG : ['white', '#9FA8DA'],
       },
       {
         subjectID  : 'subj:007',
-        subjectName: 'Lorum Subject',
-        subjectDesc: 'Lorum Ipsum Description',
+        subjectName: 'Advance Statistics',
+        subjectDesc: 'Lorum ipsum advance stats description here abc def ghj',
         progress   : {
-          correct  : 30,
+          correct  : 50,
           mistakes : 10,
           questions: 100,
         },
-        graidentBG : ['white', '#80d0c7'],
+        graidentBG : ['white', '#90CAF9'],
       },
       {
         subjectID  : 'subj:008',
-        subjectName: 'Lorum Subject',
+        subjectName: 'Numerical Analysis',
         subjectDesc: 'Lorum Ipsum Description',
         progress   : {
-          correct  : 30,
+          correct  : 10,
           mistakes : 10,
           questions: 100,
         },
-        graidentBG : ['white', '#80d0c7'],
+        graidentBG : ['white', '#80CBC4'],
       },
     ],
   },
   {
     moduleID  : 'mod:003',
-    moduleName: 'Lorum Module',
+    moduleName: 'History and Literature',
     moduleDesc: 'subject description here lorum ipsum',
     subjects: [
       {
@@ -232,716 +211,6 @@ const cardsData = [
       },
     ],
   },
-  /*
-  {
-    moduleID  : 'mod:005',
-    moduleName: 'Lorum Module',
-    moduleDesc: 'subject description here lorum ipsum',
-    subjects: [
-      {
-        subjectID  : 'subj:001',
-        subjectName: 'Lorum Subject',
-        subjectDesc: 'Lorum Ipsum Description',
-        progress   : {
-          correct  : 50,
-          mistakes : 20, 
-          questions: 100,
-        },
-        graidentBG : ['white', '#039BE5'],
-
-      },
-      {
-        subjectID  : 'subj:002',
-        subjectName: 'Lorum Subject',
-        subjectDesc: 'Lorum Ipsum Description',
-        progress   : {
-          correct  : 20,
-          mistakes : 20,
-          questions: 100,
-        },
-        graidentBG : ['white', '#a1c4fd'],
-      },
-      {
-        subjectID  : 'subj:003',
-        subjectName: 'Lorum Subject',
-        subjectDesc: 'Lorum Ipsum Description',
-        progress   : {
-          correct  : 90,
-          mistakes : 0,
-          questions: 100,
-        },
-        graidentBG : ['white', '#fcb69f'],
-      },
-      {
-        subjectID  : 'subj:004',
-        subjectName: 'Lorum Subject',
-        subjectDesc: 'Lorum Ipsum Description',
-        progress   : {
-          correct  : 30,
-          mistakes : 10,
-          questions: 100,
-        },
-        graidentBG : ['white', '#80d0c7'],
-      },
-      {
-        subjectID  : 'subj:005',
-        subjectName: 'Lorum Subject',
-        subjectDesc: 'Lorum Ipsum Description',
-        progress   : {
-          correct  : 30,
-          mistakes : 10,
-          questions: 100,
-        },
-        graidentBG : ['white', '#80d0c7'],
-      },
-      {
-        subjectID  : 'subj:006',
-        subjectName: 'Lorum Subject',
-        subjectDesc: 'Lorum Ipsum Description',
-        progress   : {
-          correct  : 30,
-          mistakes : 10,
-          questions: 100,
-        },
-        graidentBG : ['white', '#80d0c7'],
-      },
-      {
-        subjectID  : 'subj:007',
-        subjectName: 'Lorum Subject',
-        subjectDesc: 'Lorum Ipsum Description',
-        progress   : {
-          correct  : 30,
-          mistakes : 10,
-          questions: 100,
-        },
-        graidentBG : ['white', '#80d0c7'],
-      },
-      {
-        subjectID  : 'subj:008',
-        subjectName: 'Lorum Subject',
-        subjectDesc: 'Lorum Ipsum Description',
-        progress   : {
-          correct  : 30,
-          mistakes : 10,
-          questions: 100,
-        },
-        graidentBG : ['white', '#80d0c7'],
-      },
-      {
-        subjectID  : 'subj:009',
-        subjectName: 'Lorum Subject',
-        subjectDesc: 'Lorum Ipsum Description',
-        progress   : {
-          correct  : 30,
-          mistakes : 10,
-          questions: 100,
-        },
-        graidentBG : ['white', '#80d0c7'],
-      },
-      {
-        subjectID  : 'subj:010',
-        subjectName: 'Lorum Subject',
-        subjectDesc: 'Lorum Ipsum Description',
-        progress   : {
-          correct  : 30,
-          mistakes : 10,
-          questions: 100,
-        },
-        graidentBG : ['white', '#80d0c7'],
-      },
-    ],
-  },
-  {
-    moduleID  : 'mod:006',
-    moduleName: 'Lorum Module',
-    moduleDesc: 'subject description here lorum ipsum',
-    subjects: [
-      {
-        subjectID  : 'subj:001',
-        subjectName: 'Lorum Subject',
-        subjectDesc: 'Lorum Ipsum Description',
-        progress   : {
-          correct  : 50,
-          mistakes : 20, 
-          questions: 100,
-        },
-        graidentBG : ['white', '#039BE5'],
-
-      },
-      {
-        subjectID  : 'subj:002',
-        subjectName: 'Lorum Subject',
-        subjectDesc: 'Lorum Ipsum Description',
-        progress   : {
-          correct  : 20,
-          mistakes : 20,
-          questions: 100,
-        },
-        graidentBG : ['white', '#a1c4fd'],
-      },
-      {
-        subjectID  : 'subj:003',
-        subjectName: 'Lorum Subject',
-        subjectDesc: 'Lorum Ipsum Description',
-        progress   : {
-          correct  : 90,
-          mistakes : 0,
-          questions: 100,
-        },
-        graidentBG : ['white', '#fcb69f'],
-      },
-      {
-        subjectID  : 'subj:004',
-        subjectName: 'Lorum Subject',
-        subjectDesc: 'Lorum Ipsum Description',
-        progress   : {
-          correct  : 30,
-          mistakes : 10,
-          questions: 100,
-        },
-        graidentBG : ['white', '#80d0c7'],
-      },
-      {
-        subjectID  : 'subj:005',
-        subjectName: 'Lorum Subject',
-        subjectDesc: 'Lorum Ipsum Description',
-        progress   : {
-          correct  : 30,
-          mistakes : 10,
-          questions: 100,
-        },
-        graidentBG : ['white', '#80d0c7'],
-      },
-      {
-        subjectID  : 'subj:006',
-        subjectName: 'Lorum Subject',
-        subjectDesc: 'Lorum Ipsum Description',
-        progress   : {
-          correct  : 30,
-          mistakes : 10,
-          questions: 100,
-        },
-        graidentBG : ['white', '#80d0c7'],
-      },
-      {
-        subjectID  : 'subj:007',
-        subjectName: 'Lorum Subject',
-        subjectDesc: 'Lorum Ipsum Description',
-        progress   : {
-          correct  : 30,
-          mistakes : 10,
-          questions: 100,
-        },
-        graidentBG : ['white', '#80d0c7'],
-      },
-      {
-        subjectID  : 'subj:008',
-        subjectName: 'Lorum Subject',
-        subjectDesc: 'Lorum Ipsum Description',
-        progress   : {
-          correct  : 30,
-          mistakes : 10,
-          questions: 100,
-        },
-        graidentBG : ['white', '#80d0c7'],
-      },
-      {
-        subjectID  : 'subj:009',
-        subjectName: 'Lorum Subject',
-        subjectDesc: 'Lorum Ipsum Description',
-        progress   : {
-          correct  : 30,
-          mistakes : 10,
-          questions: 100,
-        },
-        graidentBG : ['white', '#80d0c7'],
-      },
-      {
-        subjectID  : 'subj:010',
-        subjectName: 'Lorum Subject',
-        subjectDesc: 'Lorum Ipsum Description',
-        progress   : {
-          correct  : 30,
-          mistakes : 10,
-          questions: 100,
-        },
-        graidentBG : ['white', '#80d0c7'],
-      },
-    ],
-  },
-  {
-    moduleID  : 'mod:007',
-    moduleName: 'Lorum Module',
-    moduleDesc: 'subject description here lorum ipsum',
-    subjects: [
-      {
-        subjectID  : 'subj:001',
-        subjectName: 'Lorum Subject',
-        subjectDesc: 'Lorum Ipsum Description',
-        progress   : {
-          correct  : 50,
-          mistakes : 20, 
-          questions: 100,
-        },
-        graidentBG : ['white', '#039BE5'],
-
-      },
-      {
-        subjectID  : 'subj:002',
-        subjectName: 'Lorum Subject',
-        subjectDesc: 'Lorum Ipsum Description',
-        progress   : {
-          correct  : 20,
-          mistakes : 20,
-          questions: 100,
-        },
-        graidentBG : ['white', '#a1c4fd'],
-      },
-      {
-        subjectID  : 'subj:003',
-        subjectName: 'Lorum Subject',
-        subjectDesc: 'Lorum Ipsum Description',
-        progress   : {
-          correct  : 90,
-          mistakes : 0,
-          questions: 100,
-        },
-        graidentBG : ['white', '#fcb69f'],
-      },
-      {
-        subjectID  : 'subj:004',
-        subjectName: 'Lorum Subject',
-        subjectDesc: 'Lorum Ipsum Description',
-        progress   : {
-          correct  : 30,
-          mistakes : 10,
-          questions: 100,
-        },
-        graidentBG : ['white', '#80d0c7'],
-      },
-      {
-        subjectID  : 'subj:005',
-        subjectName: 'Lorum Subject',
-        subjectDesc: 'Lorum Ipsum Description',
-        progress   : {
-          correct  : 30,
-          mistakes : 10,
-          questions: 100,
-        },
-        graidentBG : ['white', '#80d0c7'],
-      },
-      {
-        subjectID  : 'subj:006',
-        subjectName: 'Lorum Subject',
-        subjectDesc: 'Lorum Ipsum Description',
-        progress   : {
-          correct  : 30,
-          mistakes : 10,
-          questions: 100,
-        },
-        graidentBG : ['white', '#80d0c7'],
-      },
-      {
-        subjectID  : 'subj:007',
-        subjectName: 'Lorum Subject',
-        subjectDesc: 'Lorum Ipsum Description',
-        progress   : {
-          correct  : 30,
-          mistakes : 10,
-          questions: 100,
-        },
-        graidentBG : ['white', '#80d0c7'],
-      },
-      {
-        subjectID  : 'subj:008',
-        subjectName: 'Lorum Subject',
-        subjectDesc: 'Lorum Ipsum Description',
-        progress   : {
-          correct  : 30,
-          mistakes : 10,
-          questions: 100,
-        },
-        graidentBG : ['white', '#80d0c7'],
-      },
-      {
-        subjectID  : 'subj:009',
-        subjectName: 'Lorum Subject',
-        subjectDesc: 'Lorum Ipsum Description',
-        progress   : {
-          correct  : 30,
-          mistakes : 10,
-          questions: 100,
-        },
-        graidentBG : ['white', '#80d0c7'],
-      },
-      {
-        subjectID  : 'subj:010',
-        subjectName: 'Lorum Subject',
-        subjectDesc: 'Lorum Ipsum Description',
-        progress   : {
-          correct  : 30,
-          mistakes : 10,
-          questions: 100,
-        },
-        graidentBG : ['white', '#80d0c7'],
-      },
-    ],
-  },
-  {
-    moduleID  : 'mod:008',
-    moduleName: 'Lorum Module',
-    moduleDesc: 'subject description here lorum ipsum',
-    subjects: [
-      {
-        subjectID  : 'subj:001',
-        subjectName: 'Lorum Subject',
-        subjectDesc: 'Lorum Ipsum Description',
-        progress   : {
-          correct  : 50,
-          mistakes : 20, 
-          questions: 100,
-        },
-        graidentBG : ['white', '#039BE5'],
-
-      },
-      {
-        subjectID  : 'subj:002',
-        subjectName: 'Lorum Subject',
-        subjectDesc: 'Lorum Ipsum Description',
-        progress   : {
-          correct  : 20,
-          mistakes : 20,
-          questions: 100,
-        },
-        graidentBG : ['white', '#a1c4fd'],
-      },
-      {
-        subjectID  : 'subj:003',
-        subjectName: 'Lorum Subject',
-        subjectDesc: 'Lorum Ipsum Description',
-        progress   : {
-          correct  : 90,
-          mistakes : 0,
-          questions: 100,
-        },
-        graidentBG : ['white', '#fcb69f'],
-      },
-      {
-        subjectID  : 'subj:004',
-        subjectName: 'Lorum Subject',
-        subjectDesc: 'Lorum Ipsum Description',
-        progress   : {
-          correct  : 30,
-          mistakes : 10,
-          questions: 100,
-        },
-        graidentBG : ['white', '#80d0c7'],
-      },
-      {
-        subjectID  : 'subj:005',
-        subjectName: 'Lorum Subject',
-        subjectDesc: 'Lorum Ipsum Description',
-        progress   : {
-          correct  : 30,
-          mistakes : 10,
-          questions: 100,
-        },
-        graidentBG : ['white', '#80d0c7'],
-      },
-      {
-        subjectID  : 'subj:006',
-        subjectName: 'Lorum Subject',
-        subjectDesc: 'Lorum Ipsum Description',
-        progress   : {
-          correct  : 30,
-          mistakes : 10,
-          questions: 100,
-        },
-        graidentBG : ['white', '#80d0c7'],
-      },
-      {
-        subjectID  : 'subj:007',
-        subjectName: 'Lorum Subject',
-        subjectDesc: 'Lorum Ipsum Description',
-        progress   : {
-          correct  : 30,
-          mistakes : 10,
-          questions: 100,
-        },
-        graidentBG : ['white', '#80d0c7'],
-      },
-      {
-        subjectID  : 'subj:008',
-        subjectName: 'Lorum Subject',
-        subjectDesc: 'Lorum Ipsum Description',
-        progress   : {
-          correct  : 30,
-          mistakes : 10,
-          questions: 100,
-        },
-        graidentBG : ['white', '#80d0c7'],
-      },
-      {
-        subjectID  : 'subj:009',
-        subjectName: 'Lorum Subject',
-        subjectDesc: 'Lorum Ipsum Description',
-        progress   : {
-          correct  : 30,
-          mistakes : 10,
-          questions: 100,
-        },
-        graidentBG : ['white', '#80d0c7'],
-      },
-      {
-        subjectID  : 'subj:010',
-        subjectName: 'Lorum Subject',
-        subjectDesc: 'Lorum Ipsum Description',
-        progress   : {
-          correct  : 30,
-          mistakes : 10,
-          questions: 100,
-        },
-        graidentBG : ['white', '#80d0c7'],
-      },
-    ],
-  },
-  {
-    moduleID  : 'mod:009',
-    moduleName: 'Lorum Module',
-    moduleDesc: 'subject description here lorum ipsum',
-    subjects: [
-      {
-        subjectID  : 'subj:001',
-        subjectName: 'Lorum Subject',
-        subjectDesc: 'Lorum Ipsum Description',
-        progress   : {
-          correct  : 50,
-          mistakes : 20, 
-          questions: 100,
-        },
-        graidentBG : ['white', '#039BE5'],
-
-      },
-      {
-        subjectID  : 'subj:002',
-        subjectName: 'Lorum Subject',
-        subjectDesc: 'Lorum Ipsum Description',
-        progress   : {
-          correct  : 20,
-          mistakes : 20,
-          questions: 100,
-        },
-        graidentBG : ['white', '#a1c4fd'],
-      },
-      {
-        subjectID  : 'subj:003',
-        subjectName: 'Lorum Subject',
-        subjectDesc: 'Lorum Ipsum Description',
-        progress   : {
-          correct  : 90,
-          mistakes : 0,
-          questions: 100,
-        },
-        graidentBG : ['white', '#fcb69f'],
-      },
-      {
-        subjectID  : 'subj:004',
-        subjectName: 'Lorum Subject',
-        subjectDesc: 'Lorum Ipsum Description',
-        progress   : {
-          correct  : 30,
-          mistakes : 10,
-          questions: 100,
-        },
-        graidentBG : ['white', '#80d0c7'],
-      },
-      {
-        subjectID  : 'subj:005',
-        subjectName: 'Lorum Subject',
-        subjectDesc: 'Lorum Ipsum Description',
-        progress   : {
-          correct  : 30,
-          mistakes : 10,
-          questions: 100,
-        },
-        graidentBG : ['white', '#80d0c7'],
-      },
-      {
-        subjectID  : 'subj:006',
-        subjectName: 'Lorum Subject',
-        subjectDesc: 'Lorum Ipsum Description',
-        progress   : {
-          correct  : 30,
-          mistakes : 10,
-          questions: 100,
-        },
-        graidentBG : ['white', '#80d0c7'],
-      },
-      {
-        subjectID  : 'subj:007',
-        subjectName: 'Lorum Subject',
-        subjectDesc: 'Lorum Ipsum Description',
-        progress   : {
-          correct  : 30,
-          mistakes : 10,
-          questions: 100,
-        },
-        graidentBG : ['white', '#80d0c7'],
-      },
-      {
-        subjectID  : 'subj:008',
-        subjectName: 'Lorum Subject',
-        subjectDesc: 'Lorum Ipsum Description',
-        progress   : {
-          correct  : 30,
-          mistakes : 10,
-          questions: 100,
-        },
-        graidentBG : ['white', '#80d0c7'],
-      },
-      {
-        subjectID  : 'subj:009',
-        subjectName: 'Lorum Subject',
-        subjectDesc: 'Lorum Ipsum Description',
-        progress   : {
-          correct  : 30,
-          mistakes : 10,
-          questions: 100,
-        },
-        graidentBG : ['white', '#80d0c7'],
-      },
-      {
-        subjectID  : 'subj:010',
-        subjectName: 'Lorum Subject',
-        subjectDesc: 'Lorum Ipsum Description',
-        progress   : {
-          correct  : 30,
-          mistakes : 10,
-          questions: 100,
-        },
-        graidentBG : ['white', '#80d0c7'],
-      },
-    ],
-  },
-  {
-    moduleID  : 'mod:010',
-    moduleName: 'Lorum Module',
-    moduleDesc: 'subject description here lorum ipsum',
-    subjects: [
-      {
-        subjectID  : 'subj:001',
-        subjectName: 'Lorum Subject',
-        subjectDesc: 'Lorum Ipsum Description',
-        progress   : {
-          correct  : 50,
-          mistakes : 20, 
-          questions: 100,
-        },
-        graidentBG : ['white', '#039BE5'],
-
-      },
-      {
-        subjectID  : 'subj:002',
-        subjectName: 'Lorum Subject',
-        subjectDesc: 'Lorum Ipsum Description',
-        progress   : {
-          correct  : 20,
-          mistakes : 20,
-          questions: 100,
-        },
-        graidentBG : ['white', '#a1c4fd'],
-      },
-      {
-        subjectID  : 'subj:003',
-        subjectName: 'Lorum Subject',
-        subjectDesc: 'Lorum Ipsum Description',
-        progress   : {
-          correct  : 90,
-          mistakes : 0,
-          questions: 100,
-        },
-        graidentBG : ['white', '#fcb69f'],
-      },
-      {
-        subjectID  : 'subj:004',
-        subjectName: 'Lorum Subject',
-        subjectDesc: 'Lorum Ipsum Description',
-        progress   : {
-          correct  : 30,
-          mistakes : 10,
-          questions: 100,
-        },
-        graidentBG : ['white', '#80d0c7'],
-      },
-      {
-        subjectID  : 'subj:005',
-        subjectName: 'Lorum Subject',
-        subjectDesc: 'Lorum Ipsum Description',
-        progress   : {
-          correct  : 30,
-          mistakes : 10,
-          questions: 100,
-        },
-        graidentBG : ['white', '#80d0c7'],
-      },
-      {
-        subjectID  : 'subj:006',
-        subjectName: 'Lorum Subject',
-        subjectDesc: 'Lorum Ipsum Description',
-        progress   : {
-          correct  : 30,
-          mistakes : 10,
-          questions: 100,
-        },
-        graidentBG : ['white', '#80d0c7'],
-      },
-      {
-        subjectID  : 'subj:007',
-        subjectName: 'Lorum Subject',
-        subjectDesc: 'Lorum Ipsum Description',
-        progress   : {
-          correct  : 30,
-          mistakes : 10,
-          questions: 100,
-        },
-        graidentBG : ['white', '#80d0c7'],
-      },
-      {
-        subjectID  : 'subj:008',
-        subjectName: 'Lorum Subject',
-        subjectDesc: 'Lorum Ipsum Description',
-        progress   : {
-          correct  : 30,
-          mistakes : 10,
-          questions: 100,
-        },
-        graidentBG : ['white', '#80d0c7'],
-      },
-      {
-        subjectID  : 'subj:009',
-        subjectName: 'Lorum Subject',
-        subjectDesc: 'Lorum Ipsum Description',
-        progress   : {
-          correct  : 30,
-          mistakes : 10,
-          questions: 100,
-        },
-        graidentBG : ['white', '#80d0c7'],
-      },
-      {
-        subjectID  : 'subj:010',
-        subjectName: 'Lorum Subject',
-        subjectDesc: 'Lorum Ipsum Description',
-        progress   : {
-          correct  : 30,
-          mistakes : 10,
-          questions: 100,
-        },
-        graidentBG : ['white', '#80d0c7'],
-      },
-    ],
-  },
-  */
 ];
 
 const ModulesHeader = (props) => <CustomHeader {...props}
@@ -967,7 +236,7 @@ export class ModuleListScreen extends React.Component {
     return(
       <ViewWithBlurredHeader hasTabBar={true}>
         <ModuleList 
-          containerStyle={{paddingTop: Header.HEIGHT + 15}}
+          containerStyle={{paddingTop: Header.HEIGHT + 15, backgroundColor: 'white'}}
           moduleList={cardsData}
           onPressModule ={this._navigateToModule}
           onPressSubject={(subjectData) => alert('navigate to: ' + subjectData.subjectName)}
@@ -988,6 +257,6 @@ export const ModuleListStack = createStackNavigator({
     headerMode: 'float',
     headerTransitionPreset: 'uikit',
     headerTransparent: true,
-    navigationOptions: HeaderProps,
+    navigationOptions: HEADER_PROPS,
   }
 );

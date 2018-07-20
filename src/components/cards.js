@@ -14,7 +14,6 @@ import { material, human, systemWeights } from 'react-native-typography';
 import ProgressBar from 'react-native-progress/Bar';
 import { Bar } from 'react-native-progress';
 
-
 const cardGroupHeight = 150;
 
 export const subjectProps = {
@@ -102,6 +101,7 @@ export class SubjectProgress extends React.PureComponent {
       thickness={10}
       color={color}
       backgroundColor={backgroundColor}
+      containerStyle={{opacity: 0.65}}
     />
 
     const mistakes = <GradeDougnut
@@ -116,7 +116,7 @@ export class SubjectProgress extends React.PureComponent {
       style={{borderColor: color, borderWidth: 3, width: chartSize, height: chartSize, alignItems: 'center', justifyContent: 'center', borderRadius: chartSize,}}  
     >
       <Text>
-        <Text style={{fontSize: 24, fontWeight: '900'}}>{answher}</Text>
+        <Text style={{fontSize: 22, fontWeight: '900'}}>{answher}</Text>
         <Text style={{fontSize: 18, fontWeight: '100'}}>/{progressData.questions}</Text>
       </Text>
     </View>
@@ -200,7 +200,7 @@ export class SubjectItem extends React.PureComponent {
   }
 
   static defaultProps = {
-    height: 180,
+    height:  177,
   }
 
   constructor() {
@@ -212,9 +212,9 @@ export class SubjectItem extends React.PureComponent {
     const color = subjectData.graidentBG[1];
 
     return(
-      <View style={[{ height: height, paddingTop: 10, paddingBottom: 35, shadowOffset:{  width: 3,  height: 10}, shadowColor: '#686868', shadowOpacity: 0.35, shadowRadius: 5}, containerStyle]} removeClippedSubviews={false}>
+      <View style={[{ height: height, paddingTop: 10, paddingBottom: 35, shadowOffset:{  width: 4,  height: 5}, shadowColor: '#686868', shadowOpacity: 0.5, shadowRadius: 5}, containerStyle]} removeClippedSubviews={false}>
         <LinearGradient
-          style={{flex: 1, height: '100%', borderRadius: 15, flexDirection: 'row', paddingHorizontal: 15, paddingVertical: 15}}
+          style={{flex: 1, height: '100%', borderRadius: 15, flexDirection: 'row', paddingHorizontal: 20, paddingVertical: 15}}
           colors={subjectData.graidentBG}
           start={{x: 0, y: 0}} 
           end={{x: 1, y: 1}}
@@ -250,8 +250,8 @@ export class ModuleHeader extends React.PureComponent {
     return(
       <View>
         <IconText
-          textStyle={detailedView? styles.titleLarge : styles.title}
-          iconSize ={detailedView? 25 : 20 }
+          textStyle={[styles.title, {}]}
+          iconSize ={20}
           text={moduleData.moduleName}
           iconColor='grey'
           iconName ='heart'
@@ -295,10 +295,10 @@ export class ModuleGroup extends React.Component {
 
     //ui values
     const sliderWidth = Dimensions.get('window').width;
-    const itemWidth   = sliderWidth - 25;
+    const itemWidth   = sliderWidth - 20;
 
     return(
-      <View style={{justifyContent: 'center'}}>
+      <View style={{justifyContent: 'center', marginBottom: 5}}>
         {/*Header*/}
         <TouchableOpacity 
           style={{paddingHorizontal: 12}} 
@@ -319,7 +319,7 @@ export class ModuleGroup extends React.Component {
           itemWidth={itemWidth}
           activeSlideAlignment={'center'}
           layout={'tinder'}
-          layoutCardOffset={12}
+          layoutCardOffset={14}
           enableSnap={true}
           removeClippedSubviews={false}
         />
@@ -345,13 +345,13 @@ export class ModuleList extends React.Component {
   _renderItem = ({item, index}) => {
     return(
       <AnimatedListItem
-        index={index+1}
+        index={index}
         delay={0}
         duration={1500}
         multiplier={300}
         animation='bounceInUp'
       >
-        <ModuleGroup 
+        <ModuleGroup
           moduleData={item}
           onPressSubject={this.props.onPressSubject}
           onPressModule ={this.props.onPressModule }
@@ -446,6 +446,7 @@ const styles = StyleSheet.create({
       ios    : human.bodyObject,
       android: material.subheadingObject,
     }),
+    color: 'grey',
   },
   subjectTitle: {
     ...systemWeights.semiboldObject,
@@ -460,5 +461,6 @@ const styles = StyleSheet.create({
       ios    : human.subheadObject,
       android: material.subheadingObject,
     }),
+    color: 'rgba(0, 0, 0, 0.6)',
   }
 });
