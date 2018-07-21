@@ -1,10 +1,11 @@
 import React from 'react';
-import { StyleSheet, Text, View, TabBarIOS, Platform, NavigatorIOS, TouchableOpacity, LayoutAnimation, UIManager } from 'react-native';
+import { } from 'react-native';
 
 import { NAV_BGCOLOR     } from '../Constants';
 import { ModuleListStack } from './ModuleListScreen';
 import { SettingsStack   } from './SettingsScreen'  ;
 
+import * as Animatable from 'react-native-animatable';
 import { createBottomTabNavigator } from 'react-navigation';
 //TODO: fork on github, export BottomTabBar and npm install
 //import {  } from 'react-navigation-tabs/dist/views/BottomTabBar';
@@ -48,15 +49,22 @@ const TabNavigation = createBottomTabNavigator({
 );
 
 //container for tab navigation
-export default class Homescreen extends React.Component {
+export default class Homescreen extends React.PureComponent {
   static router = TabNavigation.router;
 
   render(){
     return (
-      <TabNavigation
-        navigation={this.props.navigation}
-
-      />
+      <Animatable.View 
+        style={{flex: 1}}
+        animation={'fadeIn'}
+        duration={750}
+        easing={'ease-in-out'}
+        useNativeDriver={true}
+      >
+        <TabNavigation
+          navigation={this.props.navigation}
+        />
+      </Animatable.View>
     );
   }
 }
