@@ -2,7 +2,7 @@ import React from 'react';
 import { View, ScrollView, ViewPropTypes, Text, TouchableOpacity, AsyncStorage } from 'react-native';
 import PropTypes from 'prop-types';
 
-import NavigationService from '../NavigationService';
+import   NavigationService       from '../NavigationService';
 import { HEADER_PROPS          } from '../Constants';
 import { ViewWithBlurredHeader } from '../components/views' ;
 import { CustomHeader          } from '../components/Header';

@@ -1,6 +1,6 @@
 import PropTypes from 'prop-types';
 import React from 'react';
-import { StyleSheet, Text, View, TabBarIOS, Platform, TouchableOpacity, AsyncStorage, ScrollView, TextInput } from 'react-native';
+import { StyleSheet, Text, View, TabBarIOS, Platform, TouchableOpacity, AsyncStorage, ScrollView, TextInput, UIManager, LayoutAnimation, ActivityIndicator } from 'react-native';
 
 import { AnimatedGradient } from '../components/animatedGradient';
 
@@ -8,35 +8,39 @@ import * as Animatable from 'react-native-animatable';
 import { Icon } from 'react-native-elements';
 import { IconButton } from '../components/buttons';
 
-const LOGIN_MODE = {
-  INITIAL      : 0,
-  LOGIN        : 1,
-  LOGIN_INVALID: 2,
-  LOGIN_SUCCESS: 3,
-  LOGIN_ERROR  : 4,
-}
+UIManager.setLayoutAnimationEnabledExperimental && UIManager.setLayoutAnimationEnabledExperimental(true);
 
 //smart cont: handles all the login logic
 export class LoginContainer extends React.Component {
   constructor(props){
     super(props);
-    this.state = {
-      mode: LOGIN_MODE.INITIAL,
-    }
   }
 
-  _login = async () => {
+
+
+  _login = (callbacks) => {
+    const {
+      onLoginLoading , //while logging in
+      onLoginInvalid , //invalid email/password
+      onLoginError   , //something went wrong
+      onLoginFinished, //finish logging in
+    } = callbacks;
+
     const { navigation } = this.props;
-    await this.setState({mode: LOGIN_MODE.LOGIN});
-    await AsyncStorage.setItem('userToken', 'abc');
-    navigation.navigate('AppRoute');
+
+    onLoginLoading();
+
+    //await this.setState({mode: LOGIN_MODE.LOGIN});
+    //await AsyncStorage.setItem('userToken', 'abc');
+    //navigation.navigate('AppRoute');
   }
 
   render(){
     const childProps = {
-      mode : this.state.mode,
       login: this._login,
-    }
+    };
+
+
     return(
       React.cloneElement(this.props.children, childProps)
     );
@@ -46,19 +50,124 @@ export class LoginContainer extends React.Component {
 //dumb cont: presents the UI
 export class LoginUI extends React.Component {
   static propType = {
-    mode : PropTypes.oneOf(Object.values(LOGIN_MODE)),
     login: PropTypes.func,
   }
 
+  constructor(props){
+    super(props);
+    this.state = {
+      loading: false,
+    }
+  }
+
+  onPressLogin = () => {
+    this.toggleLoading();
+    //this.props.login();
+  }
+
+  toggleLoading(){
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    this.setState({loading: !this.state.loading});
+    this.headerTitle.fadeOutRight(200).then(() => {
+      this.headerTitle.fadeInLeft(250);
+    });
+  }
+
   _renderHeader = () => {
+    const { loading } = this.state;
     return(
       <View>
-        <Text style={{fontSize: 40, fontWeight: '900', color: 'white'}}>
-          SIGN IN
-        </Text>
-        <Text style={{fontSize: 18, fontWeight: '100', color: 'white'}}>
-          Please sign in to continue
-        </Text>
+        <Animatable.View
+          style={{flexDirection: 'row'}}
+          ref={r => this.headerTitle = r}
+          useNativeDriver={true}
+        >
+          {loading && <ActivityIndicator size='large' style={{marginRight: 10}}/>}
+          <Text style={{fontSize: 38, fontWeight: '900', color: 'white'}}>
+            {loading? 'SIGNING IN' : 'SIGN IN'}
+          </Text>
+        </Animatable.View>
+        <Animatable.Text 
+          style={{fontSize: 18, fontWeight: '100', color: 'white'}}
+          ref={r => this.headerSubtitle = r}
+          useNativeDriver={true}
+        >
+          {loading? 'Please wait...' : 'Please sign in to continue'}
+        </Animatable.Text>
+      </View>
+    );
+  }
+
+  _renderSignInForm(){
+    return(
+      <View collapsable={true}>
+        <View style={styles.textinputContainer}>
+          <Icon
+            containerStyle={styles.textInputIcon}
+            name='ios-mail-outline'
+            type='ionicon'
+            color='white'
+            size={40}
+          />
+          <TextInput
+            style={styles.textinput}
+            placeholder='E-mail address'
+            placeholderTextColor='rgba(255, 255, 255, 0.7)'
+            keyboardType='email-address'
+            textContentType='username'
+            returnKeyType='next'
+            maxLength={50}
+            autoCapitalize={false}
+            enablesReturnKeyAutomatically={true}
+          />
+        </View>
+        <View style={styles.textinputContainer}>
+          <Icon
+            containerStyle={styles.textInputIcon}
+            name='ios-lock-outline'
+            type='ionicon'
+            color='white'
+            size={35}
+          />
+          <TextInput
+            style={styles.textinput}
+            placeholder='Password'
+            placeholderTextColor='rgba(255, 255, 255, 0.7)'
+            textContentType='password'
+            maxLength={50}
+            secureTextEntry={true}
+            autoCapitalize={false}
+            enablesReturnKeyAutomatically={true}
+          />
+        </View>
+        
+        <IconButton 
+          containerStyle={{padding: 15, marginTop: 25, backgroundColor: 'rgba(0, 0, 0, 0.4)', borderRadius: 10}}
+          textStyle={{color: 'white', fontSize: 20, fontWeight: 'bold', marginLeft: 20}}
+          iconName={'login'}
+          iconType={'simple-line-icon'}
+          iconColor={'white'}
+          iconSize={22}
+          text={'Log In'}
+          onPress={this.onPressLogin}
+        >
+          <Icon
+            name ={'chevron-right'}
+            color={'rgba(255, 255, 255, 0.5)'}
+            type ={'feather'}
+            size ={25}
+          /> 
+        </IconButton>
+
+        <TouchableOpacity>
+          <Text 
+            style={{fontSize: 16, fontWeight: '100', color: 'white', textAlign: 'center', textDecorationLine: 'underline', marginTop: 7, marginBottom: 10}}
+            numberOfLines={1}
+            ellipsizeMode='tail'
+          >
+            Don't have an acoount? Sign Up
+          </Text>
+        </TouchableOpacity>
       </View>
     );
   }
@@ -66,6 +175,7 @@ export class LoginUI extends React.Component {
   render(){
     console.log(this.props.mode);
     const { mode, login } = this.props;
+    const { loading } = this.state;
     return(
       <Animatable.View
         animation={'fadeIn'}
@@ -81,7 +191,7 @@ export class LoginUI extends React.Component {
           numOfInterps={1000}  
         >
           <Animatable.View 
-            style={styles.signInContainer}
+            style={[styles.signInContainer, {overflow: 'hidden'}]}
             animation={'bounceInUp'}
             duration={1000}
             easing={'ease-in-out'}
@@ -89,62 +199,9 @@ export class LoginUI extends React.Component {
           >
             {this._renderHeader()}
 
-            <View style={styles.textinputContainer}>
-              <Icon
-                containerStyle={styles.textInputIcon}
-                name='ios-mail-outline'
-                type='ionicon'
-                color='white'
-                size={40}
-              />
-              <TextInput
-                style={styles.textinput}
-                placeholder='E-mail address'
-                placeholderTextColor='rgba(255, 255, 255, 0.7)'
-              />
-            </View>
-            <View style={styles.textinputContainer}>
-              <Icon
-                containerStyle={styles.textInputIcon}
-                name='ios-lock-outline'
-                type='ionicon'
-                color='white'
-                size={35}
-              />
-              <TextInput
-                style={styles.textinput}
-                placeholder='Password'
-                placeholderTextColor='rgba(255, 255, 255, 0.7)'
-              />
-            </View>
-            
-            <IconButton 
-              containerStyle={{padding: 15, marginTop: 25, backgroundColor: 'rgba(0, 0, 0, 0.4)', borderRadius: 10}}
-              textStyle={{color: 'white', fontSize: 20, fontWeight: 'bold', marginLeft: 20}}
-              iconName={'login'}
-              iconType={'simple-line-icon'}
-              iconColor={'white'}
-              iconSize={22}
-              text={'Log In'}
-              onPress={this.props.login}
-            >
-              <Icon
-                name ={'chevron-right'}
-                color={'rgba(255, 255, 255, 0.5)'}
-                type ={'feather'}
-                size ={25}
-              /> 
-            </IconButton>
+            {!loading && this._renderSignInForm()}
 
-            <TouchableOpacity>
-              <Text 
-                style={{fontSize: 16, fontWeight: '100', color: 'white', textAlign: 'center', textDecorationLine: 'underline', marginTop: 7, marginBottom: 10}}
-                numberOfLines={1}
-                ellipsizeMode='tail'
-              >
-                Don't have an acoount? Sign Up
-              </Text>
-            </TouchableOpacity>
+            
           </Animatable.View>
         </AnimatedGradient>
       </Animatable.View>
@@ -154,7 +211,6 @@ export class LoginUI extends React.Component {
 
 export default class LoginScreen extends React.Component { 
   static navigationOptions = {
-
   }
 
   render(){
@@ -200,4 +256,4 @@ const styles = StyleSheet.create({
     paddingHorizontal: 5, 
     color: 'white'
   }
-});
+});``
