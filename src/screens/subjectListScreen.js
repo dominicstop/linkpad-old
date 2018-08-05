@@ -1,9 +1,9 @@
 import React from 'react';
 import { Text, View } from 'react-native';
 
-import { SubjectList, ModuleHeader } from '../components/cards'  ;
-import { ViewWithBlurredHeader     } from '../components/views'  ;
-import { ExpandCollapse            } from '../components/buttons';
+import { SubjectList, ModuleHeader } from '../components/Cards'  ;
+import { ViewWithBlurredHeader     } from '../components/Views'  ;
+import { ExpandCollapse            } from '../components/Buttons';
 
 import { Header  } from 'react-navigation';
 import { Divider, colors } from 'react-native-elements' ;

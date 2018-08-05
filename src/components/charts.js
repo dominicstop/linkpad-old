@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { StyleSheet, Text, View, ViewPropTypes, TextProps } from 'react-native';
 
-import { IconText } from './views';
+import { IconText } from './Views';
 
 import Pie from 'react-native-pie'
 

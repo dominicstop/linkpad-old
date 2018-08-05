@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 
 import   NavigationService       from '../NavigationService';
 import { HEADER_PROPS          } from '../Constants';
-import { ViewWithBlurredHeader } from '../components/views' ;
+import { ViewWithBlurredHeader } from '../components/Views' ;
 import { CustomHeader          } from '../components/Header';
 
 

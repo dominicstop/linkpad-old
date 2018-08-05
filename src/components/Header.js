@@ -2,7 +2,7 @@ import React from 'react';
 import { Text, View } from 'react-native';
 import PropTypes from 'prop-types';
 
-import { IconText } from './views'
+import { IconText } from './Views'
 
 export class CustomHeader extends React.PureComponent {
   static propTypes = {

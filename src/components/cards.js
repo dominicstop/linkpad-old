@@ -2,11 +2,10 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { StyleSheet, Text, View, Dimensions, Image, FlatList, TouchableOpacity, ViewPropTypes, Platform } from 'react-native';
 
-import { IconText } from './views';
-import { GaugeChart, GradeDougnut } from './charts';
-import { AnimatedListItem } from './views'
+import { IconText  , AnimatedListItem } from './Views';
+import { GaugeChart, GradeDougnut     } from './Charts';
 
-import Chroma from 'chroma-js'
+import Chroma from 'chroma-js';
 import Carousel from 'react-native-snap-carousel';
 import * as Animatable from 'react-native-animatable';
 import { LinearGradient } from 'expo';
@@ -415,7 +414,7 @@ export class SubjectList extends React.Component {
         data={subjectListData}
         keyExtractor={(item) => item.subjectID }
         renderItem ={this._renderItem }
-        ListFooterComponent={<View style={{padding: 20}}/>}
+        ListFooterComponent={<View style={{padding: 70}}/>}
         scrollEventThrottle={200}
         directionalLockEnabled={true}
         removeClippedSubviews={true}

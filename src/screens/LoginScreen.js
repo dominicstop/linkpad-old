@@ -1,14 +1,47 @@
 import PropTypes from 'prop-types';
 import React from 'react';
-import { StyleSheet, Text, View, TabBarIOS, Platform, TouchableOpacity, AsyncStorage, ScrollView, TextInput, UIManager, LayoutAnimation, ActivityIndicator } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, AsyncStorage, ScrollView, TextInput, UIManager, LayoutAnimation, ActivityIndicator, KeyboardAvoidingView } from 'react-native';
 
-import { AnimatedGradient } from '../components/animatedGradient';
+import { AnimatedGradient } from '../components/AnimatedGradient';
 
 import * as Animatable from 'react-native-animatable';
 import { Icon } from 'react-native-elements';
-import { IconButton } from '../components/buttons';
+
+import { IconButton } from '../components/Buttons';
+import { IconText   } from '../components/Views';
 
 UIManager.setLayoutAnimationEnabledExperimental && UIManager.setLayoutAnimationEnabledExperimental(true);
+
+export class InputForm extends React.Component {
+  static propType = {
+    iconName: PropTypes.string,
+    iconType: PropTypes.string,
+    iconSize: PropTypes.number,
+  }
+
+  render(){
+    const { iconName, iconType, iconSize, ...textInputProps } = this.props;
+    return(
+      <View style={styles.textinputContainer}>
+        <Icon
+          containerStyle={styles.textInputIcon}
+          name={iconName}
+          type={iconType}
+          size={iconSize}
+          color='white'
+        />
+        <TextInput
+          style={styles.textinput}
+          maxLength={50}
+          autoCapitalize='none'
+          enablesReturnKeyAutomatically={true}
+          {...textInputProps}
+        />
+      </View>
+    );
+  }
+}
+
 
 //smart cont: handles all the login logic
 export class LoginContainer extends React.Component {
@@ -16,9 +49,11 @@ export class LoginContainer extends React.Component {
     super(props);
   }
 
+  timeout(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
 
-
-  _login = (callbacks) => {
+  _login = async (callbacks) => {
     const {
       onLoginLoading , //while logging in
       onLoginInvalid , //invalid email/password
@@ -28,11 +63,15 @@ export class LoginContainer extends React.Component {
 
     const { navigation } = this.props;
 
-    onLoginLoading();
+    onLoginLoading && onLoginLoading();
 
-    //await this.setState({mode: LOGIN_MODE.LOGIN});
-    //await AsyncStorage.setItem('userToken', 'abc');
-    //navigation.navigate('AppRoute');
+    //simulate loading
+    await this.timeout(2000);
+    
+    onLoginFinished && await onLoginFinished();
+
+    await AsyncStorage.setItem('userToken', 'abc');
+    navigation.navigate('AppRoute');
   }
 
   render(){
@@ -56,35 +95,87 @@ export class LoginUI extends React.Component {
   constructor(props){
     super(props);
     this.state = {
-      loading: false,
+      mode: 'initial',
     }
   }
 
-  onPressLogin = () => {
-    this.toggleLoading();
-    //this.props.login();
+  onPressLogin = async () => {
+    await this.toggleLoading(true);
+    this.props.login({
+      onLoginFinished: this.toggleLoginSuccessful,
+    });
   }
 
-  toggleLoading(){
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    this.setState({loading: !this.state.loading});
-    this.headerTitle.fadeOutRight(200).then(() => {
-      this.headerTitle.fadeInLeft(250);
+  toggleLoading = (toggle) => {
+    return new Promise(async (resolve) => {
+      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+      await this.setState({mode: toggle? 'loading' : 'initial'});
+      if(toggle){
+        //sign in screen
+        await this.headerTitle.fadeOutLeft(200);
+        await this.headerTitle.fadeInRight(250);
+      } else {
+        //loading screen
+        await this.headerTitle.fadeOutRight(200);
+        await this.headerTitle.fadeInLeft  (250);
+      }
+      resolve();
+    });
+  }
+
+  transitionHeader = () => {
+    return new Promise(async resolve => {
+      await this.headerTitle.fadeOutLeft(250);
+      await this.headerTitle.fadeInRight(250);
+      resolve();
+    });
+  }
+
+  toggleLoginSuccessful = () => {
+    return new Promise(async resolve => {
+      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+      await this.setState({mode: 'succesful'});
+
+      await Promise.all([
+        this.transitionHeader(),
+        this.successContainer.bounceIn(1250),
+      ]);
+
+      resolve();
     });
   }
 
   _renderHeader = () => {
-    const { loading } = this.state;
+    const { mode } = this.state;
+
+    let headerTitle = '';
+    let headerSubtitle = '';
+
+    switch(mode) {
+      case 'initial':
+        headerTitle    = 'SIGN IN';
+        headerSubtitle = 'Please sign in to continue';
+        break;
+      case 'loading':
+        headerTitle    = 'LOGGING IN';
+        headerSubtitle = 'Please wait for second...';
+        break;
+      case 'succesful':
+        headerTitle    = 'LOGGED IN';
+        headerSubtitle = 'Login succesful, please wait.';
+        break;
+    }
+
     return(
-      <View>
+      <View collapsable={true}>
         <Animatable.View
           style={{flexDirection: 'row'}}
           ref={r => this.headerTitle = r}
           useNativeDriver={true}
         >
-          {loading && <ActivityIndicator size='large' style={{marginRight: 10}}/>}
+          {mode == 'loading' && <ActivityIndicator size='large' style={{marginRight: 10}}/>}
           <Text style={{fontSize: 38, fontWeight: '900', color: 'white'}}>
-            {loading? 'SIGNING IN' : 'SIGN IN'}
+            {headerTitle}
           </Text>
         </Animatable.View>
         <Animatable.Text 
@@ -92,7 +183,7 @@ export class LoginUI extends React.Component {
           ref={r => this.headerSubtitle = r}
           useNativeDriver={true}
         >
-          {loading? 'Please wait...' : 'Please sign in to continue'}
+          {headerSubtitle}
         </Animatable.Text>
       </View>
     );
@@ -101,45 +192,25 @@ export class LoginUI extends React.Component {
   _renderSignInForm(){
     return(
       <View collapsable={true}>
-        <View style={styles.textinputContainer}>
-          <Icon
-            containerStyle={styles.textInputIcon}
-            name='ios-mail-outline'
-            type='ionicon'
-            color='white'
-            size={40}
-          />
-          <TextInput
-            style={styles.textinput}
-            placeholder='E-mail address'
-            placeholderTextColor='rgba(255, 255, 255, 0.7)'
-            keyboardType='email-address'
-            textContentType='username'
-            returnKeyType='next'
-            maxLength={50}
-            autoCapitalize={false}
-            enablesReturnKeyAutomatically={true}
-          />
-        </View>
-        <View style={styles.textinputContainer}>
-          <Icon
-            containerStyle={styles.textInputIcon}
-            name='ios-lock-outline'
-            type='ionicon'
-            color='white'
-            size={35}
-          />
-          <TextInput
-            style={styles.textinput}
-            placeholder='Password'
-            placeholderTextColor='rgba(255, 255, 255, 0.7)'
-            textContentType='password'
-            maxLength={50}
-            secureTextEntry={true}
-            autoCapitalize={false}
-            enablesReturnKeyAutomatically={true}
-          />
-        </View>
+        <InputForm
+          placeholder='E-mail address'
+          placeholderTextColor='rgba(255, 255, 255, 0.7)'
+          keyboardType='email-address'
+          textContentType='username'
+          returnKeyType='next'
+          iconName='ios-mail-outline'
+          iconType='ionicon'
+          iconSize={40}
+        />
+        <InputForm
+          placeholder='Password'
+          placeholderTextColor='rgba(255, 255, 255, 0.7)'
+          textContentType='password'
+          secureTextEntry={true}
+          iconName='ios-mail-outline'
+          iconType='ionicon'
+          iconSize={40}
+        />
         
         <IconButton 
           containerStyle={{padding: 15, marginTop: 25, backgroundColor: 'rgba(0, 0, 0, 0.4)', borderRadius: 10}}
@@ -172,10 +243,28 @@ export class LoginUI extends React.Component {
     );
   }
 
+  _renderSigninSuccessful(){
+    return(
+      <Animatable.View
+        style={{alignItems: 'center', justifyContent: 'center', marginTop: 25}}
+        ref={r => this.successContainer = r}
+      >
+        <IconText
+          iconName ={'check-circle'}
+          iconType ={'feather'}
+          iconColor={'rgba(255,255,255,0.8)'}
+          iconSize ={32}
+          text={'Welcome Back'}
+          textStyle={{color: 'white', fontSize: 24}}
+        />
+      </Animatable.View>
+    );
+  }
+
   render(){
     console.log(this.props.mode);
-    const { mode, login } = this.props;
-    const { loading } = this.state;
+    const { login } = this.props;
+    const { mode } = this.state;
     return(
       <Animatable.View
         animation={'fadeIn'}
@@ -190,19 +279,22 @@ export class LoginUI extends React.Component {
           speed={100}
           numOfInterps={1000}  
         >
-          <Animatable.View 
-            style={[styles.signInContainer, {overflow: 'hidden'}]}
-            animation={'bounceInUp'}
-            duration={1000}
-            easing={'ease-in-out'}
-            useNativeDriver={true}
+          <KeyboardAvoidingView
+            style={{flex: 1, width: '100%', alignItems: 'center', justifyContent: 'center'}}
+            behavior='padding'
           >
-            {this._renderHeader()}
-
-            {!loading && this._renderSignInForm()}
-
-            
-          </Animatable.View>
+            <Animatable.View 
+              style={[styles.signInContainer, {overflow: 'hidden'}]}
+              animation={'bounceInUp'}
+              duration={1000}
+              easing={'ease-in-out'}
+              useNativeDriver={true}
+            >
+              {this._renderHeader()}
+              {mode == 'initial'   && this._renderSignInForm      ()}
+              {mode == 'succesful' && this._renderSigninSuccessful()}
+            </Animatable.View>
+          </KeyboardAvoidingView>
         </AnimatedGradient>
       </Animatable.View>
     );
@@ -226,18 +318,21 @@ const styles = StyleSheet.create({
   rootContainer: {
     width: '100%', 
     height: '100%', 
-    alignItems: 'center', 
-    justifyContent: 'center'
   },
   signInContainer: {
     alignSelf: 'stretch', 
     alignItems: 'stretch', 
     margin: 15, 
-    padding: 22, 
+    padding: 18, 
     backgroundColor: 'rgba(0, 0, 0, 0.5)', 
     borderRadius: 20
   },
   textinputContainer: {
+    backgroundColor: 'rgba(0, 0, 0, 0.25)',
+    height: 60,
+    paddingHorizontal: 15,
+    paddingVertical: 5,
+    borderRadius: 10,
     flexDirection: 'row', 
     marginTop: 25,
   },
@@ -251,9 +346,9 @@ const styles = StyleSheet.create({
     marginLeft: 15, 
     height: 35, 
     borderColor: 'transparent', 
-    borderBottomColor: 'white', 
+    borderBottomColor: 'rgba(255, 255, 255, 0.1)', 
     borderWidth: 1,
     paddingHorizontal: 5, 
     color: 'white'
   }
-});``
+});

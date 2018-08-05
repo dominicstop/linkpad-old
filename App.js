@@ -6,7 +6,7 @@ import { createSwitchNavigator, createStackNavigator } from 'react-navigation';
 
 import AuthLoadingScreen from './src/screens/AuthLoadingScreen';
 import LoginScreen       from './src/screens/LoginScreen';
-import Homescreen        from './src/screens/homescreen';
+import Homescreen        from './src/screens/Homescreen';
 import NavigationService from './src/NavigationService';
 
 const AppStack = createStackNavigator({

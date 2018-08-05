@@ -1,9 +1,9 @@
 import React from 'react';
 import { StyleSheet, Text, View, TabBarIOS, Platform, NavigatorIOS } from 'react-native';
 
-import { ModuleList            } from '../components/cards';
+import { ModuleList            } from '../components/Cards';
 import { CustomHeader          } from '../components/Header';
-import { ViewWithBlurredHeader } from '../components/views';
+import { ViewWithBlurredHeader } from '../components/Views';
 
 import { Header } from 'react-navigation';
 

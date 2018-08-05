@@ -2,10 +2,10 @@ import React from 'react';
 import { StyleSheet, Text, View, TabBarIOS, Platform, NavigatorIOS, TouchableOpacity, LayoutAnimation, UIManager } from 'react-native';
 
 import { HEADER_PROPS          } from '../Constants';
-import { ModuleList            } from '../components/cards'  ;
+import { ModuleList            } from '../components/Cards'  ;
 import { CustomHeader          } from '../components/Header' ;
-import { ViewWithBlurredHeader } from '../components/views'  ;
-import   SubjectListScreen       from './subjectListScreen'  ;
+import { ViewWithBlurredHeader } from '../components/Views'  ;
+import   SubjectListScreen       from './SubjectListScreen'  ;
 
 import { Header, createStackNavigator } from 'react-navigation';
 

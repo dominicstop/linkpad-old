@@ -105,16 +105,19 @@ export class AnimatedListItem extends React.PureComponent {
     index     : PropTypes.number,
     delay     : PropTypes.number,
     multiplier: PropTypes.number,
+    last      : PropTypes.number,
   }
 
   static defaultProps = {
     index     : 0  ,
     delay     : 0  ,
     multiplier: 100,
+    last      : 3  ,
   }
 
   render(){
-    const { index, delay, multiplier, ...otherProps } = this.props;
+    const { index, delay, multiplier, last, ...otherProps } = this.props;
+    if(index > last) return this.props.children;
     return(
       <Animatable.View
         delay={(index + 1) * multiplier + delay}
