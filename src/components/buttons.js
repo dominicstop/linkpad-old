@@ -1,9 +1,12 @@
 import React from 'react';
-import { Text, TouchableOpacity, ViewPropTypes, TextProps, UIManager, LayoutAnimation } from 'react-native';
-import { Icon } from 'react-native-elements';
+import { View, Text, TouchableOpacity, ViewPropTypes, TextProps, UIManager, LayoutAnimation } from 'react-native';
 import PropTypes from 'prop-types';
 
+import * as Animatable from 'react-native-animatable';
 import { LinearGradient } from 'expo';
+import { Icon } from 'react-native-elements';
+
+
 
 UIManager.setLayoutAnimationEnabledExperimental && UIManager.setLayoutAnimationEnabledExperimental(true);
 
@@ -185,6 +188,121 @@ export class ExpandCollapse extends React.PureComponent {
       >
         {isCollapsed? Collapsed : this.props.children}
       </TouchableOpacity>
+    );
+  }
+}
+
+//a header with that can be expanded when header is touched
+export class ExpandableWithHeader extends React.PureComponent {
+  static propTypes = {
+    collapseHeight: PropTypes.number ,
+    locations     : PropTypes.arrayOf(PropTypes.number),
+    colors        : PropTypes.arrayOf(PropTypes.string),
+    header        : PropTypes.element,
+    containerStyle: ViewPropTypes.style,
+  }
+
+  static defaultProps = {
+    collapseHeight: 200,
+    colors        : ['rgba(255, 255, 255, 0)', 'white'], 
+  }
+
+  constructor(props){
+    super(props);
+    this.state = {
+      height      : null,
+      collapsable : true,
+      checkHeight : true,
+      layoutHeight: null,
+    }
+  }
+
+  toggle(){
+    const { collapseHeight      } = this.props;
+    const { height, collapsable } = this.state;
+
+    if(!collapsable) return;
+    const shouldCollapse = height == collapseHeight;
+
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    this.setState({
+      height: shouldCollapse ? undefined : collapseHeight 
+    });
+
+    this.chevron.transitionTo([{
+      transform: [{rotate:  shouldCollapse? '180deg' : '0deg'}]
+    }]);
+  }
+
+  _onLayout = (event) => {
+    const { collapseHeight } = this.props;
+    const { checkHeight    } = this.state;
+    const { height         } = event.nativeEvent.layout;
+
+    if(!checkHeight) return;
+
+    const shouldCollapse = height >= collapseHeight
+    this.setState({
+      collapsable: shouldCollapse,
+      height     : shouldCollapse? collapseHeight : undefined,
+      checkHeight: false,
+    });
+  }
+
+  render(){
+    const { collapseHeight, colors, locations } = this.props;
+    const { height } = this.state;
+
+    const isCollapsed = height == collapseHeight;
+    const transparent = 'rgba(255, 255, 255, 0)';
+    const lastColor   = colors[colors.length-1]; 
+
+    const Collapsed = (
+      <LinearGradient
+        overflow='hidden'
+        colors={colors}
+        locations={locations}
+      >
+        {this.props.children}
+        <LinearGradient
+          style={{position: 'absolute', width: '100%', height: '100%'}}
+          colors={[transparent, isCollapsed? lastColor : transparent ]}
+          locations={locations}
+        />
+      </LinearGradient>
+    );
+    
+    return(
+      <View style={this.props.containerStyle}>
+        <TouchableOpacity
+          style={{flexDirection: 'row', overflow: 'hidden'}}
+          onPress={() => this.toggle()}
+          activeOpacity={1}
+        >
+          <View style={{flex: 1}}>
+            {this.props.header}
+          </View>
+          <Animatable.View
+            style={{alignItems: 'center', justifyContent: 'center', transform: [{ rotate : '0deg' }]}}
+            ref={r => this.chevron = r}
+            useNativeDriver={true}
+          >
+            <Icon
+              name='chevron-down'
+              type='feather'
+              color='grey'
+              size={30}
+            />
+          </Animatable.View>
+        </TouchableOpacity>
+        <View
+          style={{maxHeight: this.state.height}}
+          overflow='hidden'
+          onLayout={this._onLayout}
+        >
+          {isCollapsed? Collapsed : this.props.children}
+        </View>
+      </View>
     );
   }
 }

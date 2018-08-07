@@ -11,3 +11,8 @@ export const HEADER_PROPS = {
     backgroundColor: NAV_BGCOLOR,
   },
 }
+
+export default {
+  NAV_BGCOLOR ,
+  HEADER_PROPS,
+}

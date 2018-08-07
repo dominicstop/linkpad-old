@@ -207,7 +207,7 @@ export class LoginUI extends React.Component {
           placeholderTextColor='rgba(255, 255, 255, 0.7)'
           textContentType='password'
           secureTextEntry={true}
-          iconName='ios-mail-outline'
+          iconName='ios-lock-outline'
           iconType='ionicon'
           iconSize={40}
         />
@@ -346,7 +346,7 @@ const styles = StyleSheet.create({
     marginLeft: 15, 
     height: 35, 
     borderColor: 'transparent', 
-    borderBottomColor: 'rgba(255, 255, 255, 0.1)', 
+    borderBottomColor: 'rgba(255, 255, 255, 0.25)', 
     borderWidth: 1,
     paddingHorizontal: 5, 
     color: 'white'

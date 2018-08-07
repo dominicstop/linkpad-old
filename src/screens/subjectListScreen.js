@@ -1,9 +1,9 @@
 import React from 'react';
 import { Text, View } from 'react-native';
 
-import { SubjectList, ModuleHeader } from '../components/Cards'  ;
-import { ViewWithBlurredHeader     } from '../components/Views'  ;
-import { ExpandCollapse            } from '../components/Buttons';
+import { SubjectList, ModuleTitle, ModuleDescription } from '../components/Cards'  ;
+import { ViewWithBlurredHeader, IconText      } from '../components/Views'  ;
+import { ExpandCollapse, ExpandableWithHeader } from '../components/Buttons';
 
 import { Header  } from 'react-navigation';
 import { Divider, colors } from 'react-native-elements' ;
@@ -18,19 +18,38 @@ export default class SubjectListScreen extends React.Component {
 
   _renderHeader = () => {
     const { navigation} = this.props;
-    const moduleData = navigation.getParam('moduleData', null);
+
+    const moduleData   = navigation.getParam('moduleData', null);
     const subjectCount = moduleData.subjects.length;
+
+    const Header = (
+      <IconText
+        textStyle={{fontSize: 30, fontWeight: '900', marginLeft: 10}}
+        iconName={'image'}
+        iconType={'font-awesome'}
+        iconSize={25}
+        iconColor={'gray'}
+        text={'Image'}
+      >
+        <Text style={{fontWeight: '200', fontSize: 16, color: 'grey'}}>
+          touch to expand or collapse
+        </Text>
+      </IconText>
+    );
+
     return(
       <View style={{marginHorizontal: 20, paddingBottom: 10}}>
-        <ExpandCollapse 
+        <ExpandableWithHeader
+          //collapseHeight={100} 
           collapseHeight={100}
-          colors={['rgba(255, 255, 255, 0)', 'white']}
+          header={<ModuleTitle moduleData={moduleData}/>}
         >
-          <ModuleHeader 
+          <ModuleDescription 
             moduleData={moduleData}
             detailedView={true}
           />
-        </ExpandCollapse>
+        </ExpandableWithHeader>
+
         <Animatable.View
           animation='fadeInRight'
           easing='ease-in-out'

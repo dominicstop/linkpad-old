@@ -237,6 +237,49 @@ export class SubjectItem extends React.PureComponent {
   }
 }
 
+//displays the module title
+export class ModuleTitle extends React.PureComponent {
+  static propTypes = {
+    moduleData  : PropTypes.shape(moduleProps).isRequired,
+  }
+
+  render(){
+    const { moduleData } = this.props;  
+    return(
+      <IconText
+        textStyle={[styles.title, {}]}
+        iconSize ={20}
+        text={moduleData.moduleName}
+        iconColor='grey'
+        iconName ='heart'
+        iconType ='entypo'
+      >
+        {this.props.children}
+      </IconText>
+    );
+  }
+}
+
+//displays the module description
+export class ModuleDescription extends React.PureComponent {
+  static propTypes = {
+    moduleData  : PropTypes.shape(moduleProps).isRequired,
+    detailedView: PropTypes.bool,
+  }
+
+  render(){
+    const { moduleData, detailedView } = this.props;  
+    return(
+      <Text 
+        style={[{textAlign: 'justify'}, styles.subtitle]}
+        numberOfLines={ detailedView? undefined : 2}
+      >
+        {moduleData.moduleDesc}
+      </Text>
+    );
+  }
+}
+
 //displays the title and other details about the module
 export class ModuleHeader extends React.PureComponent {
   static propTypes = {
@@ -247,23 +290,9 @@ export class ModuleHeader extends React.PureComponent {
   render(){
     const { moduleData, detailedView } = this.props;  
     return(
-      <View>
-        <IconText
-          textStyle={[styles.title, {}]}
-          iconSize ={20}
-          text={moduleData.moduleName}
-          iconColor='grey'
-          iconName ='heart'
-          iconType ='entypo'
-        >
-          <Text 
-            style={[{textAlign: 'justify'}, styles.subtitle]}
-            numberOfLines={ detailedView? undefined : 2}
-          >
-            {moduleData.moduleDesc}
-          </Text>
-        </IconText>
-      </View>
+      <ModuleTitle {...this.props}>
+        <ModuleDescription {...this.props}/>
+      </ModuleTitle>
     );
   }
 }

@@ -1,11 +1,11 @@
 import React from 'react';
 import { StyleSheet, Text, View, TabBarIOS, Platform, NavigatorIOS, TouchableOpacity, LayoutAnimation, UIManager } from 'react-native';
 
-import { HEADER_PROPS          } from '../Constants';
+import   SubjectListScreen       from './SubjectListScreen'  ;
+import   Constants               from '../Constants'         ;
 import { ModuleList            } from '../components/Cards'  ;
 import { CustomHeader          } from '../components/Header' ;
 import { ViewWithBlurredHeader } from '../components/Views'  ;
-import   SubjectListScreen       from './SubjectListScreen'  ;
 
 import { Header, createStackNavigator } from 'react-navigation';
 
@@ -257,6 +257,6 @@ export const ModuleListStack = createStackNavigator({
     headerMode: 'float',
     headerTransitionPreset: 'uikit',
     headerTransparent: true,
-    navigationOptions: HEADER_PROPS,
+    navigationOptions: Constants.HEADER_PROPS,
   }
 );
