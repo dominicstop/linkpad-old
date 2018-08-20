@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { View, Text, TouchableOpacity, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, Dimensions } from 'react-native';
 
 import { IconText } from './Views';
 import { GradeItem, SummaryItem } from './Grades';
@@ -43,8 +43,8 @@ export class SubjectModal extends React.PureComponent {
   constructor(props){
     super(props);
     this.state = {
-      renderBody : false,
-      subjectData: null ,
+      modalVisible: false,
+      subjectData : null ,
     }
   }
 
@@ -55,20 +55,14 @@ export class SubjectModal extends React.PureComponent {
   }
 
   _onModalOpened = () => {
-    this.setState({renderBody: true});
+    this.setState({modalVisible: true});
   }
 
   _onModalClosed = () => {
-    this.setState({renderBody: false});
+    this.setState({modalVisible: false});
   }
 
-  _renderGradeItem = ({item, index}) => {
-    const { subjectData } = this.state;
-    return (
-      index == 0? <SummaryItem subjectData={subjectData}/> : <GradeItem {...item}/>
-    );
-  }
-
+  //grades carousel
   _renderGrades(){
     //ui values
     const sliderWidth = Dimensions.get('window').width;
@@ -98,6 +92,15 @@ export class SubjectModal extends React.PureComponent {
     );
   }
 
+  //render for carousel item
+  _renderGradeItem = ({item, index}) => {
+    const { subjectData } = this.state;
+    return (
+      //first item is summary, the rest is grades
+      index == 0? <SummaryItem subjectData={subjectData}/> : <GradeItem {...item}/>
+    );
+  }
+
   _renderBody(){
     return(
       <View style={{flex: 1}}>
@@ -106,29 +109,24 @@ export class SubjectModal extends React.PureComponent {
     );
   }
 
+  //bottom buttons: start practice/cancel
   _renderButtons(){
-    const CloseButton = (props) =>  <IconButton
-      containerStyle={{margin: 17, justifyContent: 'center', backgroundColor: '#C62828', padding: 15, borderRadius: 10}}
-      text={'Cancel'}
-      iconName={'close'}
-      iconType={'simple-line-icon'}
-      iconSize={22}
-      iconColor={'white'}
-      textStyle={{color: 'white', fontSize: 16, flex: 0}}
-      onPress={() => this.subjectModal.close()}
-      {...props}
-    />
+    const Button = (props) => {
+      const { style, ...IconButtonProps } = props;
+      return(
+        <IconButton
+          containerStyle={[styles.modalButton, styles.shadow, style]}
+          textStyle={styles.modalButtonText}
+          {...IconButtonProps}
+        />
+      );
+    }
 
-    const ReviewButton = (props) => <IconButton
-      containerStyle={{marginHorizontal: 17, justifyContent: 'center', backgroundColor: '#6200EA', padding: 15, borderRadius: 10}}
-      text={'Start Practice Exam'}
-      iconName={'pencil-square-o'}
-      iconType={'font-awesome'}
-      iconSize={22}
-      iconColor={'white'}
-      textStyle={{color: 'white', fontSize: 16, flex: 0}}
-      {...props}
-    />
+    //shared props betw iconButtons
+    const buttonProps = {
+      iconSize: 22,
+      iconColor: 'white',
+    }
 
     return(
       <Animatable.View 
@@ -139,16 +137,30 @@ export class SubjectModal extends React.PureComponent {
         useNativeDriver={true}
         collapsable={true}
       >
-        <ReviewButton/>
-        <CloseButton/>
+        <Button
+          text={'Start Practice Exam'}
+          style={{backgroundColor: '#6200EA'}}
+          iconName={'pencil-square-o'}
+          iconType={'font-awesome'}
+          {...buttonProps}
+        />
+        <Button
+          text={'Cancel'}
+          style={{backgroundColor: '#C62828'}}      
+          iconName={'close'}
+          iconType={'simple-line-icon'}
+          onPress={() => this.subjectModal.close()}
+          {...buttonProps}
+        />
       </Animatable.View>
     );
   }
 
   render(){
+    const { modalVisible } = this.state;
     return(
       <Modal 
-        style={{ height: 575, backgroundColor: 'rgba(255, 255, 255, 0.5)', borderTopLeftRadius: 25, borderTopRightRadius: 25, overflow: 'hidden'}}  
+        style={styles.subjectModal}  
         position={"bottom"} 
         ref={r => this.subjectModal = r} 
         swipeArea={15}
@@ -166,22 +178,61 @@ export class SubjectModal extends React.PureComponent {
         >
           <View style={{flex: 1}}>
             <IconText
-              containerStyle={{margin: 17}}
+              containerStyle={styles.subjectIconText}
+              textStyle={styles.subjectTitle}
+              subtitleStyle={styles.subjectSubtitle}
+              text     ={'Subject Name'}
+              subtitle ={'Choose an option'}
               iconName ={'notebook'}
               iconType ={'simple-line-icon'}
               iconColor={'rgba(0, 0, 0, 0.6)'}
               iconSize ={26}
-              text={'Subject Name'}
-              subtitle={'Choose an option'}
-              textStyle={{fontSize: 20, fontWeight: 'bold'}}
-              subtitleStyle={{fontWeight: '200'}}
             />
-            {this.state.renderBody && this._renderGrades ()}
-            {this.state.renderBody && this._renderBody   ()}
-            {this.state.renderBody && this._renderButtons()}
+            {modalVisible && this._renderGrades ()}
+            {modalVisible && this._renderBody   ()}
+            {modalVisible && this._renderButtons()}
           </View>
         </BlurView>
       </Modal>
     );
   }
 }
+
+const styles = StyleSheet.create({
+  subjectModal: {
+    height: 575, 
+    backgroundColor: 'rgba(255, 255, 255, 0.5)', 
+    borderTopLeftRadius: 25, 
+    borderTopRightRadius: 25, 
+    overflow: 'hidden'
+  },
+  subjectIconText: {
+    margin: 17
+  },
+  subjectTitle: {
+    fontSize: 20, 
+    fontWeight: 'bold'
+  },
+  subjectSubtitle: {
+    fontWeight: '200',
+  },
+  modalButton: {
+    height: 50,
+    margin: 17,
+    marginTop: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 10
+  },
+  modalButtonText: {
+    flex: 0,
+    color: 'white', 
+    fontSize: 16, 
+  },
+  shadow: {
+    shadowOffset:{  width: 3,  height: 5,  },
+    shadowColor: 'black',
+    shadowRadius: 6,
+    shadowOpacity: 0.5,
+  }
+});

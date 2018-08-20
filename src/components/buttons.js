@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, ViewPropTypes, TextProps, UIManager, LayoutAnimation } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ViewPropTypes, TextProps, UIManager, LayoutAnimation } from 'react-native';
 import PropTypes from 'prop-types';
 
 import * as Animatable from 'react-native-animatable';
@@ -48,6 +48,35 @@ export class IconButton extends React.PureComponent {
         </Text>
         {this.props.children}        
       </TouchableOpacity>
+    );
+  }
+}
+
+//icon button but with default stylings
+export class Button extends React.PureComponent {
+  render(){
+    const { style, ...IconButtonProps } = this.props;
+    
+    const containerStyle = {
+      height: 50,
+      paddingHorizontal: 15,
+      justifyContent: 'center',
+      alignItems: 'center',
+      borderRadius: 10,
+    };
+
+    const textStyle = {
+      flex: 0,
+      color: 'white', 
+      fontSize: 16, 
+    }
+
+    return(
+      <IconButton
+        containerStyle={[containerStyle, styles.shadow, style]}
+        textStyle={textStyle}
+        {...IconButtonProps}
+      />
     );
   }
 }
@@ -391,3 +420,12 @@ export function createCheckboxes(values = [], onPress = (label, isChecked) => {}
   });
   return checkboxes;
 }
+
+const styles = StyleSheet.create({
+  shadow: {
+    shadowOffset:{  width: 3,  height: 5,  },
+    shadowColor: 'black',
+    shadowRadius: 6,
+    shadowOpacity: 0.5,
+  }
+});
