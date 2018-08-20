@@ -1,116 +1,22 @@
 import React from 'react';
 import { StyleSheet, Text, View, Dimensions } from 'react-native';
 
-import { Button } from './Buttons';
+import { Button   } from './Buttons';
+import { FlipView } from './Views';
 
 import * as Animatable from 'react-native-animatable';
 import      Carousel   from 'react-native-snap-carousel';
 import    { Header   } from 'react-navigation';
 
-const overlayOpacity = 0.2
-
-Animatable.initializeRegistryWithDefinitions({
-  //unflipped: start trans
-  flipLeftStart: {
-    easing: 'ease-in',
-    from  : { transform: [{ rotateY: '0deg'  }, { scale: 1    }] },
-    to    : { transform: [{ rotateY: '90deg' }, { scale: 0.95 }] },
-  },
-  //unflipped: end trans
-  flipLeftEnd: {
-    easing: 'ease-out',
-    from  : { transform: [{ rotateY: '-90deg' }, { scale: 0.95 }] },
-    to    : { transform: [{ rotateY: '0deg'   }, { scale: 1    }] },
-  },
-  //flipped: start trans
-  flipRightStart: {
-    easing: 'ease-in',
-    from  : { transform: [{ rotateY: '0deg'   }, { scale: 1    }] },
-    to    : { transform: [{ rotateY: '-90deg' }, { scale: 0.95 }] },
-  },
-  //flipped: end trans
-  flipRightEnd: {
-    easing: 'ease-out',
-    from  : { transform: [{ rotateY: '-90deg' }, { scale: 0.95 }] },
-    to    : { transform: [{ rotateY: '0deg'   }, { scale: 1    }] },
-  },
-  //partially fade in
-  partialFadeIn: {
-    from  : { opacity: 0 },
-    to    : { opacity: overlayOpacity },
-  },
-  //partially fade out
-  partialFadeOut: {
-    from  : { opacity: overlayOpacity },
-    to    : { opacity: 0 },
-  }
-});
-
-//base card container
-export class QuestionCard extends React.PureComponent {
-  render(){
-    const { style, ...viewProps } = this.props;
-    return(
-      <View
-        style={[styles.questionCard, style]}
-        {...viewProps}
-      >
-        {this.props.children}
-      </View>
-    );
-  }
-}
-
 export class PracticeQuestion extends React.PureComponent {
-  constructor(props){
-    super(props);
-    this.state = {
-      flipped: false,
-    }
-  }
+  /*
+  
 
-  toggleFlip = () => {
+  */
 
-  }
-
-  _flipCard = async () => {
-    //flip start
-    await Promise.all([
-      this.animatedFrontBlackOverlay.partialFadeIn(200),
-      this.animatedCard             .flipLeftStart(200),
-    ]);
-
-    //hide front, show back
-    await this.setState({flipped: true});
-
-    //flip end
-    await Promise.all([
-      this.animatedBackBlackOverlay.partialFadeOut(250),
-      this.animatedCard            .flipLeftEnd   (250),
-    ]);
-  }
-
-  _unflipCard = async () => {
-    //unflip start
-    await Promise.all([
-      this.animatedBackBlackOverlay.partialFadeIn (200),
-      this.animatedCard            .flipRightStart(200),
-    ]);
-
-    //hide back, show front
-    await this.setState({flipped: false});
-
-    //unflip end
-    await Promise.all([
-      this.animatedFrontBlackOverlay.partialFadeOut(250),
-      this.animatedCard             .flipRightEnd  (250),
-    ]);
-  }
-
-  //shown when flipped: false
-  _renderFrontQuestion(){
+  _renderFrontQuestion = () => {
     return(
-      <QuestionCard>
+      <View style={{padding: 15}}>
         <Button
           text={'Flip'}
           style={{backgroundColor: '#6200EA'}}
@@ -118,53 +24,36 @@ export class PracticeQuestion extends React.PureComponent {
           iconType={'font-awesome'}
           iconSize={22}
           iconColor={'white'}
-          onPress={this._flipCard}
+          onPress={() => this.questionFlipView.flipCard()}
         />
-        <Animatable.View 
-          style={[styles.cardBlackOverlay]} 
-          ref={r => this.animatedFrontBlackOverlay = r}
-          pointerEvents={'none'}
-          useNativeDriver={true}
-        />
-      </QuestionCard>
+      </View>
     );
   }
 
-  _renderBackQuestion(){
+  _renderBackQuestion = () => {
     return(
-      <QuestionCard>
-        <Button
-          text={'UnFlip'}
-          style={{backgroundColor: '#6200EA'}}
-          iconName={'pencil-square-o'}
-          iconType={'font-awesome'}
-          iconSize={22}
-          iconColor={'white'}
-          onPress={this._unflipCard}
-        />
-        <Animatable.View 
-          style={[styles.cardBlackOverlay, {opacity: 0.5}]} 
-          ref={r => this.animatedBackBlackOverlay = r}
-          pointerEvents={'none'}
-          useNativeDriver={true}
-        />
-      </QuestionCard>
+      <Button
+        text={'Flip'}
+        style={{backgroundColor: '#6200EA'}}
+        iconName={'pencil-square-o'}
+        iconType={'font-awesome'}
+        iconSize={22}
+        iconColor={'white'}
+        onPress={() => this.questionFlipView.unflipCard()}
+      />
     );
   }
 
   render(){
-    const { flipped } = this.state;
     return(
-      <Animatable.View
-        style={[{flex: 1, 
-        transform: [
-          { rotateY: '0deg'}
-        ]}, styles.shadow]}
-        ref={r => this.animatedCard = r}
-        useNativeDriver={true}
-      >
-        {flipped? this._renderBackQuestion() : this._renderFrontQuestion()}
-      </Animatable.View>
+      <FlipView 
+        ref={r => this.questionFlipView = r}
+        containerStyle={[{flex: 1}, styles.shadow]}
+        frontComponent={this._renderFrontQuestion()}
+        frontContainerStyle={styles.questionCard}
+        backComponent={this._renderBackQuestion()}
+        backContainerStyle={styles.questionCard}
+      />
     );
   }
 }
@@ -215,10 +104,10 @@ export class PracticeExamList extends React.Component {
 
 const styles = StyleSheet.create({
   questionCard: {
-    flex: 1, 
+    flex: 1,
     backgroundColor: 'white', 
     marginBottom: 15, 
-    marginHorizontal: 15,
+    marginHorizontal: 10,
     borderRadius: 15,
     overflow: 'hidden',
   },
@@ -228,11 +117,4 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     shadowOpacity: 0.5,
   },
-  cardBlackOverlay: {
-    position: 'absolute', 
-    width: '100%', 
-    height: '100%', 
-    backgroundColor: 'black',
-    opacity: 0,
-  }
 });
