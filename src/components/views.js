@@ -14,6 +14,10 @@ export class IconText extends React.PureComponent {
       PropTypes.string,
       PropTypes.number,
     ]),
+    subtitle: PropTypes.oneOfType([
+      PropTypes.string,
+      PropTypes.number,
+    ]),
     //icon props
     iconName : PropTypes.string,
     iconColor: PropTypes.string,
@@ -23,11 +27,28 @@ export class IconText extends React.PureComponent {
     containerStyle: ViewPropTypes.style ,
     wrapperStyle  : ViewPropTypes.style ,
     textStyle     : Text.propTypes.style,
+    subtitleStyle : Text.propTypes.style,
   }
 
   render(){
-    const {text, iconName, iconColor, iconType, iconSize, containerStyle, textStyle, wrapperStyle, ...viewProps} = this.props;
+    const {text, subtitle, iconName, iconColor, iconType, iconSize, containerStyle, textStyle, subtitleStyle, wrapperStyle, ...viewProps} = this.props;
     const childrenCount = React.Children.count(this.props.children);
+
+    const Title = (props) => <Text 
+      style={[textStyle]}
+      numberOfLines={1}
+      ellipsizeMode='tail'
+      {...props}
+    >
+      {text}
+    </Text>
+
+    const TitleSubtitle = (props) => <View>
+      <Title/>
+      <Text style={subtitleStyle}>
+        {subtitle}
+      </Text>
+    </View>
 
     const IconText = (
       <View
@@ -35,18 +56,13 @@ export class IconText extends React.PureComponent {
         {...viewProps}
       >
         <Icon
+          containerStyle={{marginRight: 7}}
           name ={iconName }
           color={iconColor}
           type ={iconType }
           size ={iconSize }
         />
-        <Text 
-          style={[{marginLeft: 7}, textStyle]}
-          numberOfLines={1}
-          ellipsizeMode='tail'
-        >
-          {text}
-        </Text>
+        {subtitle? <TitleSubtitle/> : <Title/>}
       </View>
     );
 

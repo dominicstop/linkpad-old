@@ -10,7 +10,6 @@ import { ViewWithBlurredHeader } from '../components/Views'  ;
 import { Header, createStackNavigator } from 'react-navigation';
 
 import Chroma from 'chroma-js';
-
 const cardsData = [
   {
     moduleID  : 'mod:002',
@@ -232,6 +231,11 @@ export class ModuleListScreen extends React.Component {
     })
   }
 
+  _onPressSubject = (subjectData) => {
+    const { getRefSubjectModal } = this.props.screenProps;
+    getRefSubjectModal().toggleSubjectModal(subjectData);
+  }
+
   render(){
     return(
       <ViewWithBlurredHeader hasTabBar={true}>
@@ -239,7 +243,7 @@ export class ModuleListScreen extends React.Component {
           containerStyle={{paddingTop: Header.HEIGHT + 15, backgroundColor: 'white'}}
           moduleList={cardsData}
           onPressModule ={this._navigateToModule}
-          onPressSubject={(subjectData) => alert('navigate to: ' + subjectData.subjectName)}
+          onPressSubject={this._onPressSubject}
         />
       </ViewWithBlurredHeader>
     );

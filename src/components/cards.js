@@ -206,8 +206,14 @@ export class SubjectItem extends React.PureComponent {
     super();
   }
 
+  _onPressSubject = () => {
+    const { onPressSubject, subjectData } = this.props;
+    //pass subject data as param to callback
+    onPressSubject(subjectData);
+  }
+
   render() {
-    const { subjectData, height, onPressSubject, containerStyle } = this.props;
+    const { subjectData, height, containerStyle } = this.props;
     const color = subjectData.graidentBG[1];
 
     return(
@@ -228,7 +234,7 @@ export class SubjectItem extends React.PureComponent {
             numberOfLinesDesc={this.props.numberOfLinesDesc}
             containerStyle={{marginLeft: 13}}
             subjectData={subjectData}
-            onPress={onPressSubject}
+            onPress={this._onPressSubject}
             color={Chroma(color).darken().hex()}
           />
         </LinearGradient>
@@ -288,7 +294,6 @@ export class ModuleHeader extends React.PureComponent {
   }
 
   render(){
-    const { moduleData, detailedView } = this.props;  
     return(
       <ModuleTitle {...this.props}>
         <ModuleDescription {...this.props}/>

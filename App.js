@@ -1,3 +1,9 @@
+window.store = {
+ state: {
+   test: 'Test'
+ }
+};
+
 import React from 'react';
 import { StyleSheet, Text, View, StatusBar } from 'react-native';
 
@@ -7,7 +13,6 @@ import AuthLoadingScreen from './src/screens/AuthLoadingScreen';
 import LoginScreen       from './src/screens/LoginScreen';
 import Homescreen        from './src/screens/Homescreen';
 import NavigationService from './src/NavigationService';
-
 
 const AppStack = createStackNavigator({
     HomeRoute: {

@@ -1,15 +1,16 @@
 import React from 'react';
-import { } from 'react-native';
 
-import { NAV_BGCOLOR     } from '../Constants';
-import { ModuleListStack } from './ModuleListScreen';
-import { SettingsStack   } from './SettingsScreen'  ;
+import { NAV_BGCOLOR     } from '../Constants'        ;
+import { SubjectModal    } from '../components/Modals';
+import { ModuleListStack } from './ModuleListScreen'  ;
+import { SettingsStack   } from './SettingsScreen'    ;
 
 import * as Animatable from 'react-native-animatable';
 import { createBottomTabNavigator } from 'react-navigation';
+import { Icon } from 'react-native-elements';
+
 //TODO: fork on github, export BottomTabBar and npm install
 //import {  } from 'react-navigation-tabs/dist/views/BottomTabBar';
-import { Icon } from 'react-native-elements';
 
 const TabNavigation = createBottomTabNavigator({
     ModuleListRoute: {
@@ -51,6 +52,10 @@ const TabNavigation = createBottomTabNavigator({
 export default class Homescreen extends React.PureComponent {
   static router = TabNavigation.router;
 
+  constructor(props){
+    super(props);
+  }
+
   render(){
     return (
       <Animatable.View 
@@ -60,8 +65,13 @@ export default class Homescreen extends React.PureComponent {
         easing={'ease-in-out'}
         useNativeDriver={true}
       >
+        <SubjectModal ref={r => this.subjectModal = r}/>
         <TabNavigation
           navigation={this.props.navigation}
+          screenProps={{
+            ...this.props.screenProps,
+            getRefSubjectModal: () => this.subjectModal,
+          }}
         />
       </Animatable.View>
     );

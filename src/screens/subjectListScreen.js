@@ -40,8 +40,7 @@ export default class SubjectListScreen extends React.Component {
     return(
       <View style={{marginHorizontal: 20, paddingBottom: 10}}>
         <ExpandableWithHeader
-          //collapseHeight={100} 
-          collapseHeight={100}
+          collapseHeight={80}
           header={<ModuleTitle moduleData={moduleData}/>}
         >
           <ModuleDescription 
