@@ -202,38 +202,42 @@ export class FlipView extends React.PureComponent {
     }
   }
 
-  flipCard = async () => {
-    //flip start
-    await Promise.all([
-      this.animatedFrontBlackOverlay.partialFadeIn(200),
-      this.animatedRootView         .flipLeftStart(200),
-    ]);
-
-    //hide front, show back
-    await this.setState({flipped: true});
-
-    //flip end
-    await Promise.all([
-      this.animatedBackBlackOverlay.partialFadeOut(250),
-      this.animatedRootView        .flipLeftEnd   (250),
-    ]);
+  flipCard = () => {
+    return new Promise(async resolve => {
+      //flip start
+      await Promise.all([
+        this.animatedFrontBlackOverlay.partialFadeIn(200),
+        this.animatedRootView         .flipLeftStart(200),
+      ]);
+      //hide front, show back
+      await this.setState({flipped: true});
+      //flip end
+      await Promise.all([
+        this.animatedBackBlackOverlay.partialFadeOut(300),
+        this.animatedRootView        .flipLeftEnd   (300),
+      ]);
+      //resolve: animation ended
+      resolve();
+    });
   }
 
-  unflipCard = async () => {
-    //unflip start
-    await Promise.all([
-      this.animatedBackBlackOverlay.partialFadeIn (200),
-      this.animatedRootView        .flipRightStart(200),
-    ]);
-
-    //hide back, show front
-    await this.setState({flipped: false});
-
-    //unflip end
-    await Promise.all([
-      this.animatedFrontBlackOverlay.partialFadeOut(250),
-      this.animatedRootView         .flipRightEnd  (250),
-    ]);
+  unflipCard = () => {
+    return new Promise(async resolve => {
+      //unflip start
+      await Promise.all([
+        this.animatedBackBlackOverlay.partialFadeIn (200),
+        this.animatedRootView        .flipRightStart(200),
+      ]);
+      //hide back, show front
+      await this.setState({flipped: false});
+      //unflip end
+      await Promise.all([
+        this.animatedFrontBlackOverlay.partialFadeOut(300),
+        this.animatedRootView         .flipRightEnd  (300),
+      ]);
+      //resolve: animation ended
+      resolve();
+    });
   }
 
   //shown when flipped: false
