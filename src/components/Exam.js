@@ -51,6 +51,132 @@ const QUESTIONS = [
       'Tambay' ,
     ],
   },
+  {
+    question: 'Do I still love him?',
+    answer  : 'I used to, but not anymore.',
+    choices: [
+      'Yes, I still am',
+      'I gave up a long time ago',
+      'Unfortunately, No.' ,
+    ],
+  },
+  {
+    question: 'Lorum ipsum sit amit dolor aspicing?',
+    answer  : 'Correct Answer',
+    choices: [
+      'Dummy Choice',
+      'Wrong Choice',
+      'Ladies Choice' ,
+    ],
+  },
+  {
+    question: 'Lorum ipsum sit amit dolor aspicing?',
+    answer  : 'Correct Answer',
+    choices: [
+      'Dummy Choice',
+      'Wrong Choice',
+      'Ladies Choice' ,
+    ],
+  },
+  {
+    question: 'Lorum ipsum sit amit dolor aspicing?',
+    answer  : 'Correct Answer',
+    choices: [
+      'Dummy Choice',
+      'Wrong Choice',
+      'Ladies Choice' ,
+    ],
+  },
+  {
+    question: 'Lorum ipsum sit amit dolor aspicing?',
+    answer  : 'Correct Answer',
+    choices: [
+      'Dummy Choice',
+      'Wrong Choice',
+      'Ladies Choice' ,
+    ],
+  },
+  {
+    question: 'Lorum ipsum sit amit dolor aspicing?',
+    answer  : 'Correct Answer',
+    choices: [
+      'Dummy Choice',
+      'Wrong Choice',
+      'Ladies Choice' ,
+    ],
+  },
+  {
+    question: 'Lorum ipsum sit amit dolor aspicing?',
+    answer  : 'Correct Answer',
+    choices: [
+      'Dummy Choice',
+      'Wrong Choice',
+      'Ladies Choice' ,
+    ],
+  },
+  {
+    question: 'Lorum ipsum sit amit dolor aspicing?',
+    answer  : 'Correct Answer',
+    choices: [
+      'Dummy Choice',
+      'Wrong Choice',
+      'Ladies Choice' ,
+    ],
+  },
+  {
+    question: 'Lorum ipsum sit amit dolor aspicing?',
+    answer  : 'Correct Answer',
+    choices: [
+      'Dummy Choice',
+      'Wrong Choice',
+      'Ladies Choice' ,
+    ],
+  },
+  {
+    question: 'Lorum ipsum sit amit dolor aspicing?',
+    answer  : 'Correct Answer',
+    choices: [
+      'Dummy Choice',
+      'Wrong Choice',
+      'Ladies Choice' ,
+    ],
+  },
+  {
+    question: 'Lorum ipsum sit amit dolor aspicing?',
+    answer  : 'Correct Answer',
+    choices: [
+      'Dummy Choice',
+      'Wrong Choice',
+      'Ladies Choice' ,
+    ],
+  },
+  {
+    question: 'Lorum ipsum sit amit dolor aspicing?',
+    answer  : 'Correct Answer',
+    choices: [
+      'Dummy Choice',
+      'Wrong Choice',
+      'Ladies Choice' ,
+    ],
+  },
+  {
+    question: 'Lorum ipsum sit amit dolor aspicing?',
+    answer  : 'Correct Answer',
+    choices: [
+      'Dummy Choice',
+      'Wrong Choice',
+      'Ladies Choice' ,
+    ],
+  },
+  {
+    question: 'Lorum ipsum sit amit dolor aspicing?',
+    answer  : 'Correct Answer',
+    choices: [
+      'Dummy Choice',
+      'Wrong Choice',
+      'Ladies Choice' ,
+    ],
+  },
 ];
 
 const questionShape = {
@@ -272,6 +398,7 @@ export class PracticeQuestion extends React.PureComponent {
     super(props);
     this.state = {
       isExplanationOnly: false,
+      disableTouch: false,
       userAnswer: null ,
     };
   }
@@ -280,8 +407,11 @@ export class PracticeQuestion extends React.PureComponent {
     const { question } = this.props;
     //check if user's ans is correct
     const isCorrect = choice == question.answer;
-    //update userAns state
-    await setStateAsync(this, {userAnswer: choice});
+    //update userAns state + disable touch while animating
+    await setStateAsync(this, {
+      userAnswer  : choice,
+      disableTouch: true  ,
+    });
     //animate check animation if correct
     if(isCorrect){
       //fade in white overlay + check animation + pulse forward
@@ -294,8 +424,10 @@ export class PracticeQuestion extends React.PureComponent {
       //shake the root view
       await this.animatedContainer.shake(500);
     }
-
+    //flip and show explanation
     await this.questionFlipView.flipCard();
+    //enable touch
+    await setStateAsync(this, {disableTouch: false});
   }
 
   _handleOnPressNextQuestion = async () => {
@@ -358,11 +490,13 @@ export class PracticeQuestion extends React.PureComponent {
   }
 
   _renderFlipper = () => {
+    const { disableTouch } = this.state;
     return(
       <Animatable.View 
         style={{flex: 1}}
         ref={r => this.animatedContainer = r}
         useNativeDriver={true}
+        pointerEvents={disableTouch? 'none' : 'auto'}
       >
         <FlipView 
           ref={r => this.questionFlipView = r}

@@ -7,7 +7,7 @@ import { Header   } from 'react-navigation';
 import { BlurView } from 'expo';
 import * as Animatable from 'react-native-animatable';
 
-const overlayOpacity = 0.2
+const overlayOpacity = 0.3
 //declare animations
 Animatable.initializeRegistryWithDefinitions({
   //unflipped: start trans
