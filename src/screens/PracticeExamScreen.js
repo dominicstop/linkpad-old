@@ -38,7 +38,6 @@ export class PracticeExamListScreen extends React.Component {
   };
 
   componentDidMount(){
-    console.log('Rendering: PracticeExamListScreen');
     this.updateTitle(0 + '/100');
   }
 
@@ -54,6 +53,7 @@ export class PracticeExamListScreen extends React.Component {
           animation={'fadeInUp'}
           duration={500}
           easing={'ease-in-out'}
+          delay={150}
         >
           <PracticeExamList
             onSnapToItem={(index) => this.updateTitle(index + '/100')}

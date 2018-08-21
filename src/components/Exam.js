@@ -1,6 +1,8 @@
 import React from 'react';
-import { StyleSheet, Text, View, Dimensions, ScrollView, ViewPropTypes, TouchableOpacity } from 'react-native';
+import { StyleSheet, Text, View, Dimensions, ScrollView, ViewPropTypes, TouchableOpacity, Animated, Easing } from 'react-native';
 import PropTypes from 'prop-types';
+
+import { setStateAsync, timeout, shuffleArray } from '../functions/Utils';
 
 import { Button   } from './Buttons';
 import { FlipView } from './Views';
@@ -8,6 +10,9 @@ import { FlipView } from './Views';
 import * as Animatable from 'react-native-animatable';
 import      Carousel   from 'react-native-snap-carousel';
 import    { Header   } from 'react-navigation';
+
+import { DangerZone } from 'expo';
+const { Lottie } = DangerZone;
 
 const QUESTIONS = [
   {
@@ -28,6 +33,24 @@ const QUESTIONS = [
       'none' ,
     ],
   },
+  {
+    question: 'What is my name?',
+    answer  : 'Dominic Go',
+    choices: [
+      'Dominic',
+      'Go',
+      'beshie' ,
+    ],
+  },
+  {
+    question: 'Saang school did I make lipat?',
+    answer  : 'Pokpok University',
+    choices: [
+      'Adamson',
+      'TIP',
+      'Tambay' ,
+    ],
+  },
 ];
 
 const questionShape = {
@@ -38,47 +61,110 @@ const questionShape = {
   userAnswer: PropTypes.string,
 };
 
-//TODO: move to util func
-function setStateAsync(that, newState) {
-  return new Promise((resolve) => {
-      that.setState(newState, () => {
-          resolve();
-      });
-  });
+//TODO: create a generic wrappper
+//renders a animated check
+export class CheckAnimation extends React.PureComponent {
+  static propTypes = {
+    style: ViewPropTypes.style
+  }
+  
+  constructor(props){
+    super(props);
+    this.animatedValue = new Animated.Value(0);
+    this.state = {
+      source: require('../animations/checked_done_.json'),
+      mountAnimation: false,
+    };
+  }
+
+  //start animation
+  start = () => {
+    return new Promise(async resolve => {
+      await setStateAsync(this, {mountAnimation: true});
+      Animated.timing(this.animatedValue, { 
+        toValue: 1,
+        duration: 750,
+        useNativeDriver: true 
+      }).start(() => resolve());
+    });
+  }
+
+  render(){
+    const { style } = this.props;
+    if(!this.state.mountAnimation) return null;
+    return(
+      <Lottie
+        ref={r => this.animation = r}
+        progress={this.animatedValue}
+        style={style}
+        source={this.state.source}
+        loop={false}
+        autoplay={false}
+      />
+    );
+  }
 }
 
+//TODO: animate using opacity in order to use native driver
 //shows a single exam choice
 export class ExamChoice extends React.PureComponent {
   static propTypes = {
     choiceKey : PropTypes.string.isRequired,
     choiceText: PropTypes.string.isRequired,
+    answer    : PropTypes.string.isRequired,
     onPress   : PropTypes.func  .isRequired,
     //misc props
     style: ViewPropTypes.style,
   }
 
+  constructor(props){
+    super(props);
+    this.animatedValue = new Animated.Value(0);
+  }
+
+  animateColor = () => {
+    Animated.timing(this.animatedValue, {
+      toValue : 150,
+      duration: 500,
+    }).start();
+  }
+
   _onPressChoice = () => {
-    const { onPress, choiceText, choiceKey} = this.props;
+    const { onPress, choiceText, choiceKey, answer} = this.props;
+    //check if user's ans is correct
+    const isCorrect = choiceText == answer;
+
     onPress(choiceText, choiceKey);
+    if(!isCorrect) this.animateColor();
   }
   
   render(){
     const { choiceText, choiceKey, style } = this.props;
+
+    const interpolatedColor = this.animatedValue.interpolate({
+      inputRange : [0, 150],
+      outputRange: ['rgb(98, 0, 234)', 'rgb(237, 45, 113)']
+    });
+
     //TODO: move to styles
     const choiceContainerStyle = {
       flexDirection: 'row',
       alignItems: 'center',
-      backgroundColor: '#6200EA',
+      backgroundColor: interpolatedColor,
       padding: 8,
       borderRadius: 7,
     };
     return(
       <TouchableOpacity
-        style={[choiceContainerStyle, style]}
         onPress={this._onPressChoice}
+        activeOpacity={0.7}
       >
-        <Text style={{fontSize: 18, color: 'white', fontWeight: '900', width: 25,}}>{choiceKey }</Text>
-        <Text style={{fontSize: 18, color: 'white', fontWeight: '500'}}>{choiceText}</Text>
+        <Animated.View
+          style={[choiceContainerStyle, style]}
+        >
+          <Text style={{fontSize: 18, color: 'white', fontWeight: '900', width: 25,}}>{choiceKey }</Text>
+          <Text style={{fontSize: 18, color: 'white', fontWeight: '500'}}>{choiceText}</Text>
+        </Animated.View>
       </TouchableOpacity>
     );
   }
@@ -87,31 +173,26 @@ export class ExamChoice extends React.PureComponent {
 //shows a list of choices
 export class ExamChoiceList extends React.PureComponent {
   static propTypes = {
-    choices: PropTypes.arrayOf(PropTypes.string),
+    question: PropTypes.shape(questionShape),    
     onPressChoice: PropTypes.func,
   }
 
-  //TODO: move to util function
-  shuffleArray(array) {
-    var newArray = array.slice();
-    for (let i = newArray.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
-    }
-    return(newArray);
-  }
-
   _renderChoices = () => {
-    const { choices, onPressChoice } = this.props;
+    const { question, onPressChoice } = this.props;
+    //used for the key
     const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-
-    const shuffledChoices = this.shuffleArray(choices);
-
+    //combine choices and answer
+    const choicesArray = question.choices.slice();
+    choicesArray.push(question.answer);
+    //returns a copy of shuffled choices
+    const shuffledChoices = shuffleArray(choicesArray);
+    //render choices
     return shuffledChoices.map((choice, index) => 
       <ExamChoice
         choiceText={choice}
         choiceKey ={alphabet[index]}
-        key       ={choice + index}
+        answer    ={question.answer}
+        key       ={choice + index }
         style     ={{marginTop: 8, height: 45}}
         onPress   ={onPressChoice}
       />
@@ -130,8 +211,8 @@ export class ExamChoiceList extends React.PureComponent {
 //shows a question and a list of choices
 export class ExamQuestion extends React.PureComponent {
   static propTypes = {
-    onPressChoice: PropTypes.func,
     question: PropTypes.shape(questionShape),
+    onPressChoice: PropTypes.func,
   }
 
   _renderTopQuestion(){
@@ -149,12 +230,9 @@ export class ExamQuestion extends React.PureComponent {
 
   _renderBottomChoices(){
     const { question, onPressChoice } = this.props;
-    //combine choices and answer
-    const choicesArray = question.choices.slice();
-    choicesArray.push(question.answer);
     return(
       <ExamChoiceList
-        choices={choicesArray}
+        question={question}
         onPressChoice={onPressChoice}
       />
     );
@@ -171,82 +249,137 @@ export class ExamQuestion extends React.PureComponent {
 }
 
 export class Explanation extends React.PureComponent {
-
+  static propTypes = {
+  }
+  
+  render(){
+    return(
+      <View style={{flex: 1, padding: 10}}>
+        <Text style={{fontSize: 24}}>Explanation Here</Text>
+      </View>
+    );
+  }
 }
 
 export class PracticeQuestion extends React.PureComponent {
   static propTypes = {
     question: PropTypes.shape(questionShape),
+    questionNumber: PropTypes.number,
     onPressNextQuestion: PropTypes.func,
   }
 
   constructor(props){
     super(props);
     this.state = {
-      hideFlipper: false
+      isExplanationOnly: false,
+      userAnswer: null ,
     };
   }
 
   _handleOnPressChoices = async (choice, key) => {
     const { question } = this.props;
-    await this.questionFlipView.flipCard();
-    await setStateAsync(this, {hideFlipper: true});
-
+    //check if user's ans is correct
     const isCorrect = choice == question.answer;
-    
+    //update userAns state
+    await setStateAsync(this, {userAnswer: choice});
+    //animate check animation if correct
+    if(isCorrect){
+      //fade in white overlay + check animation + pulse forward
+      await Promise.all([
+        this.animiatedFrontOverlay.fadeIn(500),
+        this.animatedContainer.pulse(750),
+        this.animatedCheck.start(),
+      ]);
+    } else {
+      //shake the root view
+      await this.animatedContainer.shake(500);
+    }
+
+    await this.questionFlipView.flipCard();
   }
 
-  _handleOnPressNextQuestion = () => {
-    const { onPressNextQuestion } = this.props;
-    onPressNextQuestion();
+  _handleOnPressNextQuestion = async () => {
+    this.props.onPressNextQuestion();
+    //hide flipper after trans
+    await timeout(1000);
+    await setStateAsync(this, {isExplanationOnly: true});
+  }
+  
+
+  //renders a checkmark animation + trans white overlay
+  _renderFrontOverlay = () => {
+    return(
+      <Animatable.View 
+        style={{backgroundColor: 'rgba(250, 250, 250, 0.4)', position: 'absolute', width: '100%', height: '100%', alignItems: 'center', justifyContent: 'center', opacity: 0}}
+        ref={r => this.animiatedFrontOverlay = r}
+        useNativeDriver={true}
+        pointerEvents={'none'}
+      >
+        <CheckAnimation
+          ref={r => this.animatedCheck = r}
+        />
+      </Animatable.View>
+    );
   }
   
   _renderFrontQuestion = () => {
     return(
-      <ExamQuestion
-        onPressChoice={this._handleOnPressChoices}
-        question={this.props.question}
-      />
+      <View style={{flex: 1}}>
+        <ExamQuestion
+          onPressChoice={this._handleOnPressChoices}
+          question={this.props.question}
+        />
+        {this._renderFrontOverlay()}
+      </View>
     );
   }
 
   _renderBackExplaination = () => {
-    const { hideFlipper } = this.state;
+    const { isExplanationOnly } = this.state;
     return(
       <View 
-        style={hideFlipper? [styles.questionCard, styles.shadow, {flex: 1, overflow: 'visible'}] : undefined}
+        style={isExplanationOnly? [styles.questionCard, styles.shadow, {flex: 1, overflow: 'visible'}] : {flex: 1}}
         collapsable={true}
       >
-        <Button
-          text={'Flip'}
-          style={{backgroundColor: '#6200EA'}}
+        <Explanation
+          onPressNextQuestion={this._handleOnPressNextQuestion}
+        />
+        {!isExplanationOnly && <Button
+          text={'Next Question'}
+          style={{backgroundColor: '#6200EA', margin: 10}}
           iconName={'pencil-square-o'}
           iconType={'font-awesome'}
           iconSize={22}
           iconColor={'white'}
           onPress={this._handleOnPressNextQuestion}
-        />
+        />}
       </View>
     );
   }
 
   _renderFlipper = () => {
     return(
-      <FlipView 
-        ref={r => this.questionFlipView = r}
-        containerStyle={[{flex: 1}, styles.shadow]}
-        frontComponent={this._renderFrontQuestion()}
-        frontContainerStyle={styles.questionCard}
-        backComponent={this._renderBackExplaination()}
-        backContainerStyle={styles.questionCard}
-      />
+      <Animatable.View 
+        style={{flex: 1}}
+        ref={r => this.animatedContainer = r}
+        useNativeDriver={true}
+      >
+        <FlipView 
+          ref={r => this.questionFlipView = r}
+          containerStyle={[{flex: 1}, styles.shadow]}
+          frontComponent={this._renderFrontQuestion()}
+          frontContainerStyle={styles.questionCard}
+          backComponent={this._renderBackExplaination()}
+          backContainerStyle={styles.questionCard}
+        />
+      </Animatable.View>
     );
   }
 
   render(){
-    const { hideFlipper } = this.state;
+    const { isExplanationOnly } = this.state;
     return(
-      hideFlipper? this._renderBackExplaination() : this._renderFlipper()
+      isExplanationOnly? this._renderBackExplaination() : this._renderFlipper()
     );
   }
 }
@@ -303,6 +436,7 @@ export class PracticeExamList extends React.Component {
     return (
       <PracticeQuestion
         question={item}
+        questionNumber={index+1}
         onPressNextQuestion={this._onPressNextQuestion}
       />
     );
@@ -336,6 +470,7 @@ export class PracticeExamList extends React.Component {
     );
   }
 }
+
 
 const styles = StyleSheet.create({
   questionCard: {

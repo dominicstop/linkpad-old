@@ -13,14 +13,14 @@ Animatable.initializeRegistryWithDefinitions({
   //unflipped: start trans
   flipLeftStart: {
     easing: 'ease-in',
-    from  : { transform: [{ rotateY: '0deg'  }, { scale: 1    }] },
-    to    : { transform: [{ rotateY: '90deg' }, { scale: 0.95 }] },
+    from  : { transform: [{ rotateY: '0deg'  }, { rotateX: '0deg' }, { scale: 1    }] },
+    to    : { transform: [{ rotateY: '90deg' }, { rotateX: '4deg' }, { scale: 0.90 }] },
   },
   //unflipped: end trans
   flipLeftEnd: {
     easing: 'ease-out',
-    from  : { transform: [{ rotateY: '-90deg' }, { scale: 0.95 }] },
-    to    : { transform: [{ rotateY: '0deg'   }, { scale: 1    }] },
+    from  : { transform: [{ rotateY: '-90deg' }, { rotateX: '4deg' }, { scale: 0.90 }] },
+    to    : { transform: [{ rotateY: '0deg'   }, { rotateX: '0deg' }, { scale: 1    }] },
   },
   //flipped: start trans
   flipRightStart: {
@@ -244,7 +244,7 @@ export class FlipView extends React.PureComponent {
   _renderFrontView(){
     const { frontComponent, frontContainerStyle } = this.props;
     return(
-      <View style={frontContainerStyle}>
+      <View style={[frontContainerStyle]}>
         {frontComponent}
         <Animatable.View 
           style={[styles.cardBlackOverlay]} 
