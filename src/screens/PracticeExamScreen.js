@@ -53,7 +53,7 @@ export class PracticeExamListScreen extends React.Component {
           animation={'fadeInUp'}
           duration={500}
           easing={'ease-in-out'}
-          delay={150}
+          delay={750}
         >
           <PracticeExamList
             onSnapToItem={(index) => this.updateTitle(index + '/100')}

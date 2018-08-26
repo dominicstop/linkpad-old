@@ -56,6 +56,11 @@ export default class Homescreen extends React.PureComponent {
     super(props);
   }
 
+  componentDidMount(){
+    //const { navigation } = this.props;
+    //navigation.navigate('PracticeExamRoute');
+  }
+
   render(){
     return (
       <Animatable.View 
@@ -70,7 +75,8 @@ export default class Homescreen extends React.PureComponent {
           navigation={this.props.navigation}
           screenProps={{
             ...this.props.screenProps,
-            getRefSubjectModal: () => this.subjectModal,
+            getRefSubjectModal   : () => this.subjectModal    ,
+            getAppStackNavigation: () => this.props.navigation,
           }}
         />
       </Animatable.View>

@@ -2,6 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { View, Text, StyleSheet, Dimensions } from 'react-native';
 
+import NavigationService from '../NavigationService';
 import { IconText } from './Views';
 import { GradeItem, SummaryItem } from './Grades';
 
@@ -60,6 +61,10 @@ export class SubjectModal extends React.PureComponent {
 
   _onModalClosed = () => {
     this.setState({modalVisible: false});
+  }
+
+  _onPressStartPracticeExam = () => {
+    NavigationService.navigateApp('PracticeExamRoute');
   }
 
   //grades carousel
@@ -142,6 +147,7 @@ export class SubjectModal extends React.PureComponent {
           style={{backgroundColor: '#6200EA'}}
           iconName={'pencil-square-o'}
           iconType={'font-awesome'}
+          onPress={this._onPressStartPracticeExam}
           {...buttonProps}
         />
         <Button

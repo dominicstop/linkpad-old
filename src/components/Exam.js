@@ -4,20 +4,32 @@ import PropTypes from 'prop-types';
 
 import { setStateAsync, timeout, shuffleArray } from '../functions/Utils';
 
-import { Button   } from './Buttons';
+import { Button, ExpandCollapseTextWithHeader } from './Buttons';
 import { FlipView } from './Views';
 
 import * as Animatable from 'react-native-animatable';
 import      Carousel   from 'react-native-snap-carousel';
 import    { Header   } from 'react-navigation';
+import    { Divider  } from 'react-native-elements';
 
 import { DangerZone } from 'expo';
 const { Lottie } = DangerZone;
 
 const QUESTIONS = [
   {
+    question: 'This is a very long question and as such will trigger the collapsable text component in the explanation back view lorum ipsum sit amit dolor aspicing long question sample text here lorum ipsum.This is a very long question and as such will trigger the collapsable text component in the explanation back view lorum ipsum sit amit dolor aspicing long question sample text here lorum ipsum',
+    explanation: 'Hello world explanation',
+    answer: 'Pokpok University',
+    choices: [
+      'Adamson',
+      'TIP',
+      'Tambay' ,
+    ],
+  },
+  {
     question: 'What is Hello World',
-    answer  : 'Hello World',
+    explanation: 'This is a short explanation',
+    answer: 'Hello World',
     choices: [
       'Hello',
       'World',
@@ -26,7 +38,8 @@ const QUESTIONS = [
   },
   {
     question: 'What is my fave color',
-    answer  : 'blue',
+    explanation: 'This is a long explanation lorum ipsum sit amit dolor aspicing Hello world explanation. This is a long explanation lorum ipsum sit amit dolor aspicing Hello world explanation. This is a long explanation lorum ipsum sit amit dolor aspicing Hello world explanation',
+    answer: 'blue',
     choices: [
       'bitch',
       'lgbt',
@@ -35,7 +48,8 @@ const QUESTIONS = [
   },
   {
     question: 'What is my name?',
-    answer  : 'Dominic Go',
+    explanation: 'Hello world world hello explanation. Hello world world hello explanation',
+    answer: 'Dominic Go',
     choices: [
       'Dominic',
       'Go',
@@ -44,7 +58,8 @@ const QUESTIONS = [
   },
   {
     question: 'Saang school did I make lipat?',
-    answer  : 'Pokpok University',
+    explanation: 'Hello world world hello explanation.',
+    answer: 'Pokpok University',
     choices: [
       'Adamson',
       'TIP',
@@ -53,7 +68,8 @@ const QUESTIONS = [
   },
   {
     question: 'Do I still love him?',
-    answer  : 'I used to, but not anymore.',
+    explanation: 'lorum ipsum sit amit Hello world world hello explanation',
+    answer: 'I used to, but not anymore.',
     choices: [
       'Yes, I still am',
       'I gave up a long time ago',
@@ -62,7 +78,8 @@ const QUESTIONS = [
   },
   {
     question: 'Lorum ipsum sit amit dolor aspicing?',
-    answer  : 'Correct Answer',
+    explanation: 'Hello world world hello explanation lorum ipsum sit amit dolor aspicing',
+    answer: 'Correct Answer',
     choices: [
       'Dummy Choice',
       'Wrong Choice',
@@ -71,7 +88,8 @@ const QUESTIONS = [
   },
   {
     question: 'Lorum ipsum sit amit dolor aspicing?',
-    answer  : 'Correct Answer',
+    explanation: 'Hello world world hello explanation',
+    answer: 'Correct Answer',
     choices: [
       'Dummy Choice',
       'Wrong Choice',
@@ -80,7 +98,8 @@ const QUESTIONS = [
   },
   {
     question: 'Lorum ipsum sit amit dolor aspicing?',
-    answer  : 'Correct Answer',
+    explanation: 'Hello world world hello explanation',
+    answer: 'Correct Answer',
     choices: [
       'Dummy Choice',
       'Wrong Choice',
@@ -89,7 +108,8 @@ const QUESTIONS = [
   },
   {
     question: 'Lorum ipsum sit amit dolor aspicing?',
-    answer  : 'Correct Answer',
+    explanation: 'Hello world world hello explanation',
+    answer: 'Correct Answer',
     choices: [
       'Dummy Choice',
       'Wrong Choice',
@@ -98,79 +118,8 @@ const QUESTIONS = [
   },
   {
     question: 'Lorum ipsum sit amit dolor aspicing?',
-    answer  : 'Correct Answer',
-    choices: [
-      'Dummy Choice',
-      'Wrong Choice',
-      'Ladies Choice' ,
-    ],
-  },
-  {
-    question: 'Lorum ipsum sit amit dolor aspicing?',
-    answer  : 'Correct Answer',
-    choices: [
-      'Dummy Choice',
-      'Wrong Choice',
-      'Ladies Choice' ,
-    ],
-  },
-  {
-    question: 'Lorum ipsum sit amit dolor aspicing?',
-    answer  : 'Correct Answer',
-    choices: [
-      'Dummy Choice',
-      'Wrong Choice',
-      'Ladies Choice' ,
-    ],
-  },
-  {
-    question: 'Lorum ipsum sit amit dolor aspicing?',
-    answer  : 'Correct Answer',
-    choices: [
-      'Dummy Choice',
-      'Wrong Choice',
-      'Ladies Choice' ,
-    ],
-  },
-  {
-    question: 'Lorum ipsum sit amit dolor aspicing?',
-    answer  : 'Correct Answer',
-    choices: [
-      'Dummy Choice',
-      'Wrong Choice',
-      'Ladies Choice' ,
-    ],
-  },
-  {
-    question: 'Lorum ipsum sit amit dolor aspicing?',
-    answer  : 'Correct Answer',
-    choices: [
-      'Dummy Choice',
-      'Wrong Choice',
-      'Ladies Choice' ,
-    ],
-  },
-  {
-    question: 'Lorum ipsum sit amit dolor aspicing?',
-    answer  : 'Correct Answer',
-    choices: [
-      'Dummy Choice',
-      'Wrong Choice',
-      'Ladies Choice' ,
-    ],
-  },
-  {
-    question: 'Lorum ipsum sit amit dolor aspicing?',
-    answer  : 'Correct Answer',
-    choices: [
-      'Dummy Choice',
-      'Wrong Choice',
-      'Ladies Choice' ,
-    ],
-  },
-  {
-    question: 'Lorum ipsum sit amit dolor aspicing?',
-    answer  : 'Correct Answer',
+    explanation: 'Hello world world hello explanation1',
+    answer: 'Correct Answer',
     choices: [
       'Dummy Choice',
       'Wrong Choice',
@@ -231,7 +180,6 @@ export class CheckAnimation extends React.PureComponent {
   }
 }
 
-//TODO: animate using opacity in order to use native driver
 //shows a single exam choice
 export class ExamChoice extends React.PureComponent {
   static propTypes = {
@@ -250,7 +198,7 @@ export class ExamChoice extends React.PureComponent {
 
   animateColor = () => {
     Animated.timing(this.animatedValue, {
-      toValue : 150,
+      toValue : 1,
       duration: 500,
     }).start();
   }
@@ -267,30 +215,27 @@ export class ExamChoice extends React.PureComponent {
   render(){
     const { choiceText, choiceKey, style } = this.props;
 
-    const interpolatedColor = this.animatedValue.interpolate({
-      inputRange : [0, 150],
-      outputRange: ['rgb(98, 0, 234)', 'rgb(237, 45, 113)']
-    });
-
     //TODO: move to styles
-    const choiceContainerStyle = {
-      flexDirection: 'row',
-      alignItems: 'center',
-      backgroundColor: interpolatedColor,
-      padding: 8,
-      borderRadius: 7,
+    const colorOverlayStyle = {
+      position: 'absolute', 
+      height: '100%',
+      width: '100%', 
+      backgroundColor: 'rgb(237, 45, 113)',
+      opacity: this.animatedValue
     };
+
     return(
       <TouchableOpacity
+        style={[{height: 50, flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgb(98, 0, 234)', borderRadius: 8, overflow: 'hidden',}, style]}
         onPress={this._onPressChoice}
         activeOpacity={0.7}
       >
         <Animated.View
-          style={[choiceContainerStyle, style]}
-        >
-          <Text style={{fontSize: 18, color: 'white', fontWeight: '900', width: 25,}}>{choiceKey }</Text>
-          <Text style={{fontSize: 18, color: 'white', fontWeight: '500'}}>{choiceText}</Text>
-        </Animated.View>
+          style={colorOverlayStyle}
+          useNativeDriver={true}
+        />
+        <Text style={{fontSize: 18, marginHorizontal: 15, color: 'white', fontWeight: '900', width: 15,}}>{choiceKey }</Text>
+        <Text style={{fontSize: 18, color: 'white', fontWeight: '500'}}>{choiceText}</Text>
       </TouchableOpacity>
     );
   }
@@ -374,15 +319,131 @@ export class ExamQuestion extends React.PureComponent {
   }
 }
 
+//shows a question + title that can collapsed/expanded
+export class Question extends React.PureComponent {
+  static propTypes = {
+    question: PropTypes.shape(questionShape),    
+  }
+
+  _onPress = (isCollapsed) => {
+    this.animatedRootViewRef.pulse(750);
+  }
+
+  _renderQuestionHeader = () => {
+    return(
+      <Text style={{fontSize: 28, fontWeight: '800'}}>Question</Text>
+    );
+  }
+
+  _renderCollapsable(){
+    return(
+      <Animatable.View 
+        ref={r => this.animatedRootViewRef = r}
+        useNativeDriver={true}
+        {...this.props}
+      >
+        <ExpandCollapseTextWithHeader
+          collapsedNumberOfLines={4}
+          style={{fontSize: 20, fontWeight: '300', textAlign: 'justify'}}
+          text={this.props.question.question}
+          titleComponent={this._renderQuestionHeader()}
+          onPress={this._onPress}
+        />
+      </Animatable.View>
+    );
+  }
+
+  _renderNormal(){ 
+    return(
+      <View collapsable={true}>
+        {this._renderQuestionHeader()}
+        <Text style={{fontSize: 22, fontWeight: '300', textAlign: 'justify'}}>
+            {this.props.question.question}
+        </Text>
+      </View>
+    );
+  }
+
+  render(){
+    const { question } = this.props;
+    console.log('question.question.length: ' + question.question.length);
+    const isTextLong = question.question.length > 140;
+    return(
+      isTextLong? this._renderCollapsable() : this._renderNormal()
+    );
+  }
+
+}
+
+//shows a explanation + title that can collapsed/expanded
 export class Explanation extends React.PureComponent {
   static propTypes = {
+    question: PropTypes.shape(questionShape),    
   }
-  
+
+  _onPress = (isCollapsed) => {
+    this.animatedRootViewRef.pulse(750);
+  }
+
+  _renderQuestionHeader = () => {
+    return(
+      <Text style={{fontSize: 28, fontWeight: '800'}}>Explanation</Text>
+    );
+  }
+
+  _renderCollapsable(){
+    return(
+      <Animatable.View 
+        ref={r => this.animatedRootViewRef = r}
+        useNativeDriver={true}
+        {...this.props}
+      >
+        <ExpandCollapseTextWithHeader
+          collapsedNumberOfLines={4}
+          style={{fontSize: 20, fontWeight: '300', textAlign: 'justify'}}
+          text={this.props.question.explanation}
+          titleComponent={this._renderQuestionHeader()}
+          onPress={this._onPress}
+        />
+      </Animatable.View>
+    );
+  }
+
+  _renderNormal(){ 
+    return(
+      <View collapsable={true}>
+        {this._renderQuestionHeader()}
+        <Text style={{fontSize: 22, fontWeight: '300', textAlign: 'justify'}}>
+            {this.props.question.explanation}
+        </Text>
+      </View>
+    );
+  }
+
+  render(){
+    const { question } = this.props;
+    //console.log('question.question.length: ' + question.question.length);
+    const isTextLong = question.explanation.length > 140;
+    return(
+      isTextLong? this._renderCollapsable() : this._renderNormal()
+    );
+  }
+
+}
+
+//shows a question, ans + explanation
+export class QuestionExplanation extends React.PureComponent {
+  static propTypes = {
+    question: PropTypes.shape(questionShape),    
+  }
+
   render(){
     return(
-      <View style={{flex: 1, padding: 10}}>
-        <Text style={{fontSize: 24}}>Explanation Here</Text>
-      </View>
+      <ScrollView style={{flex: 1, padding: 15}}>
+        <Question question={this.props.question}/>
+        <Divider style={{marginVertical: 10, marginHorizontal: 15}}/>
+        <Explanation question={this.props.question}/>
+      </ScrollView>
     );
   }
 }
@@ -422,7 +483,7 @@ export class PracticeQuestion extends React.PureComponent {
       ]);
     } else {
       //shake the root view
-      await this.animatedContainer.shake(500);
+      await this.animatedContainer.shake(750);
     }
     //flip and show explanation
     await this.questionFlipView.flipCard();
@@ -431,29 +492,28 @@ export class PracticeQuestion extends React.PureComponent {
   }
 
   _handleOnPressNextQuestion = async () => {
+    //call callback prop
     this.props.onPressNextQuestion();
     //hide flipper after trans
     await timeout(1000);
     await setStateAsync(this, {isExplanationOnly: true});
   }
   
-
   //renders a checkmark animation + trans white overlay
   _renderFrontOverlay = () => {
     return(
       <Animatable.View 
-        style={{backgroundColor: 'rgba(250, 250, 250, 0.4)', position: 'absolute', width: '100%', height: '100%', alignItems: 'center', justifyContent: 'center', opacity: 0}}
+        style={{backgroundColor: 'rgba(250, 250, 250, 0.5)', position: 'absolute', width: '100%', height: '100%', alignItems: 'center', justifyContent: 'center', opacity: 0}}
         ref={r => this.animiatedFrontOverlay = r}
         useNativeDriver={true}
         pointerEvents={'none'}
       >
-        <CheckAnimation
-          ref={r => this.animatedCheck = r}
-        />
+        <CheckAnimation ref={r => this.animatedCheck = r} />
       </Animatable.View>
     );
   }
   
+  //renders the front question + choices
   _renderFrontQuestion = () => {
     return(
       <View style={{flex: 1}}>
@@ -473,7 +533,8 @@ export class PracticeQuestion extends React.PureComponent {
         style={isExplanationOnly? [styles.questionCard, styles.shadow, {flex: 1, overflow: 'visible'}] : {flex: 1}}
         collapsable={true}
       >
-        <Explanation
+        <QuestionExplanation
+          question={this.props.question}
           onPressNextQuestion={this._handleOnPressNextQuestion}
         />
         {!isExplanationOnly && <Button

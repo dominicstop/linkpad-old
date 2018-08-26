@@ -7,7 +7,7 @@ import { Header   } from 'react-navigation';
 import { BlurView } from 'expo';
 import * as Animatable from 'react-native-animatable';
 
-const overlayOpacity = 0.3
+const overlayOpacity = 0.4
 //declare animations
 Animatable.initializeRegistryWithDefinitions({
   //unflipped: start trans
@@ -154,7 +154,7 @@ export class ViewWithBlurredHeader extends React.Component {
   }
 }
 
-//used for animating items inside a flatlist
+//Container: used for animating items inside a flatlist
 export class AnimatedListItem extends React.PureComponent {
   static propTypes = {
     index     : PropTypes.number,
@@ -206,8 +206,8 @@ export class FlipView extends React.PureComponent {
     return new Promise(async resolve => {
       //flip start
       await Promise.all([
-        this.animatedFrontBlackOverlay.partialFadeIn(200),
-        this.animatedRootView         .flipLeftStart(200),
+        this.animatedFrontBlackOverlay.partialFadeIn(300),
+        this.animatedRootView         .flipLeftStart(300),
       ]);
       //hide front, show back
       await this.setState({flipped: true});

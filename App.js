@@ -19,7 +19,7 @@ const AppStack = createStackNavigator({
     }
   },{
     headerMode: 'hidden',
-    initialRouteName: 'PracticeExamRoute',
+    initialRouteName: 'HomeRoute',
   }
 );
 
@@ -33,16 +33,33 @@ const AuthStack = createStackNavigator({
   }
 );
 
+//holds the AppStack and exposes it via NavigationService
+export class AppScreen extends React.Component {
+  static router = AppStack.router;
+
+  render() {
+    return (
+      <AppStack 
+        navigation={this.props.navigation} 
+        ref={navigatorRef => {
+          NavigationService.setAppNavigator(navigatorRef);
+        }}  
+      />
+    );
+  }
+}
+
 //shows loading then navigates to either app or signin
 export const RootNavigator = createSwitchNavigator({
     AuthLoading: AuthLoadingScreen,
-    AppRoute   : AppStack ,
+    AppRoute   : AppScreen,
     AuthRoute  : AuthStack,
   }, {
     initialRouteName: 'AuthLoading',
   }
 );
 
+//holds the RootNavigator and exposes it via NavigationService
 export default class App extends React.Component {
   static router = RootNavigator.router;
 
@@ -55,7 +72,7 @@ export default class App extends React.Component {
       <RootNavigator
         navigation={this.props.navigation}
         ref={navigatorRef => {
-          NavigationService.setTopLevelNavigator(navigatorRef);
+          NavigationService.setRootNavigator(navigatorRef);
         }}
       />
     );

@@ -336,6 +336,195 @@ export class ExpandableWithHeader extends React.PureComponent {
   }
 }
 
+//touch to expand text
+export class ExpandCollapseText extends React.PureComponent {
+  static propTypes = {
+    text: PropTypes.string,
+    collapsedNumberOfLines: PropTypes.number,
+    onPress: PropTypes.func
+  }
+
+  static defaultProps = {
+    onPress: (isCollapsed) => {},
+  }
+
+  constructor(props){
+    super(props);
+    this.debug = false;
+    this.state = {
+      collapsed: true,
+      //onlayout: text height when collapsedNumberOfLines is set
+      collapsedHeight: null,
+      //onlayout: text height when collapsedNumberOfLines not set
+      expandedHeight : null,
+      //value of null = max height
+      viewHeight: null
+    };
+  }
+
+  isCollapsed = () => {
+    const { viewHeight, collapsedHeight } = this.state;
+    return viewHeight != null;
+  }
+
+  //switch betw. expanded and collapsed
+  toggle = () => {
+    const { collapsedHeight, expandedHeight } = this.state;
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    this.setState((prevState, props) => {
+      const collapsedViewHeight = expandedHeight - collapsedHeight;
+      const isCollapsed = prevState.viewHeight > 0;
+
+      //debug to console
+      if(this.debug){
+        console.log('\n\ntoggle...');
+        console.log('Prev. viewHeight: ' + prevState.viewHeight);
+        console.log('collapsedHeight: '  + collapsedHeight     );
+        console.log('isCollapsed: '      + isCollapsed         );
+      }
+
+      return { viewHeight: isCollapsed? null : collapsedViewHeight };
+    });
+  }
+
+  _onPress = () => {
+    const { viewHeight, collapsedHeight } = this.state;
+    const isCollapsed = viewHeight != null;
+    //debug
+    if(this.debug) console.log('\n\nOnPress...');
+    this.props.onPress(isCollapsed);
+    this.toggle();
+  }
+
+  _onLayout = (event) => {
+    const { collapsedHeight, expandedHeight } = this.state;
+    const { height } = event.nativeEvent.layout;
+
+    //run once, on mount: collapsedHeight: null
+    if(!collapsedHeight){
+      //debugging
+      if(this.debug){
+        console.log('\n\nText - OnLayout...');
+        console.log('Prev. collapsedHeight: ' + collapsedHeight);
+        console.log('New   collapsedHeight: ' + height);
+        console.log('viewHeight: ' + height);
+      }
+      this.setState({
+        collapsedHeight: height,
+      });
+    }
+    //run once, on mount: expandedHeight: null & collapsedHeight is set
+    if(!expandedHeight && collapsedHeight){
+      //debugging
+      if(this.debug) console.log('\n\nexpanded viewHeight: ' + height);
+
+      this.setState({
+        expandedHeight: height,
+        viewHeight    : height - collapsedHeight,        
+      });
+    }
+  }
+
+  render(){
+    const { text, collapsedNumberOfLines, onPress, containerStyle, ...textProps} = this.props;
+    const { collapsedHeight, expandedHeight, viewHeight } = this.state;
+    const numOfLines = collapsedHeight? null : collapsedNumberOfLines;
+
+    //debugging
+    if(this.debug){
+      console.log('\n\nRender....');
+      console.log('collapsedHeight: ' + collapsedHeight);
+      console.log('numOfLines: ' + numOfLines);
+      console.log('viewHeight: ' + viewHeight);
+    }
+
+
+    return (
+      <TouchableOpacity
+        style={[containerStyle, {marginBottom: 0 - viewHeight}]}
+        onPress={this._onPress}
+        activeOpacity={0.5}
+      >
+        <Text
+          numberOfLines={numOfLines}
+          onLayout={this._onLayout}
+          selectable={false}
+          ellipsizeMode={'tail'}
+          {...textProps}
+        >
+          {text}
+        </Text>
+        <View style={{marginTop: 0 - viewHeight, height: viewHeight, width: '100%', backgroundColor: 'white'}}/>
+      </TouchableOpacity>
+    );
+  }
+}
+
+//touch to expand text with animated header
+export class ExpandCollapseTextWithHeader extends React.PureComponent {
+  static propTypes = {
+    text: PropTypes.string,
+    collapsedNumberOfLines: PropTypes.number,
+    onPress: PropTypes.func,
+    titleComponent: PropTypes.element,
+  }
+
+  static defaultProps = {
+    onPress: (isCollapsed) => {},
+  }
+
+  _onPressHeader = () => {
+    this.expandCollapseRef._onPress();
+  }
+
+  _onPress = (isCollapsed) => {
+    this.props.onPress(isCollapsed);
+    this.chevron.transitionTo([{
+      transform: [{rotate:  isCollapsed? '180deg' : '0deg'}]
+    }]);
+  }
+
+  _renderHeader(){
+    const { titleComponent } = this.props;
+    return(
+      <TouchableOpacity 
+        style={{flexDirection: 'row'}}
+        onPress={this._onPressHeader}
+      >
+        <View style={{flex: 1}}>
+          {titleComponent}
+        </View>
+        <Animatable.View
+          style={{alignItems: 'center', justifyContent: 'center', transform: [{ rotate : '0deg' }]}}
+          ref={r => this.chevron = r}
+          useNativeDriver={true}
+        >
+          <Icon
+            name='chevron-down'
+            type='feather'
+            color='grey'
+            size={30}
+          />
+        </Animatable.View>
+      </TouchableOpacity>
+    );
+  }
+
+  render(){
+    const { titleComponent, onPress, ...expandCollapseProps} = this.props;
+    return(
+      <View collapsable={true}>
+        {this._renderHeader()}
+        <ExpandCollapseText
+          {...expandCollapseProps}
+          ref={r => this.expandCollapseRef = r}
+          onPress={this._onPress}
+        />
+      </View>
+    );
+  }
+}
+
 export class Checkbox extends React.Component {
   //props definition
   static propTypes = {
