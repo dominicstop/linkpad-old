@@ -3,12 +3,14 @@ import React from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, AsyncStorage, ScrollView, TextInput, UIManager, LayoutAnimation, ActivityIndicator, KeyboardAvoidingView } from 'react-native';
 
 import { AnimatedGradient } from '../components/AnimatedGradient';
+import { IconButton       } from '../components/Buttons';
+import { IconText         } from '../components/Views';
+import {setStateAsync, timeout} from '../functions/Utils';
+import ModuleDataProvider from '../functions/ModuleDataProvider';
 
 import * as Animatable from 'react-native-animatable';
 import { Icon } from 'react-native-elements';
-
-import { IconButton } from '../components/Buttons';
-import { IconText   } from '../components/Views';
+import store from 'react-native-simple-store';
 
 UIManager.setLayoutAnimationEnabledExperimental && UIManager.setLayoutAnimationEnabledExperimental(true);
 
@@ -49,15 +51,12 @@ export class LoginContainer extends React.Component {
     super(props);
   }
 
-  timeout(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-  }
-
   _login = async (callbacks) => {
     const {
       onLoginLoading , //while logging in
       onLoginInvalid , //invalid email/password
       onLoginError   , //something went wrong
+      onLoginFetching,
       onLoginFinished, //finish logging in
     } = callbacks;
 
@@ -66,11 +65,18 @@ export class LoginContainer extends React.Component {
     onLoginLoading && onLoginLoading();
 
     //simulate loading
-    await this.timeout(2000);
+    await timeout(1500);
+
+    //wait for animation and fetch to finish
+    await Promise.all([
+      ModuleDataProvider.getModuleData(),
+      onLoginFetching(),
+    ]);
     
     onLoginFinished && await onLoginFinished();
 
-    await AsyncStorage.setItem('userToken', 'abc');
+    //await AsyncStorage.setItem('userToken', 'abc');
+    await store.save('userToken', {loggedIn: true});
     navigation.navigate('AppRoute');
   }
 
@@ -78,7 +84,6 @@ export class LoginContainer extends React.Component {
     const childProps = {
       login: this._login,
     };
-
 
     return(
       React.cloneElement(this.props.children, childProps)
@@ -102,6 +107,7 @@ export class LoginUI extends React.Component {
   onPressLogin = async () => {
     await this.toggleLoading(true);
     this.props.login({
+      onLoginFetching: this.toggleLoginFetching  ,
       onLoginFinished: this.toggleLoginSuccessful,
     });
   }
@@ -123,10 +129,20 @@ export class LoginUI extends React.Component {
     });
   }
 
-  transitionHeader = () => {
+  transitionHeader = (callback) => {
     return new Promise(async resolve => {
-      await this.headerTitle.fadeOutLeft(250);
-      await this.headerTitle.fadeInRight(250);
+      //animate in
+      await Promise.all([
+        this.headerTitle   .fadeOutLeft(250),
+        this.headerSubtitle.fadeOut(100),
+      ]);
+      //call callback function
+      if(callback) await callback();
+      //animate out
+      await Promise.all([
+        this.headerTitle.fadeInRight(250),
+        this.headerSubtitle.fadeInRight(400),
+      ]);
       resolve();
     });
   }
@@ -145,10 +161,23 @@ export class LoginUI extends React.Component {
     });
   }
 
+  toggleLoginFetching = () => new Promise(async (resolve) => {
+    //animate header
+    await this.transitionHeader(async () => {
+      //change header text
+      await setStateAsync(this, {mode: 'fetching'})
+    });
+    //prevent animation from finishing too
+    await timeout(500);
+    //finish
+    resolve();
+  });
+  
+
   _renderHeader = () => {
     const { mode } = this.state;
 
-    let headerTitle = '';
+    let headerTitle    = '';
     let headerSubtitle = '';
 
     switch(mode) {
@@ -159,6 +188,10 @@ export class LoginUI extends React.Component {
       case 'loading':
         headerTitle    = 'LOGGING IN';
         headerSubtitle = 'Please wait for second...';
+        break;
+      case 'fetching':
+        headerTitle    = 'FETCHING';
+        headerSubtitle = 'Loading the data...';
         break;
       case 'succesful':
         headerTitle    = 'LOGGED IN';
@@ -173,7 +206,7 @@ export class LoginUI extends React.Component {
           ref={r => this.headerTitle = r}
           useNativeDriver={true}
         >
-          {mode == 'loading' && <ActivityIndicator size='large' style={{marginRight: 10}}/>}
+          {(mode == 'loading' || mode == 'fetching') && <ActivityIndicator size='large' style={{marginRight: 10}}/>}
           <Text style={{fontSize: 38, fontWeight: '900', color: 'white'}}>
             {headerTitle}
           </Text>

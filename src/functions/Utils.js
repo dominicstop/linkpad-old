@@ -1,3 +1,4 @@
+import chroma from 'chroma-js';
 
 //wrapper func for setstate that returns a promise
 export function setStateAsync(that, newState) {
@@ -21,4 +22,24 @@ export function shuffleArray(array) {
     [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
   }
   return(newArray);
+}
+
+export function colorShift(color, max){
+  console.log(color);
+  let hsl = chroma(color).hsl();
+  console.log('hsl original');
+  console.log(hsl);
+
+  for(let index of hsl){
+    
+  }
+  let sign   = Math.round(Math.random()) * 2 - 1;
+  let offset = Math.floor(Math.random() * max);
+  hsl[0] += (offset * sign);
+  console.log('hsl modif');
+  console.log(hsl);
+  console.log('\n\n');
+  const result = chroma.hsl(hsl[0], hsl[1], hsl[2]).hex();
+  alert(result);
+  return result;
 }

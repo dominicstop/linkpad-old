@@ -5,11 +5,14 @@ import { StyleSheet, Text, View, Dimensions, Image, FlatList, TouchableOpacity, 
 import { IconText  , AnimatedListItem } from './Views';
 import { GaugeChart, GradeDougnut     } from './Charts';
 
+import { colorShift } from '../functions/Utils';
+
 import Chroma from 'chroma-js';
 import Carousel from 'react-native-snap-carousel';
 import * as Animatable from 'react-native-animatable';
 import { LinearGradient } from 'expo';
 import { material, human, systemWeights } from 'react-native-typography';
+import _ from 'lodash';
 import ProgressBar from 'react-native-progress/Bar';
 import { Bar } from 'react-native-progress';
 
@@ -21,11 +24,25 @@ export const subjectProps = {
   subjectDesc: PropTypes.string,
 }
 
+/*
+  export const moduleProps = {
+    moduleID  : PropTypes.string,
+    moduleName: PropTypes.string,
+    moduleDesc: PropTypes.string,
+    subjects  : PropTypes.arrayOf(
+      PropTypes.shape(subjectProps)
+    ),
+  }
+*/
+
 export const moduleProps = {
-  moduleID  : PropTypes.string,
-  moduleName: PropTypes.string,
-  moduleDesc: PropTypes.string,
-  subjects  : PropTypes.arrayOf(
+  indexid: PropTypes.oneOfType([
+    PropTypes.string,
+    PropTypes.number,
+  ]),
+  modulename : PropTypes.string,
+  description: PropTypes.string,
+  subjects   : PropTypes.arrayOf(
     PropTypes.shape(subjectProps)
   ),
 }
@@ -165,21 +182,21 @@ export class SubjectDetails extends React.PureComponent {
         activeOpacity={0.7}
       >
         {/*Title*/}
-        <IconText
-          text={subjectData.subjectName}
-          textStyle={styles.subjectTitle}
-          iconColor={color}
-          iconName='heart'
-          iconType='entypo'
-          iconSize={22}
-        />
         <Text 
-          style={[{flex: 1, marginTop: 2, textAlign: 'justify'}, styles.subjectSubtitle]} 
+          style={styles.subjectTitle}
+          numberOfLines={1}
+          ellipsizeMode={'tail'} 
+          lineBreakMode={'tail'}
+        >
+          {subjectData.subjectname}
+        </Text>
+        <Text 
+          style={[{flex: 1, marginTop: 1, textAlign: 'justify'}, styles.subjectSubtitle]} 
           numberOfLines={numberOfLinesDesc}
           ellipsizeMode={'tail'} 
           lineBreakMode={'tail'}
         >
-          {subjectData.subjectDesc}
+          {subjectData.description}
         </Text>
       </TouchableOpacity>
     );
@@ -214,22 +231,50 @@ export class SubjectItem extends React.PureComponent {
 
   render() {
     const { subjectData, height, containerStyle } = this.props;
-    const color = subjectData.graidentBG[1];
+
+    const GRADIENTS = [
+      ['#36e3da', '#1b74fd'],
+      ['#4fb2fb', '#6f12e0'],
+      ['#ff2af2', '#5f1691'],
+      ['#ff4e88', '#9a45d4'],
+      ['#fb255e', '#ff5420'],
+      ['#fd1226', '#ff8b0d'],
+      ['#f0ff5b', '#ff6500'],
+    ];
+
+    const unused = [
+      ['#85fc28', '#02692c'],
+      ['#1ffc5d', '#005d40'],
+      ['#00f994', '#02757c'],
+    ];
+
+    //const randColor = _.sample(GRADIENTS);
+    //const selectedGradient = [colorShift(randColor[0], 20), colorShift(randColor[1], 15)];
+    //console.log(selectedGradient);
+    const selectedGradient = ['white', 'white']
+
+    const DUMMY_PROGRESS = {
+      correct  : 90,
+      mistakes : 0,
+      questions: 100,
+    };
+
+    const color = selectedGradient[1];
 
     return(
       <View style={[{ height: height, paddingTop: 10, paddingBottom: 35, shadowOffset:{  width: 4,  height: 5}, shadowColor: '#686868', shadowOpacity: 0.5, shadowRadius: 5}, containerStyle]} removeClippedSubviews={false}>
         <LinearGradient
           style={{flex: 1, height: '100%', borderRadius: 15, flexDirection: 'row', paddingHorizontal: 20, paddingVertical: 15}}
-          colors={subjectData.graidentBG}
+          colors={selectedGradient}
           start={{x: 0, y: 0}} 
           end={{x: 1, y: 1}}
           overflow='hidden' 
         >
-          <SubjectProgress 
-            progressData={subjectData.progress} 
+          {true && <SubjectProgress 
+            progressData={DUMMY_PROGRESS} 
             color={Chroma(color).saturate(2).hex()}         
             backgroundColor={Chroma(color).brighten(2).hex()}         
-          />
+          />}
           <SubjectDetails
             numberOfLinesDesc={this.props.numberOfLinesDesc}
             containerStyle={{marginLeft: 13}}
@@ -255,7 +300,7 @@ export class ModuleTitle extends React.PureComponent {
       <IconText
         textStyle={[styles.title, {}]}
         iconSize ={20}
-        text={moduleData.moduleName}
+        text={moduleData.modulename}
         iconColor='grey'
         iconName ='heart'
         iconType ='entypo'
@@ -280,7 +325,7 @@ export class ModuleDescription extends React.PureComponent {
         style={[{textAlign: 'justify'}, styles.subtitle]}
         numberOfLines={ detailedView? undefined : 2}
       >
-        {moduleData.moduleDesc}
+        {moduleData.description}
       </Text>
     );
   }
@@ -374,6 +419,12 @@ export class ModuleList extends React.Component {
     //style
     containerStyle: ViewPropTypes.style,
   }
+
+  constructor(props){
+    super(props);
+    console.log('this.props.moduleList');
+    console.log(this.props.moduleList);
+  }
   
   _renderItem = ({item, index}) => {
     return(
@@ -400,7 +451,7 @@ export class ModuleList extends React.Component {
       <FlatList
         style       ={[containerStyle]}
         data        ={moduleList}
-        keyExtractor={(item) => item.moduleID }
+        keyExtractor={(item) => item.indexid }
         renderItem  ={this._renderItem }
         ListFooterComponent={<View style={{padding: 100}}/>}
         scrollEventThrottle={200}
@@ -460,11 +511,8 @@ export class SubjectList extends React.Component {
 
 const styles = StyleSheet.create({
   title: {
-    ...systemWeights.boldObject,
-    ...Platform.select({
-      ios    : human.title2Object,
-      android: material.headlineObject,
-    }),
+    fontWeight: '600',
+    fontSize: 26,
   },
   titleLarge: {
     ...systemWeights.boldObject,
@@ -472,28 +520,21 @@ const styles = StyleSheet.create({
       ios    : human.title1Object,
       android: material.headlineObject,
     }),
+    color: 'rgba(255, 255, 255, 0.9)',
   },
   subtitle: {
-    ...systemWeights.thinObject,
-    ...Platform.select({
-      ios    : human.bodyObject,
-      android: material.subheadingObject,
-    }),
-    color: 'grey',
+    fontWeight: '400',
+    fontSize: 20,
   },
   subjectTitle: {
-    ...systemWeights.semiboldObject,
-    ...Platform.select({
-      ios    : human.title3Object,
-      android: material.display1Object,
-    }),
+    fontWeight: '900',
+    fontSize: 24,
+    color: 'rgba(255, 255, 255, 0.9)',
+
   },
   subjectSubtitle: {
-    ...systemWeights.thinObject,
-    ...Platform.select({
-      ios    : human.subheadObject,
-      android: material.subheadingObject,
-    }),
-    color: 'rgba(0, 0, 0, 0.6)',
+    fontWeight: '500',
+    fontSize: 16,
+    color: 'rgba(255, 255, 255, 0.9)',
   }
 });

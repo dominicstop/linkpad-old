@@ -429,7 +429,6 @@ export class ExpandCollapseText extends React.PureComponent {
     const { text, collapsedNumberOfLines, onPress, containerStyle, ...textProps} = this.props;
     const { collapsedHeight, expandedHeight, viewHeight } = this.state;
     const numOfLines = collapsedHeight? null : collapsedNumberOfLines;
-
     //debugging
     if(this.debug){
       console.log('\n\nRender....');
@@ -437,8 +436,6 @@ export class ExpandCollapseText extends React.PureComponent {
       console.log('numOfLines: ' + numOfLines);
       console.log('viewHeight: ' + viewHeight);
     }
-
-
     return (
       <TouchableOpacity
         style={[containerStyle, {marginBottom: 0 - viewHeight}]}

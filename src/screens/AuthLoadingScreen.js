@@ -3,6 +3,7 @@ import { StyleSheet, Text, View, ActivityIndicator, AsyncStorage, Dimensions } f
 
 import * as Animatable from 'react-native-animatable';
 import { BarIndicator } from 'react-native-indicators';
+import store from 'react-native-simple-store';
 
 Animatable.initializeRegistryWithDefinitions({
   zoomInTransition: {
@@ -19,7 +20,9 @@ export default class AuthLoadingScreen extends React.Component {
   _authenticate = () => {
     return new Promise(async resolve => {
       //do some authentication here
-      const userToken = await AsyncStorage.getItem('userToken');
+      const userToken = await store.get('userToken');
+      //await store.delete('modules');
+      //await store.delete('userToken');
       resolve(userToken);
     });
   }
@@ -41,8 +44,11 @@ export default class AuthLoadingScreen extends React.Component {
     ]);
 
     //navigate
-    userToken = results[0];
-    this.props.navigation.navigate(userToken? 'AppRoute' : 'AuthRoute');
+    const userToken = results[0];
+    console.log('userToken');
+    console.log(userToken);
+    const isLoggedIn = userToken != null;
+    this.props.navigation.navigate(isLoggedIn? 'AppRoute' : 'AuthRoute');
   }
   
   render(){

@@ -85,7 +85,7 @@ export class SettingsScreen extends React.Component {
 
   _signOutAsync = async () => {
     await AsyncStorage.clear();
-    NavigationService.navigate('AuthRoute');
+    //NavigationService.navigate('AuthRoute');
   };
 
   render(){

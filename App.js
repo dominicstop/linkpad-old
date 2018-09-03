@@ -10,6 +10,7 @@ import NavigationService  from './src/NavigationService';
 
 import { PracticeExamStack } from './src/screens/PracticeExamScreen';
 
+//main stack for app screens
 const AppStack = createStackNavigator({
     HomeRoute: {
       screen: Homescreen,

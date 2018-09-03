@@ -6,6 +6,7 @@ import   Constants               from '../Constants'         ;
 import { ModuleList            } from '../components/Cards'  ;
 import { CustomHeader          } from '../components/Header' ;
 import { ViewWithBlurredHeader } from '../components/Views'  ;
+import ModuleDataProvider from '../functions/ModuleDataProvider';
 
 import { Header, createStackNavigator } from 'react-navigation';
 
@@ -225,6 +226,18 @@ export class ModuleListScreen extends React.Component {
     headerTitle: ModulesHeader,
   };
 
+  constructor(props){
+    super(props);
+    this.state = {
+      modules: null, 
+    };
+  }
+  
+  componentWillMount = async () => {
+    let modules = await ModuleDataProvider.getModuleData();
+    this.setState({modules: modules});
+  }
+
   _navigateToModule = (moduleData) => {
     this.props.navigation.navigate('SubjectListRoute', {
       moduleData: moduleData,
@@ -237,14 +250,16 @@ export class ModuleListScreen extends React.Component {
   }
 
   render(){
+    //console.log('ModuleList: this.state.modules');
+    //console.log(this.state.modules);
     return(
       <ViewWithBlurredHeader hasTabBar={true}>
-        <ModuleList 
+        {this.state.modules && <ModuleList 
           containerStyle={{paddingTop: Header.HEIGHT + 15, backgroundColor: 'white'}}
-          moduleList={cardsData}
+          moduleList={this.state.modules}
           onPressModule ={this._navigateToModule}
           onPressSubject={this._onPressSubject}
-        />
+        />}
       </ViewWithBlurredHeader>
     );
   }

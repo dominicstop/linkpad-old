@@ -17,66 +17,6 @@ const { Lottie } = DangerZone;
 
 const QUESTIONS = [
   {
-    question: 'This is a very long question and as such will trigger the collapsable text component in the explanation back view lorum ipsum sit amit dolor aspicing long question sample text here lorum ipsum.This is a very long question and as such will trigger the collapsable text component in the explanation back view lorum ipsum sit amit dolor aspicing long question sample text here lorum ipsum',
-    explanation: 'Hello world explanation',
-    answer: 'Pokpok University',
-    choices: [
-      'Adamson',
-      'TIP',
-      'Tambay' ,
-    ],
-  },
-  {
-    question: 'What is Hello World',
-    explanation: 'This is a short explanation',
-    answer: 'Hello World',
-    choices: [
-      'Hello',
-      'World',
-      'Word Hello' ,
-    ],
-  },
-  {
-    question: 'What is my fave color',
-    explanation: 'This is a long explanation lorum ipsum sit amit dolor aspicing Hello world explanation. This is a long explanation lorum ipsum sit amit dolor aspicing Hello world explanation. This is a long explanation lorum ipsum sit amit dolor aspicing Hello world explanation',
-    answer: 'blue',
-    choices: [
-      'bitch',
-      'lgbt',
-      'none' ,
-    ],
-  },
-  {
-    question: 'What is my name?',
-    explanation: 'Hello world world hello explanation. Hello world world hello explanation',
-    answer: 'Dominic Go',
-    choices: [
-      'Dominic',
-      'Go',
-      'beshie' ,
-    ],
-  },
-  {
-    question: 'Saang school did I make lipat?',
-    explanation: 'Hello world world hello explanation.',
-    answer: 'Pokpok University',
-    choices: [
-      'Adamson',
-      'TIP',
-      'Tambay' ,
-    ],
-  },
-  {
-    question: 'Do I still love him?',
-    explanation: 'lorum ipsum sit amit Hello world world hello explanation',
-    answer: 'I used to, but not anymore.',
-    choices: [
-      'Yes, I still am',
-      'I gave up a long time ago',
-      'Unfortunately, No.' ,
-    ],
-  },
-  {
     question: 'Lorum ipsum sit amit dolor aspicing?',
     explanation: 'Hello world world hello explanation lorum ipsum sit amit dolor aspicing',
     answer: 'Correct Answer',
@@ -291,7 +231,7 @@ export class ExamQuestion extends React.PureComponent {
     return(
       <View style={{flex: 1}}>
         <ScrollView style={{flex: 1}}>
-          <Text style={{fontSize: 24}}>
+          <Text style={{fontSize: 22}}>
             {question.question}
           </Text>
         </ScrollView>
@@ -319,7 +259,7 @@ export class ExamQuestion extends React.PureComponent {
   }
 }
 
-//shows a question + title that can collapsed/expanded
+//shows a single question + title that can collapsed/expanded
 export class Question extends React.PureComponent {
   static propTypes = {
     question: PropTypes.shape(questionShape),    

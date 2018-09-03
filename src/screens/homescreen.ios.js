@@ -3,11 +3,14 @@ import React from 'react';
 import { NAV_BGCOLOR     } from '../Constants'        ;
 import { SubjectModal    } from '../components/Modals';
 import { ModuleListStack } from './ModuleListScreen'  ;
+import { ExamsStack      } from './ExamsScreen';
 import { SettingsStack   } from './SettingsScreen'    ;
+
 
 import * as Animatable from 'react-native-animatable';
 import { createBottomTabNavigator } from 'react-navigation';
 import { Icon } from 'react-native-elements';
+import {TipsStack} from './TipsScreen';
 
 //TODO: fork on github, export BottomTabBar and npm install
 //import {  } from 'react-navigation-tabs/dist/views/BottomTabBar';
@@ -23,10 +26,30 @@ const TabNavigation = createBottomTabNavigator({
         }
       }
     },
+    ExamsRoute: {
+      screen: ExamsStack,
+      navigationOptions: {
+        tabBarLabel: 'Exams',
+        tabBarIcon: ({ focused, tintColor }) => {
+          const iconName = focused? 'ios-bookmarks' : 'ios-bookmarks-outline';
+          return <Icon name={iconName} size={25} color={tintColor} type='ionicon'/>;
+        }
+      }
+    },
+    TipsRoute: {
+      screen: TipsStack,
+      navigationOptions: {
+        tabBarLabel: 'Tips',
+        tabBarIcon: ({ focused, tintColor }) => {
+          const iconName = focused? 'ios-star' : 'ios-star-outline';
+          return <Icon name={iconName} size={25} color={tintColor} type='ionicon'/>;
+        }
+      }
+    },
     SettingsRoute: {
       screen: SettingsStack,
       navigationOptions: {
-        tabBarLabel: 'Modules',
+        tabBarLabel: 'Settings',
         tabBarIcon: ({ focused, tintColor }) => {
           const iconName = focused? 'ios-settings' : 'ios-settings-outline';
           return <Icon name={iconName} size={25} color={tintColor} type='ionicon'/>;
