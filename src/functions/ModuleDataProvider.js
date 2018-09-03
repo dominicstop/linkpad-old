@@ -55,7 +55,26 @@ getModuleData = () => {
   });
 }
 
+refreshModuleData = () => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      //fetch modules from server
+      _moduleData = await fetchModuleData();
+      //write modules to storage
+      console.log('Looping through modules and storing to storage')
+      for(let module in _moduleData){
+        await store.update('modules', _moduleData[module]);
+      }
+    } catch(error) {
+      //some error occured
+      reject(error);
+    }
+    resolve(_moduleData);
+  });
+}
+
 export default {
   fetchModuleData,
   getModuleData,
+  refreshModuleData,
 }

@@ -87,7 +87,7 @@ export default class Homescreen extends React.PureComponent {
   render(){
     return (
       <Animatable.View 
-        style={{flex: 1}}
+        style={{flex: 1, height: '100%', width: '100%'}}
         animation={'fadeIn'}
         duration={750}
         easing={'ease-in-out'}

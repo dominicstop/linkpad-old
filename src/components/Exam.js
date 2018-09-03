@@ -71,7 +71,7 @@ const QUESTIONS = [
 const questionShape = {
   question: PropTypes.string,
   answer  : PropTypes.string,
-  choices : PropTypes.arrayOf(PropTypes.string),
+  choices : PropTypes.array ,
   //used for keeping track of ans, score etc.
   userAnswer: PropTypes.string,
 };
@@ -157,6 +157,7 @@ export class ExamChoice extends React.PureComponent {
 
     //TODO: move to styles
     const colorOverlayStyle = {
+      paddingVertical: 10,
       position: 'absolute', 
       height: '100%',
       width: '100%', 
@@ -166,7 +167,7 @@ export class ExamChoice extends React.PureComponent {
 
     return(
       <TouchableOpacity
-        style={[{height: 50, flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgb(98, 0, 234)', borderRadius: 8, overflow: 'hidden',}, style]}
+        style={[{minHeight: 50, flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgb(98, 0, 234)', borderRadius: 8, overflow: 'hidden',}, style]}
         onPress={this._onPressChoice}
         activeOpacity={0.7}
       >
@@ -175,7 +176,7 @@ export class ExamChoice extends React.PureComponent {
           useNativeDriver={true}
         />
         <Text style={{fontSize: 18, marginHorizontal: 15, color: 'white', fontWeight: '900', width: 15,}}>{choiceKey }</Text>
-        <Text style={{fontSize: 18, color: 'white', fontWeight: '500'}}>{choiceText}</Text>
+        <Text style={{fontSize: 18, color: 'white', fontWeight: '500', flex: 1}}>{choiceText}</Text>
       </TouchableOpacity>
     );
   }
@@ -192,8 +193,9 @@ export class ExamChoiceList extends React.PureComponent {
     const { question, onPressChoice } = this.props;
     //used for the key
     const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    //
+    const choicesArray = question.choices.slice().map(value => value.value);
     //combine choices and answer
-    const choicesArray = question.choices.slice();
     choicesArray.push(question.answer);
     //returns a copy of shuffled choices
     const shuffledChoices = shuffleArray(choicesArray);
@@ -204,7 +206,7 @@ export class ExamChoiceList extends React.PureComponent {
         choiceKey ={alphabet[index]}
         answer    ={question.answer}
         key       ={choice + index }
-        style     ={{marginTop: 8, height: 45}}
+        style     ={{marginTop: 8}}
         onPress   ={onPressChoice}
       />
     );
@@ -240,7 +242,7 @@ export class ExamQuestion extends React.PureComponent {
   }
 
   _renderBottomChoices(){
-    const { question, onPressChoice } = this.props;
+    const { question, onPressChoice } = this.props;    
     return(
       <ExamChoiceList
         question={question}
@@ -520,6 +522,10 @@ export class PracticeQuestion extends React.PureComponent {
 }
 
 export class PracticeExamList extends React.Component {
+  static propTypes = {
+    questions: PropTypes.array,
+  }
+
   constructor(props){
     super(props);
     this.state = {
@@ -539,7 +545,7 @@ export class PracticeExamList extends React.Component {
 
   getQuestions(){
     //create a copy
-    let questions = QUESTIONS.slice();
+    let questions = this.props.questions.slice();
     for(let question of questions){
       question.userAnswer = null
     }

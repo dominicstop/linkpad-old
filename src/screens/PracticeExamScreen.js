@@ -37,6 +37,15 @@ export class PracticeExamListScreen extends React.Component {
     };
   };
 
+  constructor(props){
+    super(props);
+    //get subjectsdata from prev. screen
+    const { navigation } = this.props;
+    this.state = {
+      subjectData: navigation.getParam('subjectData', null),
+    };
+  }
+
   componentDidMount(){
     this.updateTitle(0 + '/100');
   }
@@ -47,6 +56,7 @@ export class PracticeExamListScreen extends React.Component {
   }
   
   render() {
+    const { subjectData } = this.state;
     return (
       <ViewWithBlurredHeader>
         <Animatable.View
@@ -56,6 +66,7 @@ export class PracticeExamListScreen extends React.Component {
           delay={750}
         >
           <PracticeExamList
+            questions={subjectData.questions}
             onSnapToItem={(index) => this.updateTitle(index + '/100')}
           />
         </Animatable.View>

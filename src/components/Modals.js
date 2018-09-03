@@ -5,9 +5,10 @@ import { View, Text, StyleSheet, Dimensions } from 'react-native';
 import NavigationService from '../NavigationService';
 import { IconText } from './Views';
 import { GradeItem, SummaryItem } from './Grades';
+import { setStateAsync } from '../functions/Utils';
 
 import * as Animatable      from 'react-native-animatable'   ;
-import      Modal           from 'react-native-modalbox'     ;
+import      Modal           from "react-native-modalbox"     ;
 import      Carousel        from 'react-native-snap-carousel';
 import    { IconButton    } from '../components/Buttons'     ;
 import    { Icon, Divider } from 'react-native-elements'     ;
@@ -51,7 +52,7 @@ export class SubjectModal extends React.PureComponent {
 
   toggleSubjectModal = async (subjectData) => {
     //receive subject data from onpress subject
-    await this.setState({subjectData: subjectData});
+    await setStateAsync(this, {subjectData : subjectData});
     this.subjectModal.open();
   }
 
@@ -64,7 +65,9 @@ export class SubjectModal extends React.PureComponent {
   }
 
   _onPressStartPracticeExam = () => {
-    NavigationService.navigateApp('PracticeExamRoute');
+    NavigationService.navigateApp('PracticeExamRoute', {
+      subjectData: this.state.subjectData
+    });
   }
 
   //grades carousel
@@ -103,6 +106,30 @@ export class SubjectModal extends React.PureComponent {
     return (
       //first item is summary, the rest is grades
       index == 0? <SummaryItem subjectData={subjectData}/> : <GradeItem {...item}/>
+    );
+  }
+
+  _renderTitle(){
+    const { subjectData } = this.state;
+    return(
+      <Animatable.View
+        animation={'fadeInUp'}
+        duration={500}
+        delay={0}
+        useNativeDriver={true}
+      >
+        <IconText
+          containerStyle={styles.subjectIconText}
+          textStyle={styles.subjectTitle}
+          subtitleStyle={styles.subjectSubtitle}
+          text     ={subjectData.subjectname}
+          subtitle ={'Choose an option'}
+          iconName ={'notebook'}
+          iconType ={'simple-line-icon'}
+          iconColor={'rgba(0, 0, 0, 0.6)'}
+          iconSize ={26}
+        />
+      </Animatable.View>
     );
   }
 
@@ -162,8 +189,20 @@ export class SubjectModal extends React.PureComponent {
     );
   }
 
-  render(){
+  //renders the content of the modal
+  _renderModalContent(){
     const { modalVisible } = this.state;
+    return(
+      <View style={{flex: 1}}>
+        {modalVisible && this._renderTitle  ()}
+        {modalVisible && this._renderGrades ()}
+        {modalVisible && this._renderBody   ()}
+        {modalVisible && this._renderButtons()}
+      </View>
+    );
+  }
+
+  render(){
     return(
       <Modal 
         style={styles.subjectModal}  
@@ -182,22 +221,7 @@ export class SubjectModal extends React.PureComponent {
           intensity={100}
           tint='default'
         >
-          <View style={{flex: 1}}>
-            <IconText
-              containerStyle={styles.subjectIconText}
-              textStyle={styles.subjectTitle}
-              subtitleStyle={styles.subjectSubtitle}
-              text     ={'Subject Name'}
-              subtitle ={'Choose an option'}
-              iconName ={'notebook'}
-              iconType ={'simple-line-icon'}
-              iconColor={'rgba(0, 0, 0, 0.6)'}
-              iconSize ={26}
-            />
-            {modalVisible && this._renderGrades ()}
-            {modalVisible && this._renderBody   ()}
-            {modalVisible && this._renderButtons()}
-          </View>
+          {this._renderModalContent()}
         </BlurView>
       </Modal>
     );
@@ -209,7 +233,7 @@ const styles = StyleSheet.create({
     height: 575, 
     backgroundColor: 'rgba(255, 255, 255, 0.5)', 
     borderTopLeftRadius: 25, 
-    borderTopRightRadius: 25, 
+    borderTopRightRadius: 25,
     overflow: 'hidden'
   },
   subjectIconText: {

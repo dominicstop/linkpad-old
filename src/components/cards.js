@@ -5,7 +5,7 @@ import { StyleSheet, Text, View, Dimensions, Image, FlatList, TouchableOpacity, 
 import { IconText  , AnimatedListItem } from './Views';
 import { GaugeChart, GradeDougnut     } from './Charts';
 
-import { colorShift } from '../functions/Utils';
+import { colorShift , timeout} from '../functions/Utils';
 
 import Chroma from 'chroma-js';
 import Carousel from 'react-native-snap-carousel';
@@ -23,17 +23,6 @@ export const subjectProps = {
   subjectName: PropTypes.string,
   subjectDesc: PropTypes.string,
 }
-
-/*
-  export const moduleProps = {
-    moduleID  : PropTypes.string,
-    moduleName: PropTypes.string,
-    moduleDesc: PropTypes.string,
-    subjects  : PropTypes.arrayOf(
-      PropTypes.shape(subjectProps)
-    ),
-  }
-*/
 
 export const moduleProps = {
   indexid: PropTypes.oneOfType([
@@ -251,7 +240,8 @@ export class SubjectItem extends React.PureComponent {
     //const randColor = _.sample(GRADIENTS);
     //const selectedGradient = [colorShift(randColor[0], 20), colorShift(randColor[1], 15)];
     //console.log(selectedGradient);
-    const selectedGradient = ['white', 'white']
+    //const selectedGradient = GRADIENTS[8]
+    const selectedGradient = ['#D1C4E9', '#BBDEFB']
 
     const DUMMY_PROGRESS = {
       correct  : 90,
@@ -259,7 +249,7 @@ export class SubjectItem extends React.PureComponent {
       questions: 100,
     };
 
-    const color = selectedGradient[1];
+    const color = selectedGradient[0];
 
     return(
       <View style={[{ height: height, paddingTop: 10, paddingBottom: 35, shadowOffset:{  width: 4,  height: 5}, shadowColor: '#686868', shadowOpacity: 0.5, shadowRadius: 5}, containerStyle]} removeClippedSubviews={false}>
@@ -391,7 +381,7 @@ export class ModuleGroup extends React.Component {
         <Carousel
           //containerCustomStyle={{marginTop: -5}}
           ref={(c) => { this._carousel = c; }}
-          data={moduleData.subjects}
+          data={_.compact(moduleData.subjects)}
           renderItem={this._renderItem}
           sliderWidth={sliderWidth}
           itemWidth={itemWidth}
@@ -412,28 +402,29 @@ export class ModuleList extends React.Component {
     moduleList: PropTypes.arrayOf(
       PropTypes.shape(moduleProps)
     ).isRequired,
-    flatListProps: PropTypes.object,
     //callbacks
     onPressSubject: PropTypes.func,
     onPressModule : PropTypes.func,
     //style
     containerStyle: ViewPropTypes.style,
   }
-
-  constructor(props){
-    super(props);
-    console.log('this.props.moduleList');
-    console.log(this.props.moduleList);
-  }
   
+  componentDidMount(){
+    //fix for contentInset bug
+    setTimeout(() => {
+      this.flatlist.scrollToOffset({animated: false, offset: 100});
+      this.flatlist.scrollToOffset({animated: false, offset: -100});
+    }, 500)
+  }
+
   _renderItem = ({item, index}) => {
     return(
       <AnimatedListItem
         index={index}
         delay={0}
-        duration={1500}
+        duration={500}
         multiplier={300}
-        animation='bounceInUp'
+        animation='fadeInUp'
       >
         <ModuleGroup
           moduleData={item}
@@ -446,16 +437,17 @@ export class ModuleList extends React.Component {
   }
 
   render(){
-    const { moduleList, containerStyle, flatListProps} = this.props;
+    const { moduleList, containerStyle, ...flatListProps} = this.props;
     return(
       <FlatList
-        style       ={[containerStyle]}
-        data        ={moduleList}
-        keyExtractor={(item) => item.indexid }
-        renderItem  ={this._renderItem }
+        style={[containerStyle]}
+        data={_.compact(moduleList)}
+        ref={r => this.flatlist = r}
+        keyExtractor={(item) => item.indexid + ''}
+        renderItem ={this._renderItem }
         ListFooterComponent={<View style={{padding: 100}}/>}
-        scrollEventThrottle={200}
-        directionalLockEnabled={true}
+        //scrollEventThrottle={200}
+        //directionalLockEnabled={true}
         removeClippedSubviews={false}
         {...flatListProps}
       />
@@ -478,7 +470,7 @@ export class SubjectList extends React.Component {
     return(
       <AnimatedListItem
         index={index}
-        delay={150}
+        delay={300}
         duration={500}
       >
         <SubjectItem
@@ -496,8 +488,8 @@ export class SubjectList extends React.Component {
     return(
       <FlatList
         style={[containerStyle]}
-        data={subjectListData}
-        keyExtractor={(item) => item.subjectID }
+        data={_.compact(subjectListData)}
+        keyExtractor={(item) => item.indexid + ''}
         renderItem ={this._renderItem }
         ListFooterComponent={<View style={{padding: 70}}/>}
         scrollEventThrottle={200}
@@ -512,29 +504,21 @@ export class SubjectList extends React.Component {
 const styles = StyleSheet.create({
   title: {
     fontWeight: '600',
-    fontSize: 26,
-  },
-  titleLarge: {
-    ...systemWeights.boldObject,
-    ...Platform.select({
-      ios    : human.title1Object,
-      android: material.headlineObject,
-    }),
-    color: 'rgba(255, 255, 255, 0.9)',
+    fontSize: 24,
   },
   subtitle: {
-    fontWeight: '400',
-    fontSize: 20,
+    fontWeight: '200',
+    fontSize: 18,
   },
   subjectTitle: {
-    fontWeight: '900',
+    fontWeight: '500',
     fontSize: 24,
-    color: 'rgba(255, 255, 255, 0.9)',
+    color: 'black',
 
   },
   subjectSubtitle: {
-    fontWeight: '500',
+    fontWeight: '300',
     fontSize: 16,
-    color: 'rgba(255, 255, 255, 0.9)',
+    color: 'rgba(0, 0, 0, 0.9)',
   }
 });

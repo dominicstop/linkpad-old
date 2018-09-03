@@ -8,6 +8,8 @@ import { ExpandCollapse, ExpandableWithHeader } from '../components/Buttons';
 import { Header  } from 'react-navigation';
 import { Divider, colors } from 'react-native-elements' ;
 import * as Animatable from 'react-native-animatable';
+import _ from 'lodash';
+
 
 const getModuleTitle = (moduleData) => moduleData != null ? moduleData.moduleName : 'View Module';
 
@@ -16,11 +18,16 @@ export default class SubjectListScreen extends React.Component {
     title: getModuleTitle(navigation.getParam('moduleData', null)),
   });
 
+  _onPressSubject = (subjectData) => {
+    const { getRefSubjectModal } = this.props.screenProps;
+    getRefSubjectModal().toggleSubjectModal(subjectData);
+  }
+
   _renderHeader = () => {
     const { navigation} = this.props;
 
     const moduleData   = navigation.getParam('moduleData', null);
-    const subjectCount = moduleData.subjects.length;
+    const subjectCount = _.compact(moduleData.subjects).length;
 
     const Header = (
       <IconText
@@ -77,6 +84,7 @@ export default class SubjectListScreen extends React.Component {
           containerStyle={{paddingTop: Header.HEIGHT + 10, backgroundColor: 'white'}}
           ListHeaderComponent={this._renderHeader}
           subjectListData={moduleData.subjects}
+          onPressSubject={this._onPressSubject}
         />
       </ViewWithBlurredHeader>
     );

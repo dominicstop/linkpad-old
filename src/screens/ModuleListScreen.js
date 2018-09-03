@@ -1,16 +1,18 @@
 import React from 'react';
-import { StyleSheet, Text, View, TabBarIOS, Platform, NavigatorIOS, TouchableOpacity, LayoutAnimation, UIManager } from 'react-native';
+import { StyleSheet, Text, View, TabBarIOS, Platform, NavigatorIOS, TouchableOpacity, LayoutAnimation, UIManager, RefreshControl } from 'react-native';
 
 import   SubjectListScreen       from './SubjectListScreen'  ;
 import   Constants               from '../Constants'         ;
 import { ModuleList            } from '../components/Cards'  ;
 import { CustomHeader          } from '../components/Header' ;
 import { ViewWithBlurredHeader } from '../components/Views'  ;
+import { timeout } from '../functions/Utils';
 import ModuleDataProvider from '../functions/ModuleDataProvider';
 
 import { Header, createStackNavigator } from 'react-navigation';
 
 import Chroma from 'chroma-js';
+import {setStateAsync} from '../functions/Utils';
 const cardsData = [
   {
     moduleID  : 'mod:002',
@@ -229,8 +231,16 @@ export class ModuleListScreen extends React.Component {
   constructor(props){
     super(props);
     this.state = {
-      modules: null, 
+      modules: [], 
+      refreshing: false,
     };
+  }
+
+
+  _onRefresh = async () => {
+    await setStateAsync(this, {refreshing: true });
+    await timeout(1000);
+    await setStateAsync(this, {refreshing: false});
   }
   
   componentWillMount = async () => {
@@ -249,17 +259,32 @@ export class ModuleListScreen extends React.Component {
     getRefSubjectModal().toggleSubjectModal(subjectData);
   }
 
+  _renderRefreshCotrol(){
+    const { refreshing } = this.state;
+    const prefix = refreshing? 'Checking' : 'Check';
+    return(
+      <RefreshControl 
+        refreshing={this.state.refreshing} 
+        onRefresh={this._onRefresh}
+        title={prefix + ' for changes'}
+      />
+    );
+  }
+
   render(){
     //console.log('ModuleList: this.state.modules');
     //console.log(this.state.modules);
+
     return(
       <ViewWithBlurredHeader hasTabBar={true}>
-        {this.state.modules && <ModuleList 
-          containerStyle={{paddingTop: Header.HEIGHT + 15, backgroundColor: 'white'}}
+        <ModuleList
+          containerStyle={{backgroundColor: 'white'}}
+          contentInset={{top: Header.HEIGHT + 15}}
           moduleList={this.state.modules}
           onPressModule ={this._navigateToModule}
           onPressSubject={this._onPressSubject}
-        />}
+          refreshControl={this._renderRefreshCotrol()}
+        />
       </ViewWithBlurredHeader>
     );
   }
