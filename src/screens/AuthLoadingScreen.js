@@ -19,11 +19,16 @@ export default class AuthLoadingScreen extends React.Component {
 
   _authenticate = () => {
     return new Promise(async resolve => {
-      //do some authentication here
-      const userToken = await store.get('userToken');
-      //await store.delete('modules');
-      //await store.delete('userToken');
-      resolve(userToken);
+      try {
+        //do some authentication here
+        //await store.delete('userToken');
+        const userToken = await store.get('userToken');
+        //await store.delete('modules');
+        resolve(userToken);
+      } catch(error) {
+        await store.save('userToken', null);
+        resolve(null);
+      }
     });
   }
 

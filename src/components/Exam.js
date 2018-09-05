@@ -13,6 +13,7 @@ import    { Header   } from 'react-navigation';
 import    { Divider  } from 'react-native-elements';
 
 import { DangerZone } from 'expo';
+import _ from 'lodash';
 const { Lottie } = DangerZone;
 
 const QUESTIONS = [
@@ -546,10 +547,11 @@ export class PracticeExamList extends React.Component {
   getQuestions(){
     //create a copy
     let questions = this.props.questions.slice();
+    console.log(questions);
     for(let question of questions){
       question.userAnswer = null
     }
-    return questions;
+    return _.compact(questions);
   }
 
   //adds a new question at the end

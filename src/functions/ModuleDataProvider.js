@@ -59,12 +59,15 @@ refreshModuleData = () => {
   return new Promise(async (resolve, reject) => {
     try {
       //fetch modules from server
-      _moduleData = await fetchModuleData();
+      let new_modules = await fetchModuleData();
+      //delete previous modules stored
+      await store.delete('modules');
       //write modules to storage
-      console.log('Looping through modules and storing to storage')
-      for(let module in _moduleData){
-        await store.update('modules', _moduleData[module]);
+      for(let module in new_modules){
+        await store.push('modules', new_modules[module]);
       }
+      //update global var
+      _moduleData = new_modules;
     } catch(error) {
       //some error occured
       reject(error);

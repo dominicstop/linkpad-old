@@ -179,6 +179,7 @@ export class AnimatedListItem extends React.PureComponent {
         animation='fadeInUp'
         easing='ease-in-out'
         useNativeDriver={true}
+        collapsable={true}
         {...otherProps}
       >
         {this.props.children}

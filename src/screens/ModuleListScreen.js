@@ -239,8 +239,12 @@ export class ModuleListScreen extends React.Component {
 
   _onRefresh = async () => {
     await setStateAsync(this, {refreshing: true });
-    await timeout(1000);
-    await setStateAsync(this, {refreshing: false});
+    let result = await Promise.all([
+      ModuleDataProvider.refreshModuleData(),
+      //avoid flicker
+      timeout(1000),
+    ]);
+    await setStateAsync(this, {refreshing: false, modules: result[0]});
   }
   
   componentWillMount = async () => {
@@ -261,12 +265,12 @@ export class ModuleListScreen extends React.Component {
 
   _renderRefreshCotrol(){
     const { refreshing } = this.state;
-    const prefix = refreshing? 'Checking' : 'Check';
+    const prefix = refreshing? 'Checking' : 'Pull down to check';
     return(
       <RefreshControl 
         refreshing={this.state.refreshing} 
         onRefresh={this._onRefresh}
-        title={prefix + ' for changes'}
+        title={prefix + ' for changes...'}
       />
     );
   }

@@ -413,7 +413,7 @@ export class ModuleList extends React.Component {
     //fix for contentInset bug
     setTimeout(() => {
       this.flatlist.scrollToOffset({animated: false, offset: 100});
-      this.flatlist.scrollToOffset({animated: false, offset: -100});
+      this.flatlist.scrollToOffset({animated: false, offset: -80});
     }, 500)
   }
 

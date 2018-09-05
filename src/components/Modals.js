@@ -66,7 +66,7 @@ export class SubjectModal extends React.PureComponent {
 
   _onPressStartPracticeExam = () => {
     NavigationService.navigateApp('PracticeExamRoute', {
-      subjectData: this.state.subjectData
+      subjectData: this.state.subjectData,
     });
   }
 
