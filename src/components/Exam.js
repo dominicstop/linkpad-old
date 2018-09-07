@@ -702,7 +702,7 @@ export class PracticeExamList extends React.Component {
     //set ID's
     this.gradeItem = new GradeItem(indexID_module, indexID_subject);
 
-    if(this.DEBUG){
+    if(this.DEBUG && false){
       console.log('\n\n\nConstructor - PracticeExamList State:');
       console.log(this.state);
       console.log('\nProps - ModuleData');
@@ -727,7 +727,7 @@ export class PracticeExamList extends React.Component {
       //find the answers that corresponds to the subject
       let match = grades_from_store.find((grade_item) => {
         if(this.DEBUG){
-          console.log('\nGrades ID from store:');
+          console.log('\n\n\nGrades ID from store:');
           console.log('indexID_module : ' + grade_item.indexID_module );
           console.log('indexID_subject: ' + grade_item.indexID_subject);
           console.log('\nCurrent ID:' );
@@ -741,18 +741,20 @@ export class PracticeExamList extends React.Component {
         console.log('\n\nMatching gradeItem from grade store: ');
         console.log(match);
       }
-      this.gradeItem.setGrade(match);
+
+      if(match != null){
+        if(this.DEBUG) console.log('Found Match: setting grade item...');
+        this.gradeItem.setGrade(match);
+      }
     } 
     
     let answered_questions = [];
     let current_index = 0;
 
-    
-    console.log('\nthis.gradeItem');
-    console.log(this.gradeItem.getGrade());
-    console.log('\nthis.gradeItem.getAnswers()');
-    console.log(this.gradeItem.getAnswers());
-    
+    if(this.DEBUG){
+      console.log('\nthis.gradeItem');
+      console.log(this.gradeItem.getGrade());
+    } 
     
     //no questions have been answered yet
     if(this.gradeItem.getAnswersLength() == 0){
@@ -796,16 +798,6 @@ export class PracticeExamList extends React.Component {
     });
   }
 
-  //incomplete
-  initQuestionList(questions){
-    //read grades from storage
-    let grades = GradeStore.getGrades();
-    
-
-    
-    return list;
-  }
-
   getQuestions(){
     //add properties to question item
     let questions = this.props.questions.map((item, index) => {
@@ -842,8 +834,15 @@ export class PracticeExamList extends React.Component {
 
   //callback: when answer is selected
   _onAnswerSelected = (question, questionIndex, answer, isCorrect) => {
+    if(this.DEBUG){
+      console.log('\n\n\n\n_onAnswerSelected: ');
+      console.log('questionIndex: ' + questionIndex);
+      console.log('answer: ' + answer);
+      console.log('isCorrect: ' + isCorrect);
+    }
     this.gradeItem.addAnswer(questionIndex, answer, isCorrect);
     let current_grade = this.gradeItem.getGrade();
+    
     GradeStore.addGrade(current_grade);
   }
   
@@ -871,7 +870,7 @@ export class PracticeExamList extends React.Component {
       itemHeight  : screenHeight - headerHeight,
     };
 
-    if(this.DEBUG){
+    if(this.DEBUG && false){
       console.log('\n\Rendering PracticeExamList... STATE:');
       console.log(this.state);
     }

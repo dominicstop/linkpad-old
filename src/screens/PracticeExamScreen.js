@@ -41,7 +41,7 @@ export class PracticeExamListScreen extends React.Component {
     super(props);
     //get subjectsdata from prev. screen
     const { navigation } = this.props;
-    this.DEBUG = true;
+    this.DEBUG = false;
     this.state = {
       moduleData : navigation.getParam('moduleData' , null),
       subjectData: navigation.getParam('subjectData', null),
