@@ -4,7 +4,7 @@ import { NAV_BGCOLOR     } from '../Constants'        ;
 import { SubjectModal    } from '../components/Modals';
 import { ModuleListStack } from './ModuleListScreen'  ;
 import { ExamsStack      } from './ExamsScreen';
-import { SettingsStack   } from './SettingsScreen'    ;
+import { MoreStack       } from './MoreScreen' ;
 
 
 import * as Animatable from 'react-native-animatable';
@@ -46,10 +46,10 @@ const TabNavigation = createBottomTabNavigator({
         }
       }
     },
-    SettingsRoute: {
-      screen: SettingsStack,
-      navigationOptions: {
-        tabBarLabel: 'Settings',
+    MoreRoute: {
+      screen: MoreStack,
+          navigationOptions: {
+        tabBarLabel: 'More',
         tabBarIcon: ({ focused, tintColor }) => {
           const iconName = focused? 'ios-settings' : 'ios-settings-outline';
           return <Icon name={iconName} size={25} color={tintColor} type='ionicon'/>;

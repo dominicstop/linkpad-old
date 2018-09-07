@@ -54,6 +54,10 @@ export class PracticeExamListScreen extends React.Component {
     const {setParams} = this.props.navigation;
     setParams({ title: title })
   }
+
+  _handleOnEndReached = () => {
+    console.log('onEndReached');
+  }
   
   render() {
     const { subjectData } = this.state;
@@ -68,12 +72,14 @@ export class PracticeExamListScreen extends React.Component {
           <PracticeExamList
             questions={subjectData.questions}
             onSnapToItem={(index) => this.updateTitle(index + '/100')}
+            onEndReached={() => alert('PracticeExamListScreen')}
           />
         </Animatable.View>
       </ViewWithBlurredHeader>
     );
   }
 }
+
 export const PracticeExamStack = createStackNavigator({
   PracticeExamListRoute: {
       screen: PracticeExamListScreen,

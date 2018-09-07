@@ -7,7 +7,7 @@ import { ModuleList            } from '../components/Cards'  ;
 import { CustomHeader          } from '../components/Header' ;
 import { ViewWithBlurredHeader } from '../components/Views'  ;
 import { timeout } from '../functions/Utils';
-import ModuleDataProvider from '../functions/ModuleDataProvider';
+import ModuleStore from '../functions/ModuleStore';
 
 import { Header, createStackNavigator } from 'react-navigation';
 
@@ -240,7 +240,7 @@ export class ModuleListScreen extends React.Component {
   _onRefresh = async () => {
     await setStateAsync(this, {refreshing: true });
     let result = await Promise.all([
-      ModuleDataProvider.refreshModuleData(),
+      ModuleStore.refreshModuleData(),
       //avoid flicker
       timeout(1000),
     ]);
@@ -248,7 +248,7 @@ export class ModuleListScreen extends React.Component {
   }
   
   componentWillMount = async () => {
-    let modules = await ModuleDataProvider.getModuleData();
+    let modules = await ModuleStore.getModuleData();
     this.setState({modules: modules});
   }
 
@@ -282,7 +282,6 @@ export class ModuleListScreen extends React.Component {
     return(
       <ViewWithBlurredHeader hasTabBar={true}>
         <ModuleList
-          containerStyle={{backgroundColor: 'white'}}
           contentInset={{top: Header.HEIGHT + 15}}
           moduleList={this.state.modules}
           onPressModule ={this._navigateToModule}

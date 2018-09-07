@@ -6,12 +6,14 @@ import { AnimatedGradient } from '../components/AnimatedGradient';
 import { IconButton       } from '../components/Buttons';
 import { IconText         } from '../components/Views';
 import {setStateAsync, timeout} from '../functions/Utils';
-import ModuleDataProvider from '../functions/ModuleDataProvider';
+
+import ModuleStore from '../functions/ModuleStore';
+import TipsStore from '../functions/TipsStore';
+import UserStore from '../functions/UserStore';
 
 import * as Animatable from 'react-native-animatable';
 import { Icon } from 'react-native-elements';
 import store from 'react-native-simple-store';
-import TipsDataProvider from '../functions/TipsDataProvider';
 
 UIManager.setLayoutAnimationEnabledExperimental && UIManager.setLayoutAnimationEnabledExperimental(true);
 
@@ -103,15 +105,16 @@ export class LoginContainer extends React.Component {
 
       //wait for animation and fetch to finish
       await Promise.all([
-        ModuleDataProvider.getModuleData(),
-        TipsDataProvider.getTips(),
+        ModuleStore.getModuleData(),
+        TipsStore.getTips(),
         onLoginFetching(),
       ]);
+
+      //save user data to storage
+      UserStore.setUserData(login_response);
+
       //login finished
       onLoginFinished && await onLoginFinished(login_response);
-
-      //await AsyncStorage.setItem('userToken', 'abc');
-      await store.save('userToken', login_response);
       navigation.navigate('AppRoute');
 
     } catch(error){

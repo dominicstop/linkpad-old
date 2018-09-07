@@ -362,6 +362,8 @@ export class ExpandCollapseText extends React.PureComponent {
     };
   }
 
+  componentDidMount(){}
+
   isCollapsed = () => {
     const { viewHeight, collapsedHeight } = this.state;
     return viewHeight != null;
@@ -505,6 +507,10 @@ export class ExpandCollapseTextWithHeader extends React.PureComponent {
         </Animatable.View>
       </TouchableOpacity>
     );
+  }
+
+  renderNormal(){
+
   }
 
   render(){

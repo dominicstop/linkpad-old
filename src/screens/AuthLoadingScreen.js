@@ -5,6 +5,10 @@ import * as Animatable from 'react-native-animatable';
 import { BarIndicator } from 'react-native-indicators';
 import store from 'react-native-simple-store';
 
+import ModuleStore from '../functions/ModuleStore';
+import TipsStore   from '../functions/TipsStore'  ;
+import UserStore   from '../functions/UserStore'  ;
+
 Animatable.initializeRegistryWithDefinitions({
   zoomInTransition: {
     from  : { opacity: 1, transform: [{ scale: 0  }] },
@@ -17,30 +21,27 @@ export default class AuthLoadingScreen extends React.Component {
     super(props);
   }
 
-  _authenticate = () => {
-    return new Promise(async resolve => {
-      try {
-        //do some authentication here
-        //await store.delete('userToken');
-        const userToken = await store.get('userToken');
-        //await store.delete('modules');
-        resolve(userToken);
-      } catch(error) {
-        await store.save('userToken', null);
-        resolve(null);
-      }
-    });
-  }
-
   componentDidMount = async () => {
     let delay = ms => new Promise(r => setTimeout(r, ms));
 
     //animate in and authenticate
     const results = await Promise.all([
-      this._authenticate(),
+      UserStore.getUserData(),
       this.animatedRoot.fadeIn(250),
       this.animatedLoading.zoomIn(1250),
     ]);
+
+    //get UserData from promise
+    const userData   = results[0];
+    const isLoggedIn = userData != null;
+
+    //load modules and tips if logged in
+    if(isLoggedIn){
+      await Promise.all([
+        ModuleStore.getModuleData(),
+        TipsStore.getTips(),
+      ])
+    }
 
     //animate out
     await Promise.all([
@@ -49,10 +50,8 @@ export default class AuthLoadingScreen extends React.Component {
     ]);
 
     //navigate
-    const userToken = results[0];
-    console.log('userToken');
-    console.log(userToken);
-    const isLoggedIn = userToken != null;
+    //console.log('userData');
+    //console.log(userData);
     this.props.navigation.navigate(isLoggedIn? 'AppRoute' : 'AuthRoute');
   }
   

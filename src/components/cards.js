@@ -241,6 +241,7 @@ export class SubjectItem extends React.PureComponent {
     //const selectedGradient = [colorShift(randColor[0], 20), colorShift(randColor[1], 15)];
     //console.log(selectedGradient);
     //const selectedGradient = GRADIENTS[8]
+    //const selectedGradient = ['#D1C4E9', '#BBDEFB']
     const selectedGradient = ['#D1C4E9', '#BBDEFB']
 
     const DUMMY_PROGRESS = {
@@ -255,7 +256,7 @@ export class SubjectItem extends React.PureComponent {
       <View style={[{ height: height, paddingTop: 10, paddingBottom: 35, shadowOffset:{  width: 4,  height: 5}, shadowColor: '#686868', shadowOpacity: 0.5, shadowRadius: 5}, containerStyle]} removeClippedSubviews={false}>
         <LinearGradient
           style={{flex: 1, height: '100%', borderRadius: 15, flexDirection: 'row', paddingHorizontal: 20, paddingVertical: 15}}
-          colors={selectedGradient}
+          colors={['white', 'white']}
           start={{x: 0, y: 0}} 
           end={{x: 1, y: 1}}
           overflow='hidden' 

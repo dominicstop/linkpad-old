@@ -2,6 +2,8 @@ import React from 'react';
 import { Text, View, ViewPropTypes, TextProps, StyleSheet } from 'react-native';
 import PropTypes from 'prop-types';
 
+import { STYLES } from '../Constants';
+
 import { Icon     } from 'react-native-elements';
 import { Header   } from 'react-navigation';
 import { BlurView } from 'expo';
@@ -95,7 +97,7 @@ export class IconText extends React.PureComponent {
         {...viewProps}
       >
         <Icon
-          containerStyle={{marginRight: 7}}
+          containerStyle={{marginRight: 10}}
           name ={iconName }
           color={iconColor}
           type ={iconType }
@@ -114,6 +116,20 @@ export class IconText extends React.PureComponent {
 
     return(
       childrenCount == 0 ? IconText : Wrapper
+    );
+  }
+}
+
+export class Card extends React.PureComponent {
+  render(){
+    const { style, viewProps } = this.props;
+    return(
+      <View
+        style={[{padding: 10, paddingHorizontal: 15, backgroundColor: 'white', borderRadius: 10}, STYLES.mediumShadow, style]}
+        {...viewProps}
+      >
+        {this.props.children}
+      </View>
     );
   }
 }

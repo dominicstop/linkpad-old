@@ -1,11 +1,11 @@
 import React from 'react';
-import { StyleSheet, Text, View, Dimensions, ScrollView, ViewPropTypes, TouchableOpacity, Animated, Easing } from 'react-native';
+import { StyleSheet, Text, View, Dimensions, ScrollView, ViewPropTypes, TouchableOpacity, Animated, Easing, Alert } from 'react-native';
 import PropTypes from 'prop-types';
 
 import { setStateAsync, timeout, shuffleArray } from '../functions/Utils';
 
 import { Button, ExpandCollapseTextWithHeader } from './Buttons';
-import { FlipView } from './Views';
+import { FlipView, IconText } from './Views';
 
 import * as Animatable from 'react-native-animatable';
 import      Carousel   from 'react-native-snap-carousel';
@@ -274,7 +274,16 @@ export class Question extends React.PureComponent {
 
   _renderQuestionHeader = () => {
     return(
-      <Text style={{fontSize: 28, fontWeight: '800'}}>Question</Text>
+      <IconText
+        //icon
+        iconName={'help-circle'}
+        iconType={'feather'}
+        iconColor={'grey'}
+        iconSize={26}
+        //title
+        text={'Question'}
+        textStyle={{fontSize: 28, fontWeight: '800'}}
+      />
     );
   }
 
@@ -309,7 +318,7 @@ export class Question extends React.PureComponent {
 
   render(){
     const { question } = this.props;
-    console.log('question.question.length: ' + question.question.length);
+    //console.log('question.question.length: ' + question.question.length);
     const isTextLong = question.question.length > 140;
     return(
       isTextLong? this._renderCollapsable() : this._renderNormal()
@@ -330,7 +339,16 @@ export class Explanation extends React.PureComponent {
 
   _renderQuestionHeader = () => {
     return(
-      <Text style={{fontSize: 28, fontWeight: '800'}}>Explanation</Text>
+      <IconText
+        //icon
+        iconName={'info'}
+        iconType={'feather'}
+        iconColor={'grey'}
+        iconSize={26}
+        //title
+        text={'Explanation'}
+        textStyle={{fontSize: 28, fontWeight: '800'}}
+      />
     );
   }
 
@@ -374,6 +392,33 @@ export class Explanation extends React.PureComponent {
 
 }
 
+export class Answer extends React.PureComponent {
+  static propTypes = {
+    question: PropTypes.shape(questionShape),    
+  }
+
+  render(){
+    const { question } = this.props;
+    return(
+      <View collapsable={true}>
+        <IconText
+          //icon
+          iconName={'check-circle'}
+          iconType={'feather'}
+          iconColor={'grey'}
+          iconSize={26}
+          //title
+          text={'Answer'}
+          textStyle={{fontSize: 28, fontWeight: '800'}}
+        />
+        <Text style={{fontSize: 20, fontWeight: '300', textAlign: 'justify'}}>
+          Correct answer is <Text style={{fontWeight: 'bold'}}>{question.answer}</Text>
+        </Text>
+      </View>
+    );
+  }
+}
+
 //shows a question, ans + explanation
 export class QuestionExplanation extends React.PureComponent {
   static propTypes = {
@@ -384,7 +429,9 @@ export class QuestionExplanation extends React.PureComponent {
     return(
       <ScrollView style={{flex: 1, padding: 15}}>
         <Question question={this.props.question}/>
-        <Divider style={{marginVertical: 10, marginHorizontal: 15}}/>
+        <Divider style={{marginVertical: 13, marginHorizontal: 15}}/>
+        <Answer question={this.props.question}/>
+        <Divider style={{marginVertical: 13, marginHorizontal: 15}}/>
         <Explanation question={this.props.question}/>
       </ScrollView>
     );
@@ -393,9 +440,11 @@ export class QuestionExplanation extends React.PureComponent {
 
 export class PracticeQuestion extends React.PureComponent {
   static propTypes = {
+    isLast: PropTypes.bool,
     question: PropTypes.shape(questionShape),
     questionNumber: PropTypes.number,
     onPressNextQuestion: PropTypes.func,
+    onEndReached: PropTypes.func
   }
 
   constructor(props){
@@ -438,8 +487,12 @@ export class PracticeQuestion extends React.PureComponent {
     //call callback prop
     this.props.onPressNextQuestion();
     //hide flipper after trans
-    await timeout(1000);
+    await this.nextButtonContainer.fadeOut(750);
     await setStateAsync(this, {isExplanationOnly: true});
+  }
+
+  _handleOnPressLast = () => {
+    this.props.onEndReached();
   }
   
   //renders a checkmark animation + trans white overlay
@@ -471,6 +524,8 @@ export class PracticeQuestion extends React.PureComponent {
 
   _renderBackExplaination = () => {
     const { isExplanationOnly } = this.state;
+    const { isLast } = this.props;
+    const shouldShowNextButton = !isExplanationOnly && !isLast;
     return(
       <View 
         style={isExplanationOnly? [styles.questionCard, styles.shadow, {flex: 1, overflow: 'visible'}] : {flex: 1}}
@@ -480,15 +535,29 @@ export class PracticeQuestion extends React.PureComponent {
           question={this.props.question}
           onPressNextQuestion={this._handleOnPressNextQuestion}
         />
-        {!isExplanationOnly && <Button
-          text={'Next Question'}
-          style={{backgroundColor: '#6200EA', margin: 10}}
-          iconName={'pencil-square-o'}
-          iconType={'font-awesome'}
-          iconSize={22}
-          iconColor={'white'}
-          onPress={this._handleOnPressNextQuestion}
-        />}
+        <Animatable.View
+          ref={r => this.nextButtonContainer = r}
+          useNativeDriver={true}
+        >
+          {shouldShowNextButton && <Button
+            text={'Next Question'}
+            style={{backgroundColor: '#6200EA', margin: 10}}
+            iconName={'pencil-square-o'}
+            iconType={'font-awesome'}
+            iconSize={22}
+            iconColor={'white'}
+            onPress={this._handleOnPressNextQuestion}
+          />}
+          {isLast && <Button
+            text={'Finish Exam'}
+            style={{backgroundColor: '#6200EA', margin: 10}}
+            iconName={'check'}
+            iconType={'font-awesome'}
+            iconSize={22}
+            iconColor={'white'}
+            onPress={this._handleOnPressLast}
+          />}
+        </Animatable.View>
       </View>
     );
   }
@@ -525,6 +594,7 @@ export class PracticeQuestion extends React.PureComponent {
 export class PracticeExamList extends React.Component {
   static propTypes = {
     questions: PropTypes.array,
+    onEndReached: PropTypes.func,
   }
 
   constructor(props){
@@ -547,7 +617,6 @@ export class PracticeExamList extends React.Component {
   getQuestions(){
     //create a copy
     let questions = this.props.questions.slice();
-    console.log(questions);
     for(let question of questions){
       question.userAnswer = null
     }
@@ -576,16 +645,21 @@ export class PracticeExamList extends React.Component {
   }
   
   _renderItem = ({item, index}) => {
+    const isLast = index == this.state.questions.length - 1;
     return (
       <PracticeQuestion
         question={item}
         questionNumber={index+1}
+        isLast={isLast}
         onPressNextQuestion={this._onPressNextQuestion}
+        onEndReached={this.props.onEndReached}
       />
     );
   }
 
   render(){
+    const {onEndReached, ...flatListProps } = this.props;
+
     //ui values for carousel
     const headerHeight = Header.HEIGHT + 15;
     const screenHeight = Dimensions.get('window').height;
@@ -608,7 +682,7 @@ export class PracticeExamList extends React.Component {
         bounces={true}
         //other props
         {...carouselHeight}
-        {...this.props}
+        {...flatListProps}
       />
     );
   }

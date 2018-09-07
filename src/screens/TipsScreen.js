@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, RefreshControl, ScrollView, ViewPropTypes, Text, TouchableOpacity, AsyncStorage, FlatList } from 'react-native';
+import { StyleSheet, RefreshControl, Alert, View, Text, TouchableOpacity, AsyncStorage, FlatList } from 'react-native';
 import PropTypes from 'prop-types';
 
 import   NavigationService       from '../NavigationService';
@@ -7,14 +7,13 @@ import { HEADER_PROPS          } from '../Constants'        ;
 import { ViewWithBlurredHeader } from '../components/Views' ;
 import { CustomHeader          } from '../components/Header';
 import { TipList               } from '../components/Tips'  ;
-import { timeout } from '../functions/Utils';
-import TipsDataProvider from '../functions/TipsDataProvider';
+import { timeout, setStateAsync } from '../functions/Utils';
 
-
+import TipsStore from '../functions/TipsStore';
 
 import { Header, createStackNavigator } from 'react-navigation';
 import { Icon } from 'react-native-elements';
-import { setStateAsync } from '../functions/Utils';
+import _ from 'lodash';
 
 const TipsHeader = (props) => <CustomHeader {...props}
   iconName='star-outlined'
@@ -38,18 +37,33 @@ export class TipsScreen extends React.Component {
   }
 
   async componentWillMount(){
-    let tips = await TipsDataProvider.fetchTipsData();
+    let tips = await TipsStore.getTips();
     await setStateAsync(this, {tips: tips});
   }
 
   _onRefresh = async () => {
+    const { tips } = this.state;
+    let new_tips = tips;
+    //set ui to refrshing
     await setStateAsync(this, {refreshing: true });
-    let result = await Promise.all([
-      TipsDataProvider.getTips(),
+    try {
+      let result = await Promise.all([
+        //get tips from server
+        TipsStore.refreshTipsData(),
+        //avoid flicker
+        timeout(1000),
+      ]);
+      //extract tips
+      new_tips = result[0];
+      const isTipsNew = _.isEqual(tips, new_tips);
+      if(isTipsNew) Alert.alert('Sorry', 'No new tips to show');
+    } catch(error){
       //avoid flicker
-      timeout(1000),
-    ]);
-    await setStateAsync(this, {refreshing: false, tips: result[0]});
+      await timeout(750);
+      Alert.alert('Error', 'Unable to fetch new tips (Please try again)');
+      this.setState({refreshing: false});
+    }
+    await setStateAsync(this, {refreshing: false, tips: new_tips});
   }
 
   _renderRefreshCotrol(){
@@ -64,6 +78,19 @@ export class TipsScreen extends React.Component {
     );
   }
 
+  _renderFooter = () => {
+    return (
+      <View style={{marginBottom: 80}}>
+        <Icon
+          name={'heart'}
+          type={'entypo'}
+          color={'rgb(170, 170, 170)'}
+          size={24}
+        />
+      </View>
+    )
+  }
+
   render(){
     return(
       <ViewWithBlurredHeader hasTabBar={true}>
@@ -71,6 +98,7 @@ export class TipsScreen extends React.Component {
           contentInset={{top: Header.HEIGHT + 12}}
           tips={this.state.tips}
           refreshControl={this._renderRefreshCotrol()}
+          ListFooterComponent={this._renderFooter()}
         />
       </ViewWithBlurredHeader>
     );

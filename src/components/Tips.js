@@ -6,6 +6,7 @@ import { setStateAsync, timeout, shuffleArray } from '../functions/Utils';
 import { STYLES } from '../Constants';
 
 import { Button, ExpandCollapseTextWithHeader } from './Buttons';
+import {Card} from './Views';
 
 import _ from 'lodash';
 
@@ -27,34 +28,66 @@ const TIP_SHAPE = {
   title: PropTypes.string,
 };
 
-export class Card extends React.PureComponent {
-  render(){
-    const { styles, viewProps } = this.props; 
-    return(
-      <View 
-        style={[STYLES.mediumShadow, {padding: 12, backgroundColor: 'white', margin: 10, borderRadius: 10}, styles]} 
-        {...viewProps}
-      >
-        {this.props.children}
-      </View>
-    );
-  }
-}
-
 export class TipItem extends React.PureComponent { 
   static propTypes = {
     tip: PropTypes.shape(TIP_SHAPE),
   }
 
-  render(){
+  constructor(props){
+    super(props);
+  }
+
+  _onPress = (isCollapsed) => {
+    this.animatedRootViewRef.pulse(750);
+  }
+
+  _renderHeader(){
     const { tip } = this.props;
     return(
-      <Card>
+      <View collapsable={true}>
         <Text style={{fontSize: 24, fontWeight: 'bold'}}>{tip.title}</Text>
         <Text style={{fontSize: 16, fontWeight: '100', color: 'grey'}}>Last updated on {tip.dateposted}</Text>
         <Divider style={{margin: 10}}/>
-        <Text style={{fontSize: 18, fontWeight: '300'}}>{tip.tip}</Text>
-      </Card>
+      </View>
+    );
+  }
+
+  _renderCollapsable(){
+    const { tip } = this.props;
+    return(
+      <Animatable.View 
+        ref={r => this.animatedRootViewRef = r}
+        useNativeDriver={true}
+      >
+        <View style={{marginHorizontal: 10, marginBottom: 10, padding: 13, backgroundColor: 'white', borderColor: 'rgb(197, 212, 216)', borderWidth: 3, borderRadius: 10, overflow: 'hidden'}}>
+          <ExpandCollapseTextWithHeader
+            collapsedNumberOfLines={5}
+            style={{fontSize: 18, fontWeight: '300', textAlign: 'justify'}}
+            text={tip.tip}
+            titleComponent={this._renderHeader()}
+            onPress={this._onPress}
+          />
+        </View>
+      </Animatable.View>
+    );
+  }
+
+  _renderNormal(){ 
+    return(
+      <View style={{marginHorizontal: 10, marginBottom: 10, padding: 13, backgroundColor: 'white', borderColor: 'rgb(197, 212, 216)', borderWidth: 3, borderRadius: 10, overflow: 'hidden'}}>      
+        {this._renderHeader()}
+        <Text style={{fontSize: 18, fontWeight: '300', textAlign: 'justify'}}>
+            {this.props.tip.tip}
+        </Text>
+      </View>
+    );
+  }
+
+  render(){
+    const { tip } = this.props;
+    const isTextLong = tip.tip.length > 200;
+    return(
+      isTextLong? this._renderCollapsable() : this._renderNormal()
     );
   }
 }
@@ -71,7 +104,8 @@ export class TipList extends React.PureComponent {
     setTimeout(() => {
       this.flatlist.scrollToOffset({animated: false, offset: 100});
       this.flatlist.scrollToOffset({animated: false, offset: -80});
-    }, 500)
+    }, 1);
+    console.log('Tips');
   }
 
   _renderItemTip = ({item, index}) => {
@@ -79,7 +113,8 @@ export class TipList extends React.PureComponent {
       <AnimatedListItem
         index={index}
         duration={500}
-        multiplier={10}
+        multiplier={100}
+        last={6}
       >
         <TipItem tip={item}/>
       </AnimatedListItem>
@@ -91,7 +126,7 @@ export class TipList extends React.PureComponent {
     return(
       <FlatList
         ref={r => this.flatlist = r}
-        data={this.props.tips}
+        data={_.compact(this.props.tips)}
         keyExtractor={item => item.indexid + ''}
         renderItem={this._renderItemTip}
         {...flatListProps}

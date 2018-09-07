@@ -19,7 +19,7 @@ export const STYLES = StyleSheet.create({
   mediumShadow: {
     shadowOffset:{  width: 2,  height: 3,  },
     shadowColor: 'black',
-    shadowRadius: 4,
+    shadowRadius: 3,
     shadowOpacity: 0.5,
   },
 });
