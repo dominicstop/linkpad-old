@@ -92,8 +92,8 @@ export class MoreScreen extends React.Component {
   }
 
   _signOutAsync = async () => {
-    //await AsyncStorage.clear();
-    //NavigationService.navigate('AuthRoute');
+    await AsyncStorage.clear();
+    NavigationService.navigateRoot('AuthRoute');
   };
 
   async componentWillMount(){
@@ -161,6 +161,12 @@ export class MoreScreen extends React.Component {
       <ViewWithBlurredHeader hasTabBar={true}>
         <ScrollView style={{paddingTop: Header.HEIGHT + 15, paddingHorizontal: 15}}>
           {user && this._renderUserDetails()}
+          <TouchableOpacity 
+            style={{padding: 10, margin: 10, backgroundColor: 'pink'}}
+            onPress={() => this._signOutAsync()}
+          >
+            <Text>Sign Out</Text>
+          </TouchableOpacity>
         </ScrollView>
       </ViewWithBlurredHeader>
     );

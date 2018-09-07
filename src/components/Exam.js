@@ -3,6 +3,7 @@ import { StyleSheet, Text, View, Dimensions, ScrollView, ViewPropTypes, Touchabl
 import PropTypes from 'prop-types';
 
 import { setStateAsync, timeout, shuffleArray } from '../functions/Utils';
+import GradeStorefrom from '../functions/GradeStore';
 
 import { Button, ExpandCollapseTextWithHeader } from './Buttons';
 import { FlipView, IconText } from './Views';
@@ -14,6 +15,7 @@ import    { Divider  } from 'react-native-elements';
 
 import { DangerZone } from 'expo';
 import _ from 'lodash';
+import GradeStore from '../functions/GradeStore';
 const { Lottie } = DangerZone;
 
 const QUESTIONS = [
@@ -76,6 +78,62 @@ const questionShape = {
   //used for keeping track of ans, score etc.
   userAnswer: PropTypes.string,
 };
+
+//grade for a subject
+class GradeItem {
+  constructor(indexID_module = 0, indexID_subject = 0){
+    this.DEBUG = true;
+    this.grade = {
+      //used for identifyingå
+      indexID_module : indexID_module,
+      indexID_subject: indexID_subject,
+      //dates
+      timestamp_started: this.getTimestamp(),
+      timestamp_ended  : '',
+      //array of ans to question
+      answers: []
+    };
+    if(this.DEBUG){
+      console.log('\n\nNew GradeItem Created:');
+      console.log(this.grade);
+    }
+  }
+
+  //returns the current timestamp
+  getTimestamp = () => {
+    const dateTime  = new Date().getTime();
+    return Math.floor(dateTime / 1000);
+  }
+
+  //setter and getters
+  getGrade = () => _.cloneDeep(this.grade);
+  setGrade = grade => this.grade = _.cloneDeep(grade);
+  setTimestamp_ended = () => this.grade.timestamp_ended = this.getTimestamp();
+  getLastAnswer = () => this.getGrade().answers.pop();
+  getAnswersLength = () => this.grade.answers.length;
+
+  //add an answer
+  addAnswer = (indexID = 0, answer = '', isCorrect = false) => {
+    let new_answer = {
+      //append data
+      indexID_question: indexID,
+      answer: answer,
+      isCorrect: isCorrect,
+      //add a timestamp
+      timestamp: this.getTimestamp(),
+    };
+    //append to answer
+    this.grade.answers.push(new_answer);
+    if(this.DEBUG){
+      console.log('\n\nNew Answer Added:');
+      console.log(new_answer);
+      console.log('\n\nhis.grade.answers:');
+      console.log(this.grade.answers);
+    }
+    //return created answer obj
+    return new_answer;
+  }
+}
 
 //TODO: create a generic wrappper
 //renders a animated check
@@ -440,11 +498,16 @@ export class QuestionExplanation extends React.PureComponent {
 
 export class PracticeQuestion extends React.PureComponent {
   static propTypes = {
+    //whether the question is the last one
     isLast: PropTypes.bool,
     question: PropTypes.shape(questionShape),
     questionNumber: PropTypes.number,
+    //called when the next question is pressed in the back explantion
     onPressNextQuestion: PropTypes.func,
-    onEndReached: PropTypes.func
+    //called when there are no more questions to add
+    onEndReached: PropTypes.func,
+    //called when a choice is pressed
+    onAnswerSelected: PropTypes.func
   }
 
   constructor(props){
@@ -457,9 +520,11 @@ export class PracticeQuestion extends React.PureComponent {
   }
 
   _handleOnPressChoices = async (choice, key) => {
-    const { question } = this.props;
+    const { question, questionNumber, onAnswerSelected } = this.props;
     //check if user's ans is correct
     const isCorrect = choice == question.answer;
+    //call the callback prop
+    onAnswerSelected && onAnswerSelected(question, questionNumber, choice, isCorrect);
     //update userAns state + disable touch while animating
     await setStateAsync(this, {
       userAnswer  : choice,
@@ -599,18 +664,72 @@ export class PracticeExamList extends React.Component {
 
   constructor(props){
     super(props);
+    this.DEBUG = true;
     this.state = {
-      questions   : this.getQuestions(),
-      questionList: this.initQuestionList(),
+      //true when read/writng to storage
+      loading: true,
+      //list of all the questions in an subject
+      questions: [],
+      //list of questions to show in the UI
+      questionList: [],
+      //current question index
       currentIndex: 0,
+    }
+    this.gradeItem = new GradeItem();
+    if(this.DEBUG){
+      console.log('\n\nstate PracticeExamList');
+      console.log(this.state);
     }
   }
 
-  //incomplete
-  initQuestionList(){
+  async componentWillMount(){
+    await setStateAsync(this, {loading: true});
+    //get questions from props
     const questions = this.getQuestions();
-    let   list      = [];
-    list.push(questions[0]);
+    //read grades from storage
+    let grades_from_store = await GradeStore.getGrades();
+    //update gradeitem
+    if(grades_from_store != null) this.gradeItem.setGrade(grades_from_store);
+    
+    let answered_questions = [];
+
+    
+    console.log('\nthis.gradeItem');
+    console.log(this.gradeItem.getGrade());
+    console.log('this.gradeItem.getAnswersLength()');
+    console.log(this.gradeItem.getAnswersLength());
+    
+    
+    //no questions have been answered yet
+    if(this.gradeItem.getAnswersLength() == 0){
+      //add the first item in the question array
+      answered_questions.push(questions[0]);
+
+    } else {
+      //get the last index of the answer
+      let last_index = this.gradeItem.getLastAnswer().indexID_question
+      //create an array of questions that has been already answered
+      answered_questions = questions.slice(0, last_index+1);
+    }
+
+
+    
+    //
+
+    this.setState({
+      loading: false,
+      questionList: answered_questions,
+      questions: questions, 
+    });
+  }
+
+  //incomplete
+  initQuestionList(questions){
+    //read grades from storage
+    let grades = GradeStore.getGrades();
+    
+
+    
     return list;
   }
 
@@ -643,23 +762,30 @@ export class PracticeExamList extends React.Component {
   _onPressNextQuestion = () => {
     this.nextQuestion();
   }
+
+  //callback: when answer is selected
+  _onAnswerSelected = (question, questionIndex, answer, isCorrect) => {
+    this.gradeItem.addAnswer(questionIndex, answer, isCorrect);
+    let current_grade = this.gradeItem.getGrade();
+    GradeStore.addGrade(current_grade);
+  }
   
   _renderItem = ({item, index}) => {
     const isLast = index == this.state.questions.length - 1;
     return (
       <PracticeQuestion
         question={item}
-        questionNumber={index+1}
+        questionNumber={index}
         isLast={isLast}
         onPressNextQuestion={this._onPressNextQuestion}
         onEndReached={this.props.onEndReached}
+        onAnswerSelected={this._onAnswerSelected}
       />
     );
   }
 
   render(){
     const {onEndReached, ...flatListProps } = this.props;
-
     //ui values for carousel
     const headerHeight = Header.HEIGHT + 15;
     const screenHeight = Dimensions.get('window').height;
@@ -667,6 +793,13 @@ export class PracticeExamList extends React.Component {
       sliderHeight: screenHeight, 
       itemHeight  : screenHeight - headerHeight,
     };
+
+    if(this.DEBUG){
+      console.log('\n\Rendering PracticeExamList... STATE:');
+      console.log(this.state);
+    }
+
+    if(this.state.loading) return null;
 
     return(
       <Carousel
