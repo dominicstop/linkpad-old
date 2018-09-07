@@ -46,13 +46,17 @@ export class SubjectModal extends React.PureComponent {
     super(props);
     this.state = {
       modalVisible: false,
+      moduleData  : null ,
       subjectData : null ,
     }
   }
 
-  toggleSubjectModal = async (subjectData) => {
-    //receive subject data from onpress subject
-    await setStateAsync(this, {subjectData : subjectData});
+  toggleSubjectModal = async (moduleData, subjectData) => {
+    //receive subject/module data from onpress subject
+    await setStateAsync(this, {
+      moduleData : moduleData ,
+      subjectData: subjectData,
+    });
     this.subjectModal.open();
   }
 
@@ -66,6 +70,7 @@ export class SubjectModal extends React.PureComponent {
 
   _onPressStartPracticeExam = () => {
     NavigationService.navigateApp('PracticeExamRoute', {
+      moduleData : this.state.moduleData ,
       subjectData: this.state.subjectData,
     });
   }

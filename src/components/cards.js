@@ -195,6 +195,7 @@ export class SubjectDetails extends React.PureComponent {
 //shows a single subject card and holds SubjectDetails and SubjectProgess
 export class SubjectItem extends React.PureComponent {
   static propTypes = {
+    moduleData: PropTypes.shape(moduleProps),
     subjectData: PropTypes.shape(subjectProps),
     height: PropTypes.number,
     numberOfLinesDesc: PropTypes.number,
@@ -213,9 +214,9 @@ export class SubjectItem extends React.PureComponent {
   }
 
   _onPressSubject = () => {
-    const { onPressSubject, subjectData } = this.props;
+    const { onPressSubject, subjectData, moduleData } = this.props;
     //pass subject data as param to callback
-    onPressSubject(subjectData);
+    onPressSubject(subjectData, moduleData);
   }
 
   render() {
@@ -352,6 +353,7 @@ export class ModuleGroup extends React.Component {
   _renderItem = ({item, index}) => {
     return(
       <SubjectItem 
+        moduleData={this.props.moduleData}
         subjectData={item}
         onPressSubject={this.props.onPressSubject}
         numberOfLinesDesc={this.props.numberOfLinesDesc}

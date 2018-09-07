@@ -29,17 +29,14 @@ let structure = {
 
 getGrades = () => {
   return new Promise(async (resolve, reject) => {
+    if(DEBUG) console.log('\nReading Practice Grades: ');
     //has not been set, init with storage
     if(_gradeData == null){
       //get modules from storage
-      let grades_from_storage = await store.get(KEY);
-      _gradeData = JSON.parse(grades_from_storage);
+      _gradeData = await store.get(KEY);
     }
     //resolve tips data
-    if(DEBUG){
-      console.log('\nReading Practice Grades: ');
-      console.log(_gradeData);
-    }
+    if(DEBUG) console.log(_gradeData);
     resolve(_gradeData);
   });
 }
@@ -65,8 +62,9 @@ setGrades = (grades_array) => {
 
 addGrade = (grade_item) => {
   //convert grade_item to JSON Stirng
-  let grade_item_string = JSON.stringify(grade_item);
-  return store.push(KEY, grade_item_string);
+  //let grade_item_string = JSON.stringify(grade_item);
+  if(DEBUG) console.log(_gradeData);
+  return store.push(KEY, grade_item);
 }
 
 export default {

@@ -1,7 +1,7 @@
 import store from 'react-native-simple-store';
 import _ from 'lodash';
 
-const DEBUG = true;
+const DEBUG = false;
 const URL = 'https://linkpad-pharmacy-reviewer.firebaseapp.com/getalltips';
 const KEY = 'tips';
 

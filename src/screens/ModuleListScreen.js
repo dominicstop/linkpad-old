@@ -258,9 +258,9 @@ export class ModuleListScreen extends React.Component {
     })
   }
 
-  _onPressSubject = (subjectData) => {
+  _onPressSubject = (subjectData, moduleData) => {
     const { getRefSubjectModal } = this.props.screenProps;
-    getRefSubjectModal().toggleSubjectModal(subjectData);
+    getRefSubjectModal().toggleSubjectModal(moduleData, subjectData);
   }
 
   _renderRefreshCotrol(){

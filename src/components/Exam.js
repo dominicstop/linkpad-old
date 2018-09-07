@@ -79,6 +79,13 @@ const questionShape = {
   userAnswer: PropTypes.string,
 };
 
+
+class Questions {
+  constructor(indexID_module = 0, indexID_subject = 0){
+    this.questions
+  }
+}
+
 //grade for a subject
 class GradeItem {
   constructor(indexID_module = 0, indexID_subject = 0){
@@ -107,10 +114,19 @@ class GradeItem {
 
   //setter and getters
   getGrade = () => _.cloneDeep(this.grade);
-  setGrade = grade => this.grade = _.cloneDeep(grade);
+  setGrade = grade => {
+    this.grade = grade;
+    if(this.DEBUG){
+      console.log('\n\nSet Grades with:');
+      console.log(grade);
+      console.log('\nthis.grade');
+      console.log(this.grade);
+    }
+  };
+  getAnswers = () => this.grade.answers;
   setTimestamp_ended = () => this.grade.timestamp_ended = this.getTimestamp();
   getLastAnswer = () => this.getGrade().answers.pop();
-  getAnswersLength = () => this.grade.answers.length;
+  getAnswersLength = () => this.grade["answers"].length;
 
   //add an answer
   addAnswer = (indexID = 0, answer = '', isCorrect = false) => {
@@ -512,8 +528,10 @@ export class PracticeQuestion extends React.PureComponent {
 
   constructor(props){
     super(props);
+    //check if question is answered
+    let hasAnswer = props.question.userAnswer != null;
     this.state = {
-      isExplanationOnly: false,
+      isExplanationOnly: hasAnswer,
       disableTouch: false,
       userAnswer: null ,
     };
@@ -660,6 +678,8 @@ export class PracticeExamList extends React.Component {
   static propTypes = {
     questions: PropTypes.array,
     onEndReached: PropTypes.func,
+    moduleData: PropTypes.object,
+    subjectData: PropTypes.object,
   }
 
   constructor(props){
@@ -675,29 +695,63 @@ export class PracticeExamList extends React.Component {
       //current question index
       currentIndex: 0,
     }
-    this.gradeItem = new GradeItem();
+
+    //extract id's from the current subject and modules
+    const indexID_module  = props.moduleData.indexid ;
+    const indexID_subject = props.subjectData.indexid;
+    //set ID's
+    this.gradeItem = new GradeItem(indexID_module, indexID_subject);
+
     if(this.DEBUG){
-      console.log('\n\nstate PracticeExamList');
+      console.log('\n\n\nConstructor - PracticeExamList State:');
       console.log(this.state);
+      console.log('\nProps - ModuleData');
+      console.log(this.props.moduleData);
+      console.log('\nProps - SubjectData');
+      console.log(this.props.subjectData);
     }
   }
 
   async componentWillMount(){
+    const { moduleData, subjectData } = this.props;
+    //extract id's from the current subject and modules
+    const indexID_module  = moduleData.indexid ;
+    const indexID_subject = subjectData.indexid;
+  
     await setStateAsync(this, {loading: true});
     //get questions from props
     const questions = this.getQuestions();
     //read grades from storage
     let grades_from_store = await GradeStore.getGrades();
-    //update gradeitem
-    if(grades_from_store != null) this.gradeItem.setGrade(grades_from_store);
+    if(grades_from_store != null){
+      //find the answers that corresponds to the subject
+      let match = grades_from_store.find((grade_item) => {
+        if(this.DEBUG){
+          console.log('\nGrades ID from store:');
+          console.log('indexID_module : ' + grade_item.indexID_module );
+          console.log('indexID_subject: ' + grade_item.indexID_subject);
+          console.log('\nCurrent ID:' );
+          console.log('indexID_module : ' + indexID_module );
+          console.log('indexID_subject: ' + indexID_subject);
+        }
+        return grade_item.indexID_module == indexID_module && grade_item.indexID_subject == indexID_subject
+      });
+      
+      if(this.DEBUG){
+        console.log('\n\nMatching gradeItem from grade store: ');
+        console.log(match);
+      }
+      this.gradeItem.setGrade(match);
+    } 
     
     let answered_questions = [];
+    let current_index = 0;
 
     
     console.log('\nthis.gradeItem');
     console.log(this.gradeItem.getGrade());
-    console.log('this.gradeItem.getAnswersLength()');
-    console.log(this.gradeItem.getAnswersLength());
+    console.log('\nthis.gradeItem.getAnswers()');
+    console.log(this.gradeItem.getAnswers());
     
     
     //no questions have been answered yet
@@ -706,10 +760,28 @@ export class PracticeExamList extends React.Component {
       answered_questions.push(questions[0]);
 
     } else {
-      //get the last index of the answer
-      let last_index = this.gradeItem.getLastAnswer().indexID_question
-      //create an array of questions that has been already answered
-      answered_questions = questions.slice(0, last_index+1);
+      //get the answered questions
+      answered_questions = this.gradeItem.getAnswers().map((answer_item, index) => {
+        //find the matching question item
+        let matching_question = questions.find((question) => question.indexID == answer_item.indexID_question);
+        return {
+          ...matching_question,
+          userAnswer: answer_item.answer,
+        }
+      });
+      let last_answer = answered_questions.slice().pop();
+      let last_index  = last_answer.indexID;
+
+      console.log('\nlast_answer');
+      console.log(last_answer);
+
+      console.log('\nlast_index');
+      console.log(last_index);
+
+      current_index = last_index;
+      
+      current_index += 1;
+      answered_questions.push(questions[current_index]);
     }
 
 
@@ -719,7 +791,8 @@ export class PracticeExamList extends React.Component {
     this.setState({
       loading: false,
       questionList: answered_questions,
-      questions: questions, 
+      questions: questions,
+      currentIndex: current_index,
     });
   }
 
@@ -734,11 +807,15 @@ export class PracticeExamList extends React.Component {
   }
 
   getQuestions(){
-    //create a copy
-    let questions = this.props.questions.slice();
-    for(let question of questions){
-      question.userAnswer = null
-    }
+    //add properties to question item
+    let questions = this.props.questions.map((item, index) => {
+      return {
+        ...item,
+        userAnswer: null,
+        indexID: index,
+      }
+    });
+
     return _.compact(questions);
   }
 
@@ -806,7 +883,7 @@ export class PracticeExamList extends React.Component {
         ref={(c) => { this._questionListCarousel = c; }}
         data={this.state.questionList}
         renderItem={this._renderItem}
-        firstItem={0}
+        firstItem={this.state.currentIndex}
         activeSlideAlignment={'end'}
         vertical={true}
         lockScrollWhileSnapping={false}
