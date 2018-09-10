@@ -76,8 +76,11 @@ refreshModuleData = () => {
   });
 }
 
+clear = () => _moduleData = null;
+
 export default {
   fetchModuleData,
   getModuleData,
   refreshModuleData,
+  clear,
 }

@@ -5,6 +5,7 @@ import   SubjectListScreen       from './SubjectListScreen'  ;
 import   Constants               from '../Constants'         ;
 import { ModuleList            } from '../components/Cards'  ;
 import { CustomHeader          } from '../components/Header' ;
+import { DrawerButton          } from '../components/Buttons';
 import { ViewWithBlurredHeader } from '../components/Views'  ;
 import { timeout } from '../functions/Utils';
 import ModuleStore from '../functions/ModuleStore';
@@ -223,10 +224,11 @@ const ModulesHeader = (props) => <CustomHeader {...props}
 
 //show a list of modules
 export class ModuleListScreen extends React.Component {
-  static navigationOptions = {
+  static navigationOptions=({navigation, screenProps}) => ({
     title: 'Modules',
     headerTitle: ModulesHeader,
-  };
+    headerLeft : <DrawerButton drawerNav={screenProps.drawerNav}/>,
+  });
 
   constructor(props){
     super(props);
@@ -252,8 +254,9 @@ export class ModuleListScreen extends React.Component {
     this.setState({modules: modules});
   }
 
-  _navigateToModule = (moduleData) => {
+  _navigateToModule = (moduleList, moduleData) => {
     this.props.navigation.navigate('SubjectListRoute', {
+      moduleList: moduleList,
       moduleData: moduleData,
     })
   }

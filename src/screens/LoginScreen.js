@@ -112,6 +112,9 @@ export class LoginContainer extends React.Component {
 
       //save user data to storage
       UserStore.setUserData(login_response);
+      console.log('login_response');
+      console.log(login_response);
+
 
       //login finished
       onLoginFinished && await onLoginFinished(login_response);
@@ -442,6 +445,9 @@ export class LoginUI extends React.Component {
     return(
       <Animatable.View
         style={{alignItems: 'center', justifyContent: 'center', marginTop: 25}}
+        animation={'fadeIn'}
+        easing={'ease-in-out'}
+        duration={750}
         ref={r => this.successContainer = r}
       >
         <IconText

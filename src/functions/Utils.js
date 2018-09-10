@@ -24,6 +24,17 @@ export function shuffleArray(array) {
   return(newArray);
 }
 
+//pick a random item from an array
+export function randomElementFromArray(array) {
+  return array[Math.floor(Math.random() * array.length)];
+}
+
+//when i exceeds max, go back to zero
+export function returnToZero(i, max){
+  let mod = i % (max + 1);
+  return i <= max? i : mod;
+}
+
 export function colorShift(color, max){
   console.log(color);
   let hsl = chroma(color).hsl();

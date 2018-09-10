@@ -2,7 +2,7 @@ import React from 'react';
 import { StyleSheet, Text, View, Dimensions, ScrollView, ViewPropTypes, TouchableOpacity, Animated, Easing, Alert } from 'react-native';
 import PropTypes from 'prop-types';
 
-import { setStateAsync, timeout, shuffleArray } from '../functions/Utils';
+import { setStateAsync, timeout, shuffleArray, randomElementFromArray , returnToZero} from '../functions/Utils';
 import GradeStorefrom from '../functions/GradeStore';
 
 import { Button, ExpandCollapseTextWithHeader } from './Buttons';
@@ -466,13 +466,71 @@ export class Explanation extends React.PureComponent {
 
 }
 
+//shows the answer
 export class Answer extends React.PureComponent {
   static propTypes = {
     question: PropTypes.shape(questionShape),    
   }
 
-  render(){
+  constructor(props){
+    super(props);
+    this.DEBUG = false;
+  }
+
+  _renderCorrect(){
     const { question } = this.props;
+    //possible prefixes
+    const prefixes = [
+      "Correct! the answer is: ",
+      "You're right, the answer is: ",
+      "Great job! the answer is: ",
+      "Your answer is correct: ",
+      "Perfect! The answer is: ",
+      "You answered correctly: ",
+      "Right! The answer is: ",
+    ];
+    //pick an index/prefix based on the indexid
+    const index = returnToZero(question.indexID, prefixes.length-1);
+    const prefix = prefixes[index];
+    return (
+      <Text style={{fontSize: 20, fontWeight: '300', textAlign: 'justify'}}>
+        {prefix}<Text style={{fontWeight: 'bold', color: '#1B5E20', textDecorationLine: 'underline'}}>{question.answer}</Text>
+      </Text>
+    );
+  };
+
+  _renderWrong(){
+    const { question } = this.props;
+    //possible prefixes
+    const prefixes = [
+      "Nice try but the correct answer is: ",
+      "You're wrong, the right answer is: ",
+      "Keep trying! the correct answer is: ",
+      "Sorry, the right answer: ",
+      "Oops, the correct choice is: ",
+      "Incorrect, the right answer is: ",
+      "Wrong! The correct answer is: ",
+      "Try again! The right choice is: ",
+    ];
+    //pick an index/prefix based on the indexid
+    const index = returnToZero(question.indexID, prefixes.length-1);
+    const prefix = prefixes[index];
+    return (
+      <Text style={{fontSize: 20, fontWeight: '300', textAlign: 'justify'}}>
+        {prefix}<Text style={{fontWeight: 'bold', color: '#1B5E20', textDecorationLine: 'underline'}}>{question.answer}</Text> but you answered: <Text style={{fontWeight: 'bold', color: '#BF360C', textDecorationLine: 'underline'}}>{question.userAnswer}</Text>
+      </Text>
+    );
+  }
+
+  render(){
+    console.log('this.props.question');
+    console.log(this.props.question);
+    const { question } = this.props;
+
+    //check if the an
+    let isCorrect = question.answer == question.userAnswer;
+    if(question.userAnswer == null) isCorrect = true;
+
     return(
       <View collapsable={true}>
         <IconText
@@ -485,9 +543,7 @@ export class Answer extends React.PureComponent {
           text={'Answer'}
           textStyle={{fontSize: 28, fontWeight: '800'}}
         />
-        <Text style={{fontSize: 20, fontWeight: '300', textAlign: 'justify'}}>
-          Correct answer is <Text style={{fontWeight: 'bold'}}>{question.answer}</Text>
-        </Text>
+          {isCorrect? this._renderCorrect() : this._renderWrong()}
       </View>
     );
   }
@@ -606,8 +662,18 @@ export class PracticeQuestion extends React.PureComponent {
   }
 
   _renderBackExplaination = () => {
-    const { isExplanationOnly } = this.state;
-    const { isLast } = this.props;
+    const { isExplanationOnly, userAnswer } = this.state;
+    const { isLast, question } = this.props;
+
+    const question_withUserAnswer = {
+      ...question,
+      userAnswer: userAnswer
+    }
+
+    console.log('question_withUserAnswer');
+    console.log(question_withUserAnswer);
+    
+    
     const shouldShowNextButton = !isExplanationOnly && !isLast;
     return(
       <View 
@@ -615,7 +681,7 @@ export class PracticeQuestion extends React.PureComponent {
         collapsable={true}
       >
         <QuestionExplanation
-          question={this.props.question}
+          question={userAnswer == null? question : question_withUserAnswer}
           onPressNextQuestion={this._handleOnPressNextQuestion}
         />
         <Animatable.View
@@ -684,7 +750,7 @@ export class PracticeExamList extends React.Component {
 
   constructor(props){
     super(props);
-    this.DEBUG = true;
+    this.DEBUG = false;
     this.state = {
       //true when read/writng to storage
       loading: true,
@@ -782,13 +848,15 @@ export class PracticeExamList extends React.Component {
 
       current_index = last_index;
       
-      current_index += 1;
-      answered_questions.push(questions[current_index]);
+      let total_questions = subjectData.questions.length - 1;
+
+      if(current_index < total_questions){
+        current_index += 1;
+        answered_questions.push(questions[current_index]);
+      }
+
+
     }
-
-
-    
-    //
 
     this.setState({
       loading: false,

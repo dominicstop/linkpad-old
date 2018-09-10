@@ -77,8 +77,11 @@ refreshTipsData = () => {
   });
 }
 
+clear = () => _tipsData = null;
+
 export default {
   fetchTipsData,
   getTips,
   refreshTipsData,
+  clear,
 }

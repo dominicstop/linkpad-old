@@ -2,7 +2,7 @@ import store from 'react-native-simple-store';
 import _ from 'lodash';
 
 const KEY   = 'grade_practice';
-const DEBUG = true;
+const DEBUG = false;
 
 let _gradeData = null;
 

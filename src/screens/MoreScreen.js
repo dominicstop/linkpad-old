@@ -6,12 +6,17 @@ import   NavigationService       from '../NavigationService';
 import { HEADER_PROPS          } from '../Constants';
 import { ViewWithBlurredHeader, IconText, Card } from '../components/Views' ;
 import { CustomHeader          } from '../components/Header';
+import { DrawerButton          } from '../components/Buttons';
 
-import UserStore   from '../functions/UserStore'  ;
+
+import ModuleStore from '../functions/ModuleStore';
+import TipsStore from '../functions/TipsStore';
+import UserStore from '../functions/UserStore';
+
+import { setStateAsync } from '../functions/Utils';
 
 import { Header, createStackNavigator } from 'react-navigation';
 import { Icon, Divider } from 'react-native-elements';
-import {setStateAsync} from '../functions/Utils';
 
 const HeaderProps = {
   headerTransparent: true,
@@ -79,10 +84,11 @@ export class SettingItem extends React.PureComponent {
 
 //show the setting screen
 export class MoreScreen extends React.Component {
-  static navigationOptions = {
+  static navigationOptions=({navigation, screenProps}) => ({
     title: 'More',
     headerTitle: MoreHeader,
-  };
+    headerLeft : <DrawerButton drawerNav={screenProps.drawerNav}/>,
+  });
 
   constructor(props){
     super(props);
@@ -92,6 +98,11 @@ export class MoreScreen extends React.Component {
   }
 
   _signOutAsync = async () => {
+    //clear variables
+    ModuleStore.clear();
+    UserStore.clear();
+    TipsStore.clear();
+    //delete everything
     await AsyncStorage.clear();
     NavigationService.navigateRoot('AuthRoute');
   };

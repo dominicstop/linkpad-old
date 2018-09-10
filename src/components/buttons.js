@@ -336,6 +336,30 @@ export class ExpandableWithHeader extends React.PureComponent {
   }
 }
 
+export class DrawerButton extends React.PureComponent {
+  static propTypes = {
+    drawerNav: PropTypes.object
+  }
+
+  render(){
+    const {drawerNav, ...touchableProps} = this.props;
+    return(
+      <TouchableOpacity
+        style={{marginLeft: 10}}
+        onPress={() => drawerNav.openDrawer()}
+        {...touchableProps}
+      >
+        <Icon
+          name='ios-menu'
+          type='ionicon'
+          size={26}
+          color='white'
+        />
+      </TouchableOpacity>
+    );
+  }
+}
+
 //touch to expand text
 export class ExpandCollapseText extends React.PureComponent {
   static propTypes = {

@@ -8,6 +8,7 @@ import store from 'react-native-simple-store';
 import ModuleStore from '../functions/ModuleStore';
 import TipsStore   from '../functions/TipsStore'  ;
 import UserStore   from '../functions/UserStore'  ;
+import ResourcesStore from '../functions/ResourcesStore';
 
 Animatable.initializeRegistryWithDefinitions({
   zoomInTransition: {
@@ -40,6 +41,7 @@ export default class AuthLoadingScreen extends React.Component {
       await Promise.all([
         ModuleStore.getModuleData(),
         TipsStore.getTips(),
+        ResourcesStore.getResources(),
       ])
     }
 

@@ -342,11 +342,21 @@ export class ModuleHeader extends React.PureComponent {
 //displays a single module item and a list of subjects
 export class ModuleGroup extends React.Component {
   static propTypes = {
+    //extra data
+    moduleList: PropTypes.arrayOf(
+      PropTypes.shape(moduleProps)
+    ).isRequired,
+    //actual data used
     moduleData       : PropTypes.shape(moduleProps).isRequired,
     numberOfLinesDesc: PropTypes.number,
     //callbacks
     onPressSubject: PropTypes.func,
     onPressModule : PropTypes.func,
+  }
+
+  _onPressModule = () => {
+    const { moduleList, moduleData } = this.props;
+    this.props.onPressModule(moduleList, moduleData);
   }
 
   //renders a single subject item
@@ -362,7 +372,7 @@ export class ModuleGroup extends React.Component {
   }
 
   render() {
-    const { moduleData, onPressModule } = this.props;
+    const { moduleData } = this.props;
 
     //ui values
     const sliderWidth = Dimensions.get('window').width;
@@ -373,7 +383,7 @@ export class ModuleGroup extends React.Component {
         {/*Header*/}
         <TouchableOpacity 
           style={{paddingHorizontal: 12}} 
-          onPress={() => onPressModule(moduleData)}
+          onPress={this._onPressModule}
         >
           <ModuleHeader 
             moduleData={moduleData}
@@ -430,6 +440,7 @@ export class ModuleList extends React.Component {
         animation='fadeInUp'
       >
         <ModuleGroup
+          moduleList={this.props.moduleList}
           moduleData={item}
           onPressSubject={this.props.onPressSubject}
           onPressModule ={this.props.onPressModule }
@@ -460,6 +471,12 @@ export class ModuleList extends React.Component {
 
 export class SubjectList extends React.Component {
   static propTypes = {
+    //extra props
+    moduleList: PropTypes.arrayOf(
+      PropTypes.shape(moduleProps)
+    ).isRequired,
+    moduleData: PropTypes.shape(moduleProps).isRequired,
+    //actual props used for data
     subjectListData: PropTypes.arrayOf(
       PropTypes.shape(subjectProps)
     ).isRequired,
@@ -481,6 +498,7 @@ export class SubjectList extends React.Component {
           numberOfLinesDesc={6}
           subjectData={item}
           onPressSubject={this.props.onPressSubject}
+          moduleData={this.props.moduleData}
         />
       </AnimatedListItem>
     );

@@ -1,43 +1,52 @@
 import React from 'react';
-import { View, ScrollView, ViewPropTypes, Text, TouchableOpacity, AsyncStorage } from 'react-native';
+import { View, ScrollView, ViewPropTypes, Text, TouchableOpacity, AsyncStorage, StyleSheet } from 'react-native';
 import PropTypes from 'prop-types';
 
 import   NavigationService       from '../NavigationService';
 import { HEADER_PROPS          } from '../Constants';
-import { ViewWithBlurredHeader } from '../components/Views' ;
+import { ViewWithBlurredHeader, IconText, Card } from '../components/Views' ;
 import { CustomHeader          } from '../components/Header';
 import { DrawerButton          } from '../components/Buttons';
 
-import { Header, createStackNavigator } from 'react-navigation';
-import { Icon } from 'react-native-elements';
 
-const ExamsHeader = (props) => <CustomHeader {...props}
-  iconName='bookmark'
-  iconType='feather'
+import { setStateAsync } from '../functions/Utils';
+
+import { Header, createStackNavigator } from 'react-navigation';
+import { Icon, Divider } from 'react-native-elements';
+
+const AboutHeader = (props) => <CustomHeader {...props}
+  iconName='menu'
+  iconType='simple-line-icon'
   iconSize={22}
 />
 
-//show the setting screen
-export class ExamsScreen extends React.Component {
+export class AboutScreen extends React.Component {
   static navigationOptions=({navigation, screenProps}) => ({
-    title: 'Exams',
-    headerTitle: ExamsHeader,
+    title: 'About',
+    headerTitle: AboutHeader,
     headerLeft : <DrawerButton drawerNav={screenProps.drawerNav}/>,
   });
+
+  constructor(props){
+    super(props);
+  }
 
   render(){
     return(
       <ViewWithBlurredHeader hasTabBar={true}>
-        <ScrollView style={{paddingTop: Header.HEIGHT + 15, paddingHorizontal: 20}}>
-        </ScrollView>
+
       </ViewWithBlurredHeader>
     );
   }
 }
 
-export const ExamsStack = createStackNavigator({
-    ExamsRoute: {
-      screen: ExamsScreen,
+export const styles = StyleSheet.create({
+
+});
+
+export const AboutStack = createStackNavigator({
+  AboutRoute: {
+      screen: AboutScreen,
     },
   }, {
     headerMode: 'float',

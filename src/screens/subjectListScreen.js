@@ -15,12 +15,12 @@ const getModuleTitle = (moduleData) => moduleData != null ? moduleData.moduleNam
 
 export default class SubjectListScreen extends React.Component {
   static navigationOptions = ({navigation}) => ({
-    title: getModuleTitle(navigation.getParam('moduleData', null)),
+    title: 'View Module',
   });
 
-  _onPressSubject = (subjectData) => {
+  _onPressSubject = (subjectData, moduleData) => {
     const { getRefSubjectModal } = this.props.screenProps;
-    getRefSubjectModal().toggleSubjectModal(subjectData);
+    getRefSubjectModal().toggleSubjectModal(moduleData, subjectData);
   }
 
   _renderHeader = () => {
@@ -49,6 +49,7 @@ export default class SubjectListScreen extends React.Component {
         <ExpandableWithHeader
           collapseHeight={80}
           header={<ModuleTitle moduleData={moduleData}/>}
+          colors={['rgba(255, 255, 255, 0)', 'rgb(233, 232, 239)']}
         >
           <ModuleDescription 
             moduleData={moduleData}
@@ -57,7 +58,7 @@ export default class SubjectListScreen extends React.Component {
         </ExpandableWithHeader>
 
         <Animatable.View
-          animation='fadeInRight'
+          animation='fadeInUp'
           easing='ease-in-out'
           duration={500}
           delay={100}
@@ -76,15 +77,20 @@ export default class SubjectListScreen extends React.Component {
 
   render(){
     const { navigation } = this.props;
+    //get data from previous screen: module list
+    const moduleList = navigation.getParam('moduleList', null);
     const moduleData = navigation.getParam('moduleData', null);
 
     return(
       <ViewWithBlurredHeader hasTabBar={true}>
         <SubjectList
-          containerStyle={{paddingTop: Header.HEIGHT + 10, backgroundColor: 'white'}}
+          containerStyle={{paddingTop: Header.HEIGHT + 10}}
           ListHeaderComponent={this._renderHeader}
           subjectListData={moduleData.subjects}
           onPressSubject={this._onPressSubject}
+          //extra props/data
+          moduleData={moduleData}
+          moduleList={moduleList}
         />
       </ViewWithBlurredHeader>
     );

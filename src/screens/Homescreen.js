@@ -1,0 +1,210 @@
+import React from 'react';
+import { Dimensions } from 'react-native';
+
+import { NAV_BGCOLOR     } from '../Constants';
+import { SubjectModal    } from '../components/Modals';
+import { CustomDrawer    } from '../components/CustomDrawer';
+import { ModuleListStack } from './ModuleListScreen';
+import { ResourcesStack  } from './ResourcesScreen';
+import { ExamsStack      } from './ExamsScreen';
+import { MoreStack       } from './MoreScreen';
+import { BoardExamStack  } from './BoardExamScreen';
+import { PaymentStack    } from './PaymentScreen';
+import { AboutStack      } from './AboutScreen';
+
+import { TipsStack       } from './TipsScreen';
+
+import { createBottomTabNavigator, createDrawerNavigator } from 'react-navigation';
+import * as Animatable from 'react-native-animatable';
+import { Icon } from 'react-native-elements';
+
+
+const { width, height } = Dimensions.get('window');
+
+//TODO: fork on github, export BottomTabBar and npm install
+//import {  } from 'react-navigation-tabs/dist/views/BottomTabBar';
+
+//tab navigation in the homescreen
+const TabNavigation = createBottomTabNavigator({
+    TabModuleListRoute: {
+      screen: ModuleListStack,
+      navigationOptions: {
+        tabBarLabel: 'Modules',
+        tabBarIcon: ({ focused, tintColor }) => {
+          const iconName = focused? 'ios-albums' : 'ios-albums-outline';
+          return <Icon name={iconName} size={25} color={tintColor} type='ionicon'/>;
+        }
+      }
+    },
+    TabExamsRoute: {
+      screen: ExamsStack,
+      navigationOptions: {
+        tabBarLabel: 'Exams',
+        tabBarIcon: ({ focused, tintColor }) => {
+          const iconName = focused? 'ios-bookmarks' : 'ios-bookmarks-outline';
+          return <Icon name={iconName} size={25} color={tintColor} type='ionicon'/>;
+        }
+      }
+    },
+    TabResourcesRoute: {
+      screen: ResourcesStack,
+      navigationOptions: {
+        tabBarLabel: 'Resources',
+        tabBarIcon: ({ focused, tintColor }) => {
+          const iconName = focused? 'ios-information-circle' : 'ios-information-circle-outline';
+          return <Icon name={iconName} size={25} color={tintColor} type='ionicon'/>;
+        }
+      }
+    },
+    TabTipsRoute: {
+      screen: TipsStack,
+      navigationOptions: {
+        tabBarLabel: 'Tips',
+        tabBarIcon: ({ focused, tintColor }) => {
+          const iconName = focused? 'ios-star' : 'ios-star-outline';
+          return <Icon name={iconName} size={25} color={tintColor} type='ionicon'/>;
+        }
+      }
+    },
+  }, {
+    initialRouteName: 'TabModuleListRoute',
+    tabBarOptions: {
+      activeTintColor: 'rgba(255, 255, 255, 0.8)',
+      inactiveTintColor: 'rgba(255, 255, 255, 0.4)',
+      style: {
+        backgroundColor: NAV_BGCOLOR,
+        position: 'absolute',
+        left: 0,
+        right: 0,
+        bottom: 0,
+      }
+    }
+  }
+);
+
+//container for tab navigation
+export class Homescreen extends React.PureComponent {
+  static router = TabNavigation.router;
+
+  constructor(props){
+    super(props);
+  }
+
+  render(){
+    return (
+      <Animatable.View 
+        style={{flex: 1, height: '100%', width: '100%'}}
+        animation={'fadeIn'}
+        duration={750}
+        easing={'ease-in-out'}
+        useNativeDriver={true}
+      >
+        <SubjectModal ref={r => this.subjectModal = r}/>
+        <TabNavigation
+          navigation={this.props.navigation}
+          screenProps={{
+            ...this.props.screenProps,
+            getRefSubjectModal   : () => this.subjectModal    ,
+            getAppStackNavigation: () => this.props.navigation,
+          }}
+        />
+      </Animatable.View>
+    );
+  }
+}
+
+//side drawer navigation
+export const DrawerStack = createDrawerNavigator({
+    DrawerHomeRoute: {
+      screen: Homescreen,
+      navigationOptions: {
+        drawerLabel: 'Home',
+        drawerIcon: ({ tintColor }) => (
+          <Icon
+            name='ios-people'
+            type='ionicon'
+            size={28}
+            color={tintColor}
+          />
+        ),
+      }
+    },
+    DrawerBoardExamRoute: {
+      screen: BoardExamStack,
+      navigationOptions: {
+        drawerLabel: 'Board Exam',
+        drawerIcon: ({ tintColor }) => (
+          <Icon
+            name='ios-clipboard'
+            type='ionicon'
+            size={28}
+            color={tintColor}
+          />
+        ),
+      }
+    },
+    DrawerPaymentRoute: {
+      screen: PaymentStack,
+      navigationOptions: {
+        drawerLabel: 'Payment',
+        drawerIcon: ({ tintColor }) => (
+          <Icon
+            name='ios-cash'
+            type='ionicon'
+            size={28}
+            color={tintColor}
+          />
+        ),
+      }
+    },
+    DrawerAboutRoute: {
+      screen: AboutStack,
+      navigationOptions: {
+        drawerLabel: 'About',
+        drawerIcon: ({ tintColor }) => (
+          <Icon
+            name='ios-information-circle'
+            type='ionicon'
+            size={28}
+            color={tintColor}
+          />
+        ),
+      }
+    },
+    DrawerSettingsRoute: {
+      screen: MoreStack,
+      navigationOptions: {
+        drawerLabel: 'Settings',
+        drawerIcon: ({ tintColor }) => (
+          <Icon
+            name='ios-settings'
+            type='ionicon'
+            size={28}
+            color={tintColor}
+          />
+        ),
+      }
+    },
+  }, {
+    drawerBackgroundColor: 'rgba(0, 0, 0, 0)',
+    drawerWidth: width - 40,
+    contentComponent: CustomDrawer
+  }
+);
+
+//wraps drawerstack and passes drawernav as screenprop
+export class DrawerStackContainer extends React.Component {
+  static router = DrawerStack.router;
+
+  render(){
+    return (
+      <DrawerStack
+        navigation={this.props.navigation}
+        screenProps={{
+          ...this.props.screenProps,
+          drawerNav: this.props.navigation,
+        }}
+      />
+    );
+  }
+}

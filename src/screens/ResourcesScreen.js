@@ -1,72 +1,76 @@
 import React from 'react';
-import { StyleSheet, RefreshControl, Alert, View, Text, TouchableOpacity, AsyncStorage, FlatList } from 'react-native';
+import { StyleSheet, RefreshControl, Alert, View, Text, TouchableOpacity, AsyncStorage, FlatList, ScrollView } from 'react-native';
 import PropTypes from 'prop-types';
 
-import   NavigationService       from '../NavigationService' ;
+import   NavigationService       from '../NavigationService'  ;
 import { HEADER_PROPS          } from '../Constants'         ;
 import { ViewWithBlurredHeader } from '../components/Views'  ;
 import { CustomHeader          } from '../components/Header' ;
-import { TipList               } from '../components/Tips'   ;
 import { DrawerButton          } from '../components/Buttons';
 
 import { timeout, setStateAsync } from '../functions/Utils';
+import   ResourcesStore           from '../functions/ResourcesStore';
 
-import TipsStore from '../functions/TipsStore';
-
+import * as Animatable from 'react-native-animatable';
 import { Header, createStackNavigator } from 'react-navigation';
 import { Icon } from 'react-native-elements';
 import _ from 'lodash';
+import { ResourceList } from '../components/Resources';
 
-const TipsHeader = (props) => <CustomHeader {...props}
+const ResourcesHeader = (props) => <CustomHeader {...props}
   iconName='star-outlined'
   iconType='entypo'
   iconSize={22}
 />
 
 //show the setting screen
-export class TipsScreen extends React.Component {
+export class ResourcesScreen extends React.Component {
   static navigationOptions=({navigation, screenProps}) => ({
-    title: 'Tips',
-    headerTitle: TipsHeader,
+    title: 'Resources',
+    headerTitle: ResourcesHeader,
     headerLeft : <DrawerButton drawerNav={screenProps.drawerNav}/>,
   });
+  
 
   constructor(props){
     super(props);
+    this.DEBUG = false;
     this.state = {
-      tips: [],
+      resources: [],
       refreshing: false,
     };
   }
 
   async componentWillMount(){
-    let tips = await TipsStore.getTips();
-    await setStateAsync(this, {tips: tips});
+    let resources = await ResourcesStore.getResources();
+    await setStateAsync(this, {resources: resources});
   }
 
   _onRefresh = async () => {
-    const { tips } = this.state;
-    let new_tips = tips;
+    const { resources } = this.state;
+    let new_resources = resources;
     //set ui to refrshing
     await setStateAsync(this, {refreshing: true });
     try {
       let result = await Promise.all([
-        //get tips from server
-        TipsStore.refreshTipsData(),
+        //get resources from server
+        ResourcesStore.refreshResourcesData(),
         //avoid flicker
         timeout(1000),
       ]);
-      //extract tips
-      new_tips = result[0];
-      const isTipsNew = _.isEqual(tips, new_tips);
-      if(isTipsNew) Alert.alert('Sorry', 'No new tips to show');
+      //extract resources
+      new_resources = result[0];
+      //check if fetched resources is different
+      const isresourcesNew = _.isEqual(resources, new_resources);
+      if(isresourcesNew) Alert.alert('Sorry', 'No new resources to show');
     } catch(error){
       //avoid flicker
       await timeout(750);
-      Alert.alert('Error', 'Unable to fetch new tips (Please try again)');
+      if(this.DEBUG) console.log('ResourcesScreen _onRefresh error: ' + error);
+      Alert.alert('Error', 'Unable to fetch new resources (Please try again)');
       this.setState({refreshing: false});
     }
-    await setStateAsync(this, {refreshing: false, tips: new_tips});
+    await setStateAsync(this, {refreshing: false, resources: new_resources});
   }
 
   _renderRefreshCotrol(){
@@ -83,23 +87,27 @@ export class TipsScreen extends React.Component {
 
   _renderFooter = () => {
     return (
-      <View style={{marginBottom: 80}}>
+      <Animatable.View 
+        style={{marginBottom: 80}}
+        delay={1000}
+        animation={'fadeIn'}
+      >
         <Icon
           name={'heart'}
           type={'entypo'}
           color={'rgb(170, 170, 170)'}
           size={24}
         />
-      </View>
+      </Animatable.View>
     )
   }
 
   render(){
     return(
       <ViewWithBlurredHeader hasTabBar={true}>
-        <TipList
+        <ResourceList
           contentInset={{top: Header.HEIGHT + 12}}
-          tips={this.state.tips}
+          resources={this.state.resources}
           refreshControl={this._renderRefreshCotrol()}
           ListFooterComponent={this._renderFooter()}
         />
@@ -108,9 +116,9 @@ export class TipsScreen extends React.Component {
   }
 }
 
-export const TipsStack = createStackNavigator({
-  TipsRoute: {
-      screen: TipsScreen,
+export const ResourcesStack = createStackNavigator({
+  resourcesRoute: {
+      screen: ResourcesScreen,
     },
   }, {
     headerMode: 'float',
