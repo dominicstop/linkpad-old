@@ -5,6 +5,9 @@ import { StyleSheet, Text, View, ViewPropTypes, TextProps } from 'react-native';
 import { IconText } from './Views';
 
 import Pie from 'react-native-pie'
+import {STYLES} from '../Constants';
+import Chroma from 'chroma-js';
+
 
 
 export class GaugeChart extends React.PureComponent {
@@ -29,16 +32,19 @@ export class GaugeChart extends React.PureComponent {
 
   render(){
     const { percent, color, backgroundColor, thickness, radius, containerStyle, textStyle } = this.props;
+    const glowColor = Chroma(color).saturate(1.5).hex();
     return(
       <View style={containerStyle}>
-        <Pie 
-          radius={radius}
-          innerRadius={radius-thickness}
-          series={[percent]}
-          colors={[color]}
-          backgroundColor={backgroundColor}
-        />
-        <View style={[styles.gauge]}>
+        <View style={[STYLES.glow, {shadowColor: glowColor, shadowRadius: 12, shadowOpacity: 0.6}]}>
+          <Pie 
+            radius={radius}
+            innerRadius={radius-thickness}
+            series={[percent]}
+            colors={[color]}
+            backgroundColor={backgroundColor}
+          />
+        </View>
+        <View style={[styles.gauge, STYLES.mediumShadow]}>
           <Text style={[styles.gaugeText, textStyle]}>{percent}%</Text>
         </View>
       </View>

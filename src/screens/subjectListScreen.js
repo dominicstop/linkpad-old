@@ -1,9 +1,10 @@
 import React from 'react';
 import { Text, View } from 'react-native';
 
-import { SubjectList, ModuleTitle, ModuleDescription } from '../components/Cards'  ;
+import { SubjectList, ModuleTitle, ModuleDescription } from '../components/Cards';
 import { ViewWithBlurredHeader, IconText      } from '../components/Views'  ;
 import { ExpandCollapse, ExpandableWithHeader } from '../components/Buttons';
+import { CustomHeader } from '../components/Header' ;
 
 import { Header, NavigationEvents  } from 'react-navigation';
 import { Divider, colors } from 'react-native-elements' ;
@@ -13,9 +14,12 @@ import _ from 'lodash';
 
 const getModuleTitle = (moduleData) => moduleData != null ? moduleData.moduleName : 'View Module';
 
+const SubjectListHeader = (props) => <CustomHeader {...props}/>
+
 export default class SubjectListScreen extends React.Component {
   static navigationOptions = {
     title: 'View Module',
+    headerTitle: SubjectListHeader,    
     drawerLockMode: 'locked-close'
   };
 

@@ -24,7 +24,7 @@ export class CustomHeader extends React.PureComponent {
     return(
       <IconText
         text={this.props.children}
-        textStyle={[{color: this.props.color, fontSize: 18, fontWeight: 'bold'}, this.props.style]}
+        textStyle={[{color: this.props.color, fontSize: 17, fontWeight: '400'}, this.props.style]}
         containerStyle={STYLES.glow}
         iconColor={this.props.color   }
         iconName ={this.props.iconName}

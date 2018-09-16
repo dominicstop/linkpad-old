@@ -1,7 +1,7 @@
 import React from 'react';
 import { StyleSheet, Text, View, Dimensions, TouchableOpacity } from 'react-native';
 
-import   Constants               from '../Constants'       ;
+import   Constants, { STYLES }               from '../Constants'       ;
 import { ViewWithBlurredHeader } from '../components/Views';
 import { PracticeExamList      } from '../components/Exam' ;
 
@@ -56,6 +56,7 @@ export class PracticeExamListScreen extends React.Component {
     if(state.params) title = state.params.title;    
     return {
       title: title,
+      headerTitleStyle: STYLES.glow,
       headerLeft: <CloseButton onPress={() => navigation.navigate('HomeRoute')}/>
     };
   };

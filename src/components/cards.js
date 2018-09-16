@@ -106,7 +106,7 @@ export class SubjectProgress extends React.PureComponent {
       thickness={10}
       color={color}
       backgroundColor={backgroundColor}
-      containerStyle={{opacity: 0.65}}
+      containerStyle={{}}
     />
 
     const mistakes = <GradeDougnut
@@ -255,13 +255,7 @@ export class SubjectItem extends React.PureComponent {
 
     return(
       <View style={[{ height: height, paddingTop: 10, paddingBottom: 35, shadowOffset:{  width: 4,  height: 5}, shadowColor: '#686868', shadowOpacity: 0.5, shadowRadius: 5}, containerStyle]} removeClippedSubviews={false}>
-        <LinearGradient
-          style={{flex: 1, height: '100%', borderRadius: 15, flexDirection: 'row', paddingHorizontal: 20, paddingVertical: 15}}
-          colors={['white', 'white']}
-          start={{x: 0, y: 0}} 
-          end={{x: 1, y: 1}}
-          overflow='hidden' 
-        >
+        <View style={{flex: 1, height: '100%', borderRadius: 15, flexDirection: 'row', paddingHorizontal: 20, paddingVertical: 15, backgroundColor: 'white'}} overflow='hidden' >
           {true && <SubjectProgress 
             progressData={DUMMY_PROGRESS} 
             color={Chroma(color).saturate(2).hex()}         
@@ -274,7 +268,7 @@ export class SubjectItem extends React.PureComponent {
             onPress={this._onPressSubject}
             color={Chroma(color).darken().hex()}
           />
-        </LinearGradient>
+        </View>
       </View>
     );
   }

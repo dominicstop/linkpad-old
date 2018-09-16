@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, Text, View, TabBarIOS, Platform, NavigatorIOS, TouchableOpacity, LayoutAnimation, UIManager, RefreshControl } from 'react-native';
+import { StyleSheet, Text, View, Platform, NavigatorIOS, TouchableOpacity, LayoutAnimation, UIManager, RefreshControl } from 'react-native';
 
 import   SubjectListScreen       from './SubjectListScreen'  ;
 import   Constants               from '../Constants'         ;
@@ -321,9 +321,17 @@ export const ModuleListStack = createStackNavigator({
       screen: SubjectListScreen,
     }, 
   }, {
-    headerMode: 'screen',
-    headerTransitionPreset: 'uikit',
-    headerTransparent: true,
     navigationOptions: Constants.HEADER_PROPS,
+    ...Platform.select({
+      ios: {
+        headerMode: 'float',
+        headerTransitionPreset: 'uikit',
+        headerTransparent: true,
+      },
+      android: {
+        headerMode: 'screen',
+        headerTransparent: false,
+      },
+    }),
   }
 );

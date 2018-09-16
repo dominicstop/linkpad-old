@@ -13,7 +13,7 @@ import   LoginScreen              from './src/screens/LoginScreen';
 import   NavigationService        from './src/NavigationService';
 
 //use native navigation
-//useScreens();
+useScreens();
 
 //main stack for app screens
 const AppStack = createStackNavigator({
