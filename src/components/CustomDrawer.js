@@ -19,7 +19,7 @@ import {STYLES} from '../Constants';
 export class CustomDrawer extends React.PureComponent {
   constructor(props){
     super(props);
-    this.DEBUG = true;
+    this.DEBUG = false;
     this.state = {
       user: null,
     }
@@ -85,8 +85,6 @@ export class CustomDrawer extends React.PureComponent {
 
   _renderDrawerItems = () => {
     const { user } = this.state;
-    console.log('user');
-    console.log(user);
     return(
       <ScrollView style={{paddingTop: 20, flex: 1}} bounces={false}>
         {user && this._renderHeader()}

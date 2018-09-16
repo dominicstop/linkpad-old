@@ -105,7 +105,6 @@ export class TipList extends React.PureComponent {
       this.flatlist.scrollToOffset({animated: false, offset: 100});
       this.flatlist.scrollToOffset({animated: false, offset: -80});
     }, 1);
-    console.log('Tips');
   }
 
   _renderItemTip = ({item, index}) => {

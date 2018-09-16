@@ -10,7 +10,7 @@ import { ViewWithBlurredHeader } from '../components/Views'  ;
 import { timeout } from '../functions/Utils';
 import ModuleStore from '../functions/ModuleStore';
 
-import { Header, createStackNavigator } from 'react-navigation';
+import { Header, createStackNavigator, NavigationEvents } from 'react-navigation';
 
 import Chroma from 'chroma-js';
 import {setStateAsync} from '../functions/Utils';
@@ -238,6 +238,10 @@ export class ModuleListScreen extends React.Component {
     };
   }
 
+  componentDidFocus = () => {
+    const { setDrawerSwipe } = this.props.screenProps;
+    setDrawerSwipe(true);
+  }
 
   _onRefresh = async () => {
     await setStateAsync(this, {refreshing: true });
@@ -250,8 +254,16 @@ export class ModuleListScreen extends React.Component {
   }
   
   componentWillMount = async () => {
+    //get modules from storage
     let modules = await ModuleStore.getModuleData();
     this.setState({modules: modules});
+  }
+
+  componentDidMount(){
+    //set callbacks for modal
+    const { getRefSubjectModal, setDrawerSwipe } = this.props.screenProps;
+    getRefSubjectModal().modalClosedCallback = () => setDrawerSwipe(true);
+    getRefSubjectModal().modalOpenedCallback = () => setDrawerSwipe(false);
   }
 
   _navigateToModule = (moduleList, moduleData) => {
@@ -262,7 +274,7 @@ export class ModuleListScreen extends React.Component {
   }
 
   _onPressSubject = (subjectData, moduleData) => {
-    const { getRefSubjectModal } = this.props.screenProps;
+    const { getRefSubjectModal, setDrawerSwipe } = this.props.screenProps;
     getRefSubjectModal().toggleSubjectModal(moduleData, subjectData);
   }
 
@@ -286,9 +298,10 @@ export class ModuleListScreen extends React.Component {
 
     return(
       <ViewWithBlurredHeader hasTabBar={true}>
+        <NavigationEvents onDidFocus={this.componentDidFocus}/>
         <ModuleList
           containerStyle={{marginTop: Platform.OS == 'android'? header_height + 15 : 0}}
-          contentInset={{top: Header.HEIGHT + 15}}
+          contentInset={{top: Header.HEIGHT + 17}}
           moduleList={this.state.modules}
           onPressModule ={this._navigateToModule}
           onPressSubject={this._onPressSubject}

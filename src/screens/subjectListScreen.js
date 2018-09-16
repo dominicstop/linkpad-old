@@ -5,7 +5,7 @@ import { SubjectList, ModuleTitle, ModuleDescription } from '../components/Cards
 import { ViewWithBlurredHeader, IconText      } from '../components/Views'  ;
 import { ExpandCollapse, ExpandableWithHeader } from '../components/Buttons';
 
-import { Header  } from 'react-navigation';
+import { Header, NavigationEvents  } from 'react-navigation';
 import { Divider, colors } from 'react-native-elements' ;
 import * as Animatable from 'react-native-animatable';
 import _ from 'lodash';
@@ -14,9 +14,15 @@ import _ from 'lodash';
 const getModuleTitle = (moduleData) => moduleData != null ? moduleData.moduleName : 'View Module';
 
 export default class SubjectListScreen extends React.Component {
-  static navigationOptions = ({navigation}) => ({
+  static navigationOptions = {
     title: 'View Module',
-  });
+    drawerLockMode: 'locked-close'
+  };
+
+  componentDidFocus = () => {
+    const { setDrawerSwipe } = this.props.screenProps;
+    setDrawerSwipe(false);
+  }
 
   _onPressSubject = (subjectData, moduleData) => {
     const { getRefSubjectModal } = this.props.screenProps;
@@ -83,6 +89,7 @@ export default class SubjectListScreen extends React.Component {
 
     return(
       <ViewWithBlurredHeader hasTabBar={true}>
+        <NavigationEvents onDidFocus={this.componentDidFocus}/>
         <SubjectList
           containerStyle={{paddingTop: Header.HEIGHT + 10}}
           ListHeaderComponent={this._renderHeader}

@@ -82,12 +82,30 @@ const TabNavigation = createBottomTabNavigator({
   }
 );
 
+
+
 //container for tab navigation
 export class Homescreen extends React.PureComponent {
   static router = TabNavigation.router;
 
+  static navigationOptions = {
+    drawerLockMode: 'locked-closed',
+  }
+
+  static navigationOptions = ({navigation}) => {
+    let drawerLockMode = 'unlocked';
+    if(navigation.state.params) drawerLockMode = navigation.state.params.enableDrawerSwipe? 'unlocked' : 'locked-closed';
+    return {
+      drawerLockMode    
+    }
+  } 
+
   constructor(props){
     super(props);
+  }
+
+  setDrawerSwipe = (mode) => {
+    this.props.navigation.setParams({enableDrawerSwipe: mode});
   }
 
   render(){
@@ -106,6 +124,7 @@ export class Homescreen extends React.PureComponent {
             ...this.props.screenProps,
             getRefSubjectModal   : () => this.subjectModal    ,
             getAppStackNavigation: () => this.props.navigation,
+            setDrawerSwipe: this.setDrawerSwipe,
           }}
         />
       </Animatable.View>

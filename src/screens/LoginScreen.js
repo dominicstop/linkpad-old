@@ -112,10 +112,6 @@ export class LoginContainer extends React.Component {
 
       //save user data to storage
       UserStore.setUserData(login_response);
-      console.log('login_response');
-      console.log(login_response);
-
-
       //login finished
       onLoginFinished && await onLoginFinished(login_response);
       navigation.navigate('AppRoute');

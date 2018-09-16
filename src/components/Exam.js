@@ -89,7 +89,7 @@ class Questions {
 //grade for a subject
 class GradeItem {
   constructor(indexID_module = 0, indexID_subject = 0){
-    this.DEBUG = true;
+    this.DEBUG = false;
     this.grade = {
       //used for identifyingå
       indexID_module : indexID_module,
@@ -523,8 +523,6 @@ export class Answer extends React.PureComponent {
   }
 
   render(){
-    console.log('this.props.question');
-    console.log(this.props.question);
     const { question } = this.props;
 
     //check if the an
@@ -669,10 +667,6 @@ export class PracticeQuestion extends React.PureComponent {
       ...question,
       userAnswer: userAnswer
     }
-
-    console.log('question_withUserAnswer');
-    console.log(question_withUserAnswer);
-    
     
     const shouldShowNextButton = !isExplanationOnly && !isLast;
     return(
@@ -839,12 +833,6 @@ export class PracticeExamList extends React.Component {
       });
       let last_answer = answered_questions.slice().pop();
       let last_index  = last_answer.indexID;
-
-      console.log('\nlast_answer');
-      console.log(last_answer);
-
-      console.log('\nlast_index');
-      console.log(last_index);
 
       current_index = last_index;
       

@@ -28,8 +28,6 @@ setUserData = (userData) => {
       reject(error);
     }
     //resolve tips data
-    console.log('_userData');
-    console.log(_userData);
     resolve(_userData);
   }); 
 }

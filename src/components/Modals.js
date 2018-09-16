@@ -61,18 +61,18 @@ export class SubjectModal extends React.PureComponent {
   }
 
   _onModalOpened = () => {
+    //call callback if defined
+    if(this.modalOpenedCallback) this.modalOpenedCallback();
     this.setState({modalVisible: true});
   }
 
   _onModalClosed = () => {
+    //call callback if defined
+    if(this.modalClosedCallback) this.modalClosedCallback();
     this.setState({modalVisible: false});
   }
 
   _onPressStartPracticeExam = () => {
-    console.log('this.state.moduleData');
-    console.log(this.state.moduleData);
-    console.log('\n\n\n\n\n\nthis.state.subjectData');
-    console.log(this.state.subjectData);
     NavigationService.navigateApp('PracticeExamRoute', {
       moduleData : this.state.moduleData ,
       subjectData: this.state.subjectData,
