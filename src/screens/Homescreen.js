@@ -1,7 +1,7 @@
 import React from 'react';
-import { Dimensions } from 'react-native';
+import { Dimensions, Platform } from 'react-native';
 
-import { NAV_BGCOLOR     , STYLES} from '../Constants';
+import Constants, { NAV_BGCOLOR     , STYLES} from '../Constants';
 import { SubjectModal    } from '../components/Modals';
 import { CustomDrawer    } from '../components/CustomDrawer';
 import { ModuleListStack } from './ModuleListScreen';
@@ -68,11 +68,12 @@ const TabNavigation = createBottomTabNavigator({
     },
   }, {
     initialRouteName: 'TabModuleListRoute',
+    lazy: false,
     tabBarOptions: {
       activeTintColor: 'rgba(255, 255, 255, 0.8)',
       inactiveTintColor: 'rgba(255, 255, 255, 0.4)',
       style: {
-        backgroundColor: NAV_BGCOLOR,
+        backgroundColor: Platform.OS == 'ios'? null : Constants.NAV_BGCOLOR,
         position: 'absolute',
         left: 0,
         right: 0,

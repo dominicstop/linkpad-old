@@ -114,7 +114,7 @@ export class CustomDrawer extends React.PureComponent {
           iconColor={'white'}
           iconSize={25}
           //style
-          containerStyle={{paddingVertical: 10, paddingHorizontal: 15, margin: 15, borderRadius: 15, borderColor: 'rgba(255, 255, 255, 0.6)', borderWidth: 1}}
+          containerStyle={{paddingVertical: 10, paddingHorizontal: 15, margin: 15, borderRadius: 15, backgroundColor: 'rgba(0, 0, 0, 0.1)'}}
           textStyle={{color: 'white', fontSize: 16, marginLeft: 10}}
         />
       </View>
@@ -130,7 +130,8 @@ export class CustomDrawer extends React.PureComponent {
         >
         <LinearGradient
           style={{flex: 1}}
-          colors={['rgba(137, 30, 232, 0.8)' , 'rgba(1, 66, 209, 0.6)']}
+          start={{x: 0.0, y: 0.25}} end={{x: 0.5, y: 1.0}}
+          colors={['rgba(137, 30, 232, 0.7)' , 'rgba(18, 1, 209, 0.6)']}
         >
           {this._renderDrawerItems()}
           {this._renderFooter()}

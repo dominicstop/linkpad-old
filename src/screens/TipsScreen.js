@@ -13,8 +13,9 @@ import { timeout, setStateAsync } from '../functions/Utils';
 
 import TipsStore from '../functions/TipsStore';
 
-import { Header, createStackNavigator } from 'react-navigation';
+import { Header, createStackNavigator, NavigationEvents } from 'react-navigation';
 import { Icon } from 'react-native-elements';
+import * as Animatable from 'react-native-animatable';
 import _ from 'lodash';
 
 const TipsHeader = (props) => <CustomHeader {...props}
@@ -36,12 +37,21 @@ export class TipsScreen extends React.Component {
     this.state = {
       tips: [],
       refreshing: false,
+      showContent: false,
     };
   }
 
   async componentWillMount(){
+    //load data from storage
     let tips = await TipsStore.getTips();
     await setStateAsync(this, {tips: tips});
+  }
+
+  componentDidFocus = () => {
+    //mount or show contents on first show
+    if(!this.state.showContent){
+      this.setState({showContent: true});
+    }
   }
 
   _onRefresh = async () => {
@@ -59,7 +69,9 @@ export class TipsScreen extends React.Component {
       //extract tips
       new_tips = result[0];
       const isTipsNew = _.isEqual(tips, new_tips);
+      //show alert when there are no changes
       if(isTipsNew) Alert.alert('Sorry', 'No new tips to show');
+
     } catch(error){
       //avoid flicker
       await timeout(750);
@@ -83,26 +95,31 @@ export class TipsScreen extends React.Component {
 
   _renderFooter = () => {
     return (
-      <View style={{marginBottom: 80}}>
+      <Animatable.View 
+        style={{marginBottom: 80}}
+        delay={1000}
+        animation={'fadeInUp'}
+      >
         <Icon
           name={'heart'}
           type={'entypo'}
           color={'rgb(170, 170, 170)'}
           size={24}
         />
-      </View>
+      </Animatable.View>
     )
   }
 
   render(){
     return(
       <ViewWithBlurredHeader hasTabBar={true}>
-        <TipList
+        <NavigationEvents onDidFocus={this.componentDidFocus}/>
+        {this.state.showContent && <TipList
           contentInset={{top: Header.HEIGHT + 12}}
           tips={this.state.tips}
           refreshControl={this._renderRefreshCotrol()}
           ListFooterComponent={this._renderFooter()}
-        />
+        />}
       </ViewWithBlurredHeader>
     );
   }

@@ -2,20 +2,20 @@ import React from 'react';
 import { StyleSheet, RefreshControl, Alert, View, Text, TouchableOpacity, AsyncStorage, FlatList, ScrollView } from 'react-native';
 import PropTypes from 'prop-types';
 
-import   NavigationService       from '../NavigationService'  ;
-import { HEADER_PROPS          } from '../Constants'         ;
-import { ViewWithBlurredHeader } from '../components/Views'  ;
-import { CustomHeader          } from '../components/Header' ;
-import { DrawerButton          } from '../components/Buttons';
+import   NavigationService       from '../NavigationService'   ;
+import { HEADER_PROPS          } from '../Constants'           ;
+import { ViewWithBlurredHeader } from '../components/Views'    ;
+import { CustomHeader          } from '../components/Header'   ;
+import { DrawerButton          } from '../components/Buttons'  ;
+import { ResourceList          } from '../components/Resources';
 
 import { timeout, setStateAsync } from '../functions/Utils';
 import   ResourcesStore           from '../functions/ResourcesStore';
 
 import * as Animatable from 'react-native-animatable';
-import { Header, createStackNavigator } from 'react-navigation';
+import { Header, createStackNavigator, NavigationEvents } from 'react-navigation';
 import { Icon } from 'react-native-elements';
 import _ from 'lodash';
-import { ResourceList } from '../components/Resources';
 
 const ResourcesHeader = (props) => <CustomHeader {...props}
   iconName='star-outlined'
@@ -38,12 +38,21 @@ export class ResourcesScreen extends React.Component {
     this.state = {
       resources: [],
       refreshing: false,
+      showContent: false,
     };
   }
 
   async componentWillMount(){
+    //load data from storage
     let resources = await ResourcesStore.getResources();
     await setStateAsync(this, {resources: resources});
+  }
+
+  componentDidFocus = () => {
+    //mount or show contents on first show
+    if(!this.state.showContent){
+      this.setState({showContent: true});
+    }
   }
 
   _onRefresh = async () => {
@@ -62,7 +71,9 @@ export class ResourcesScreen extends React.Component {
       new_resources = result[0];
       //check if fetched resources is different
       const isresourcesNew = _.isEqual(resources, new_resources);
+      //show alert when there are no changes
       if(isresourcesNew) Alert.alert('Sorry', 'No new resources to show');
+
     } catch(error){
       //avoid flicker
       await timeout(750);
@@ -90,7 +101,7 @@ export class ResourcesScreen extends React.Component {
       <Animatable.View 
         style={{marginBottom: 80}}
         delay={1000}
-        animation={'fadeIn'}
+        animation={'fadeInUp'}
       >
         <Icon
           name={'heart'}
@@ -105,12 +116,13 @@ export class ResourcesScreen extends React.Component {
   render(){
     return(
       <ViewWithBlurredHeader hasTabBar={true}>
-        <ResourceList
+        <NavigationEvents onDidFocus={this.componentDidFocus}/>
+        {this.state.showContent && <ResourceList
           contentInset={{top: Header.HEIGHT + 12}}
           resources={this.state.resources}
           refreshControl={this._renderRefreshCotrol()}
           ListFooterComponent={this._renderFooter()}
-        />
+        />}
       </ViewWithBlurredHeader>
     );
   }

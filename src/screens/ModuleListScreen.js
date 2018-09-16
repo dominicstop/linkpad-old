@@ -239,6 +239,7 @@ export class ModuleListScreen extends React.Component {
   }
 
   componentDidFocus = () => {
+    //enable drawer when this screen is active
     const { setDrawerSwipe } = this.props.screenProps;
     setDrawerSwipe(true);
   }
@@ -260,9 +261,9 @@ export class ModuleListScreen extends React.Component {
   }
 
   componentDidMount(){
-    //set callbacks for modal
+    //set callbacks for modal when opened/closed
     const { getRefSubjectModal, setDrawerSwipe } = this.props.screenProps;
-    getRefSubjectModal().modalClosedCallback = () => setDrawerSwipe(true);
+    getRefSubjectModal().modalClosedCallback = () => setDrawerSwipe(true );
     getRefSubjectModal().modalOpenedCallback = () => setDrawerSwipe(false);
   }
 

@@ -179,7 +179,7 @@ export class ViewWithBlurredHeader extends React.PureComponent {
       }}>
         <BlurView intensity={100} tint='default'>
           <LinearGradient
-            style={{width: '100%', height: '100%', opacity: 0.3}}
+            style={{width: '100%', height: '100%', opacity: 0.7}}
             start={[0, 1]} end={[1, 0]}
             colors={['rgb(48, 0, 247)', 'rgb(90, 0, 247)']}
           />

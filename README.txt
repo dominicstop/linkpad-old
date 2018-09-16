@@ -4,6 +4,8 @@ Files I Modified Inside node_modules
   DIR: /kaacbay/node_modules/react-native-drawer-layout/dist
   CHANGES:
     Line 413: backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: _reactNative.Platform.OS == 'ios'? 'rgba(0, 0, 0, 0.0)' : 'rgba(0, 0, 0, 0.5)',
+
 
 2) LinearGradient.android.js and LinearGradient.ios.js
   DIR: /kaacbay/node_modules/expo/src/effects
