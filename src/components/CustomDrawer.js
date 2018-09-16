@@ -14,6 +14,7 @@ import { DrawerItems, NavigationActions } from 'react-navigation';
 import { BlurView, LinearGradient } from 'expo';
 import * as Animatable from 'react-native-animatable';
 import { Icon, Divider } from 'react-native-elements';
+import {STYLES} from '../Constants';
 
 export class CustomDrawer extends React.PureComponent {
   constructor(props){
@@ -62,18 +63,22 @@ export class CustomDrawer extends React.PureComponent {
     const phone = user.phoneNumber? user.phoneNumber : 'Phone unknown';
 
     return(
-      <View style={{flex: 1, padding: 15, flexDirection: 'row', alignItems: 'center'}}>
-        <View style={{width: 80, height: 80, borderRadius: 80/2, backgroundColor: '#6200EA', marginRight: 15, alignItems: 'center', justifyContent: 'center'}}>
-          <Text style={{fontSize: 24, fontWeight: '900', color: 'white'}}>{letters}</Text>
+      <View style={headerStyles.containerHeader}>
+        {/*Left: Avatar w/ Initials*/}
+        <View style={[headerStyles.containerAvatar, STYLES.glow, {shadowRadius: 32, shadowColor: '#6200EA', shadowOpacity: 0.8}]}>
+          <Text style={[headerStyles.avatarInitials, STYLES.glow, {shadowRadius: 16}]}>{letters}</Text>
         </View>
-        <View style={{flex: 1, justifyContent: 'center'}}>
-          <Text numberOfLines={1} style={{fontSize: 18, fontWeight: '800', color: 'white'}}>{name}</Text>
-          <Text numberOfLines={1} style={{fontSize: 16, fontWeight: '200', color: 'white'}}>{email}</Text>
-          <View style={{backgroundColor: '#673AB7', marginTop: 5, alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 10}}>
-            <Text style={{color: 'white'}}>{premium}</Text>
+        {/*Right: User Details*/}
+        <View style={headerStyles.containerUserDetails}>
+          {/*User: Name and Email*/}
+          <Text numberOfLines={1} style={[headerStyles.titleName    , STYLES.glow]}>{name }</Text>
+          <Text numberOfLines={1} style={[headerStyles.subtitleEmail, STYLES.glow]}>{email}</Text>
+          {/*Premium status pill*/}
+          <View style={headerStyles.pillPremium}>
+            <Text style={headerStyles.textPremium}>{premium}</Text>
           </View>
         </View>
-        <Divider style={{backgroundColor: 'rgba(255, 255, 255, 0.8)', marginTop: 12, marginHorizontal: 20}}/>
+        <Divider style={{backgroundColor: 'rgba(255, 255, 255, 0.8)', marginHorizontal: 20, height: 5}}/>
       </View>
     );
   }
@@ -91,7 +96,7 @@ export class CustomDrawer extends React.PureComponent {
           activeBackgroundColor='rgba(0, 0, 0, 0.10)'
           inactiveTintColor='rgba(255, 255, 255, 0.7)'
           labelStyle={{fontSize: 18}}
-          activeLabelStyle={{fontWeight: '900'}}
+          activeLabelStyle={[{fontWeight: '900'}, STYLES.glow]}
           inactiveLabelStyle={{fontWeight: '300'}}
           onItemPress={this._onItemPress}
         />
@@ -135,4 +140,52 @@ export class CustomDrawer extends React.PureComponent {
       </BlurView>
     );
   }
-}
+};
+
+const headerStyles = StyleSheet.create({
+  containerHeader: {
+    flex: 1, 
+    padding: 15, 
+    flexDirection: 'row', 
+    alignItems: 'center'
+  },
+  containerUserDetails: {
+    flex: 1, 
+    justifyContent: 'center'
+  },
+  containerAvatar: {
+    width: 80, 
+    height: 80, 
+    borderRadius: 80/2, 
+    backgroundColor: '#6200EA', 
+    marginRight: 15, 
+    alignItems: 'center', 
+    justifyContent: 'center'
+  },
+  avatarInitials: {
+    fontSize: 24, 
+    fontWeight: '900', 
+  color: 'white'
+  },
+  titleName: {
+    fontSize: 18, 
+    fontWeight: '800', 
+    color: 'white'
+  },
+  subtitleEmail: {
+    fontSize: 16, 
+    fontWeight: '200', 
+    color: 'white'
+  },
+  pillPremium: {
+    backgroundColor: '#673AB7', 
+    marginTop: 5, 
+    alignSelf: 'flex-start', 
+    paddingHorizontal: 10, 
+    paddingVertical: 5, 
+    borderRadius: 10
+  },
+  textPremium: {
+    color: 'white'
+  },
+});

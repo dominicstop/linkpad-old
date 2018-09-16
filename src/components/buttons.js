@@ -5,6 +5,7 @@ import PropTypes from 'prop-types';
 import * as Animatable from 'react-native-animatable';
 import { LinearGradient } from 'expo';
 import { Icon } from 'react-native-elements';
+import {STYLES} from '../Constants';
 
 
 
@@ -342,10 +343,10 @@ export class DrawerButton extends React.PureComponent {
   }
 
   render(){
-    const {drawerNav, ...touchableProps} = this.props;
+    const {drawerNav, style, ...touchableProps} = this.props;
     return(
       <TouchableOpacity
-        style={{marginLeft: 10}}
+        style={[STYLES.glow, { marginLeft: 10, shadowOpacity: 0.5 } , style]}
         onPress={() => drawerNav.openDrawer()}
         {...touchableProps}
       >

@@ -2,8 +2,9 @@ import React from 'react';
 import { View, ScrollView, ViewPropTypes, Text, TouchableOpacity, AsyncStorage } from 'react-native';
 import PropTypes from 'prop-types';
 
+import Constants from '../Constants';
+
 import   NavigationService       from '../NavigationService';
-import { HEADER_PROPS          } from '../Constants';
 import { ViewWithBlurredHeader } from '../components/Views' ;
 import { CustomHeader          } from '../components/Header';
 import { DrawerButton          } from '../components/Buttons';
@@ -43,6 +44,7 @@ export const ExamsStack = createStackNavigator({
     headerMode: 'float',
     headerTransitionPreset: 'uikit',
     headerTransparent: true,
-    navigationOptions: HEADER_PROPS,
+    navigationOptions: Constants.HEADER_PROPS,
+    ...Constants.STACKNAV_PROPS
   }
 );

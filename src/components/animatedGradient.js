@@ -51,7 +51,7 @@ export class AnimatedGradient extends React.PureComponent {
     const { speed } = this.props;
     this.gradientInterval = setInterval( () => {
       //update gradient colors
-      this.linearGradientRef.setNativeProps({
+      this.linearGradientRef.gradientRef.setNativeProps({
         //convert colors before assigning
         colors: this.nextColors().map(processColor)
       });

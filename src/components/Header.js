@@ -1,8 +1,9 @@
 import React from 'react';
-import { Text, View } from 'react-native';
+import { Text, View, StyleSheet } from 'react-native';
 import PropTypes from 'prop-types';
 
-import { IconText } from './Views'
+import { IconText } from './Views';
+import { STYLES   } from '../Constants';
 
 export class CustomHeader extends React.PureComponent {
   static propTypes = {
@@ -24,6 +25,7 @@ export class CustomHeader extends React.PureComponent {
       <IconText
         text={this.props.children}
         textStyle={[{color: this.props.color, fontSize: 18, fontWeight: 'bold'}, this.props.style]}
+        containerStyle={STYLES.glow}
         iconColor={this.props.color   }
         iconName ={this.props.iconName}
         iconType ={this.props.iconType}

@@ -1,13 +1,14 @@
 import React from 'react';
-import { Text, View, ViewPropTypes, TextProps, StyleSheet } from 'react-native';
+import { Text, View, ViewPropTypes, Platform, StyleSheet } from 'react-native';
 import PropTypes from 'prop-types';
 
 import { STYLES } from '../Constants';
 
 import { Icon     } from 'react-native-elements';
 import { Header   } from 'react-navigation';
-import { BlurView } from 'expo';
+import Expo, { BlurView } from 'expo';
 import * as Animatable from 'react-native-animatable';
+import { LinearGradient } from 'expo';
 
 const overlayOpacity = 0.4
 //declare animations
@@ -135,7 +136,7 @@ export class Card extends React.PureComponent {
 }
 
 //ios only: used woth react-nav for a blurred floating header
-export class ViewWithBlurredHeader extends React.Component {
+export class ViewWithBlurredHeader extends React.PureComponent {
   static propTypes = {
     hasTabBar: PropTypes.bool
   }
@@ -144,28 +145,88 @@ export class ViewWithBlurredHeader extends React.Component {
     hasTabBar: false
   }
 
-  render(){
-    const { hasTabBar } = this.props;
+  //ios blurred header overlay
+  _renderHeaderBlur(){
+    return(
+      <View style={{
+        position: 'absolute', width: '100%', height: Header.HEIGHT,
+        shadowOffset:{ height: 3 },
+        shadowColor: 'rgb(48, 0, 247)',
+        shadowRadius: 9,
+        shadowOpacity: 0.5,
+      }}>
+        <BlurView intensity={100} tint='default'>
+          <LinearGradient
+            style={{width: '100%', height: '100%', opacity: 0.7}}
+            start={{x: 0.0, y: 0.25}} end={{x: 0.5, y: 1.0}}
+            colors={['rgb(48, 0, 247)', 'rgb(90, 0, 247)']}
+          />
+        </BlurView>
+      </View>
+    );
+  }
 
+  //ios blurred tab bar overlay
+  _renderTabBlur(){
     const TabBarHeight = 49;
+    return(
+      <View style={{
+        position: 'absolute', width: '100%', height: TabBarHeight, bottom: 0,
+        shadowOffset:{ height: -3 },
+        shadowColor: 'rgb(48, 0, 247)',
+        shadowRadius: 16,
+        shadowOpacity: 0.5,
+      }}>
+        <BlurView intensity={100} tint='default'>
+          <LinearGradient
+            style={{width: '100%', height: '100%', opacity: 0.3}}
+            start={[0, 1]} end={[1, 0]}
+            colors={['rgb(48, 0, 247)', 'rgb(90, 0, 247)']}
+          />
+        </BlurView>
+      </View>
+    );
+  }
 
-    const TabBlurView = (props) => <BlurView 
-      style={{position: 'absolute', width: '100%', height: TabBarHeight, bottom: 0}}
-      intensity={100}
-      tint='default'
-      {...props}
-    />
-
+  render_iOS(){
+    const { hasTabBar } = this.props;
     return(
       <View style={{flex: 1}}>
         {this.props.children}
-        <BlurView 
-          style={{position: 'absolute', width: '100%', height: Header.HEIGHT}}
-          intensity={100}
-          tint='default'
-        />
-        {hasTabBar? <TabBlurView/> : null}
+        {this._renderHeaderBlur()}
+        {hasTabBar && this._renderTabBlur()}
       </View>
+    );
+  }
+
+  //android header overlay
+  _renderHeader(){
+    const header_height = Header.HEIGHT + Expo.Constants.statusBarHeight;
+    return(
+      <LinearGradient
+        style={{position: 'absolute', width: '100%', height: header_height, paddingTop: Expo.Constants.statusBarHeight}}
+        colors={['#8400ea', '#651FFF']}
+        start={[0, 1]} 
+        end={[1, 0]}
+      />
+    );
+  }
+
+  render_Android(){
+    return(
+      <View style={{flex: 1}}>
+        {this.props.children}
+        {this._renderHeader()}
+      </View>
+    );
+  }
+
+  render(){
+    return(
+      Platform.select({
+        ios    : this.render_iOS(),
+        android: this.render_Android(),
+      })
     );
   }
 }

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Dimensions } from 'react-native';
 
-import { NAV_BGCOLOR     } from '../Constants';
+import { NAV_BGCOLOR     , STYLES} from '../Constants';
 import { SubjectModal    } from '../components/Modals';
 import { CustomDrawer    } from '../components/CustomDrawer';
 import { ModuleListStack } from './ModuleListScreen';
@@ -32,7 +32,7 @@ const TabNavigation = createBottomTabNavigator({
         tabBarLabel: 'Modules',
         tabBarIcon: ({ focused, tintColor }) => {
           const iconName = focused? 'ios-albums' : 'ios-albums-outline';
-          return <Icon name={iconName} size={25} color={tintColor} type='ionicon'/>;
+          return <Icon name={iconName} size={25} color={tintColor} type='ionicon' containerStyle={focused? STYLES.glow : null}/>;
         }
       }
     },
@@ -42,7 +42,7 @@ const TabNavigation = createBottomTabNavigator({
         tabBarLabel: 'Exams',
         tabBarIcon: ({ focused, tintColor }) => {
           const iconName = focused? 'ios-bookmarks' : 'ios-bookmarks-outline';
-          return <Icon name={iconName} size={25} color={tintColor} type='ionicon'/>;
+          return <Icon name={iconName} size={25} color={tintColor} type='ionicon' containerStyle={focused? STYLES.glow : null}/>;
         }
       }
     },
@@ -52,7 +52,7 @@ const TabNavigation = createBottomTabNavigator({
         tabBarLabel: 'Resources',
         tabBarIcon: ({ focused, tintColor }) => {
           const iconName = focused? 'ios-information-circle' : 'ios-information-circle-outline';
-          return <Icon name={iconName} size={25} color={tintColor} type='ionicon'/>;
+          return <Icon name={iconName} size={25} color={tintColor} type='ionicon' containerStyle={focused? STYLES.glow : null}/>;
         }
       }
     },
@@ -62,7 +62,7 @@ const TabNavigation = createBottomTabNavigator({
         tabBarLabel: 'Tips',
         tabBarIcon: ({ focused, tintColor }) => {
           const iconName = focused? 'ios-star' : 'ios-star-outline';
-          return <Icon name={iconName} size={25} color={tintColor} type='ionicon'/>;
+          return <Icon name={iconName} size={25} color={tintColor} type='ionicon' containerStyle={focused? STYLES.glow : null}/>;
         }
       }
     },
@@ -93,9 +93,9 @@ export class Homescreen extends React.PureComponent {
   render(){
     return (
       <Animatable.View 
-        style={{flex: 1, height: '100%', width: '100%'}}
+        style={{flex: 1, height: '100%', width: '100%', backgroundColor: 'rgb(233, 232, 239)'}}
         animation={'fadeIn'}
-        duration={750}
+        duration={500}
         easing={'ease-in-out'}
         useNativeDriver={true}
       >
@@ -113,6 +113,19 @@ export class Homescreen extends React.PureComponent {
   }
 }
 
+export class DrawerIcon extends React.PureComponent {
+  render(){
+    const { color } = this.props;
+    const shouldGlow = color == 'white';
+    return(
+      <Icon 
+        {...this.props}
+        containerStyle={shouldGlow? [STYLES.glow, {shadowOpacity: 0.35}] : null}
+      />
+    );
+  }
+}
+
 //side drawer navigation
 export const DrawerStack = createDrawerNavigator({
     DrawerHomeRoute: {
@@ -120,7 +133,7 @@ export const DrawerStack = createDrawerNavigator({
       navigationOptions: {
         drawerLabel: 'Home',
         drawerIcon: ({ tintColor }) => (
-          <Icon
+          <DrawerIcon
             name='ios-people'
             type='ionicon'
             size={28}
@@ -134,7 +147,7 @@ export const DrawerStack = createDrawerNavigator({
       navigationOptions: {
         drawerLabel: 'Board Exam',
         drawerIcon: ({ tintColor }) => (
-          <Icon
+          <DrawerIcon
             name='ios-clipboard'
             type='ionicon'
             size={28}
@@ -148,8 +161,9 @@ export const DrawerStack = createDrawerNavigator({
       navigationOptions: {
         drawerLabel: 'Payment',
         drawerIcon: ({ tintColor }) => (
-          <Icon
+          <DrawerIcon
             name='ios-cash'
+            containerStyle={tintColor == 'white'? STYLES.glow : null}
             type='ionicon'
             size={28}
             color={tintColor}
@@ -162,7 +176,7 @@ export const DrawerStack = createDrawerNavigator({
       navigationOptions: {
         drawerLabel: 'About',
         drawerIcon: ({ tintColor }) => (
-          <Icon
+          <DrawerIcon
             name='ios-information-circle'
             type='ionicon'
             size={28}
@@ -176,7 +190,7 @@ export const DrawerStack = createDrawerNavigator({
       navigationOptions: {
         drawerLabel: 'Settings',
         drawerIcon: ({ tintColor }) => (
-          <Icon
+          <DrawerIcon
             name='ios-settings'
             type='ionicon'
             size={28}

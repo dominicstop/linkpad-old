@@ -362,7 +362,7 @@ export class LoginUI extends React.Component {
           ref={r => this.headerTitle = r}
           useNativeDriver={true}
         >
-          {isLoading && <ActivityIndicator size='large' style={{marginRight: 10}}/>}
+          {isLoading && <ActivityIndicator size='large' style={{marginRight: 10}} color={'rgba(255, 255, 255, 0.8)'}/>}
           <Text style={{fontSize: 38, fontWeight: '900', color: 'white'}}>
             {titleText}
           </Text>
@@ -379,6 +379,12 @@ export class LoginUI extends React.Component {
   }
 
   _renderSignInForm(){
+
+    const textInputProps = {
+      underlineColorAndroid: 'rgba(0,0,0,0)',
+      selectionColor: 'rgba(255, 255, 255, 0.7)',
+    }
+
     return(
       <Animatable.View 
         collapsable={true}
@@ -397,7 +403,8 @@ export class LoginUI extends React.Component {
           returnKeyType='next'
           iconName='ios-mail-outline'
           iconType='ionicon'
-          iconSize={40}
+          iconSize={30}
+          {...textInputProps}
         />
         <InputForm
           placeholder='Password'
@@ -407,7 +414,8 @@ export class LoginUI extends React.Component {
           secureTextEntry={true}
           iconName='ios-lock-outline'
           iconType='ionicon'
-          iconSize={40}
+          iconSize={30}
+          {...textInputProps}
         />
         
         <IconButton 
@@ -473,7 +481,7 @@ export class LoginUI extends React.Component {
         useNativeDriver={true}
       >
         <AnimatedGradient
-          style={styles.rootContainer}
+          style={[styles.rootContainer]}
           colorsTop   ={['#7F00FF', '#654ea3', '#642B73', '#c0392b', '#ff00cc', '#FC466B', ]}
           colorsBottom={['#F100FF', '#eaafc8', '#C6426E', '#8e44ad', '#333399', '#3F5EFB', ]}
           speed={100}
@@ -484,7 +492,7 @@ export class LoginUI extends React.Component {
             behavior='padding'
           >
             <Animatable.View 
-              style={[styles.signInContainer, {overflow: 'hidden'}]}
+              style={[styles.signInContainer, {overflow: 'hidden', elevation: 1}]}
               ref={r => this.animatedSignInContainer = r}
               animation={'bounceInUp'}
               duration={1000}

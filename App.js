@@ -2,6 +2,9 @@ import React from 'react';
 import { StyleSheet, Text, View, StatusBar } from 'react-native';
 
 import { createSwitchNavigator, createStackNavigator } from 'react-navigation';
+import { useScreens } from 'react-native-screens';
+
+import Constants from './src/Constants';
 
 import { DrawerStackContainer   } from './src/screens/Homescreen';
 import { PracticeExamStack      } from './src/screens/PracticeExamScreen';
@@ -9,6 +12,8 @@ import   AuthLoadingScreen        from './src/screens/AuthLoadingScreen';
 import   LoginScreen              from './src/screens/LoginScreen';
 import   NavigationService        from './src/NavigationService';
 
+//use native navigation
+//useScreens();
 
 //main stack for app screens
 const AppStack = createStackNavigator({
@@ -25,7 +30,8 @@ const AppStack = createStackNavigator({
     headerMode: 'hidden',
     initialRouteName: 'HomeRoute',
     gesturesEnabled: false,
-    mode: 'modal'
+    mode: 'modal',
+    ...Constants.STACKNAV_PROPS
   }
 );
 
@@ -36,6 +42,7 @@ const AuthStack = createStackNavigator({
     },
   }, {
     headerMode: 'hidden',
+    ...Constants.STACKNAV_PROPS
   }
 );
 

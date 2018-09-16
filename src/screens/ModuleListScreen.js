@@ -282,9 +282,12 @@ export class ModuleListScreen extends React.Component {
     //console.log('ModuleList: this.state.modules');
     //console.log(this.state.modules);
 
+    const header_height = Header.HEIGHT + Expo.Constants.statusBarHeight;
+
     return(
       <ViewWithBlurredHeader hasTabBar={true}>
         <ModuleList
+          containerStyle={{marginTop: Platform.OS == 'android'? header_height + 15 : 0}}
           contentInset={{top: Header.HEIGHT + 15}}
           moduleList={this.state.modules}
           onPressModule ={this._navigateToModule}
@@ -304,7 +307,7 @@ export const ModuleListStack = createStackNavigator({
       screen: SubjectListScreen,
     }, 
   }, {
-    headerMode: 'float',
+    headerMode: 'screen',
     headerTransitionPreset: 'uikit',
     headerTransparent: true,
     navigationOptions: Constants.HEADER_PROPS,
