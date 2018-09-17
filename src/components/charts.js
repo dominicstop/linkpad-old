@@ -35,7 +35,7 @@ export class GaugeChart extends React.PureComponent {
     const glowColor = Chroma(color).saturate(1.5).hex();
     return(
       <View style={containerStyle}>
-        <View style={[STYLES.glow, {shadowColor: glowColor, shadowRadius: 12, shadowOpacity: 0.6}]}>
+        <View style={[STYLES.glow, {shadowColor: glowColor, shadowRadius: 12, shadowOpacity: 0.75}]}>
           <Pie 
             radius={radius}
             innerRadius={radius-thickness}

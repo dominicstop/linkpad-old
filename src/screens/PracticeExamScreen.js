@@ -1,16 +1,16 @@
 import React from 'react';
 import { StyleSheet, Text, View, Dimensions, TouchableOpacity } from 'react-native';
 
-import   Constants, { STYLES }               from '../Constants'       ;
+import   Constants, { STYLES   } from '../Constants'       ;
 import { ViewWithBlurredHeader } from '../components/Views';
 import { PracticeExamList      } from '../components/Exam' ;
 
-import GradeStore from '../functions/GradeStore';
+import IncompletePracticeExamStore from '../functions/IncompletePracticeExamStore';
 
-import * as Animatable             from 'react-native-animatable';
-import    { createStackNavigator } from 'react-navigation';
 
-import { Icon } from 'react-native-elements';
+import * as Animatable          from 'react-native-animatable';
+import { createStackNavigator } from 'react-navigation';
+import { Icon                 } from 'react-native-elements';
 
 export class PracticeExamHeader extends React.PureComponent {
   constructor(props){
@@ -48,7 +48,6 @@ const CloseButton = (props) => {
   )
 }
 
-
 export class PracticeExamListScreen extends React.Component {
   static navigationOptions = ({ navigation }) => {
     const { state } = navigation;
@@ -65,25 +64,46 @@ export class PracticeExamListScreen extends React.Component {
     super(props);
     //get subjectsdata from prev. screen
     const { navigation } = this.props;
-    this.DEBUG = true;
+    this.DEBUG = false;
     this.state = {
       moduleData : navigation.getParam('moduleData' , null),
       subjectData: navigation.getParam('subjectData', null),
     };
 
-    const items = this.state.subjectData.questions.length;
-
-    this.updateTitle(0 + '/' + items);
-
-    if(this.DEBUG){
-      console.log('\n\nConstructor: PracticeExamListScreen - State:');
+    this.updateTitleIndex(1);
+    //debug: print state
+    if(this.DEBUG && false){
+      console.log('\n-------------------------------------START');
+      console.log('Constructor: PracticeExamListScreen - State:');
       console.log(this.state);
+      console.log('-----------------------------------------END');
     }
   }
 
   async componentDidMount(){
-    let index = await this.getCurrentIndexFromQuestion();
-    this.updateTitleIndex(index);
+    const last_index    = await this.getLastAnsweredIndex();
+    const display_index = last_index > 0? last_index + 2 : 1;
+    this.updateTitleIndex(display_index);
+  }
+
+  //returns the last item's index in iPE's store
+  async getLastAnsweredIndex(){
+    const { subjectData, moduleData } = this.state;
+    //extract id's from the current subject and modules
+    const indexID_module  = moduleData .indexid;
+    const indexID_subject = subjectData.indexid;
+
+    //find match from store
+    let matched_iPE = await IncompletePracticeExamStore.findMatch({indexID_module, indexID_subject}, true);
+    let last_index = 0;
+
+    if(matched_iPE.hasMatch){
+      //get the last question from array
+      let last_question = matched_iPE.match_iPE.answers.slice().pop();
+      //update last index
+      last_index = last_question.indexID_question;
+    } 
+    return (last_index);
   }
 
   updateTitle = (title) => {
@@ -94,52 +114,9 @@ export class PracticeExamListScreen extends React.Component {
   updateTitleIndex = (index) => {
     const { subjectData } = this.state;
     const items = subjectData.questions.length;
-    this.updateTitle(index == 0? 1 : index + '/' + items);
-  }
-
-  //TODO: move to GradeStore
-  getCurrentIndexFromQuestion(){
-    return new Promise(async (resolve, reject) => {
-      const { subjectData, moduleData } = this.state;
-      //extract id's from the current subject and modules
-      const indexID_module  = moduleData.indexid ;
-      const indexID_subject = subjectData.indexid;
-      //get questions from state
-      const questions = subjectData.questions;
-
-      try {
-        //read grades from storage
-        let grades_from_store = await GradeStore.getGrades();
-        if(grades_from_store != null){
-          //find the answers that corresponds to the subject
-          let match = grades_from_store.find((grade_item) => {
-            if(this.DEBUG){
-              console.log('\n\n\nGrades ID from store:');
-              console.log('indexID_module : ' + grade_item.indexID_module );
-              console.log('indexID_subject: ' + grade_item.indexID_subject);
-              console.log('\nCurrent ID:' );
-              console.log('indexID_module : ' + indexID_module );
-              console.log('indexID_subject: ' + indexID_subject);
-            }
-            return grade_item.indexID_module == indexID_module && grade_item.indexID_subject == indexID_subject
-          });
-          
-          if(this.DEBUG){
-            console.log('\n\nMatching gradeItem from grade store: ');
-            console.log(match);
-          }
-
-          if(match != null){
-            let last_grade = match.answers.slice().pop();
-            let last_index = last_grade.indexID_question + 1;
-            resolve(last_index);
-          }
-          resolve(1);
-        } 
-      } catch(error){
-        reject(error);
-      }
-    });
+    const prefix = 'Question ';
+    const suffix = index == 0? 1 : index + '/' + items;
+    this.updateTitle(prefix + suffix);
   }
 
   _handleOnEndReached = () => {

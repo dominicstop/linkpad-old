@@ -346,7 +346,7 @@ export class DrawerButton extends React.PureComponent {
     const {drawerNav, style, ...touchableProps} = this.props;
     return(
       <TouchableOpacity
-        style={[STYLES.glow, { marginLeft: 10, shadowOpacity: 0.5 } , style]}
+        style={[STYLES.glow, { marginLeft: 10, shadowOpacity: 0.5, shadowRadius: 3 } , style]}
         onPress={() => drawerNav.openDrawer()}
         {...touchableProps}
       >
@@ -355,6 +355,7 @@ export class DrawerButton extends React.PureComponent {
           type='ionicon'
           size={26}
           color='white'
+          containerStyle={[STYLES.glow]}
         />
       </TouchableOpacity>
     );

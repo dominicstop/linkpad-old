@@ -3,7 +3,8 @@ import { StyleSheet, Text, View, Dimensions, ScrollView, ViewPropTypes, Touchabl
 import PropTypes from 'prop-types';
 
 import { setStateAsync, timeout, shuffleArray, randomElementFromArray , returnToZero} from '../functions/Utils';
-import GradeStorefrom from '../functions/GradeStore';
+import IncompletePracticeExamStore from '../functions/IncompletePracticeExamStore';
+
 
 import { Button, ExpandCollapseTextWithHeader } from './Buttons';
 import { FlipView, IconText } from './Views';
@@ -15,7 +16,6 @@ import    { Divider  } from 'react-native-elements';
 
 import { DangerZone } from 'expo';
 import _ from 'lodash';
-import GradeStore from '../functions/GradeStore';
 const { Lottie } = DangerZone;
 
 const QUESTIONS = [
@@ -79,19 +79,13 @@ const questionShape = {
   userAnswer: PropTypes.string,
 };
 
-
-class Questions {
-  constructor(indexID_module = 0, indexID_subject = 0){
-    this.questions
-  }
-}
-
-//grade for a subject
-class GradeItem {
+//
+class IncompletePracticeExams {
   constructor(indexID_module = 0, indexID_subject = 0){
     this.DEBUG = false;
-    this.grade = {
-      //used for identifyingå
+    //this is where IPE's are stored
+    this.items = {
+      //used for identifying
       indexID_module : indexID_module,
       indexID_subject: indexID_subject,
       //dates
@@ -100,9 +94,13 @@ class GradeItem {
       //array of ans to question
       answers: []
     };
+
+    //debug: print items
     if(this.DEBUG){
-      console.log('\n\nNew GradeItem Created:');
-      console.log(this.grade);
+      console.log('\n+++++++++++++++++++++++++++++START');
+      console.log('New IncompletePracticeExams Created:');
+      console.log(this.items);
+      console.log('+++++++++++++++++++++++++++++++++END');
     }
   }
 
@@ -113,39 +111,62 @@ class GradeItem {
   }
 
   //setter and getters
-  getGrade = () => _.cloneDeep(this.grade);
-  setGrade = grade => {
-    this.grade = grade;
+  getItems = () => _.cloneDeep(this.items);
+  setItems = (new_item) => {
+    this.items = new_item;
     if(this.DEBUG){
-      console.log('\n\nSet Grades with:');
-      console.log(grade);
-      console.log('\nthis.grade');
-      console.log(this.grade);
+      console.log('\n##########START');
+      console.log('Set Grades with: ');
+      console.log(new_item);
+      console.log('##############END');
     }
   };
-  getAnswers = () => this.grade.answers;
-  setTimestamp_ended = () => this.grade.timestamp_ended = this.getTimestamp();
-  getLastAnswer = () => this.getGrade().answers.pop();
-  getAnswersLength = () => this.grade["answers"].length;
+
+  getAnswers = () => this.items.answers;
+  setTimestamp_ended = () => this.items.timestamp_ended = this.getTimestamp();
+  getLastAnswer = () => this.getItems().answers.pop();
+  getAnswersLength = () => this.items["answers"].length;
+  
+  //return questions with the corresponding userAnswers from iPE
+  mergeAnswersWithQuestions = (questions) => {
+    //get the answers from the iPE items
+    const answers_iPE = this.getAnswers();
+    //return an array of questions merged with the matching answer from iPE
+    return answers_iPE.map((answer_item, index) => {
+      //find the matching question item
+      let matching_question = questions.find((question) => question.indexID == answer_item.indexID_question);
+      return {
+        //append the question item
+        ...matching_question,
+        //insert the answers from the iPE
+        userAnswer: answer_item.answer,
+      }
+    });
+  }
 
   //add an answer
   addAnswer = (indexID = 0, answer = '', isCorrect = false) => {
+    //create an answer object
     let new_answer = {
-      //append data
       indexID_question: indexID,
-      answer: answer,
-      isCorrect: isCorrect,
       //add a timestamp
       timestamp: this.getTimestamp(),
+      //append data
+      answer, isCorrect,
     };
-    //append to answer
-    this.grade.answers.push(new_answer);
+
+    //append to answers
+    this.items.answers.push(new_answer);
+    //debug: print answers and new_answer
     if(this.DEBUG){
-      console.log('\n\nNew Answer Added:');
-      console.log(new_answer);
-      console.log('\n\nhis.grade.answers:');
-      console.log(this.grade.answers);
+      console.log('\n^^^^^^^^^^^START');
+      console.log('New Answer Added: ');
+      console.log(new_answer          );
+      console.log('Current Answeres: ');
+      console.log(this.items.answers  );
+      console.log('^^^^^^^^^^^^^^^END');
     }
+
     //return created answer obj
     return new_answer;
   }
@@ -752,98 +773,79 @@ export class PracticeExamList extends React.Component {
       questions: [],
       //list of questions to show in the UI
       questionList: [],
-      //current question index
+      //determines which question to show
       currentIndex: 0,
     }
 
     //extract id's from the current subject and modules
-    const indexID_module  = props.moduleData.indexid ;
+    const indexID_module  = props.moduleData .indexid;
     const indexID_subject = props.subjectData.indexid;
     //set ID's
-    this.gradeItem = new GradeItem(indexID_module, indexID_subject);
+    this.incompletePE = new IncompletePracticeExams(indexID_module, indexID_subject);
 
+    //debug: print state
     if(this.DEBUG && false){
-      console.log('\n\n\nConstructor - PracticeExamList State:');
+      console.log('\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~START');
+      console.log('Constructor - PracticeExamList State:');
       console.log(this.state);
-      console.log('\nProps - ModuleData');
-      console.log(this.props.moduleData);
-      console.log('\nProps - SubjectData');
-      console.log(this.props.subjectData);
+      console.log('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~END');
     }
   }
 
   async componentWillMount(){
     const { moduleData, subjectData } = this.props;
     //extract id's from the current subject and modules
-    const indexID_module  = moduleData.indexid ;
+    const indexID_module  = moduleData .indexid;
     const indexID_subject = subjectData.indexid;
   
     await setStateAsync(this, {loading: true});
     //get questions from props
     const questions = this.getQuestions();
-    //read grades from storage
-    let grades_from_store = await GradeStore.getGrades();
-    if(grades_from_store != null){
-      //find the answers that corresponds to the subject
-      let match = grades_from_store.find((grade_item) => {
-        if(this.DEBUG){
-          console.log('\n\n\nGrades ID from store:');
-          console.log('indexID_module : ' + grade_item.indexID_module );
-          console.log('indexID_subject: ' + grade_item.indexID_subject);
-          console.log('\nCurrent ID:' );
-          console.log('indexID_module : ' + indexID_module );
-          console.log('indexID_subject: ' + indexID_subject);
-        }
-        return grade_item.indexID_module == indexID_module && grade_item.indexID_subject == indexID_subject
-      });
-      
-      if(this.DEBUG){
-        console.log('\n\nMatching gradeItem from grade store: ');
-        console.log(match);
-      }
 
-      if(match != null){
-        if(this.DEBUG) console.log('Found Match: setting grade item...');
-        this.gradeItem.setGrade(match);
+    //read incomplete PE's from storage
+    let iPE_fromStore = await IncompletePracticeExamStore.get(true);
+
+    if(iPE_fromStore != null){
+      //find the answers that corresponds to the subject
+      let match = await IncompletePracticeExamStore.findMatch({indexID_module, indexID_subject}, true);
+      if(match.hasMatch){
+        if(this.DEBUG) console.log('\nFound Match: setting iPE item...');
+        this.incompletePE.setItems(match.match_iPE);
       }
     } 
     
+    //for storing the previous questions
     let answered_questions = [];
+    //for determining which question to show
     let current_index = 0;
-
+    //debug: print iPE items in obj
     if(this.DEBUG){
-      console.log('\nthis.gradeItem');
-      console.log(this.gradeItem.getGrade());
+      console.log('\n>>>>>>>>>>>>>>>>>>>>>>>>START');
+      console.log('iPE items in: this.incompletePE');
+      console.log(this.incompletePE.getItems()     );
+      console.log('>>>>>>>>>>>>>>>>>>>>>>>>>>>>END');
     } 
     
     //no questions have been answered yet
-    if(this.gradeItem.getAnswersLength() == 0){
+    if(this.incompletePE.getAnswersLength() == 0){
       //add the first item in the question array
       answered_questions.push(questions[0]);
 
     } else {
       //get the answered questions
-      answered_questions = this.gradeItem.getAnswers().map((answer_item, index) => {
-        //find the matching question item
-        let matching_question = questions.find((question) => question.indexID == answer_item.indexID_question);
-        return {
-          ...matching_question,
-          userAnswer: answer_item.answer,
-        }
-      });
-      let last_answer = answered_questions.slice().pop();
-      let last_index  = last_answer.indexID;
-
-      current_index = last_index;
-      
+      answered_questions = this.incompletePE.mergeAnswersWithQuestions(questions)
+      //get the last question from array
+      let last_question = answered_questions.slice().pop();
+      //extract index from last question
+      current_index = last_question.indexID;
+      //count the number of questions
       let total_questions = subjectData.questions.length - 1;
 
+      //append a new question if not the last
       if(current_index < total_questions){
         current_index += 1;
         answered_questions.push(questions[current_index]);
       }
-
-
     }
 
     this.setState({
@@ -896,10 +898,10 @@ export class PracticeExamList extends React.Component {
       console.log('answer: ' + answer);
       console.log('isCorrect: ' + isCorrect);
     }
-    this.gradeItem.addAnswer(questionIndex, answer, isCorrect);
-    let current_grade = this.gradeItem.getGrade();
+    this.incompletePE.addAnswer(questionIndex, answer, isCorrect);
+    let current_grade = this.incompletePE.getItems();
     
-    GradeStore.addGrade(current_grade);
+    IncompletePracticeExamStore.add(current_grade);
   }
   
   _renderItem = ({item, index}) => {
