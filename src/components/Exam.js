@@ -16,6 +16,7 @@ import    { Divider  } from 'react-native-elements';
 
 import { DangerZone } from 'expo';
 import _ from 'lodash';
+import {STYLES} from '../Constants';
 const { Lottie } = DangerZone;
 
 const QUESTIONS = [
@@ -515,7 +516,10 @@ export class Answer extends React.PureComponent {
     const prefix = prefixes[index];
     return (
       <Text style={{fontSize: 20, fontWeight: '300', textAlign: 'justify'}}>
-        {prefix}<Text style={{fontWeight: 'bold', color: '#1B5E20', textDecorationLine: 'underline'}}>{question.answer}</Text>
+        {prefix}
+        <Text style={[{fontWeight: 'bold', color: '#1B5E20', textDecorationLine: 'underline'}]}>
+          {question.answer}
+        </Text>
       </Text>
     );
   };
@@ -538,7 +542,14 @@ export class Answer extends React.PureComponent {
     const prefix = prefixes[index];
     return (
       <Text style={{fontSize: 20, fontWeight: '300', textAlign: 'justify'}}>
-        {prefix}<Text style={{fontWeight: 'bold', color: '#1B5E20', textDecorationLine: 'underline'}}>{question.answer}</Text> but you answered: <Text style={{fontWeight: 'bold', color: '#BF360C', textDecorationLine: 'underline'}}>{question.userAnswer}</Text>
+        {prefix}
+        <Text style={{fontWeight: 'bold', color: '#1B5E20', textDecorationLine: 'underline'}}>
+          {question.answer}
+        </Text> 
+        {' but you answered: '}
+        <Text style={{fontWeight: 'bold', color: '#BF360C', textDecorationLine: 'underline'}}>
+          {question.userAnswer}
+        </Text>
       </Text>
     );
   }
