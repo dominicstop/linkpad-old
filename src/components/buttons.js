@@ -485,13 +485,14 @@ export class ExpandCollapseText extends React.PureComponent {
   }
 }
 
-//touch to expand text with animated header
+//touch to expand text wrapped with animated header
 export class ExpandCollapseTextWithHeader extends React.PureComponent {
   static propTypes = {
     text: PropTypes.string,
     collapsedNumberOfLines: PropTypes.number,
     onPress: PropTypes.func,
     titleComponent: PropTypes.element,
+    titleContainerStyle: ViewPropTypes.style,
   }
 
   static defaultProps = {
@@ -510,13 +511,13 @@ export class ExpandCollapseTextWithHeader extends React.PureComponent {
   }
 
   _renderHeader(){
-    const { titleComponent } = this.props;
+    const { titleComponent, titleContainerStyle } = this.props;
     return(
       <TouchableOpacity 
-        style={{flexDirection: 'row'}}
+        style={[{flexDirection: 'row'}, titleContainerStyle]}
         onPress={this._onPressHeader}
       >
-        <View style={{flex: 1}}>
+        <View style={[{flex: 1}]}>
           {titleComponent}
         </View>
         <Animatable.View
@@ -552,6 +553,75 @@ export class ExpandCollapseTextWithHeader extends React.PureComponent {
       </View>
     );
   }
+}
+
+/**
+ * if number of characters reached, it will render it inside a
+ * ExpandCollapseTextWithHeader and if not, it will render as
+ * normal text + header w/o the arrow on the side
+ */
+export class AnimatedCollapsable extends React.PureComponent {
+  static propTypes = {
+    //the title or header
+    titleComponent: PropTypes.element.isRequired,
+    //text to show
+    text: PropTypes.string.isRequired,
+    //number of char before rendering inside a collapsable
+    maxChar: PropTypes.number.isRequired,
+    //number of lines when collapsed
+    collapsedNumberOfLines: PropTypes.number,
+    //should animate pulse
+    extraAnimation: PropTypes.bool,
+    onPress: PropTypes.func,
+  }
+
+  static defaultProps = {
+    extraAnimation: true,
+    collapsedNumberOfLines: 3,
+  }
+
+  _onPress = (isCollapsed) => {
+    const { extraAnimation } = this.props;
+    if(extraAnimation) this.animatedRootViewRef.pulse(750);
+  }
+
+  _renderCollapsable(){
+    const { extraAnimation, onPress, ...ExpandCollapseProps } = this.props;
+    return(
+      <Animatable.View 
+        ref={r => this.animatedRootViewRef = r}
+        useNativeDriver={true}
+      >
+        <ExpandCollapseTextWithHeader
+          onPress={this._onPress}
+          {...ExpandCollapseProps}
+        />
+      </Animatable.View>
+    );
+  }
+
+  _renderNormal(){ 
+    //note: style prop is textstyle in ExpandCollapseText
+    const { text, style, titleComponent } = this.props;
+    return(
+      <View collapsable={true}>
+        {titleComponent}
+        <Text style={[style]}>
+          {text}
+        </Text>
+      </View>
+    );
+  }
+
+  render(){
+    const { text, maxChar } = this.props;
+    //render inside collapsable if max char reached
+    const isTextLong = text.length > maxChar;
+    return(
+      isTextLong? this._renderCollapsable() : this._renderNormal()
+    );
+  }
+
 }
 
 export class Checkbox extends React.Component {

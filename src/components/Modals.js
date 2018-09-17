@@ -4,6 +4,7 @@ import { View, Text, StyleSheet, Dimensions, TouchableOpacity, ScrollView } from
 
 import NavigationService from '../NavigationService';
 import { IconText } from './Views';
+import { AnimatedCollapsable } from './Buttons';
 import { GradeItem, SummaryItem } from './Grades';
 import { setStateAsync } from '../functions/Utils';
 
@@ -54,6 +55,14 @@ export class SubjectModal extends React.PureComponent {
     }
   }
 
+  //shows or hide the modal
+  toggleModal = (toggle = false) => {
+    this.setState({
+      modalVisible: toggle
+    });
+  }
+
+  //called when
   toggleSubjectModal = async (moduleData, subjectData) => {
     //receive subject/module data from onpress subject
     await setStateAsync(this, {
@@ -79,7 +88,6 @@ export class SubjectModal extends React.PureComponent {
   }
 
   _handleOnPressStartPE = () => {
-    this.toggleModal(false);
     //navigate to practice exam route
     NavigationService.navigateApp('PracticeExamRoute', {
       moduleData : this.state.moduleData ,
@@ -91,6 +99,23 @@ export class SubjectModal extends React.PureComponent {
     //hide the modal
     this.toggleModal(false)
   }
+
+  //hide modal when swiped down
+  _handleOnSwipe = () => {
+    this.setState({ modalVisible: false })
+  }
+
+  _handleOnScroll = event => {
+    this.setState({
+      scrollOffset: event.nativeEvent.contentOffset.y
+    });
+  };
+
+  _handleScrollTo = p => {
+    if (this.scrollViewRef) {
+      this.scrollViewRef.scrollTo(p);
+    }
+  };
 
   //grades carousel
   _renderGrades(){
@@ -155,11 +180,29 @@ export class SubjectModal extends React.PureComponent {
     );
   }
 
-  _renderBody(){
-    return(
-      <View style={{flex: 1}}>
+  _renderDescription(){
+    const { moduleData, subjectData } = this.state;
 
-      </View>
+    const descriptionTitle = <IconText
+      //icon
+      iconName={'info'}
+      iconType={'feather'}
+      iconColor={'grey'}
+      iconSize={26}
+      //title
+      text={'Description'}
+      textStyle={{fontSize: 24, fontWeight: '800'}}
+    />
+
+    return(
+      <AnimatedCollapsable
+        text={subjectData.description}
+        maxChar={200}
+        titleComponent={descriptionTitle}
+        titleContainerStyle={{marginHorizontal: 15}}
+        containerStyle={{marginHorizontal: 15}}
+        style={{fontSize: 18, textAlign: 'justify'}}
+      />
     );
   }
 
@@ -217,59 +260,12 @@ export class SubjectModal extends React.PureComponent {
     if(!showModalContent) return(null);
     return(
       <View collapsable={true}>
-        {this._renderTitle  ()}
-        {this._renderGrades ()}
-        {this._renderBody   ()}
-        {this._renderButtons()}
+        {this._renderTitle      ()}
+        {this._renderDescription()}
+        {this._renderGrades     ()}
+        {this._renderButtons    ()}
       </View>
     );
-  }
-
-  _render(){
-    return(
-      <Modal 
-        style={styles.subjectModal}  
-        position={"bottom"} 
-        ref={r => this.subjectModal = r} 
-        swipeArea={15}
-        swipeThreshold={1}
-        backdropOpacity={0.3}
-        animationDuration={500}
-        swipeToClose={true}
-        onOpened={this._handleOnModalShow}
-        onClosed={this._handleOnModalHide}
-      >
-        <BlurView
-          style={{flex: 1}}
-          intensity={100}
-          tint='default'
-        >
-          {this._renderModalContent()}
-        </BlurView>
-      </Modal>
-    );
-  }
-
-  _handleOnSwipe = () => {
-    this.setState({ modalVisible: false })
-  }
-
-  _handleOnScroll = event => {
-    this.setState({
-      scrollOffset: event.nativeEvent.contentOffset.y
-    });
-  };
-
-  _handleScrollTo = p => {
-    if (this.scrollViewRef) {
-      this.scrollViewRef.scrollTo(p);
-    }
-  };
-
-  toggleModal = (toggle = false) => {
-    this.setState({
-      modalVisible: toggle
-    });
   }
 
   render(){
@@ -282,10 +278,10 @@ export class SubjectModal extends React.PureComponent {
         onSwipe={this._handleOnSwipe}
         onModalShow={this._handleOnModalShow}
         onModalHide={this._handleOnModalHide}
-        swipeDirection="down"
-        scrollTo={this._handleScrollTo}
-        scrollOffset={this.state.scrollOffset}
-        //scrollOffsetMax={(modalHeight - 100) * -1} // content height - ScrollView height
+        //swipeDirection="down"
+        //scrollTo={this._handleScrollTo}
+        //scrollOffset={this.state.scrollOffset}
+        //scrollOffsetMax={modalHeight} // content height - ScrollView height
         style={styles.bottomModal}
         backdropOpacity={0.15}
         useNativeDriver={false}
@@ -300,7 +296,8 @@ export class SubjectModal extends React.PureComponent {
             <ScrollView
               ref={ref => (this.scrollViewRef = ref)}
               onScroll={this._handleOnScroll}
-              scrollEventThrottle={16}
+              scrollEventThrottle={200}
+              directionalLockEnabled={true}
             >
               {this._renderModalContent()}
             </ScrollView>
