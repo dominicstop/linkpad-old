@@ -242,6 +242,7 @@ export class ModuleListScreen extends React.Component {
     //enable drawer when this screen is active
     const { setDrawerSwipe } = this.props.screenProps;
     setDrawerSwipe(true);
+    //close the modal if it's open
   }
 
   _onRefresh = async () => {

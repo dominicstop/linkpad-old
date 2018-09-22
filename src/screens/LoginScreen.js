@@ -11,6 +11,7 @@ import ModuleStore from '../functions/ModuleStore';
 import TipsStore from '../functions/TipsStore';
 import UserStore from '../functions/UserStore';
 
+import { Header, NavigationEvents } from 'react-navigation';
 import * as Animatable from 'react-native-animatable';
 import { Icon } from 'react-native-elements';
 import store from 'react-native-simple-store';
@@ -136,6 +137,7 @@ export class LoginContainer extends React.Component {
 export class LoginUI extends React.Component {
   static propType = {
     login: PropTypes.func,
+    onPressSignUp: PropTypes.func
   }
 
   constructor(props){
@@ -234,6 +236,12 @@ export class LoginUI extends React.Component {
       onLoginError   : this.toggleLoginError     ,
       onLoginFinished: this.toggleLoginSuccessful,
     });
+  }
+
+  _handleOnPressSignUp = async () => {
+    const { onPressSignUp } = this.props;
+    await this.ref_rootView.fadeOutLeft(300);
+    onPressSignUp && onPressSignUp();
   }
 
   //called when attempting to log in
@@ -432,7 +440,7 @@ export class LoginUI extends React.Component {
           /> 
         </IconButton>
 
-        <TouchableOpacity>
+        <TouchableOpacity onPress={this._handleOnPressSignUp}>
           <Text 
             style={{fontSize: 16, fontWeight: '100', color: 'white', textAlign: 'center', textDecorationLine: 'underline', marginTop: 7, marginBottom: 10}}
             numberOfLines={1}
@@ -470,18 +478,14 @@ export class LoginUI extends React.Component {
     const { login } = this.props;
     const { isLoading, mode, isCollapsed } = this.state;
     return(
-      <Animatable.View
-        animation={'fadeIn'}
-        duration={500}
-        easing={'ease-in-out'}
-        useNativeDriver={true}
-      >
-        <AnimatedGradient
-          style={[styles.rootContainer]}
-          colorsTop   ={['#7F00FF', '#654ea3', '#642B73', '#c0392b', '#ff00cc', '#FC466B', ]}
-          colorsBottom={['#F100FF', '#eaafc8', '#C6426E', '#8e44ad', '#333399', '#3F5EFB', ]}
-          speed={100}
-          numOfInterps={1000}  
+      <View collapsable={true}>
+        <Animatable.View
+          ref={r => this.ref_rootView = r}
+          style={styles.rootContainer}
+          animation={'fadeIn'}
+          duration={500}
+          easing={'ease-in-out'}
+          useNativeDriver={true}
         >
           <KeyboardAvoidingView
             style={{flex: 1, width: '100%', alignItems: 'center', justifyContent: 'center'}}
@@ -500,8 +504,8 @@ export class LoginUI extends React.Component {
               {mode == 'succesful' && this._renderSigninSuccessful()}
             </Animatable.View>
           </KeyboardAvoidingView>
-        </AnimatedGradient>
-      </Animatable.View>
+        </Animatable.View>
+      </View>
     );
   }
 }
@@ -510,11 +514,25 @@ export default class LoginScreen extends React.Component {
   static navigationOptions = {
   }
 
+  _handleOnPressSignUp = () => {
+    const { navigation } = this.props;
+    navigation.navigate('SignUpRoute');
+  }
+
+  componentWillBlur = () => {
+    const { getAuthBGGradientRef } = this.props.screenProps;
+    //stop the BG Gradient animation
+    getAuthBGGradientRef && getAuthBGGradientRef().stop();
+  }
+
   render(){
     return(
-      <LoginContainer navigation={this.props.navigation}>
-        <LoginUI/>
-      </LoginContainer>
+      <View collapsable={true}>
+        <NavigationEvents onWillBlur={this.componentWillBlur}/>
+        <LoginContainer navigation={this.props.navigation}>
+          <LoginUI onPressSignUp={this._handleOnPressSignUp}/>
+        </LoginContainer>
+      </View>
     );
   }
 }

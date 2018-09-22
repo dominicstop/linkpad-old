@@ -14,10 +14,12 @@ function navigateRoot(routeName, params) {
   );
 }
 
+
 let _appNavigator;
 function setAppNavigator(navigatorRef){
   _appNavigator = navigatorRef;
 }
+
 function navigateApp(routeName, params) {
   _appNavigator.dispatch(
     NavigationActions.navigate({
@@ -27,7 +29,20 @@ function navigateApp(routeName, params) {
   );
 }
 
-// add other navigation functions that you need and export them
+
+let _authNavigator;
+function setAuthNavigator(navigatorRef){
+  _authNavigator = navigatorRef;
+}
+
+function navigateAuth(routeName, params) {
+  _authNavigator.dispatch(
+    NavigationActions.navigate({
+      routeName,
+      params,
+    })
+  );
+}
 
 export default {
   setRootNavigator,

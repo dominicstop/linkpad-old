@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { View, Text, StyleSheet, Dimensions, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, Dimensions } from 'react-native';
 
 import NavigationService from '../NavigationService';
 import { IconText } from './Views';
@@ -9,11 +9,11 @@ import { GradeItem, SummaryItem } from './Grades';
 import { setStateAsync } from '../functions/Utils';
 
 import * as Animatable      from 'react-native-animatable'   ;
-import      Modal           from "react-native-modal"        ;
+import      Modal           from "react-native-modalbox"     ;
 import      Carousel        from 'react-native-snap-carousel';
 import    { IconButton    } from '../components/Buttons'     ;
 import    { Icon, Divider } from 'react-native-elements'     ;
-import    { BlurView      } from 'expo'                      ;
+import    { BlurView      } from 'expo';
 
 const GRADE_DATA = [
   {
@@ -46,76 +46,39 @@ export class SubjectModal extends React.PureComponent {
   constructor(props){
     super(props);
     this.state = {
-      //used to show or hide the modal
       modalVisible: false,
-      //show or hide the modal contents
-      showModalContent: false,
       moduleData  : null ,
       subjectData : null ,
     }
   }
 
-  //shows or hide the modal
-  toggleModal = (toggle = false) => {
-    this.setState({
-      modalVisible: toggle
-    });
-  }
-
-  //called when
   toggleSubjectModal = async (moduleData, subjectData) => {
     //receive subject/module data from onpress subject
     await setStateAsync(this, {
       moduleData : moduleData ,
       subjectData: subjectData,
     });
-    //show the modal
-    this.toggleModal(true);
+    this.subjectModal.open();
   }
 
-  _handleOnModalShow = () => {
+  _onModalOpened = () => {
     //call callback if defined
     if(this.modalOpenedCallback) this.modalOpenedCallback();
-    //show the modal content after animation
-    this.setState({showModalContent: true});
+    this.setState({modalVisible: true});
   }
 
-  _handleOnModalHide = () => {
+  _onModalClosed = () => {
     //call callback if defined
     if(this.modalClosedCallback) this.modalClosedCallback();
-    //hide the modal content after animation
-    this.setState({showModalContent: false})
+    this.setState({modalVisible: false});
   }
 
-  _handleOnPressStartPE = () => {
-    //navigate to practice exam route
+  _onPressStartPracticeExam = () => {
     NavigationService.navigateApp('PracticeExamRoute', {
       moduleData : this.state.moduleData ,
       subjectData: this.state.subjectData,
     });
   }
-
-  _handleOnModalHide = () => {
-    //hide the modal
-    this.toggleModal(false)
-  }
-
-  //hide modal when swiped down
-  _handleOnSwipe = () => {
-    this.setState({ modalVisible: false })
-  }
-
-  _handleOnScroll = event => {
-    this.setState({
-      scrollOffset: event.nativeEvent.contentOffset.y
-    });
-  };
-
-  _handleScrollTo = p => {
-    if (this.scrollViewRef) {
-      this.scrollViewRef.scrollTo(p);
-    }
-  };
 
   //grades carousel
   _renderGrades(){
@@ -239,7 +202,7 @@ export class SubjectModal extends React.PureComponent {
           style={{backgroundColor: '#6200EA'}}
           iconName={'pencil-square-o'}
           iconType={'font-awesome'}
-          onPress={this._handleOnPressStartPE}
+          onPress={this._onPressStartPracticeExam}
           {...buttonProps}
         />
         <Button
@@ -247,7 +210,7 @@ export class SubjectModal extends React.PureComponent {
           style={{backgroundColor: '#C62828'}}      
           iconName={'close'}
           iconType={'simple-line-icon'}
-          onPress={this._handleOnPressCancel}
+          onPress={() => this.subjectModal.close()}
           {...buttonProps}
         />
       </Animatable.View>
@@ -256,54 +219,38 @@ export class SubjectModal extends React.PureComponent {
 
   //renders the content of the modal
   _renderModalContent(){
-    const { showModalContent } = this.state;
-    if(!showModalContent) return(null);
+    const { modalVisible } = this.state;
     return(
-      <View collapsable={true}>
-        {this._renderTitle      ()}
-        {this._renderDescription()}
-        {this._renderGrades     ()}
-        {this._renderButtons    ()}
+      <View style={{flex: 1}}>
+        {modalVisible && this._renderTitle  ()}
+        {modalVisible && this._renderGrades ()}
+        {modalVisible && this._renderDescription   ()}
+        {modalVisible && this._renderButtons()}
       </View>
     );
   }
 
   render(){
-    const { height, width } = Dimensions.get("window");
-    const modalHeight = height * 0.85;
-
     return(
       <Modal 
-        isVisible={this.state.modalVisible}
-        onSwipe={this._handleOnSwipe}
-        onModalShow={this._handleOnModalShow}
-        onModalHide={this._handleOnModalHide}
-        //swipeDirection="down"
-        //scrollTo={this._handleScrollTo}
-        //scrollOffset={this.state.scrollOffset}
-        //scrollOffsetMax={modalHeight} // content height - ScrollView height
-        style={styles.bottomModal}
-        backdropOpacity={0.15}
-        useNativeDriver={false}
+        style={styles.subjectModal}  
+        position={"bottom"} 
+        ref={r => this.subjectModal = r} 
+        swipeArea={15}
+        swipeThreshold={1}
+        backdropOpacity={0.3}
+        animationDuration={500}
+        swipeToClose={true}
+        onOpened={this._onModalOpened}
+        onClosed={this._onModalClosed}
       >
-        
-        <View style={{height: modalHeight}}>
-          <BlurView
-            style={{flex: 1}}
-            intensity={100}
-            tint='light'
-          >
-            <ScrollView
-              ref={ref => (this.scrollViewRef = ref)}
-              onScroll={this._handleOnScroll}
-              scrollEventThrottle={200}
-              directionalLockEnabled={true}
-            >
-              {this._renderModalContent()}
-            </ScrollView>
-          </BlurView>
-          
-        </View>
+        <BlurView
+          style={{flex: 1}}
+          intensity={100}
+          tint='default'
+        >
+          {this._renderModalContent()}
+        </BlurView>
       </Modal>
     );
   }
@@ -345,22 +292,5 @@ const styles = StyleSheet.create({
     shadowColor: 'black',
     shadowRadius: 6,
     shadowOpacity: 0.5,
-  },
-
-  scrollableModalContent1: {
-    height: 200,
-    backgroundColor: "orange",
-    alignItems: "center",
-    justifyContent: "center"
-  },
-  scrollableModalContent2: {
-    height: 200,
-    backgroundColor: "lightgreen",
-    alignItems: "center",
-    justifyContent: "center"
-  },
-  bottomModal: {
-    justifyContent: "flex-end",
-    margin: 0
-  },
+  }
 });

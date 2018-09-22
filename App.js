@@ -8,8 +8,10 @@ import Constants from './src/Constants';
 
 import { DrawerStackContainer   } from './src/screens/Homescreen';
 import { PracticeExamStack      } from './src/screens/PracticeExamScreen';
+import { AnimatedGradient       } from './src/components/AnimatedGradient';
 import   AuthLoadingScreen        from './src/screens/AuthLoadingScreen';
 import   LoginScreen              from './src/screens/LoginScreen';
+import   SignUpScreen             from './src/screens/SignUpScreen';
 import   NavigationService        from './src/NavigationService';
 
 //use native navigation
@@ -40,9 +42,23 @@ const AuthStack = createStackNavigator({
     LoginRoute: {
       screen: LoginScreen,
     },
+    SignUpRoute: {
+      screen: SignUpScreen,
+    }
   }, {
     headerMode: 'hidden',
-    ...Constants.STACKNAV_PROPS
+    cardStyle: {
+      backgroundColor: 'transparent',
+      opacity: 1,
+    },
+    transitionConfig : () => ({
+      containerStyle: {
+        backgroundColor: 'transparent',
+      },
+      transitionSpec: {
+        duration: 0,
+      },
+    }),
   }
 );
 
@@ -62,11 +78,38 @@ export class AppScreen extends React.Component {
   }
 }
 
+//holds the AuthStack
+export class AuthScreen extends React.Component {
+  static router = AuthStack.router;
+
+  render() {
+    return (
+      <View style={{flex: 1}}>
+        <AnimatedGradient
+          ref={r => this.animatedGradientRef = r}
+          style={{position: 'absolute', width: '100%', height: '100%'}}
+          colorsTop   ={['#7F00FF', '#654ea3', '#642B73', '#c0392b', '#ff00cc', '#FC466B', ]}
+          colorsBottom={['#F100FF', '#eaafc8', '#C6426E', '#8e44ad', '#333399', '#3F5EFB', ]}
+          speed={100}
+          numOfInterps={1000}  
+        />
+        <AuthStack
+          navigation={this.props.navigation}
+          screenProps={{
+            ...this.props.screenProps,
+            getAuthBGGradientRef: () => this.animatedGradientRef,
+          }}
+        />
+      </View>
+    );
+  }
+}
+
 //shows loading then navigates to either app or signin
 export const RootNavigator = createSwitchNavigator({
     AuthLoading: AuthLoadingScreen,
-    AppRoute   : AppScreen,
-    AuthRoute  : AuthStack,
+    AppRoute   : AppScreen ,
+    AuthRoute  : AuthScreen,
   }, {
     initialRouteName: 'AuthLoading',
   }
