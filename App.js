@@ -6,7 +6,7 @@ import { useScreens } from 'react-native-screens';
 
 import Constants from './src/Constants';
 
-import { DrawerStackContainer   } from './src/screens/Homescreen';
+import { DrawerStackContainer   } from './src/screens/Drawer';
 import { PracticeExamStack      } from './src/screens/PracticeExamScreen';
 import { AnimatedGradient       } from './src/components/AnimatedGradient';
 import   AuthLoadingScreen        from './src/screens/AuthLoadingScreen';
@@ -90,7 +90,7 @@ export class AuthScreen extends React.Component {
           style={{position: 'absolute', width: '100%', height: '100%'}}
           colorsTop   ={['#7F00FF', '#654ea3', '#642B73', '#c0392b', '#ff00cc', '#FC466B', ]}
           colorsBottom={['#F100FF', '#eaafc8', '#C6426E', '#8e44ad', '#333399', '#3F5EFB', ]}
-          speed={100}
+          speed={200}
           numOfInterps={1000}  
         />
         <AuthStack

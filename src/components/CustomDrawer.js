@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, Text, View, ScrollView, Dimensions, TextInput, AsyncStorage } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, Dimensions, TextInput, AsyncStorage, Platform } from 'react-native';
 
 import   NavigationService   from '../NavigationService';
 import { IconButton        } from '../components/Buttons';
@@ -122,6 +122,10 @@ export class CustomDrawer extends React.PureComponent {
   }
   
   render(){
+    const colors = Platform.select({
+      ios    : ['rgba(137, 30, 232, 0.7)', 'rgba(18, 1, 209, 0.6)'], 
+      android: ['rgba(137, 30, 232, 0.8)', 'rgba(18, 1, 209, 0.7)'],
+    });
     return (
       <BlurView
         style={{height: '100%'}}
@@ -131,7 +135,7 @@ export class CustomDrawer extends React.PureComponent {
         <LinearGradient
           style={{flex: 1}}
           start={{x: 0.0, y: 0.25}} end={{x: 0.5, y: 1.0}}
-          colors={['rgba(137, 30, 232, 0.7)' , 'rgba(18, 1, 209, 0.6)']}
+          {...{colors}}
         >
           {this._renderDrawerItems()}
           {this._renderFooter()}

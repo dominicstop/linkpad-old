@@ -238,6 +238,10 @@ export class ModuleListScreen extends React.Component {
     };
   }
 
+  shouldComponentUpdate(nextProps, nextState){
+    return this.state.modules != nextState.modules;
+  }
+
   componentDidFocus = () => {
     //enable drawer when this screen is active
     const { setDrawerSwipe } = this.props.screenProps;
@@ -293,11 +297,8 @@ export class ModuleListScreen extends React.Component {
   }
 
   render(){
-    //console.log('ModuleList: this.state.modules');
-    //console.log(this.state.modules);
-
     const header_height = Header.HEIGHT + Expo.Constants.statusBarHeight;
-
+    console.log('Module List rendering');
     return(
       <ViewWithBlurredHeader hasTabBar={true}>
         <NavigationEvents onDidFocus={this.componentDidFocus}/>

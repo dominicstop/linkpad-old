@@ -47,6 +47,10 @@ export class TipsScreen extends React.Component {
     await setStateAsync(this, {tips: tips});
   }
 
+  shouldComponentUpdate(nextProps, nextState){
+    return !_.isEqual(this.state, nextState)
+  }
+
   componentDidFocus = () => {
     //mount or show contents on first show
     if(!this.state.showContent){
@@ -111,6 +115,7 @@ export class TipsScreen extends React.Component {
   }
 
   render(){
+    console.log('Tips Screen rendering');
     return(
       <ViewWithBlurredHeader hasTabBar={true}>
         <NavigationEvents onDidFocus={this.componentDidFocus}/>

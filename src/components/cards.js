@@ -325,16 +325,30 @@ export class ModuleHeader extends React.PureComponent {
   }
 
   render(){
+    const { moduleData, detailedView } = this.props;  
     return(
-      <ModuleTitle {...this.props}>
-        <ModuleDescription {...this.props}/>
-      </ModuleTitle>
+      <View>
+        {/*Title*/}
+        <Text 
+          style={[styles.title]}
+          numberOfLines={1}
+        >
+          {moduleData.modulename }
+        </Text>
+        {/*Description*/}
+        <Text 
+          style={[{textAlign: 'justify'}, styles.subtitle]}
+          numberOfLines={ detailedView? undefined : 2}
+        >
+          {moduleData.description}
+        </Text>
+      </View>
     );
   }
 }
 
 //displays a single module item and a list of subjects
-export class ModuleGroup extends React.Component {
+export class ModuleGroup extends React.PureComponent {
   static propTypes = {
     //extra data
     moduleList: PropTypes.arrayOf(
@@ -404,7 +418,7 @@ export class ModuleGroup extends React.Component {
 }
 
 //displays the list of modules
-export class ModuleList extends React.Component {
+export class ModuleList extends React.PureComponent {
   static propTypes = {
     moduleList: PropTypes.arrayOf(
       PropTypes.shape(moduleProps)

@@ -48,6 +48,10 @@ export class ResourcesScreen extends React.Component {
     await setStateAsync(this, {resources: resources});
   }
 
+  shouldComponentUpdate(nextProps, nextState){
+    return !_.isEqual(this.state, nextState)
+  }
+
   componentDidFocus = () => {
     //mount or show contents on first show
     if(!this.state.showContent){
@@ -114,6 +118,7 @@ export class ResourcesScreen extends React.Component {
   }
 
   render(){
+    console.log('Resource Screen rendering');
     return(
       <ViewWithBlurredHeader hasTabBar={true}>
         <NavigationEvents onDidFocus={this.componentDidFocus}/>

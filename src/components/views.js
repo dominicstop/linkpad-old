@@ -148,13 +148,7 @@ export class ViewWithBlurredHeader extends React.PureComponent {
   //ios blurred header overlay
   _renderHeaderBlur(){
     return(
-      <View style={{
-        position: 'absolute', width: '100%', height: Header.HEIGHT,
-        shadowOffset:{ height: 3 },
-        shadowColor: 'rgb(48, 0, 247)',
-        shadowRadius: 9,
-        shadowOpacity: 0.5,
-      }}>
+      <View style={{position: 'absolute', width: '100%', height: Header.HEIGHT,}}>
         <BlurView intensity={100} tint='default'>
           <LinearGradient
             style={{width: '100%', height: '100%', opacity: 0.7}}
@@ -170,13 +164,7 @@ export class ViewWithBlurredHeader extends React.PureComponent {
   _renderTabBlur(){
     const TabBarHeight = 49;
     return(
-      <View style={{
-        position: 'absolute', width: '100%', height: TabBarHeight, bottom: 0,
-        shadowOffset:{ height: -3 },
-        shadowColor: 'rgb(48, 0, 247)',
-        shadowRadius: 16,
-        shadowOpacity: 0.5,
-      }}>
+      <View style={{ position: 'absolute', width: '100%', height: TabBarHeight, bottom: 0 }}>
         <BlurView intensity={100} tint='default'>
           <LinearGradient
             style={{width: '100%', height: '100%', opacity: 0.7}}

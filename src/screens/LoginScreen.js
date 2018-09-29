@@ -18,6 +18,16 @@ import store from 'react-native-simple-store';
 
 UIManager.setLayoutAnimationEnabledExperimental && UIManager.setLayoutAnimationEnabledExperimental(true);
 
+//Enum for each mode state
+const MODES = {
+  initial  : 'initial'  ,
+  loading  : 'loading'  ,
+  fetching : 'fetching' ,
+  succesful: 'succesful',
+  invalid  : 'invalid'  ,
+  error    : 'error'    ,
+}
+
 export class InputForm extends React.Component {
   static propType = {
     iconName: PropTypes.string,
@@ -47,7 +57,6 @@ export class InputForm extends React.Component {
     );
   }
 }
-
 
 //smart cont: handles all the login logic
 export class LoginContainer extends React.Component {
@@ -137,7 +146,6 @@ export class LoginContainer extends React.Component {
 export class LoginUI extends React.Component {
   static propType = {
     login: PropTypes.func,
-    onPressSignUp: PropTypes.func
   }
 
   constructor(props){
@@ -164,66 +172,62 @@ export class LoginUI extends React.Component {
     this.state = this.getState('initial');
   }
 
+  componentDidFocus = async () => {
+    await this.ref_rootView.fadeInLeft(300);
+  }
+
   //returns the corresponding state for the mode
   getState = (mode) => {
-    let newState = {};
     switch(mode) {
-      case 'initial':
-        newState = {
-          titleText      : 'SIGN IN',
-          subtitleText   : 'Please sign in to continue',
-          isLoading      : false,
-          emailValue     : '',
-          passwordValue  : '',
-          isEmailValid   : true,
-          isPasswordValid: true,
-        };
-        break;
-      case 'loading':
-        newState = {
-          titleText      : 'LOGGING IN',
-          subtitleText   : 'Please wait for second...',
-          isLoading      : true,
-        };
-        break;
-      case 'fetching':
-        newState = {
-          titleText      : 'FETCHING',
-          subtitleText   : 'Loading the data...',
-          isLoading      : true,
-        };
-        break;
-      case 'succesful':
-      newState = {
-          titleText      : 'LOGGED IN',
-          subtitleText   : 'Login succesful, please wait.',
-          isLoading      : false,
-          isEmailValid   : true,
-          isPasswordValid: true,
-        };
-        break;
-      case 'invalid':      
-        newState = {
-          titleText      : 'SIGN IN',
-          subtitleText   : 'Invalid email or password (please try again)',
-          isLoading      : false,
-          emailValue     : '',
-          passwordValue  : '',
-          isEmailValid   : false,
-          isPasswordValid: false,
-        };
-        break;
-      case 'error':      
-        newState = {
-          titleText      : 'SIGN IN',
-          subtitleText   : 'Something went wrong (please try again)',
-          isLoading      : false,
-          isEmailValid   : true,
-          isPasswordValid: true,
-        };
-        break;
+      case MODES.initial: return {
+        titleText      : 'SIGN IN',
+        subtitleText   : 'Please sign in to continue',
+        isLoading      : false,
+        emailValue     : '',
+        passwordValue  : '',
+        isEmailValid   : true,
+        isPasswordValid: true,
+       ...{mode},
+      };
+      case MODES.loading: return {
+        titleText   : 'LOGGING IN',
+        subtitleText: 'Please wait for second...',
+        isLoading   : true,
+        ...{mode}
+      };
+      case MODES.fetching: return {
+        titleText   : 'FETCHING',
+        subtitleText: 'Loading the data...',
+        isLoading   : true,
+        ...{mode}
+      };
+      case MODES.succesful: return {
+        titleText      : 'LOGGED IN',
+        subtitleText   : 'Login succesful, please wait.',
+        isLoading      : false,
+        isEmailValid   : true,
+        isPasswordValid: true,
+        ...{mode}
+      };
+      case MODES.invalid: return {
+        titleText      : 'SIGN IN',
+        subtitleText   : 'Invalid email or password (please try again)',
+        isLoading      : false,
+        emailValue     : '',
+        passwordValue  : '',
+        isEmailValid   : false,
+        isPasswordValid: false,
+        ...{mode}
+      };
+      case MODES.error: return {
+        titleText      : 'SIGN IN',
+        subtitleText   : 'Something went wrong (please try again)',
+        isLoading      : false,
+        isEmailValid   : true,
+        isPasswordValid: true,
+        ...{mode}
+      };
     }
-    return {mode: mode, ...newState};
   }
 
   onPressLogin = async () => {
@@ -357,7 +361,7 @@ export class LoginUI extends React.Component {
 
   //title and subtitle 
   _renderHeader = () => {
-    const { isLoading, emailValue, passwordValue, isEmailValid, isPasswordValid, errorText, titleText, subtitleText, } = this.state;
+    const { isLoading, titleText, subtitleText, } = this.state;
 
     return(
       <View collapsable={true}>
@@ -479,6 +483,7 @@ export class LoginUI extends React.Component {
     const { isLoading, mode, isCollapsed } = this.state;
     return(
       <View collapsable={true}>
+        <NavigationEvents onDidFocus={this.componentDidFocus}/>
         <Animatable.View
           ref={r => this.ref_rootView = r}
           style={styles.rootContainer}
@@ -525,10 +530,19 @@ export default class LoginScreen extends React.Component {
     getAuthBGGradientRef && getAuthBGGradientRef().stop();
   }
 
+  componentDidFocus = () => {
+    const { getAuthBGGradientRef } = this.props.screenProps;
+    //start the BG Gradient animation
+    getAuthBGGradientRef && getAuthBGGradientRef().start();
+  }
+
   render(){
     return(
       <View collapsable={true}>
-        <NavigationEvents onWillBlur={this.componentWillBlur}/>
+        <NavigationEvents 
+          onWillBlur={this.componentWillBlur}
+          onDidFocus={this.componentDidFocus}
+        />
         <LoginContainer navigation={this.props.navigation}>
           <LoginUI onPressSignUp={this._handleOnPressSignUp}/>
         </LoginContainer>

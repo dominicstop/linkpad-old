@@ -34,8 +34,8 @@ export const STYLES = StyleSheet.create({
   glow: {
     shadowOffset:{ height: 0, width: 0 },
     shadowColor: 'white',
-    shadowRadius: 9,
-    shadowOpacity: 0.7,
+    shadowRadius: 6,
+    shadowOpacity: 0.5,
   },
 });
 
