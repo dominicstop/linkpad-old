@@ -62,11 +62,9 @@ export class IconButton extends React.PureComponent {
         </TouchableOpacity>
       ),
       android: (
-        <View
-          style={[{overflow: 'hidden'}, wrapperStyle]}
-        >
+        <View style={[{overflow: 'hidden'}, wrapperStyle]}>
           <TouchableNativeFeedback
-            background={TouchableNativeFeedback.Ripple('rgba(255, 255, 255, 0.7)')}
+            background={TouchableNativeFeedback.Ripple('rgba(255, 255, 255, 0.5)')}
             useForeground={true}
             {...otherProps}
           >

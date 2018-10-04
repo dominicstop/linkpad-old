@@ -29,12 +29,14 @@ const MODES = {
   error    : 'error'    ,
 }
 
-export class InputForm extends React.Component {
+export class InputForm extends React.PureComponent {
   static propType = {
+    //for styling
     iconName : PropTypes.string,
     iconType : PropTypes.string,
     iconSize : PropTypes.number,
     iconColor: PropTypes.string,
+    isEnabled: PropTypes.bool  ,
   }
 
   static defaultProps = {
@@ -45,9 +47,19 @@ export class InputForm extends React.Component {
   }
 
   render(){
-    const { iconName, iconType, iconSize, iconColor, ...textInputProps } = this.props;
+    const { iconName, iconType, iconSize, iconColor, isEnabled, ...textInputProps } = this.props;
+    const backgroundColor = Platform.select({
+      ios: {
+        backgroundColor: 'rgba(0, 0, 0, 0.25)',
+      },
+      android: {
+        backgroundColor: isEnabled? 'rgba(0, 0, 0, 0.15)' : 'rgba(0, 0, 0, 0.08)',
+      },
+    });
     return(
-      <View style={styles.textinputContainer}>
+      <Animatable.View 
+        style={[styles.textinputContainer, {...backgroundColor}]}
+      >
         <Icon
           containerStyle={styles.textInputIcon}
           name={iconName}
@@ -60,9 +72,10 @@ export class InputForm extends React.Component {
           maxLength={50}
           autoCapitalize='none'
           enablesReturnKeyAutomatically={true}
+          editable={isEnabled}
           {...textInputProps}
         />
-      </View>
+      </Animatable.View>
     );
   }
 }
@@ -130,10 +143,10 @@ export class LoginContainer extends React.Component {
       ]);
 
       //save user data to storage
-      //UserStore.setUserData(login_response);
+      UserStore.setUserData(login_response);
       //login finished
       onLoginFinished && await onLoginFinished(login_response);
-      //navigation.navigate('AppRoute');
+      navigation.navigate('AppRoute');
 
     } catch(error){
       await onLoginError();
@@ -710,7 +723,7 @@ export class LoginUI_android extends React.Component {
         easing={'ease-in-out'}
         useNativeDriver={true}
       >
-        <View style={{width: 100, height: 100, backgroundColor: 'white', borderRadius: 50, borderColor: 'rgba(0, 0, 0, 0.4)', borderWidth: 6}}>
+        <View style={{width: 100, height: 100, backgroundColor: 'white', borderRadius: 50, borderColor: 'rgba(255, 255, 255, 0.4)', borderWidth: 6}}>
 
         </View>
       </Animatable.View>
@@ -768,7 +781,7 @@ export class LoginUI_android extends React.Component {
       underlineColorAndroid: 'rgba(0,0,0,0)',
       selectionColor: 'rgba(255, 255, 255, 0.7)',
       placeholderTextColor: 'rgba(0, 0, 0, 0.35)',
-      editable: !isLoading
+      isEnabled: !isLoading
     }
     //placeholder text color
     if(!isEmailValid || !isPasswordValid ){
@@ -944,14 +957,6 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     flexDirection: 'row', 
     marginTop: 25,
-    ...Platform.select({
-      ios: {
-        backgroundColor: 'rgba(0, 0, 0, 0.25)',
-      },
-      android: {
-        backgroundColor: 'rgba(0, 0, 0, 0.15)',
-      },
-    })
   },
   textInputIcon: {
     width: 30
