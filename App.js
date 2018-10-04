@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, Text, View, StatusBar } from 'react-native';
+import { StyleSheet, Text, View, StatusBar, Platform } from 'react-native';
 
 import { createSwitchNavigator, createStackNavigator } from 'react-navigation';
 import { useScreens } from 'react-native-screens';
@@ -82,16 +82,24 @@ export class AppScreen extends React.Component {
 export class AuthScreen extends React.Component {
   static router = AuthStack.router;
 
-  render() {
+  constructor(props){
+    super(props);
+    //shared between ios and android
+    this.gradientProps = {
+      colorsTop   : ['#7F00FF', '#654ea3', '#642B73', '#c0392b', '#ff00cc', '#FC466B', ],
+      colorsBottom: ['#F100FF', '#eaafc8', '#C6426E', '#8e44ad', '#333399', '#3F5EFB', ],
+      speed       : 200 ,
+      numOfInterps: 1000,  
+    }
+  }
+
+  render_android(){
     return (
-      <View style={{flex: 1}}>
+      <View style={{flex: 1, backgroundColor: '#FAFAFA'}}>
         <AnimatedGradient
           ref={r => this.animatedGradientRef = r}
-          style={{position: 'absolute', width: '100%', height: '100%'}}
-          colorsTop   ={['#7F00FF', '#654ea3', '#642B73', '#c0392b', '#ff00cc', '#FC466B', ]}
-          colorsBottom={['#F100FF', '#eaafc8', '#C6426E', '#8e44ad', '#333399', '#3F5EFB', ]}
-          speed={200}
-          numOfInterps={1000}  
+          style={{position: 'absolute', width: '100%', height: '40%'}}
+          {...this.gradientProps}
         />
         <AuthStack
           navigation={this.props.navigation}
@@ -102,6 +110,32 @@ export class AuthScreen extends React.Component {
         />
       </View>
     );
+  }
+
+  render_iOS() {
+    return (
+      <View style={{flex: 1}}>
+        <AnimatedGradient
+          ref={r => this.animatedGradientRef = r}
+          style={{position: 'absolute', width: '100%', height: '100%'}}
+          {...this.gradientProps}          
+        />
+        <AuthStack
+          navigation={this.props.navigation}
+          screenProps={{
+            ...this.props.screenProps,
+            getAuthBGGradientRef: () => this.animatedGradientRef,
+          }}
+        />
+      </View>
+    );
+  }
+
+  render(){
+    return Platform.select({
+      ios: this.render_iOS(),
+      android: this.render_android(),
+    });
   }
 }
 

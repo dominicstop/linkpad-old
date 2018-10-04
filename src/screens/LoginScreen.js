@@ -1,6 +1,6 @@
 import PropTypes from 'prop-types';
-import React from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, AsyncStorage, ScrollView, TextInput, UIManager, LayoutAnimation, ActivityIndicator, KeyboardAvoidingView } from 'react-native';
+import React, { Fragment } from 'react';
+import { StyleSheet, Text, View, TouchableOpacity, Keyboard, ScrollView, TextInput, UIManager, LayoutAnimation, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
 
 import { AnimatedGradient } from '../components/AnimatedGradient';
 import { IconButton       } from '../components/Buttons';
@@ -16,9 +16,10 @@ import * as Animatable from 'react-native-animatable';
 import { Icon } from 'react-native-elements';
 import store from 'react-native-simple-store';
 
+//enable layout animation
 UIManager.setLayoutAnimationEnabledExperimental && UIManager.setLayoutAnimationEnabledExperimental(true);
 
-//Enum for each mode state
+//Enum for each login state
 const MODES = {
   initial  : 'initial'  ,
   loading  : 'loading'  ,
@@ -30,13 +31,21 @@ const MODES = {
 
 export class InputForm extends React.Component {
   static propType = {
-    iconName: PropTypes.string,
-    iconType: PropTypes.string,
-    iconSize: PropTypes.number,
+    iconName : PropTypes.string,
+    iconType : PropTypes.string,
+    iconSize : PropTypes.number,
+    iconColor: PropTypes.string,
+  }
+
+  static defaultProps = {
+    iconColor: Platform.select({
+      ios: 'white',
+      android: 'grey',
+    }),
   }
 
   render(){
-    const { iconName, iconType, iconSize, ...textInputProps } = this.props;
+    const { iconName, iconType, iconSize, iconColor, ...textInputProps } = this.props;
     return(
       <View style={styles.textinputContainer}>
         <Icon
@@ -44,7 +53,7 @@ export class InputForm extends React.Component {
           name={iconName}
           type={iconType}
           size={iconSize}
-          color='white'
+          color={iconColor}
         />
         <TextInput
           style={styles.textinput}
@@ -121,10 +130,10 @@ export class LoginContainer extends React.Component {
       ]);
 
       //save user data to storage
-      UserStore.setUserData(login_response);
+      //UserStore.setUserData(login_response);
       //login finished
       onLoginFinished && await onLoginFinished(login_response);
-      navigation.navigate('AppRoute');
+      //navigation.navigate('AppRoute');
 
     } catch(error){
       await onLoginError();
@@ -142,8 +151,8 @@ export class LoginContainer extends React.Component {
   }
 }
 
-//dumb cont: presents the UI
-export class LoginUI extends React.Component {
+//dumb cont: presents the UI for iOS
+export class LoginUI_iOS extends React.Component {
   static propType = {
     login: PropTypes.func,
   }
@@ -515,6 +524,359 @@ export class LoginUI extends React.Component {
   }
 }
 
+//dumb cont: presents the UI for Android
+export class LoginUI_android extends React.Component {
+  static propType = {
+    login: PropTypes.func,
+  }
+
+  constructor(props){
+    super(props);
+    this.state = {
+      mode: 'initial',
+      //shows hide the loading indicator
+      isLoading: false,
+      //shows or hide the body content
+      isCollapsed: false,
+      //textinput values
+      emailValue: '',
+      passwordValue: '',
+      //validation
+      isEmailValid: true,
+      isPasswordValid: true,
+      //UI error message
+      errorText: '',
+      //UI Header title and subtitle
+      titleText: '',
+      subtitleText: '',
+      firstRender: true,
+    };
+    //set initial state
+    this.state = this.getState('initial');
+  }
+
+  componentDidFocus = async () => {
+    //dont animate on first mount
+    if(this.state.firstRender){
+      this.setState({firstRender: false});
+      return;
+    }
+    await this.ref_rootView.fadeInLeft(300);
+  }
+
+  //returns the corresponding state for the mode
+  getState = (mode) => {
+    switch(mode) {
+      case MODES.initial: return {
+        titleText      : 'Log in...',
+        subtitleText   : 'Please sign in to continue',
+        isLoading      : false,
+        emailValue     : '',
+        passwordValue  : '',
+        isEmailValid   : true,
+        isPasswordValid: true,
+        firstRender    : true,
+       ...{mode},
+      };
+      case MODES.loading: return {
+        titleText      : 'Logging in...',
+        subtitleText   : 'Please wait for a second...',
+        isLoading      : true,
+        isEmailValid   : true,
+        isPasswordValid: true,
+        ...{mode}
+      };
+      case MODES.fetching: return {
+        titleText   : 'Logging in...',
+        subtitleText: 'Fetching data from server...',
+        isLoading   : true,
+        ...{mode}
+      };
+      case MODES.succesful: return {
+        titleText      : 'Welcome...',
+        subtitleText   : 'Login succesful, please wait.',
+        isLoading      : false,
+        isEmailValid   : true,
+        isPasswordValid: true,
+        ...{mode}
+      };
+      case MODES.invalid: return {
+        titleText      : 'Log in...',
+        subtitleText   : 'Your email or password is invalid (please try again.)',
+        isLoading      : false,
+        emailValue     : '',
+        passwordValue  : '',
+        isEmailValid   : false,
+        isPasswordValid: false,
+        ...{mode}
+      };
+      case MODES.error: return {
+        titleText      : 'Log In...',
+        subtitleText   : 'Something went wrong (please try again)',
+        isLoading      : false,
+        isEmailValid   : true,
+        isPasswordValid: true,
+        ...{mode}
+      };
+    }
+  }
+
+  //transtion in/out title and subtitle
+  transitionHeader = (callback, animateTitle = true, animateSubtitle = true) => {
+    return new Promise(async resolve => {
+      //animate in
+      await Promise.all([
+        animateTitle    && this.headerTitle   .fadeOutLeft(250),
+        animateSubtitle && this.headerSubtitle.fadeOut(100),
+      ]);
+      //call callback function
+      callback && await callback();
+      //animate out
+      await Promise.all([
+        animateTitle    && this.headerTitle   .fadeInRight(250),
+        animateSubtitle && this.headerSubtitle.fadeInRight(400),
+      ]);
+      //finish animation
+      resolve();
+    });
+  }
+
+  //helper function to animate changes based on mode
+  setMode = async (mode) => {
+    const nextState = this.getState(mode);
+    const { titleText, subtitleText } = this.state;
+    //if there are changes, animate title/sub
+    const animateTitle    = titleText    !== nextState.titleText;
+    const animateSubtitle = subtitleText !== nextState.subtitleText;
+    //animate header
+    await this.transitionHeader(() => {
+      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+      return setStateAsync(this, nextState);
+    }, animateTitle, animateSubtitle);
+    //reduce stutter
+    await timeout(150);
+  }
+
+  toggleLoading = async () => {
+    await this.setMode(MODES.loading);
+  }
+
+  toggleLoginFetching = async () => {
+    await this.setMode(MODES.fetching);
+  }
+
+  toggleLoginInvalid = async () => {
+    await this.setMode(MODES.invalid);    
+  }
+
+  toggleLoginError = async () => {
+    await this.setMode(MODES.error);
+  }
+
+  toggleLoginSuccessful = async () => {
+    await this.setMode(MODES.succesful);
+  }
+
+  onPressLogin = async () => {
+    const { emailValue, passwordValue, isLoading } = this.state;
+    //dont invoke when loading
+    if(isLoading) return;
+    //dismiss keyboard
+    Keyboard.dismiss();
+    //call login from props
+    this.props.login({email: emailValue, pass: passwordValue}, {
+      //pass the callback functions
+      onLoginLoading : this.toggleLoading        ,
+      onLoginFetching: this.toggleLoginFetching  ,
+      onLoginInvalid : this.toggleLoginInvalid   ,
+      onLoginError   : this.toggleLoginError     ,
+      onLoginFinished: this.toggleLoginSuccessful,
+    });
+  }
+
+  _handleOnPressSignUp = async () => {
+    const { onPressSignUp } = this.props;
+    await this.ref_rootView.fadeOutLeft(300);
+    onPressSignUp && onPressSignUp();
+  }
+
+  //the logo on top of sign in container
+  _renderLogo(){
+    return(
+      <Animatable.View
+        style={{marginBottom: -45, elevation: 20}}
+        animation={'fadeInUp'}
+        duration={400}
+        easing={'ease-in-out'}
+        useNativeDriver={true}
+      >
+        <View style={{width: 100, height: 100, backgroundColor: 'white', borderRadius: 50, borderColor: 'rgba(0, 0, 0, 0.4)', borderWidth: 6}}>
+
+        </View>
+      </Animatable.View>
+    );
+  }
+
+  _renderLogInButton(){
+    const { isLoading } = this.state;
+    //Button text
+    const text = isLoading? 'Logging in...' : 'Log In';
+    //Button right component
+    const chevron = (<Icon
+      name ={'chevron-right'}
+      color={'rgba(255, 255, 255, 0.5)'}
+      type ={'feather'}
+      size ={25}
+    />);
+    const loading = (<ActivityIndicator
+      color={'white'}
+      size={25}
+    />);
+
+    return(
+      <Fragment>
+        <IconButton 
+          containerStyle={{padding: 15}}
+          wrapperStyle={{marginTop: 25, backgroundColor: '#5E35B1', borderRadius: 20}}
+          textStyle={{color: 'white', fontSize: 20, fontWeight: 'bold', marginLeft: 20}}
+          iconName={'login'}
+          iconType={'simple-line-icon'}
+          iconColor={'white'}
+          iconSize={22}
+          onPress={this.onPressLogin}
+          {...{text}}
+        >
+          {isLoading? loading : chevron}
+        </IconButton>
+        <TouchableOpacity onPress={this._handleOnPressSignUp}>
+          <Text 
+            style={{fontSize: 16, fontWeight: '100', color: 'grey', textAlign: 'center', textDecorationLine: 'underline', marginTop: 7, marginBottom: 10}}
+            numberOfLines={1}
+            ellipsizeMode='tail'
+          >
+            Don't have an acoount? Sign Up
+          </Text>
+      </TouchableOpacity>
+      </Fragment>
+    );
+  }
+
+  //login inputs
+  _renderForm(){
+    const { emailValue, passwordValue, isEmailValid, isPasswordValid, isLoading } = this.state;
+    const textInputProps = {
+      underlineColorAndroid: 'rgba(0,0,0,0)',
+      selectionColor: 'rgba(255, 255, 255, 0.7)',
+      placeholderTextColor: 'rgba(0, 0, 0, 0.35)',
+      editable: !isLoading
+    }
+    //placeholder text color
+    if(!isEmailValid || !isPasswordValid ){
+      textInputProps.placeholderTextColor = 'darkred';
+    }
+    //icon colors idle/active
+    let emailIconColor    = emailValue    == ''? 'grey' : 'black' ;
+    let passwordIconColor = passwordValue == ''? 'grey' : 'black' ;
+    //icon colors when invalid
+    if(!isEmailValid   ) emailIconColor    = 'red';
+    if(!isPasswordValid) passwordIconColor = 'red';
+    
+
+    return(
+      <Animatable.View 
+        collapsable={true}
+        animation={'fadeInUp'}
+        easing={'ease-in-out'}
+        duration={750}
+        useNativeDriver={true}
+      >
+        <InputForm
+          placeholder='E-mail address'
+          keyboardType='email-address'
+          onChangeText={(text) => this.setState({emailValue: text, isEmailValid: true})}
+          textContentType='username'
+          returnKeyType='next'
+          iconName='ios-mail-outline'
+          iconType='ionicon'
+          iconSize={30}
+          iconColor={emailIconColor}
+          {...textInputProps}
+        />
+        <InputForm
+          placeholder='Password'
+          onChangeText={(text) => this.setState({passwordValue: text, isPasswordValid: true})}
+          placeholderTextColor='rgba(255, 255, 255, 0.7)'
+          textContentType='password'
+          secureTextEntry={true}
+          iconName='ios-lock-outline'
+          iconType='ionicon'
+          iconSize={30}
+          iconColor={passwordIconColor}
+          {...textInputProps}
+        />
+        {this._renderLogInButton()}
+      </Animatable.View>
+    );
+  }
+  
+  //sign in form container
+  _renderSignIn(){
+    const { titleText, subtitleText } = this.state;
+    return(
+      <Animatable.View 
+        style={[styles.signInContainer, {overflow: 'hidden'}]}
+        ref={r => this.animatedSignInContainer = r}
+        animation={'fadeInUp'}
+        duration={600}
+        easing={'ease-in-out'}
+        useNativeDriver={true}
+      >
+        <Animatable.Text 
+          ref={r => this.headerTitle = r}
+          style={{fontSize: 32, fontWeight: '900'}}
+          useNativeDriver={true}
+        >
+          {titleText}
+        </Animatable.Text>
+        <Animatable.Text 
+          ref={r => this.headerSubtitle = r}
+          style={{fontSize: 18, fontWeight: '100', color: 'grey'}}
+          useNativeDriver={true}
+        >
+          {subtitleText}
+        </Animatable.Text>
+        {this._renderForm()}
+      </Animatable.View>
+    );
+  }
+
+  
+  render(){
+    const { login } = this.props;
+    const { isLoading, mode, isCollapsed } = this.state;
+    return(
+      <View collapsable={true}>
+        <NavigationEvents onDidFocus={this.componentDidFocus}/>
+        <Animatable.View
+          ref={r => this.ref_rootView = r}
+          style={styles.rootContainer}
+          duration={500}
+          easing={'ease-in-out'}
+          useNativeDriver={true}
+        >
+          <KeyboardAvoidingView
+            style={{flex: 1, width: '100%', alignItems: 'center', justifyContent: 'center'}}
+            behavior='padding'
+          >
+            {this._renderLogo  ()}
+            {this._renderSignIn()}
+          </KeyboardAvoidingView>
+        </Animatable.View>
+      </View>
+    );
+  }
+}
+
 export default class LoginScreen extends React.Component { 
   static navigationOptions = {
   }
@@ -544,7 +906,10 @@ export default class LoginScreen extends React.Component {
           onDidFocus={this.componentDidFocus}
         />
         <LoginContainer navigation={this.props.navigation}>
-          <LoginUI onPressSignUp={this._handleOnPressSignUp}/>
+          {Platform.select({
+            ios    : <LoginUI_iOS     onPressSignUp={this._handleOnPressSignUp}/>,
+            android: <LoginUI_android onPressSignUp={this._handleOnPressSignUp}/>,
+          })}
         </LoginContainer>
       </View>
     );
@@ -560,18 +925,33 @@ const styles = StyleSheet.create({
     alignSelf: 'stretch', 
     alignItems: 'stretch', 
     margin: 15, 
-    padding: 18, 
-    backgroundColor: 'rgba(0, 0, 0, 0.5)', 
-    borderRadius: 20
+    padding: 18,
+    borderRadius: 20,
+    ...Platform.select({
+      ios: {
+        backgroundColor: 'rgba(0, 0, 0, 0.5)'
+      },
+      android: {
+        backgroundColor: 'rgba(255, 255, 255, 1)',
+        paddingTop: 25,
+        elevation: 15,
+      },
+    })
   },
   textinputContainer: {
-    backgroundColor: 'rgba(0, 0, 0, 0.25)',
-    height: 60,
     paddingHorizontal: 15,
-    paddingVertical: 5,
+    paddingVertical: 10,
     borderRadius: 10,
     flexDirection: 'row', 
     marginTop: 25,
+    ...Platform.select({
+      ios: {
+        backgroundColor: 'rgba(0, 0, 0, 0.25)',
+      },
+      android: {
+        backgroundColor: 'rgba(0, 0, 0, 0.15)',
+      },
+    })
   },
   textInputIcon: {
     width: 30
@@ -583,9 +963,16 @@ const styles = StyleSheet.create({
     marginLeft: 15, 
     height: 35, 
     borderColor: 'transparent', 
-    borderBottomColor: 'rgba(255, 255, 255, 0.25)', 
     borderWidth: 1,
-    paddingHorizontal: 5, 
-    color: 'white'
+    paddingHorizontal: 5,
+    ...Platform.select({
+      ios: {
+        borderBottomColor: 'rgba(255, 255, 255, 0.25)', 
+        color: 'white', 
+      },
+      android: {
+        color: 'black'
+      },
+    }),
   }
 });

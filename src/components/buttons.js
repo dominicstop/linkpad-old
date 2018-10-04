@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ViewPropTypes, TextProps, UIManager, LayoutAnimation } from 'react-native';
+import React, { Fragment } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ViewPropTypes, TextProps, UIManager, LayoutAnimation, Platform, TouchableNativeFeedback } from 'react-native';
 import PropTypes from 'prop-types';
 
 import * as Animatable from 'react-native-animatable';
@@ -27,16 +27,14 @@ export class IconButton extends React.PureComponent {
     iconProps: PropTypes.object,
     //style
     containerStyle: ViewPropTypes.style ,
+    wrapperStyle  : ViewPropTypes.style ,
     textStyle     : Text.propTypes.style,
   }
 
-  render(){
-    const {text, iconName, iconColor, iconType, iconSize, containerStyle, textStyle, children, iconProps, ...otherProps} = this.props;
+  _renderContent(){
+    const {text, iconName, iconColor, iconType, iconSize, textStyle, iconProps} = this.props;
     return(
-      <TouchableOpacity
-        style={[{flexDirection: 'row', alignItems: 'center'}, containerStyle]}
-        {...otherProps}
-      >
+      <Fragment>
         <Icon
           name ={iconName }
           color={iconColor}
@@ -47,9 +45,38 @@ export class IconButton extends React.PureComponent {
         <Text style={[{marginLeft: 8, flex: 1}, textStyle]}>
           {text}
         </Text>
-        {this.props.children}        
-      </TouchableOpacity>
+        {this.props.children}  
+      </Fragment>
     );
+  }
+
+  render(){
+    const {text, iconName, iconColor, iconType, iconSize, containerStyle, wrapperStyle, textStyle, children, iconProps, ...otherProps} = this.props;
+    return(Platform.select({
+      ios: (
+        <TouchableOpacity
+          style={[{flexDirection: 'row', alignItems: 'center'}, containerStyle]}
+          {...otherProps}
+        >
+          {this._renderContent()}
+        </TouchableOpacity>
+      ),
+      android: (
+        <View
+          style={[{overflow: 'hidden'}, wrapperStyle]}
+        >
+          <TouchableNativeFeedback
+            background={TouchableNativeFeedback.Ripple('rgba(255, 255, 255, 0.7)')}
+            useForeground={true}
+            {...otherProps}
+          >
+            <View style={[{flexDirection: 'row', alignItems: 'center'}, containerStyle]}>
+              {this._renderContent()}
+            </View>
+          </TouchableNativeFeedback>
+        </View>
+      ),
+    }));
   }
 }
 
