@@ -3,8 +3,10 @@ import { StyleSheet, Text, View, StatusBar, Platform } from 'react-native';
 
 import { createSwitchNavigator, createStackNavigator } from 'react-navigation';
 import { useScreens } from 'react-native-screens';
+import * as Animatable from 'react-native-animatable';
 
 import Constants from './src/Constants';
+import {shuffleArray} from './src/functions/Utils';
 
 import { DrawerStackContainer   } from './src/screens/Drawer';
 import { PracticeExamStack      } from './src/screens/PracticeExamScreen';
@@ -86,19 +88,26 @@ export class AuthScreen extends React.Component {
     super(props);
     //shared between ios and android
     this.gradientProps = {
-      colorsTop   : ['#7F00FF', '#654ea3', '#642B73', '#c0392b', '#ff00cc', '#FC466B', ],
-      colorsBottom: ['#F100FF', '#eaafc8', '#C6426E', '#8e44ad', '#333399', '#3F5EFB', ],
-      speed       : 200 ,
+      speed       : 100 ,
       numOfInterps: 1000,  
     }
   }
 
   render_android(){
+    const transparent = 'rgba(255, 255, 255, 0)';
+    const colors = shuffleArray(['#7F00FF', '#304FFE', '#651FFF', '#6A1B9A', '#311B92', '#8E24AA', '#673AB7', '#9C27B0' ]);
     return (
-      <View style={{flex: 1, backgroundColor: '#FAFAFA'}}>
+      <Animatable.View 
+        style={{flex: 1, backgroundColor: '#FAFAFA'}}
+        animation={'fadeIn'}
+        duration={1000}
+        useNativeDriver={true}
+      >
         <AnimatedGradient
           ref={r => this.animatedGradientRef = r}
-          style={{position: 'absolute', width: '100%', height: '40%'}}
+          style={{position: 'absolute', width: '100%', height: '70%'}}
+          colorsTop   ={colors}
+          colorsBottom={colors.map(() => transparent)}
           {...this.gradientProps}
         />
         <AuthStack
@@ -108,7 +117,7 @@ export class AuthScreen extends React.Component {
             getAuthBGGradientRef: () => this.animatedGradientRef,
           }}
         />
-      </View>
+      </Animatable.View>
     );
   }
 

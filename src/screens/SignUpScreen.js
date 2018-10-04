@@ -50,10 +50,10 @@ export class InputForm extends React.PureComponent {
     mode: MODES.initial,
     //active color props
     inactiveStyleBG  : {
-      backgroundColor: 'rgba(0, 0, 0, 0.05)',
+      backgroundColor: 'rgba(0, 0, 0, 0.03)',
     },
     inactiveColorText: 'rgba(0, 0, 0, 0.50)',
-    inactiveColorIcon: 'rgba(0, 0, 0, 0.30)',
+    inactiveColorIcon: 'rgba(0, 0, 0, 0.20)',
     //inactive color props
     activeStyleBG  : {
       backgroundColor: 'rgba(0, 0, 0, 0.15)',
@@ -519,15 +519,12 @@ export class SignUpUI_android extends React.PureComponent {
 
   constructor(props){
     super(props);
-    this.state = {
-      isLoading: false,
-    };
     //init state
-    this.state = this.getState('initial');
+    this.state = this.getState(MODES.initial);
   }
 
   componentWillBlur = () => {
-    this.ref_rootView.fadeOutRight(500);
+    this.ref_rootView.fadeOutRight(400);
   }
 
   //returns the corresponding state for the mode
