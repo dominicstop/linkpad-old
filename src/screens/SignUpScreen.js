@@ -7,15 +7,16 @@ import { IconButton } from '../components/Buttons';
 import { Header, NavigationEvents } from 'react-navigation';
 import * as Animatable from 'react-native-animatable';
 import { Icon } from 'react-native-elements';
-import {setStateAsync, timeout} from '../functions/Utils';
+import { setStateAsync, timeout } from '../functions/Utils';
+import { validateEmail, validatePassword, validateNotEmpty } from '../functions/Validation';
 
 const CREATE_USER_URL = 'https://linkpad-pharmacy-reviewer.firebaseapp.com/createuser';
 const NEW_USER_URL    = 'https://linkpad-pharmacy-reviewer.firebaseapp.com/newuser'   ;
 
 const MODES = {
   initial  : 'initial'  ,
+  creating : 'creating' ,
   loading  : 'loading'  ,
-  fetching : 'fetching' ,
   succesful: 'succesful',
   invalid  : 'invalid'  ,
   error    : 'error'    ,
@@ -30,7 +31,7 @@ export class InputForm extends React.PureComponent {
     //used for setting state of form
     mode: PropTypes.oneOf(Object.values(MODES)),
     //used to test if value is correct
-    validation: PropTypes.func  ,
+    validate: PropTypes.func  ,
     //inital color, not in focus
     inactiveStyleBG  : PropTypes.object,
     inactiveColorText: PropTypes.string,
@@ -53,7 +54,7 @@ export class InputForm extends React.PureComponent {
       backgroundColor: 'rgba(0, 0, 0, 0.03)',
     },
     inactiveColorText: 'rgba(0, 0, 0, 0.50)',
-    inactiveColorIcon: 'rgba(0, 0, 0, 0.20)',
+    inactiveColorIcon: 'rgba(0, 0, 0, 0.10)',
     //inactive color props
     activeStyleBG  : {
       backgroundColor: 'rgba(0, 0, 0, 0.15)',
@@ -63,7 +64,6 @@ export class InputForm extends React.PureComponent {
     correctColor : 'green',
     errorColor   : 'red', 
   }
-
 
   constructor(props){
     super(props);
@@ -82,9 +82,9 @@ export class InputForm extends React.PureComponent {
 
   //transition left input icon
   transitionIcon = async (callback) => {
-    await this.containerIcon.fadeOut(500);
+    await this.containerIcon.fadeOut(400);
     callback && await callback();
-    await this.containerIcon.fadeIn(500);
+    await this.containerIcon.fadeIn(400);
   }
 
   //transition input BG
@@ -109,7 +109,7 @@ export class InputForm extends React.PureComponent {
 
   //returns the corresponding state based on mode
   getMode(mode){
-    const { inactiveStyleBG, inactiveColorText, inactiveColorIcon, activeStyleBG, activeColorText, activeColorIcon } = this.props;
+    const { inactiveStyleBG, inactiveColorText, inactiveColorIcon, activeStyleBG, activeColorText, activeColorIcon, correctColor, errorColor } = this.props;
     switch(mode) {
       case MODES.initial: return {
         editable: true,
@@ -124,9 +124,19 @@ export class InputForm extends React.PureComponent {
         ...{mode}
       };
       case MODES.succesful: return {
+        editable: false,
+        iconColor: correctColor,
         ...{mode}
       };
       case MODES.invalid: return {
+        editable: true,
+        iconColor: errorColor,
+        ...{mode}
+      };
+      case MODES.error: return {
+        editable: true,
+        backgroundStyle: activeStyleBG,
+        iconColor: inactiveColorIcon,
         ...{mode}
       };
     }
@@ -134,19 +144,23 @@ export class InputForm extends React.PureComponent {
 
   //update/animate state based on mode
   setMode = (mode) => {
-    console.log('set mode');
-    console.log(mode);
     //get next state from mode
     const nextMode = this.getMode(mode);
     switch(mode) {
-      case MODES.loading:
+      case MODES.error  :
         this.transitionElements(() => this.setState(nextMode));
         break;
 
       case MODES.succesful:
+        this.transitionIcon(() => this.setState(nextMode));
         break;
 
-      case MODES.invalid: 
+      case MODES.loading:
+        this.transitionElements(() => this.setState(nextMode));
+        break;
+
+      case MODES.invalid:
+        this.transitionIcon(() => this.setState(nextMode));
         break;
     }
   }
@@ -155,29 +169,36 @@ export class InputForm extends React.PureComponent {
   componentDidUpdate(prevProps, prevState, snapshot){
     const didModeChange = this.props.mode != prevProps.mode;
     if(!didModeChange) return false;
-    console.log('didModeChange: true');
     this.setMode(this.props.mode);   
   }
 
   _handleFocus = () => {
-    const { inactiveColorIcon, activeColorIcon } = this.props;
+    const { inactiveColorIcon, activeColorIcon, onFocus } = this.props;
+    onFocus && onFocus();
     this.transitionIcon(() => {
       return setStateAsync(this, {iconColor: activeColorIcon})
     });
   }
 
-  _handleBlur = () => {
-    const { inactiveColorIcon, activeColorIcon } = this.props;
+  _handleOnEndEditing = (event) => {
+    const { inactiveColorIcon, activeColorIcon, errorColor, onEndEditing, validate } = this.props;
+    onEndEditing && onEndEditing(event);
+
+    //get text from textinput
+    const text = event.nativeEvent.text;
+    //check if input is valid
+    const isValid = validate(text);
+    //change icon color
+    const iconColor = isValid? inactiveColorIcon : errorColor;
+    
     this.transitionIcon(() => {
-      return setStateAsync(this, {iconColor: inactiveColorIcon})
+      return setStateAsync(this, {iconColor})
     });
   }
 
   _renderIcon(){
-    const { iconName, iconType, iconSize, inactiveColorText } = this.props;
+    const { iconName, iconType, iconSize, inactiveColorIcon } = this.props;
     const { iconColor, mode } = this.state;
-    console.log('Render Mode: ');
-    console.log(mode);
 
     const WrappedIcon = (props) => <Icon
       name={iconName}
@@ -190,10 +211,11 @@ export class InputForm extends React.PureComponent {
       <View collapsable={true}>
         <WrappedIcon
           containerStyle={[styles.textInputIcon, {position: 'absolute'}]}
-          color={inactiveColorText}
+          color={inactiveColorIcon}
         />
         <Animatable.View
           ref={r => this.containerIcon = r}
+          easing={'ease-in-out'}
           useNativeDriver={true}
         >
           <WrappedIcon
@@ -210,15 +232,15 @@ export class InputForm extends React.PureComponent {
     const { editable } = this.state;
     return(
       <TextInput
+        //pass down props
+        {...textInputProps}
         style={styles.textinput}
         maxLength={50}
         autoCapitalize='none'
         enablesReturnKeyAutomatically={true}
         onFocus={this._handleFocus}
-        onBlur={this._handleBlur}
+        onEndEditing={this._handleOnEndEditing}
         {...{editable}}
-        //pass down props
-        {...textInputProps}
       />
     );
   }
@@ -248,18 +270,6 @@ export class InputForm extends React.PureComponent {
 export class SignUpContainer extends React.PureComponent {
   constructor(props){
     super(props);
-  }
-
-  componentDidMount(){
-    return;
-    console.log('createUser test');
-    //this.createUser({email: 'test@email.com', pass: '123456'});
-    this.createAccount({
-      email: 'test7@gmail.com', 
-      pass : '123456789',
-      firstname: 'dominic6',
-      lastname: 'test4',
-    });
   }
 
   //called first: returns 'uid'
@@ -319,74 +329,95 @@ export class SignUpContainer extends React.PureComponent {
         
         console.log('new user resp:');
         console.log(response);
-        let json = await response.text();
-        console.log('new user json');
-        console.log(json);
 
-        resolve(json);
+        resolve(response);
       } catch(error) {
         reject(error);
       }
     });
   }
 
-  createAccount = async ({email, pass, firstname, lastname}) => {
-    const createUser_response = await this.createUser({email, pass});
+  //callback is called after create user
+  createAccount = async ({email, pass, firstname, lastname}, callback) => {
+    const createUser_resp = await this.createUser({email, pass});
     //extract uid from response
-    const { uid } = createUser_response;
+    const { uid } = createUser_resp;
     //extract username from email
     const userid = email.replace(/@.*$/,"");
-    //register new user
-    const newUser_response = await this.newUser({
-      email, firstname, lastname, uid, userid
-    });
+    //wait for newUser and callback to finish
+    const results = await Promise.all([
+      //register new user
+      this.newUser({email, firstname, lastname, uid, userid}),
+      //call callback and wait to finish if exist
+      callback && callback(uid),
+    ]);
+    //extract newUser response
+    const newUser_resp = results[0];
+    //resolve responses
+    return {createUser_resp, newUser_resp};
   }
 
-  _signUp = async (signup_credentials, callbacks) => {
+  _signup = async (signup_credentials, callbacks) => {
     const {
-      onSigUpLoading , //while signing up
+      onSigUpLoading , //while signing up: createUser
+      onSigUpCreating, //while signing up: newUser
       onSigUpInvalid , //invalid email/password
       onSigUpError   , //something went wrong
       onSigUpFinished, //finish logging in
     } = callbacks;
 
     try {
-      //wait for animation while login
+      //wait for animation while signing up
       let resolve_results = await Promise.all([
-        this.login(login_credentials),
+        this.createAccount(signup_credentials, onSigUpCreating),
         onSigUpLoading && await onSigUpLoading(),
       ]);
-      //extract login json from Promise Array
-      let login_response = resolve_results[0];
+      //extract response from Promise Array
+      const {createUser_resp, newUser_resp} = resolve_results[0];
+
+      console.log('\n\n_Sign up:');
+      console.log('createUser_resp');
+      console.log(createUser_resp);
+      console.log('newUser_resp');
+      console.log(newUser_resp);
+      console.log('newUser_resp.ok');
+      console.log(newUser_resp.ok);
 
       //stop if login invalid
-      if(!login_response.success){
-        onSigUpInvalid && await onSigUpInvalid(login_response);
+      if(!newUser_resp.ok){
+        onSigUpInvalid && await onSigUpInvalid(resolve_results[0]);
         return;
       }
 
-      //wait for animation and fetch to finish
-      await Promise.all([
-        ModuleStore.getModuleData(),
-        TipsStore.getTips(),
-        onLoginFetching(),
-      ]);
-
       //save user data to storage
-      UserStore.setUserData(login_response);
-      //login finished
-      onSigUpFinished && await onSigUpFinished(login_response);
-      const { navigation } = this.props;
-      navigation.navigate('AppRoute');
+      //UserStore.setUserData(signup_response);
+      //signup finished
+      onSigUpFinished && await onSigUpFinished();
+      //const { navigation } = this.props;
+      //navigation.navigate('AppRoute');
 
     } catch(error){
+      console.log('error: _signup: ');
+      console.log(error);
       await onSigUpError && onSigUpError(error);
     }
   }
 
+  _validate = ({email, pass, firstname, lastname}) => {
+    let results = [];
+    results.push(validateEmail   (email    ));
+    results.push(validatePassword(pass     ));
+    results.push(validateNotEmpty(firstname));
+    results.push(validateNotEmpty(lastname ));
+    //evaluate results
+    return results.every(item => item);
+  }
+
   render(){
     const childProps = {
-      signUp: this._signUp,
+      signup    : this._signup,
+      validate  : this._validate,
+      navigation: this.props.navigation,
     };
 
     return(
@@ -520,72 +551,161 @@ export class SignUpUI_android extends React.PureComponent {
   constructor(props){
     super(props);
     //init state
+    this.state = {
+      //textinput values
+      fnameValue   : '',
+      lnameValue   : '',
+      emailValue   : '',
+      passwordValue: '',
+    }
     this.state = this.getState(MODES.initial);
+    this.DEBUG = true;
   }
 
   componentWillBlur = () => {
     this.ref_rootView.fadeOutRight(400);
   }
 
+  //transtion in/out title and subtitle
+  transitionHeader = async (callback, animateTitle = true, animateSubtitle = true) => {
+    //animate in
+    await Promise.all([
+      animateTitle    && this.headerTitle   .fadeOutLeft(300),
+      animateSubtitle && this.headerSubtitle.fadeOutLeft(200),
+    ]);
+    //call callback function
+    callback && await callback();
+    //animate out
+    await Promise.all([
+      animateTitle    && this.headerTitle   .fadeInRight(300),
+      animateSubtitle && this.headerSubtitle.fadeInRight(400),
+    ]);
+    //reduce stutter
+    await timeout(750);
+  }
+
   //returns the corresponding state for the mode
   getState = (mode) => {
     switch(mode) {
       case MODES.initial: return {
-        titleText      : 'SIGN UP',
-        subtitleText   : 'Create an account',
+        titleText      : 'Sign up',
+        subtitleText   : 'Create an account to continue using LinkPad',
         isLoading      : false,
         emailValue     : '',
         passwordValue  : '',
-        isEmailValid   : true,
-        isPasswordValid: true,
         ...{mode}
       };
       case MODES.loading: return {
-        titleText   : 'LOGGING IN',
-        subtitleText: 'Please wait for second...',
+        titleText   : 'Signing up',
+        subtitleText: 'Creating account...',
         isLoading   : true,
         ...{mode}
       };
-      case MODES.fetching: return {
-        titleText   : 'FETCHING',
-        subtitleText: 'Loading the data...',
+      case MODES.creating: return {
+        titleText   : 'Signing up',
+        subtitleText: 'Almost done, please wait...',
         isLoading   : true,
         ...{mode}
       };
       case MODES.succesful: return {
-        titleText      : 'LOGGED IN',
-        subtitleText   : 'Login succesful, please wait.',
+        titleText      : 'Signed up',
+        subtitleText   : 'Your account has been successfully created.',
         isLoading      : false,
-        isEmailValid   : true,
-        isPasswordValid: true,
         ...{mode}
       };
       case MODES.invalid: return {
-        titleText      : 'SIGN IN',
-        subtitleText   : 'Invalid email or password (please try again)',
+        titleText      : 'Sign up',
+        subtitleText   : 'Invalid details (please try again)',
         isLoading      : false,
         emailValue     : '',
         passwordValue  : '',
-        isEmailValid   : false,
-        isPasswordValid: false,
         ...{mode}
       };
       case MODES.error: return {
-        titleText      : 'SIGN IN',
-        subtitleText   : 'Something went wrong (please try again)',
-        isLoading      : false,
-        isEmailValid   : true,
-        isPasswordValid: true,
+        titleText   : 'Sign up',
+        subtitleText: 'Something went wrong (please try again)',
+        isLoading   : false,
         ...{mode}
       };
     }
   }
 
+  setStateFromMode = async (mode) => {
+    const nextState = this.getState(mode);
+    const { titleText, subtitleText } = this.state;
+    //if there are changes, animate title/sub
+    const animateTitle    = titleText    !== nextState.titleText;
+    const animateSubtitle = subtitleText !== nextState.subtitleText;
+    //animate header
+    await this.transitionHeader(() => {
+      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+      this.setState(nextState);
+    }, animateTitle, animateSubtitle);
+  }
+
+  _handleOnSignupLoading = async () => {
+    this.DEBUG && console.log('Signup Loading');
+    this.setStateFromMode(MODES.loading);
+  }
+
+  _handleOnSignupCreating = async () => {
+    this.DEBUG && console.log('Signup Creating');
+    this.setStateFromMode(MODES.creating);
+  }
+
+  _handleOnSignupFinished = async () => {
+    this.DEBUG && console.log('Signup Finished');
+    this.setStateFromMode(MODES.succesful);
+  }
+
+  _handleOnSignupInvalid = async () => {
+    this.DEBUG && console.log('Signup Invalid');
+    this.setStateFromMode(MODES.invalid);
+  }
+
+  _handleOnSignupError = async () => {
+    this.DEBUG && console.log('Signup Error');
+    this.setStateFromMode(MODES.error);
+  }
+
   _handleOnPressSignUp = async () => {
-    //hide keyboard
+    const { fnameValue, lnameValue, emailValue, passwordValue, isLoading, mode } = this.state;
+    //handle onpress signup
+    if(mode == MODES.succesful){
+      const { navigation } = this.props;
+      navigation.navigate('LoginRoute');
+      return;
+    }
+    
+    //dont invoke when loading
+    if(isLoading) return;
+    //dismiss keyboard
     Keyboard.dismiss();
-    await timeout(500);
-    this.setState(this.getState(MODES.loading));
+
+    //match state to POST params
+    const signup_data = {
+      email    : emailValue,
+      pass     : passwordValue,
+      firstname: fnameValue,
+      lastname : lnameValue,
+    };
+
+    //check if inputs are valid
+    if(!this.props.validate(signup_data)){
+      this.formContainer.shake(750);
+      this.setStateFromMode(MODES.invalid);
+      return;
+    }
+
+    //call signup from props
+    this.props.signup(signup_data, {
+      //pass the callback functions
+      onSigUpLoading : this._handleOnSignupLoading , 
+      onSigUpCreating: this._handleOnSignupCreating,
+      onSigUpInvalid : this._handleOnSignupInvalid ,
+      onSigUpError   : this._handleOnSignupError   ,
+      onSigUpFinished: this._handleOnSignupFinished,
+    });
   }
 
   _renderHeader(){
@@ -617,9 +737,10 @@ export class SignUpUI_android extends React.PureComponent {
   }
 
   _renderSignUpButton(){
-    const { isLoading } = this.state;
+    const { isLoading, mode } = this.state;
     //Button text
-    const text = isLoading? 'Creating account...' : 'Sign Up';
+    let text = isLoading? 'Creating account...' : 'Sign Up';
+    if(mode == MODES.succesful) text = 'Sign in';
     //Button right component
     const chevron = (<Icon
       name ={'chevron-right'}
@@ -651,25 +772,18 @@ export class SignUpUI_android extends React.PureComponent {
 
   //login inputs
   _renderForm(){
-    const { emailValue, passwordValue, isEmailValid, isPasswordValid, isLoading, mode } = this.state;
+    const { emailValue, passwordValue, isLoading, mode } = this.state;
     const textInputProps = {
-      underlineColorAndroid: 'rgba(0,0,0,0)',
-      selectionColor: 'rgba(255, 255, 255, 0.7)',
-      placeholderTextColor: 'rgba(0, 0, 0, 0.35)',
-      isEnabled: !isLoading,
+      underlineColorAndroid: 'rgba(0, 0, 0, 0)',
+      selectionColor       : '#B39DDB',
+      placeholderTextColor : 'rgba(0, 0, 0, 0.35)',
+      autoCorrect: false,
+      autoFocus: false,
+      blurOnSubmit: true,
+      disableFullscreenUI: true,
+      multiline: false,
       ...{mode}
     }
-    //placeholder text color
-    if(!isEmailValid || !isPasswordValid ){
-      textInputProps.placeholderTextColor = 'darkred';
-    }
-    //icon colors idle/active
-    let emailIconColor    = emailValue    == ''? 'grey' : 'black' ;
-    let passwordIconColor = passwordValue == ''? 'grey' : 'black' ;
-    //icon colors when invalid
-    if(!isEmailValid   ) emailIconColor    = 'red';
-    if(!isPasswordValid) passwordIconColor = 'red';
-    
 
     return(
       <Animatable.View 
@@ -679,26 +793,54 @@ export class SignUpUI_android extends React.PureComponent {
         easing={'ease-in-out'}
         useNativeDriver={true}
       >
+        {/*First Name*/}
+        <InputForm
+          placeholder='First Name'
+          onChangeText={(text) => this.setState({fnameValue: text})}
+          returnKeyType='next'
+          iconName='account'
+          iconType='material-community'
+          iconSize={30}
+          autoCapitalize={'words'}
+          validate={validateNotEmpty}
+          {...textInputProps}
+        />
+        {/*Last Name*/}
+        <InputForm
+          placeholder='Last name'
+          onChangeText={(text) => this.setState({lnameValue: text})}
+          returnKeyType='next'
+          iconName='account-multiple'
+          iconType='material-community'
+          iconSize={30}
+          autoCapitalize={'words'}
+          validate={validateNotEmpty}
+          {...textInputProps}
+        />
+        {/*E-Mail*/}
         <InputForm
           placeholder='E-mail address'
           keyboardType='email-address'
-          onChangeText={(text) => this.setState({emailValue: text, isEmailValid: true})}
+          onChangeText={(text) => this.setState({emailValue: text})}
           textContentType='username'
           returnKeyType='next'
-          iconName='ios-mail-outline'
-          iconType='ionicon'
+          iconName='email'
+          iconType='material-community'
           iconSize={30}
+          validate={validateEmail}
           {...textInputProps}
         />
+        {/*Password*/}
         <InputForm
           placeholder='Password'
-          onChangeText={(text) => this.setState({passwordValue: text, isPasswordValid: true})}
+          onChangeText={(text) => this.setState({passwordValue: text})}
           placeholderTextColor='rgba(255, 255, 255, 0.7)'
           textContentType='password'
           secureTextEntry={true}
-          iconName='ios-lock-outline'
-          iconType='ionicon'
+          iconName='lock'
+          iconType='material-community'
           iconSize={30}
+          validate={validatePassword}
           {...textInputProps}
         />
         {this._renderSignUpButton()}
@@ -756,7 +898,7 @@ export default class SignUpScreen extends React.Component {
     return (
       <View collapsable={true}>
         <NavigationEvents onDidFocus={this.componentDidFocus} />
-        <SignUpContainer>
+        <SignUpContainer navigation={this.props.navigation}>
           {Platform.select({
             ios: <SignUpUI_iOS/>,
             android: <SignUpUI_android/>,
@@ -784,7 +926,6 @@ const styles = StyleSheet.create({
       },
       android: {
         backgroundColor: 'rgba(255, 255, 255, 1)',
-        paddingTop: 25,
         elevation: 15,
       },
     })
