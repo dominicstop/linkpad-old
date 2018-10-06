@@ -505,7 +505,7 @@ export class LoginUI_iOS extends React.Component {
     const { login } = this.props;
     const { isLoading, mode, isCollapsed } = this.state;
     return(
-      <View collapsable={true}>
+      <View style={{paddingTop: 20}}>
         <NavigationEvents onDidFocus={this.componentDidFocus}/>
         <Animatable.View
           ref={r => this.ref_rootView = r}
@@ -514,24 +514,30 @@ export class LoginUI_iOS extends React.Component {
           duration={500}
           easing={'ease-in-out'}
           useNativeDriver={true}
-        >
-          <KeyboardAvoidingView
-            style={{flex: 1, width: '100%', alignItems: 'center', justifyContent: 'center'}}
-            behavior='padding'
+        > 
+          <ScrollView 
+            contentContainerStyle={{flexGrow: 1}}
+            keyboardShouldPersistTaps={'always'} 
+            keyboardDismissMode={"on-drag"}
           >
-            <Animatable.View 
-              style={[styles.signInContainer, {overflow: 'hidden', elevation: 1}]}
-              ref={r => this.animatedSignInContainer = r}
-              animation={'bounceInUp'}
-              duration={1000}
-              easing={'ease-in-out'}
-              useNativeDriver={true}
+            <KeyboardAvoidingView
+              style={{ flex: 1, width: '100%', alignItems: 'center', justifyContent: 'center' }}
+              behavior='padding'
             >
-              {this._renderHeader()}
-              {!isCollapsed        && this._renderSignInForm      ()}
-              {mode == 'succesful' && this._renderSigninSuccessful()}
-            </Animatable.View>
-          </KeyboardAvoidingView>
+              <Animatable.View 
+                style={[styles.signInContainer, {overflow: 'hidden', elevation: 1}]}
+                ref={r => this.animatedSignInContainer = r}
+                animation={'bounceInUp'}
+                duration={1000}
+                easing={'ease-in-out'}
+                useNativeDriver={true}
+              >
+                {this._renderHeader()}
+                {!isCollapsed        && this._renderSignInForm      ()}
+                {mode == 'succesful' && this._renderSigninSuccessful()}
+              </Animatable.View>     
+            </KeyboardAvoidingView>
+          </ScrollView>
         </Animatable.View>
       </View>
     );
@@ -567,6 +573,9 @@ export class LoginUI_android extends React.Component {
     };
     //set initial state
     this.state = this.getState('initial');
+    //prevent multiple presses
+    this._handleOnPressLogin  = _.throttle(this._handleOnPressLogin , 1000, {leading:true, trailing:false});
+    this._handleOnPressSignUp = _.throttle(this._handleOnPressSignUp, 1000, {leading:true, trailing:false});
   }
 
   componentDidFocus = async () => {

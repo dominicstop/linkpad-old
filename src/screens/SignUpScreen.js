@@ -6,6 +6,7 @@ import { IconButton } from '../components/Buttons';
 import { validateEmail, validatePassword, validateNotEmpty } from '../functions/Validation';
 import { setStateAsync, timeout } from '../functions/Utils';
 
+import { BlurView } from 'expo';
 import _ from 'lodash';
 import { AndroidBackHandler } from 'react-navigation-backhandler';
 import {  NavigationEvents } from 'react-navigation';
@@ -809,7 +810,7 @@ export class SignUpUI_iOS extends React.PureComponent {
 
   render(){
     return(
-      <Fragment>
+      <View style={{paddingTop: 20}}>
         <NavigationEvents onWillBlur={this.componentWillBlur}/>
         <Animatable.View
           ref={r => this.ref_rootView = r}
@@ -819,14 +820,21 @@ export class SignUpUI_iOS extends React.PureComponent {
           easing={'ease-in-out'}
           useNativeDriver={true}
         >
-          <KeyboardAvoidingView
-            style={{ flex: 1, width: '100%', alignItems: 'center', justifyContent: 'center' }}
-            behavior='padding'
+          <ScrollView 
+            contentContainerStyle={{flexGrow: 1}}
+            keyboardShouldPersistTaps={'handled'} 
+            keyboardDismissMode="interactive"
           >
-            {this._renderFormContainer()}          
-          </KeyboardAvoidingView>
+            <KeyboardAvoidingView
+              style={{ flex: 1, width: '100%', alignItems: 'center', justifyContent: 'center' }}
+              behavior='padding'
+            >
+              {this._renderFormContainer()}       
+            </KeyboardAvoidingView>
+          </ScrollView>
+          
         </Animatable.View>
-      </Fragment>
+      </View>
     );
   }
   
@@ -1205,7 +1213,7 @@ export default class SignUpScreen extends React.Component {
 
   render() {
     return (
-      <View collapsable={true}>
+      <View>
         <NavigationEvents 
           onDidFocus={this.componentDidFocus} />
         <SignUpContainer
