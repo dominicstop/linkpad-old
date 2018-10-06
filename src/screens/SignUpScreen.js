@@ -3,12 +3,13 @@ import React, { Fragment } from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, Keyboard, ScrollView, TextInput, UIManager, LayoutAnimation, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
 
 import { IconButton } from '../components/Buttons';
+import { validateEmail, validatePassword, validateNotEmpty } from '../functions/Validation';
+import { setStateAsync, timeout } from '../functions/Utils';
 
-import { Header, NavigationEvents } from 'react-navigation';
+import { AndroidBackHandler } from 'react-navigation-backhandler';
+import {  NavigationEvents } from 'react-navigation';
 import * as Animatable from 'react-native-animatable';
 import { Icon } from 'react-native-elements';
-import { setStateAsync, timeout } from '../functions/Utils';
-import { validateEmail, validatePassword, validateNotEmpty } from '../functions/Validation';
 
 const CREATE_USER_URL = 'https://linkpad-pharmacy-reviewer.firebaseapp.com/createuser';
 const NEW_USER_URL    = 'https://linkpad-pharmacy-reviewer.firebaseapp.com/newuser'   ;
@@ -208,7 +209,13 @@ export class InputForm extends React.PureComponent {
     />
     
     return(
-      <View collapsable={true}>
+      <Animatable.View 
+        collapsable={true}
+        animation={'fadeInRight'}
+        easing={'ease-in-out'}
+        duration={750}
+        useNativeDriver={true}
+      >
         <WrappedIcon
           containerStyle={[styles.textInputIcon, {position: 'absolute'}]}
           color={inactiveColorIcon}
@@ -223,7 +230,7 @@ export class InputForm extends React.PureComponent {
             color={iconColor}
           />
         </Animatable.View>
-      </View>
+      </Animatable.View>
     );
   }
 
@@ -413,11 +420,16 @@ export class SignUpContainer extends React.PureComponent {
     return results.every(item => item);
   }
 
+  _login = () => {
+    const { navigation } = this.props;
+    navigation.navigate('LoginRoute');
+  }
+
   render(){
     const childProps = {
-      signup    : this._signup,
-      validate  : this._validate,
-      navigation: this.props.navigation,
+      signup  : this._signup  ,
+      login   : this._login   ,
+      validate: this._validate,
     };
 
     return(
@@ -552,6 +564,7 @@ export class SignUpUI_android extends React.PureComponent {
     super(props);
     //init state
     this.state = {
+      shouldRender: true,
       //textinput values
       fnameValue   : '',
       lnameValue   : '',
@@ -563,7 +576,7 @@ export class SignUpUI_android extends React.PureComponent {
   }
 
   componentWillBlur = () => {
-    this.ref_rootView.fadeOutRight(400);
+    this.transitionOut();
   }
 
   //transtion in/out title and subtitle
@@ -584,15 +597,23 @@ export class SignUpUI_android extends React.PureComponent {
     await timeout(750);
   }
 
+  transitionOut = async () => {
+    //animate out
+    await this.ref_rootView.fadeOutRight(400);
+    //unmount views
+    this.setState({shouldRender: false});
+  }
+
   //returns the corresponding state for the mode
   getState = (mode) => {
     switch(mode) {
       case MODES.initial: return {
-        titleText      : 'Sign up',
-        subtitleText   : 'Create an account to continue using LinkPad',
-        isLoading      : false,
-        emailValue     : '',
-        passwordValue  : '',
+        titleText     : 'Sign up',
+        subtitleText  : 'Create an account to continue using LinkPad',
+        isLoading     : false,
+        shouldRender  : true,
+        emailValue    : '',
+        passwordValue : '',
         ...{mode}
       };
       case MODES.loading: return {
@@ -670,10 +691,10 @@ export class SignUpUI_android extends React.PureComponent {
 
   _handleOnPressSignUp = async () => {
     const { fnameValue, lnameValue, emailValue, passwordValue, isLoading, mode } = this.state;
-    //handle onpress signup
+    //handle onpress login
     if(mode == MODES.succesful){
-      const { navigation } = this.props;
-      navigation.navigate('LoginRoute');
+      await this.transitionOut();
+      this.props.login();
       return;
     }
     
@@ -707,6 +728,16 @@ export class SignUpUI_android extends React.PureComponent {
       onSigUpFinished: this._handleOnSignupFinished,
     });
   }
+
+  _handleOnBackPress = async () => {
+    //dont go back when loading
+    if(this.state.isLoading) return true;
+    //animate out
+    await this.transitionOut();
+    //go back to login
+    this.props.login();
+    return true;
+  };
 
   _renderHeader(){
     const { isLoading,  titleText, subtitleText, } = this.state;
@@ -863,8 +894,9 @@ export class SignUpUI_android extends React.PureComponent {
   }
 
   render(){
+    if(!this.state.shouldRender) return null;
     return(
-      <Fragment>
+      <AndroidBackHandler onBackPress={this._handleOnBackPress}>
         <NavigationEvents onWillBlur={this.componentWillBlur}/>
         <Animatable.View
           ref={r => this.ref_rootView = r}
@@ -881,7 +913,7 @@ export class SignUpUI_android extends React.PureComponent {
             {this._renderFormContainer()}          
           </KeyboardAvoidingView>
         </Animatable.View>
-      </Fragment>
+      </AndroidBackHandler>
     );
   }
 }
@@ -900,7 +932,7 @@ export default class SignUpScreen extends React.Component {
         <NavigationEvents onDidFocus={this.componentDidFocus} />
         <SignUpContainer navigation={this.props.navigation}>
           {Platform.select({
-            ios: <SignUpUI_iOS/>,
+            ios    : <SignUpUI_iOS/>,
             android: <SignUpUI_android/>,
           })}
         </SignUpContainer>

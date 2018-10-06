@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, Text, View, StatusBar, Platform } from 'react-native';
+import { StyleSheet, Text, View, StatusBar, Platform, Animated, Easing } from 'react-native';
 
 import { createSwitchNavigator, createStackNavigator } from 'react-navigation';
 import { useScreens } from 'react-native-screens';
@@ -59,6 +59,8 @@ const AuthStack = createStackNavigator({
       },
       transitionSpec: {
         duration: 0,
+        timing: Animated.timing,
+        easing: Easing.step0,
       },
     }),
   }
