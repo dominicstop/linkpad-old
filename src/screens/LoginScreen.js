@@ -11,6 +11,7 @@ import ModuleStore from '../functions/ModuleStore';
 import TipsStore from '../functions/TipsStore';
 import UserStore from '../functions/UserStore';
 
+import _ from 'lodash';
 import { Header, NavigationEvents } from 'react-navigation';
 import * as Animatable from 'react-native-animatable';
 import { Icon } from 'react-native-elements';
@@ -192,6 +193,9 @@ export class LoginUI_iOS extends React.Component {
     };
     //set initial state
     this.state = this.getState('initial');
+    //prevent multiple presses
+    this._handleOnPressLogin  = _.throttle(this._handleOnPressLogin , 1000, {leading:true, trailing:false});
+    this._handleOnPressSignUp = _.throttle(this._handleOnPressSignUp, 1000, {leading:true, trailing:false});
   }
 
   componentDidFocus = async () => {
@@ -252,7 +256,7 @@ export class LoginUI_iOS extends React.Component {
     }
   }
 
-  onPressLogin = async () => {
+  _handleOnPressLogin = async () => {
     const { emailValue, passwordValue } = this.state;
     this.props.login({email: emailValue, pass: passwordValue}, {
       //pass the callback functions
@@ -350,22 +354,19 @@ export class LoginUI_iOS extends React.Component {
   }
 
   //transtion in/out title and subtitle
-  transitionHeader = (callback) => {
-    return new Promise(async resolve => {
-      //animate in
-      await Promise.all([
-        this.headerTitle   .fadeOutLeft(250),
-        this.headerSubtitle.fadeOut(100),
-      ]);
-      //call callback function
-      callback && await callback();
-      //animate out
-      await Promise.all([
-        this.headerTitle.fadeInRight(250),
-        this.headerSubtitle.fadeInRight(400),
-      ]);
-      resolve();
-    });
+  transitionHeader = async (callback, animateTitle = true, animateSubtitle = true) => {
+    //animate in
+    await Promise.all([
+      animateTitle    && this.headerTitle   .fadeOutLeft(250),
+      animateSubtitle && this.headerSubtitle.fadeOut(100),
+    ]);
+    //call callback function
+    callback && await callback();
+    //animate out
+    await Promise.all([
+      animateTitle    && this.headerTitle.fadeInRight(250),
+      animateSubtitle && this.headerSubtitle.fadeInRight(400),
+    ]);
   }
 
   //transtion in/out subtitle
@@ -456,7 +457,7 @@ export class LoginUI_iOS extends React.Component {
           iconColor={'white'}
           iconSize={22}
           text={'Log In'}
-          onPress={this.onPressLogin}
+          onPress={this._handleOnPressLogin}
         >
           <Icon
             name ={'chevron-right'}
@@ -690,7 +691,7 @@ export class LoginUI_android extends React.Component {
     await this.setMode(MODES.succesful);
   }
 
-  onPressLogin = async () => {
+  _handleOnPressLogin = async () => {
     const { emailValue, passwordValue, isLoading } = this.state;
     //dont invoke when loading
     if(isLoading) return;
@@ -756,7 +757,7 @@ export class LoginUI_android extends React.Component {
           iconType={'simple-line-icon'}
           iconColor={'white'}
           iconSize={22}
-          onPress={this.onPressLogin}
+          onPress={this._handleOnPressLogin}
           {...{text}}
         >
           {isLoading? loading : chevron}

@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, Text, View, StatusBar, Platform, Animated, Easing } from 'react-native';
+import { StyleSheet, Text, View, StatusBar, Platform } from 'react-native';
 
 import { createSwitchNavigator, createStackNavigator } from 'react-navigation';
 import { useScreens } from 'react-native-screens';
@@ -59,8 +59,6 @@ const AuthStack = createStackNavigator({
       },
       transitionSpec: {
         duration: 0,
-        timing: Animated.timing,
-        easing: Easing.step0,
       },
     }),
   }
@@ -129,6 +127,8 @@ export class AuthScreen extends React.Component {
         <AnimatedGradient
           ref={r => this.animatedGradientRef = r}
           style={{position: 'absolute', width: '100%', height: '100%'}}
+          colorsTop   ={['#7F00FF', '#654ea3', '#642B73', '#c0392b', '#ff00cc', '#FC466B', ]}
+          colorsBottom={['#F100FF', '#eaafc8', '#C6426E', '#8e44ad', '#333399', '#3F5EFB', ]}
           {...this.gradientProps}          
         />
         <AuthStack

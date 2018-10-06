@@ -50,20 +50,40 @@ export class InputForm extends React.PureComponent {
   //inital values
   static defaultProps = {
     mode: MODES.initial,
-    //active color props
-    inactiveStyleBG  : {
-      backgroundColor: 'rgba(0, 0, 0, 0.03)',
-    },
-    inactiveColorText: 'rgba(0, 0, 0, 0.50)',
-    inactiveColorIcon: 'rgba(0, 0, 0, 0.10)',
-    //inactive color props
-    activeStyleBG  : {
-      backgroundColor: 'rgba(0, 0, 0, 0.15)',
-    },
-    activeColorText: 'rgba(0, 0, 0, 1.00)',
-    activeColorIcon: 'rgba(0, 0, 0, 1.00)',
-    correctColor : 'green',
-    errorColor   : 'red', 
+    ...Platform.select({
+      ios: {
+        //active color props
+        inactiveStyleBG  : {
+          backgroundColor: 'rgba(0, 0, 0, 0.25)',        
+        },
+        inactiveColorText: 'rgba(0, 0, 0, 0.50)',
+        inactiveColorIcon: 'rgba(255, 255, 255, 0.5)',
+        //inactive color props
+        activeStyleBG  : {
+          backgroundColor: 'rgba(0, 0, 0, 0.25)',
+        },
+        activeColorText: 'rgba(0, 0, 0, 1.00)',
+        activeColorIcon: 'rgba(255, 255, 255, 1)',
+        correctColor : '#76FF03',
+        errorColor   : 'red', 
+      },
+      android: {
+        //active color props
+        inactiveStyleBG  : {
+          backgroundColor: 'rgba(0, 0, 0, 0.03)',
+        },
+        inactiveColorText: 'rgba(0, 0, 0, 0.50)',
+        inactiveColorIcon: 'rgba(0, 0, 0, 0.10)',
+        //inactive color props
+        activeStyleBG  : {
+          backgroundColor: 'rgba(0, 0, 0, 0.15)',
+        },
+        activeColorText: 'rgba(0, 0, 0, 1.00)',
+        activeColorIcon: 'rgba(0, 0, 0, 1.00)',
+        correctColor : 'green',
+        errorColor   : 'red', 
+      }
+    }),
   }
 
   constructor(props){
@@ -166,6 +186,13 @@ export class InputForm extends React.PureComponent {
     }
   }
 
+  componentDidMount(){
+    //this is a temp hack
+    if(this.props.mode == MODES.succesful && Platform.OS == 'ios'){
+      this.setMode(this.props.mode);   
+    }
+  }
+
   //update state based on props
   componentDidUpdate(prevProps, prevState, snapshot){
     const didModeChange = this.props.mode != prevProps.mode;
@@ -209,7 +236,12 @@ export class InputForm extends React.PureComponent {
     />
     
     return(
-      <View collapsable={true}>
+      <Animatable.View
+        animation={'fadeInRight'}
+        easing={'ease-in-out'}
+        duration={750}
+        useNativeDriver={true}
+      >
         <WrappedIcon
           containerStyle={[styles.textInputIcon, {position: 'absolute'}]}
           color={inactiveColorIcon}
@@ -224,18 +256,19 @@ export class InputForm extends React.PureComponent {
             color={iconColor}
           />
         </Animatable.View>
-      </View>
+      </Animatable.View>
     );
   }
 
   _renderInput(){
     const { iconName, iconType, iconSize, iconColor, mode, ...textInputProps } = this.props;
+    const successStyle = mode == MODES.succesful? {borderBottomColor: 'rgba(255, 255, 255, 0.0)', } : {};
     const { editable } = this.state;
     return(
       <TextInput
         //pass down props
         {...textInputProps}
-        style={styles.textinput}
+        style={[styles.textinput, successStyle]}
         maxLength={50}
         autoCapitalize='none'
         enablesReturnKeyAutomatically={true}
@@ -249,8 +282,10 @@ export class InputForm extends React.PureComponent {
   render(){
     const { iconName, iconType, iconSize, iconColor, mode, ...textInputProps } = this.props;
     const { backgroundStyle } = this.state;
+    const successStyle = mode == MODES.succesful? {opacity: 0.75, borderColor: 'rgba(255, 255, 255, 0.5)', borderWidth: 1} : {};
+
     return(
-      <View style={{overflow: 'hidden', marginTop: 20,  borderRadius: 10,}}>
+      <View style={[{overflow: 'hidden', marginTop: 20,  borderRadius: 10}, successStyle]}>
         {/*BG*/}
         <Animatable.View
           style={[{position: 'absolute', width: '100%', height: '100%'}, backgroundStyle]}
@@ -376,6 +411,7 @@ export class SignUpContainer extends React.PureComponent {
       //extract response from Promise Array
       const {createUser_resp, newUser_resp} = resolve_results[0];
 
+      /*
       console.log('\n\n_Sign up:');
       console.log('createUser_resp');
       console.log(createUser_resp);
@@ -383,6 +419,7 @@ export class SignUpContainer extends React.PureComponent {
       console.log(newUser_resp);
       console.log('newUser_resp.ok');
       console.log(newUser_resp.ok);
+      */
 
       //stop if login invalid
       if(!newUser_resp.ok){
@@ -439,123 +476,403 @@ export class SignUpUI_iOS extends React.PureComponent {
   constructor(props){
     super(props);
     this.state = {
+      //shows or hide the body content
+      isCollapsed: false,
       isLoading: false,
     };
     //init state
-    this.state = this.getState('initial');
+    this.state = this.getState(MODES.initial);
   }
 
   //returns the corresponding state for the mode
   getState = (mode) => {
     switch(mode) {
       case MODES.initial: return {
-        titleText      : 'SIGN UP',
-        subtitleText   : 'Create an account',
-        isLoading      : false,
-        emailValue     : '',
-        passwordValue  : '',
-        isEmailValid   : true,
-        isPasswordValid: true,
+        titleText     : 'SIGN UP',
+        subtitleText  : 'Create an account to continue using LinkPad',
+        isLoading     : false,
+        shouldRender  : true,
+        emailValue    : '',
+        passwordValue : '',
+        ...{mode}
       };
       case MODES.loading: return {
-        titleText   : 'LOGGING IN',
-        subtitleText: 'Please wait for second...',
+        titleText   : 'Signing up',
+        subtitleText: 'Creating your account...',
         isLoading   : true,
+        ...{mode}
       };
-      case MODES.fetching: return {
-        titleText   : 'FETCHING',
-        subtitleText: 'Loading the data...',
+      case MODES.creating: return {
+        titleText   : 'Signing up',
+        subtitleText: 'Almost done, please wait...',
         isLoading   : true,
+        ...{mode}
       };
       case MODES.succesful: return {
-        titleText      : 'LOGGED IN',
-        subtitleText   : 'Login succesful, please wait.',
+        titleText      : 'Signed up',
+        subtitleText   : 'Your account has been successfully created. Press sign in to continue.',
         isLoading      : false,
-        isEmailValid   : true,
-        isPasswordValid: true,
+        ...{mode}
       };
       case MODES.invalid: return {
-        titleText      : 'SIGN IN',
-        subtitleText   : 'Invalid email or password (please try again)',
+        titleText      : 'Sign up',
+        subtitleText   : 'Invalid details (please try again)',
         isLoading      : false,
         emailValue     : '',
         passwordValue  : '',
-        isEmailValid   : false,
-        isPasswordValid: false,
+        ...{mode}
       };
       case MODES.error: return {
-        titleText      : 'SIGN IN',
-        subtitleText   : 'Something went wrong (please try again)',
-        isLoading      : false,
-        isEmailValid   : true,
-        isPasswordValid: true,
+        titleText   : 'Sign up',
+        subtitleText: 'Something went wrong (please try again)',
+        isLoading   : false,
+        ...{mode}
       };
     }
   }
 
+  setStateFromMode = async (mode) => {
+    const nextState = this.getState(mode);
+    const { titleText, subtitleText } = this.state;
+    //if there are changes, animate title/sub
+    const animateTitle    = titleText    !== nextState.titleText;
+    const animateSubtitle = subtitleText !== nextState.subtitleText;
+    //animate header
+    await this.transitionHeader(() => {
+      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+      return setStateAsync(this, nextState);
+    }, animateTitle, animateSubtitle);
+  }
+
+  //transtion in/out title and subtitle
+  transitionHeader = async (callback, animateTitle = true, animateSubtitle = true) => {
+    //animate in
+    await Promise.all([
+      animateTitle    && this.headerTitle   .fadeOutLeft(250),
+      animateSubtitle && this.headerSubtitle.fadeOut(100),
+    ]);
+    //call callback function
+    callback && await callback();
+    //animate out
+    await Promise.all([
+      animateTitle    && this.headerTitle.fadeInRight(250),
+      animateSubtitle && this.headerSubtitle.fadeInRight(400),
+    ]);
+    //less flicker
+    await timeout(500);
+  }
+
+  transitionOut = async () => {
+    const { getAuthBGGradientRef } = this.props.screenProps;
+    //stop the BG Gradient animation
+    getAuthBGGradientRef && getAuthBGGradientRef().stop();
+    //animate out
+    await this.formContainer.fadeOutRight(250);
+  }
+
+  //called when attempting to log in
+  _handleOnSignupLoading = async () => {
+    this.DEBUG && console.log('Signup Loading');
+    //collapse container: hide body
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    await setStateAsync(this, {isCollapsed: true});
+    //then replace title and subtitle
+    await this.setStateFromMode(MODES.loading);
+  }
+
+  _handleOnSignupCreating = async () => {
+    this.DEBUG && console.log('Signup Creating');
+    this.setStateFromMode(MODES.creating);
+  }
+
+  _handleOnSignupFinished = async () => {
+    this.DEBUG && console.log('Signup Finished');
+    //update state
+    await this.setStateFromMode(MODES.succesful);
+    //collapse container: hide body
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    this.setState({isCollapsed: false});
+  }
+
+  _handleOnSignupInvalid = async () => {
+    this.DEBUG && console.log('Signup Invalid');
+    //collapse container: hide body
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    await setStateAsync(this, {isCollapsed: false});
+    //update state
+    this.setStateFromMode(MODES.invalid);
+  }
+
+  _handleOnSignupError = async () => {
+    this.DEBUG && console.log('Signup Error');
+    //collapse container: hide body
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    await setStateAsync(this, {isCollapsed: false});
+    //update state
+    this.setStateFromMode(MODES.error);
+  }
+
+  _handleOnPressSignUp = async () => {
+    const { fnameValue, lnameValue, emailValue, passwordValue, isLoading, mode } = this.state;
+    //handle onpress login
+    if(mode == MODES.succesful){
+      await this.transitionOut();
+      this.props.login();
+      return;
+    }
+    
+    //dont invoke when loading
+    if(isLoading) return;
+    //dismiss keyboard
+    Keyboard.dismiss();
+
+    //match state to POST params
+    const signup_data = {
+      email    : emailValue,
+      pass     : passwordValue,
+      firstname: fnameValue,
+      lastname : lnameValue,
+    };
+
+    //check if inputs are valid
+    if(!this.props.validate(signup_data)){
+      this.formContainer.shake(750);
+      this.setStateFromMode(MODES.invalid);
+      return;
+    }
+
+    //call signup from props
+    this.props.signup(signup_data, {
+      //pass the callback functions
+      onSigUpLoading : this._handleOnSignupLoading , 
+      onSigUpCreating: this._handleOnSignupCreating,
+      onSigUpInvalid : this._handleOnSignupInvalid ,
+      onSigUpError   : this._handleOnSignupError   ,
+      onSigUpFinished: this._handleOnSignupFinished,
+    });
+  }
+
+  _handleOnPressSignUp = async () => {
+    const { fnameValue, lnameValue, emailValue, passwordValue, isLoading, mode } = this.state;
+    //handle onpress login
+    if(mode == MODES.succesful){
+      await this.transitionOut();
+      this.props.login();
+      return;
+    }
+    
+    //dont invoke when loading
+    if(isLoading) return;
+    //dismiss keyboard
+    Keyboard.dismiss();
+
+    //match state to POST params
+    const signup_data = {
+      email    : emailValue,
+      pass     : passwordValue,
+      firstname: fnameValue,
+      lastname : lnameValue,
+    };
+
+    /*
+    //check if inputs are valid
+    if(!this.props.validate(signup_data)){
+      this.formContainer.shake(750);
+      this.setStateFromMode(MODES.invalid);
+      return;
+    }
+    */
+
+    //call signup from props
+    this.props.signup(signup_data, {
+      //pass the callback functions
+      onSigUpLoading : this._handleOnSignupLoading , 
+      onSigUpCreating: this._handleOnSignupCreating,
+      onSigUpInvalid : this._handleOnSignupInvalid ,
+      onSigUpError   : this._handleOnSignupError   ,
+      onSigUpFinished: this._handleOnSignupFinished,
+    });
+  }
 
   _renderHeader(){
     const { isLoading,  titleText, subtitleText, } = this.state;
     return (
-      <View collapsable={true}>
+      <Fragment>
         <Animatable.View
           style={{flexDirection: 'row'}}
           ref={r => this.headerTitle = r}
           useNativeDriver={true}
         >
           {isLoading && <ActivityIndicator size='large' style={{marginRight: 10}} color={'rgba(255, 255, 255, 0.8)'}/>}
-          <Text style={{fontSize: 38, fontWeight: '900', color: 'white'}}>
+          <Text style={styles.textTitle}>
             {titleText}
           </Text>
         </Animatable.View>
         <Animatable.Text 
-          style={{fontSize: 18, fontWeight: '100', color: 'white'}}
           ref={r => this.headerSubtitle = r}
+          style={styles.textSubtitle}
+          animation={'fadeInRight'}
+          duration={650}
+          easing={'ease-in-out'}
           useNativeDriver={true}
         >
           {subtitleText}
         </Animatable.Text>
-      </View>
+      </Fragment>
     );
   }
 
-  _renderForm() {
+  _renderSignUpButton(){
+    const { isLoading, mode } = this.state;
+    //Button text
+    let text = isLoading? 'Creating account...' : 'Sign Up';
+    if(mode == MODES.succesful) text = 'Sign in';
+
     return(
-      <View collapsable={true}>
-        
-      </View>
+      <IconButton 
+        containerStyle={styles.iconButtonContainer}
+        textStyle={styles.iconButtonText}
+        iconName={'login'}
+        iconType={'simple-line-icon'}
+        iconColor={'white'}
+        iconSize={22}
+        onPress={this._handleOnPressSignUp}
+        {...{text}}
+      >
+        <Icon
+          name ={'chevron-right'}
+          color={'rgba(255, 255, 255, 0.5)'}
+          type ={'feather'}
+          size ={25}
+        /> 
+      </IconButton>
+    );
+  }
+
+  //login inputs
+  _renderForm(){
+    const { fnameValue, lnameValue, emailValue, passwordValue, isLoading, mode } = this.state;
+    const succesful = mode == MODES.succesful;
+    const textInputProps = {
+      selectionColor      : 'rgba(255, 255, 255, 0.5)',
+      placeholderTextColor: 'rgba(255, 255, 255, 0.7)',
+      autoCorrect: false,
+      autoFocus: false,
+      blurOnSubmit: true,
+      disableFullscreenUI: true,
+      multiline: false,
+      ...{mode}
+    }
+
+    return(
+      <Animatable.View 
+        collapsable={true}
+        ref={r => this.formContainer = r}
+        animation={'fadeInRight'}
+        duration={700}
+        easing={'ease-in-out'}
+        useNativeDriver={true}
+      >
+        {/*First Name*/}
+        <InputForm
+          placeholder='First Name'
+          onChangeText={(text) => this.setState({fnameValue: text})}
+          returnKeyType='next'
+          iconName='account'
+          iconType='material-community'
+          iconSize={30}
+          autoCapitalize={'words'}
+          validate={validateNotEmpty}
+          value={fnameValue}
+          {...textInputProps}
+        />
+        {/*Last Name*/}
+        <InputForm
+          placeholder='Last name'
+          onChangeText={(text) => this.setState({lnameValue: text})}
+          returnKeyType='next'
+          iconName='account-multiple'
+          iconType='material-community'
+          iconSize={30}
+          autoCapitalize={'words'}
+          validate={validateNotEmpty}
+          value={lnameValue}
+          {...textInputProps}
+        />
+        {/*E-Mail*/}
+        <InputForm
+          placeholder='E-mail address'
+          keyboardType='email-address'
+          onChangeText={(text) => this.setState({emailValue: text})}
+          textContentType='username'
+          returnKeyType='next'
+          iconName='email'
+          iconType='material-community'
+          iconSize={30}
+          validate={validateEmail}
+          value={emailValue}
+          {...textInputProps}
+        />
+        {/*Password*/}
+        {!succesful && <InputForm
+          placeholder='Password'
+          onChangeText={(text) => this.setState({passwordValue: text})}
+          placeholderTextColor='rgba(255, 255, 255, 0.7)'
+          textContentType='password'
+          secureTextEntry={true}
+          iconName='lock'
+          iconType='material-community'
+          iconSize={30}
+          validate={validatePassword}
+          value={passwordValue}
+          {...textInputProps}
+        />}
+        {this._renderSignUpButton()}
+      </Animatable.View>
+    );
+  }
+
+  //sign in form container
+  _renderFormContainer(){
+    const { isCollapsed } = this.state;
+    return(
+      <Animatable.View 
+        style={[styles.formContainer, {overflow: 'hidden'}]}
+        ref={r => this.formContainer = r}
+        useNativeDriver={true}
+      >
+        {this._renderHeader()}
+        {!isCollapsed && this._renderForm()}
+      </Animatable.View>
     );
   }
 
   render(){
     return(
-      <Animatable.View
-        ref={r => this.ref_rootView = r}
-        style={styles.rootContainer}
-        animation={'fadeInRight'}
-        duration={300}
-        easing={'ease-in-out'}
-        useNativeDriver={true}
-      >
-        <KeyboardAvoidingView
-          style={{ flex: 1, width: '100%', alignItems: 'center', justifyContent: 'center' }}
-          behavior='padding'
+      <Fragment>
+        <NavigationEvents onWillBlur={this.componentWillBlur}/>
+        <Animatable.View
+          ref={r => this.ref_rootView = r}
+          style={styles.rootContainer}
+          animation={'fadeInRight'}
+          duration={300}
+          easing={'ease-in-out'}
+          useNativeDriver={true}
         >
-          <Animatable.View
-            style={[styles.formContainer, { overflow: 'hidden', elevation: 1 }]}
-            ref={r => this.formContainer = r}
-            useNativeDriver={true}
+          <KeyboardAvoidingView
+            style={{ flex: 1, width: '100%', alignItems: 'center', justifyContent: 'center' }}
+            behavior='padding'
           >
-            {this._renderHeader()}
-          </Animatable.View>
-        </KeyboardAvoidingView>
-      </Animatable.View>
+            {this._renderFormContainer()}          
+          </KeyboardAvoidingView>
+        </Animatable.View>
+      </Fragment>
     );
   }
+  
 }
 
 export class SignUpUI_android extends React.PureComponent {
-
   constructor(props){
     super(props);
     //init state
@@ -568,7 +885,7 @@ export class SignUpUI_android extends React.PureComponent {
       passwordValue: '',
     }
     this.state = this.getState(MODES.initial);
-    this.DEBUG = true;
+    this.DEBUG = false;
   }
 
   componentWillBlur = () => {
@@ -744,7 +1061,7 @@ export class SignUpUI_android extends React.PureComponent {
       <Fragment>
         <Animatable.Text 
           ref={r => this.headerTitle = r}
-          style={{fontSize: 32, fontWeight: '900'}}
+          style={styles.textTitle}
           animation={'fadeInRight'}
           duration={500}
           easing={'ease-in-out'}
@@ -754,7 +1071,7 @@ export class SignUpUI_android extends React.PureComponent {
         </Animatable.Text>
         <Animatable.Text 
           ref={r => this.headerSubtitle = r}
-          style={{fontSize: 18, fontWeight: '100', color: 'grey'}}
+          style={styles.textSubtitle}
           animation={'fadeInRight'}
           duration={650}
           easing={'ease-in-out'}
@@ -819,7 +1136,7 @@ export class SignUpUI_android extends React.PureComponent {
       <Animatable.View 
         collapsable={true}
         animation={'fadeInRight'}
-        duration={750}
+        duration={700}
         easing={'ease-in-out'}
         useNativeDriver={true}
       >
@@ -901,7 +1218,7 @@ export class SignUpUI_android extends React.PureComponent {
           ref={r => this.ref_rootView = r}
           style={styles.rootContainer}
           animation={'fadeInRight'}
-          duration={400}
+          duration={300}
           easing={'ease-in-out'}
           useNativeDriver={true}
         >
@@ -946,6 +1263,56 @@ export default class SignUpScreen extends React.Component {
 }
 
 const styles = StyleSheet.create({
+  textTitle: Platform.select({
+    ios: {
+      fontSize: 38, 
+      fontWeight: '900', 
+      color: 'white',
+    },
+    android: {
+      fontSize: 32, 
+      fontWeight: '900'
+    }
+  }),
+  textSubtitle: Platform.select({
+    ios: {
+      fontSize: 18, 
+      fontWeight: '100', 
+      color: 'white',
+    },
+    android: {
+      fontSize: 18, 
+      fontWeight: '100', 
+      color: 'grey'
+    }
+  }),
+  iconButtonContainer: Platform.select({
+    ios: {
+      padding: 15, 
+      marginTop: 20,
+      marginBottom: 5, 
+      backgroundColor: 'rgba(0, 0, 0, 0.4)', 
+      borderRadius: 10,
+    },
+    android: {
+      padding: 15,
+    }
+  }),
+  iconButtonText: Platform.select({
+    ios: {
+      color: 'white',
+      fontSize: 20,
+      fontWeight: 'bold',
+      marginLeft: 20,
+    },
+    android: {
+      color: 'white', 
+      fontSize: 20, 
+      fontWeight: 'bold', 
+      marginLeft: 20,
+    }
+  }),
+  
   rootContainer: {
     width: '100%', 
     height: '100%', 
