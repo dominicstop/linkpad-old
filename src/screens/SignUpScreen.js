@@ -209,13 +209,7 @@ export class InputForm extends React.PureComponent {
     />
     
     return(
-      <Animatable.View 
-        collapsable={true}
-        animation={'fadeInRight'}
-        easing={'ease-in-out'}
-        duration={750}
-        useNativeDriver={true}
-      >
+      <View collapsable={true}>
         <WrappedIcon
           containerStyle={[styles.textInputIcon, {position: 'absolute'}]}
           color={inactiveColorIcon}
@@ -230,7 +224,7 @@ export class InputForm extends React.PureComponent {
             color={iconColor}
           />
         </Animatable.View>
-      </Animatable.View>
+      </View>
     );
   }
 
@@ -430,6 +424,8 @@ export class SignUpContainer extends React.PureComponent {
       signup  : this._signup  ,
       login   : this._login   ,
       validate: this._validate,
+      //pass down props
+      ...this.props
     };
 
     return(
@@ -598,8 +594,11 @@ export class SignUpUI_android extends React.PureComponent {
   }
 
   transitionOut = async () => {
+    const { getAuthBGGradientRef } = this.props.screenProps;
+    //stop the BG Gradient animation
+    getAuthBGGradientRef && getAuthBGGradientRef().stop();
     //animate out
-    await this.ref_rootView.fadeOutRight(400);
+    await this.formContainer.fadeOutRight(250);
     //unmount views
     this.setState({shouldRender: false});
   }
@@ -920,17 +919,22 @@ export class SignUpUI_android extends React.PureComponent {
 
 export default class SignUpScreen extends React.Component {
 
-  componentDidFocus = () => {
+  componentDidFocus = async () => {
     const { getAuthBGGradientRef } = this.props.screenProps;
     //start the BG Gradient animation
+    await timeout(1250);
     getAuthBGGradientRef && getAuthBGGradientRef().start();
   }
 
   render() {
     return (
       <View collapsable={true}>
-        <NavigationEvents onDidFocus={this.componentDidFocus} />
-        <SignUpContainer navigation={this.props.navigation}>
+        <NavigationEvents 
+          onDidFocus={this.componentDidFocus} />
+        <SignUpContainer
+          navigation={this.props.navigation}
+          screenProps={this.props.screenProps}
+        >
           {Platform.select({
             ios    : <SignUpUI_iOS/>,
             android: <SignUpUI_android/>,
