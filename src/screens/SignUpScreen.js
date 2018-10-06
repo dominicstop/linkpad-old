@@ -6,6 +6,7 @@ import { IconButton } from '../components/Buttons';
 import { validateEmail, validatePassword, validateNotEmpty } from '../functions/Validation';
 import { setStateAsync, timeout } from '../functions/Utils';
 
+import _ from 'lodash';
 import { AndroidBackHandler } from 'react-navigation-backhandler';
 import {  NavigationEvents } from 'react-navigation';
 import * as Animatable from 'react-native-animatable';
@@ -472,7 +473,6 @@ export class SignUpContainer extends React.PureComponent {
 }
 
 export class SignUpUI_iOS extends React.PureComponent {
-
   constructor(props){
     super(props);
     this.state = {
@@ -482,6 +482,8 @@ export class SignUpUI_iOS extends React.PureComponent {
     };
     //init state
     this.state = this.getState(MODES.initial);
+    //prevent multiple presses
+    this._handleOnPressSignUp = _.throttle(this._handleOnPressSignUp, 1000, {leading:true, trailing:false});
   }
 
   //returns the corresponding state for the mode
@@ -640,48 +642,6 @@ export class SignUpUI_iOS extends React.PureComponent {
       this.setStateFromMode(MODES.invalid);
       return;
     }
-
-    //call signup from props
-    this.props.signup(signup_data, {
-      //pass the callback functions
-      onSigUpLoading : this._handleOnSignupLoading , 
-      onSigUpCreating: this._handleOnSignupCreating,
-      onSigUpInvalid : this._handleOnSignupInvalid ,
-      onSigUpError   : this._handleOnSignupError   ,
-      onSigUpFinished: this._handleOnSignupFinished,
-    });
-  }
-
-  _handleOnPressSignUp = async () => {
-    const { fnameValue, lnameValue, emailValue, passwordValue, isLoading, mode } = this.state;
-    //handle onpress login
-    if(mode == MODES.succesful){
-      await this.transitionOut();
-      this.props.login();
-      return;
-    }
-    
-    //dont invoke when loading
-    if(isLoading) return;
-    //dismiss keyboard
-    Keyboard.dismiss();
-
-    //match state to POST params
-    const signup_data = {
-      email    : emailValue,
-      pass     : passwordValue,
-      firstname: fnameValue,
-      lastname : lnameValue,
-    };
-
-    /*
-    //check if inputs are valid
-    if(!this.props.validate(signup_data)){
-      this.formContainer.shake(750);
-      this.setStateFromMode(MODES.invalid);
-      return;
-    }
-    */
 
     //call signup from props
     this.props.signup(signup_data, {
