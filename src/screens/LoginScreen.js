@@ -12,6 +12,7 @@ import TipsStore from '../functions/TipsStore';
 import UserStore from '../functions/UserStore';
 
 import _ from 'lodash';
+import { BlurView } from 'expo';
 import { Header, NavigationEvents } from 'react-navigation';
 import * as Animatable from 'react-native-animatable';
 import { Icon } from 'react-native-elements';
@@ -501,9 +502,31 @@ export class LoginUI_iOS extends React.Component {
     );
   }
 
-  render(){
-    const { login } = this.props;
+  _renderContainer(){
     const { isLoading, mode, isCollapsed } = this.state;
+    return(
+      <Animatable.View 
+        style={[styles.signInContainer, {overflow: 'hidden', padding: 0}]}
+        ref={r => this.animatedSignInContainer = r}
+        animation={'bounceInUp'}
+        duration={1000}
+        easing={'ease-in-out'}
+        useNativeDriver={true}
+      >
+        <BlurView
+          style={{flex: 1, padding: 18}}
+          intensity={75}
+          tint={'dark'}
+        >
+          {this._renderHeader()}
+          {!isCollapsed        && this._renderSignInForm      ()}
+          {mode == 'succesful' && this._renderSigninSuccessful()}
+        </BlurView>
+      </Animatable.View>
+    );
+  }
+
+  render(){
     return(
       <View style={{paddingTop: 20}}>
         <NavigationEvents onDidFocus={this.componentDidFocus}/>
@@ -524,18 +547,7 @@ export class LoginUI_iOS extends React.Component {
               style={{ flex: 1, width: '100%', alignItems: 'center', justifyContent: 'center' }}
               behavior='padding'
             >
-              <Animatable.View 
-                style={[styles.signInContainer, {overflow: 'hidden', elevation: 1}]}
-                ref={r => this.animatedSignInContainer = r}
-                animation={'bounceInUp'}
-                duration={1000}
-                easing={'ease-in-out'}
-                useNativeDriver={true}
-              >
-                {this._renderHeader()}
-                {!isCollapsed        && this._renderSignInForm      ()}
-                {mode == 'succesful' && this._renderSigninSuccessful()}
-              </Animatable.View>     
+              {this._renderContainer()}
             </KeyboardAvoidingView>
           </ScrollView>
         </Animatable.View>
@@ -952,7 +964,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     ...Platform.select({
       ios: {
-        backgroundColor: 'rgba(0, 0, 0, 0.5)'
+        backgroundColor: 'rgba(0, 0, 0, 0.1)'
       },
       android: {
         backgroundColor: 'rgba(255, 255, 255, 1)',

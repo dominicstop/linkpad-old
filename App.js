@@ -14,6 +14,7 @@ import { AnimatedGradient       } from './src/components/AnimatedGradient';
 import   AuthLoadingScreen        from './src/screens/AuthLoadingScreen';
 import   LoginScreen              from './src/screens/LoginScreen';
 import   SignUpScreen             from './src/screens/SignUpScreen';
+import   WelcomeScreen            from './src/screens/WelomeScreen';
 import   NavigationService        from './src/NavigationService';
 
 //use native navigation
@@ -40,7 +41,10 @@ const AppStack = createStackNavigator({
 );
 
 //stack for sign in, sign up etc.
-const AuthStack = createStackNavigator({ 
+const AuthStack = createStackNavigator({
+    WelcomeRoute: {
+      screen: WelcomeScreen,
+    },
     LoginRoute: {
       screen: LoginScreen,
     },
@@ -88,9 +92,32 @@ export class AuthScreen extends React.Component {
     super(props);
     //shared between ios and android
     this.gradientProps = {
-      speed       : 100 ,
+      speed       : 25  ,
       numOfInterps: 1000,  
     }
+  }
+
+  _renderBG(){
+    return(
+      <Animatable.View
+        style={{position: 'absolute', width: '100%', height: '100%'}}
+        animation="fadeIn" 
+        duration={2000}
+        useNativeDriver={true}
+      >
+        <Animatable.Image
+          style={{width: '100%', height: '100%'}}          
+          source={require('./assets/loginBG.jpg')}
+          resizeMode={'cover'}
+          animation="pulse" 
+          easing="ease-in-out" 
+          iterationCount="infinite"
+          delay={2000}
+          duration={7500}
+          useNativeDriver={true}
+        />
+      </Animatable.View>
+    );
   }
 
   render_android(){
@@ -124,11 +151,12 @@ export class AuthScreen extends React.Component {
   render_iOS() {
     return (
       <View style={{flex: 1}}>
+        {this._renderBG()}
         <AnimatedGradient
           ref={r => this.animatedGradientRef = r}
-          style={{position: 'absolute', width: '100%', height: '100%'}}
-          colorsTop   ={['#7F00FF', '#654ea3', '#642B73', '#c0392b', '#ff00cc', '#FC466B', ]}
-          colorsBottom={['#F100FF', '#eaafc8', '#C6426E', '#8e44ad', '#333399', '#3F5EFB', ]}
+          style={{position: 'absolute', width: '100%', height: '100%', opacity: 0.75}}
+          colorsTop   ={['#7F00FF', '#ff00cc', '#654ea3', '#FC466B', '#642B73', '#c0392b', ]}
+          colorsBottom={['#F100FF', '#333399', '#eaafc8', '#3F5EFB', '#C6426E', '#8e44ad', ]}
           {...this.gradientProps}          
         />
         <AuthStack

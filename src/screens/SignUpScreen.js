@@ -662,6 +662,9 @@ export class SignUpUI_iOS extends React.PureComponent {
         <Animatable.View
           style={{flexDirection: 'row'}}
           ref={r => this.headerTitle = r}
+          animation={'fadeInRight'}          
+          duration={500}
+          easing={'ease-in-out'}
           useNativeDriver={true}
         >
           {isLoading && <ActivityIndicator size='large' style={{marginRight: 10}} color={'rgba(255, 255, 255, 0.8)'}/>}
@@ -798,12 +801,18 @@ export class SignUpUI_iOS extends React.PureComponent {
     const { isCollapsed } = this.state;
     return(
       <Animatable.View 
-        style={[styles.formContainer, {overflow: 'hidden'}]}
+        style={[styles.formContainer, {overflow: 'hidden', padding: 0}]}
         ref={r => this.formContainer = r}
         useNativeDriver={true}
       >
-        {this._renderHeader()}
-        {!isCollapsed && this._renderForm()}
+        <BlurView
+          style={{flex: 1, padding: 18}}
+          intensity={75}
+          tint={'dark'}
+        >
+          {this._renderHeader()}
+          {!isCollapsed && this._renderForm()}
+        </BlurView>
       </Animatable.View>
     );
   }
@@ -1293,7 +1302,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     ...Platform.select({
       ios: {
-        backgroundColor: 'rgba(0, 0, 0, 0.5)'
+        backgroundColor: 'rgba(0, 0, 0, 0.1)'
       },
       android: {
         backgroundColor: 'rgba(255, 255, 255, 1)',
