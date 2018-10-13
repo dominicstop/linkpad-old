@@ -1,16 +1,46 @@
-import React from 'react';
+import React, { Fragment } from 'react';
 import PropTypes from 'prop-types';
 import { StyleSheet, Text, View, Image, Platform, ScrollView, Dimensions, TouchableOpacity } from 'react-native';
 
-
-import { AnimatedGradient } from '../components/AnimatedGradient';
-
 import * as Animatable from 'react-native-animatable';
 import Swiper from 'react-native-swiper';
+import {  NavigationEvents } from 'react-navigation';
 import { Divider } from 'react-native-elements';
 
 import { DangerZone } from 'expo';
 let { Lottie } = DangerZone;
+
+export class AnimatedView extends React.PureComponent {
+  static propTypes = {
+    animation: PropTypes.string,
+    easing: PropTypes.string,
+    duration: PropTypes.number,
+    difference: PropTypes.number,
+  }
+
+  static defaultProps = {
+    animation: 'fadeInUp',
+    easing: 'ease-in-out',
+    duration: 1000,
+    difference: 250,
+  }
+
+  render(){
+    const { animation, duration, difference, ...otherProps } = this.props;
+    return this.props.children.map((child, index) => {
+      return(
+        <Animatable.View
+          key={'animatedView-' + index}
+          duration={duration + (index * difference)}
+          useNativeDriver={true}
+          {...{animation, ...otherProps}}
+        >
+          {child}
+        </Animatable.View>
+      );
+    });
+  }
+}
 
 export class Slide extends React.PureComponent {
   static propTypes = {
@@ -102,7 +132,7 @@ export class TitleSlide extends React.PureComponent {
     const useNativeDriver = Platform.OS != 'ios';
     return(
       <Animatable.View 
-        style={styles.slide1}
+        style={styles.slide}
         animation={'fadeIn'}
         delay={750}
         duration={4000}
@@ -158,13 +188,7 @@ export class VisionSlide extends React.PureComponent {
     const marginOffset = (iconSize - this.iconContainerSize) / 4 * -1;
 
     return(
-      <Animatable.View
-        style={{width: this.iconContainerSize, height: this.iconContainerSize, borderRadius: this.iconContainerSize/2, overflow: 'hidden'}}
-        animation={'fadeInUp'}
-        easing={'ease-in-out'}
-        duration={750}
-        useNativeDriver={true}
-      >
+      <View style={{width: this.iconContainerSize, height: this.iconContainerSize, borderRadius: this.iconContainerSize/2, overflow: 'hidden'}}>
         <Lottie
           ref={r => this.animation = r}
           style={{width: iconSize, height: iconSize, marginTop: marginOffset, marginLeft: marginOffset}}
@@ -172,7 +196,7 @@ export class VisionSlide extends React.PureComponent {
           autoPlay
           loop
         />
-      </Animatable.View>
+      </View>
     );
   }
 
@@ -182,36 +206,14 @@ export class VisionSlide extends React.PureComponent {
     const fontSize = 28;
     const paddingTop = (deviceHeight * 0.5) - (this.iconContainerSize / 2) - (fontSize + 15);
     return(
-      <Animatable.View 
-        style={styles.slide1}
-        useNativeDriver={true}
-      >
-        {this._renderIcon()}
-        <Animatable.Text 
-          style={{fontSize: 28, fontWeight: '900', color: 'white', marginTop: 15}}
-          animation={'fadeInUp'}
-          easing={'ease-in-out'}
-          duration={1000}
-        >
-          {'Our Vision'}
-        </Animatable.Text>
-        <Animatable.Text 
-          style={{fontSize: 24, fontWeight: '300', color: 'white', marginTop: 15, marginHorizontal: 10, textAlign: 'center'}}
-          animation={'fadeInUp'}
-          easing={'ease-in-out'}
-          duration={1250}
-        >
-          {'Donec sed odio dui. Cras justo odio, dapibus ac facilisis in, egestas eget quam.'}
-        </Animatable.Text>
-        <Animatable.View
-          style={{width: '50%', height: 1, backgroundColor: 'rgba(255, 255, 255, 0.5)', marginTop: 20}}
-          animation={'fadeInUp'}
-          easing={'ease-in-out'}
-          duration={1500}
-          useNativeDriver={true}
-        />
-        
-      </Animatable.View>
+      <View style={styles.slide}>
+        <AnimatedView duration={750}>
+          {this._renderIcon()}
+          <Text style={[styles.textTitle, {marginTop: 20}]}>{'Our Vision'}</Text>
+          <Text style={[styles.textBody]}>{'Donec sed odio dui. Cras justo odio, dapibus ac facilisis in, egestas eget quam.'}</Text>
+          <View style={styles.line}/>
+        </AnimatedView>
+      </View>
     );
   }
 }
@@ -232,13 +234,7 @@ export class GoalSlide extends React.PureComponent {
     const marginOffset = (iconSize - this.iconContainerSize) / 4 * -1;
 
     return(
-      <Animatable.View
-        style={{width: this.iconContainerSize, height: this.iconContainerSize, borderRadius: this.iconContainerSize/2, overflow: 'hidden'}}
-        animation={'fadeInUp'}
-        easing={'ease-in-out'}
-        duration={750}
-        useNativeDriver={true}
-      >
+      <View style={{width: this.iconContainerSize, height: this.iconContainerSize, borderRadius: this.iconContainerSize/2, overflow: 'hidden'}}>
         <Lottie
           ref={r => this.animation = r}
           style={{width: iconSize, height: iconSize, marginTop: marginOffset, marginLeft: marginOffset}}
@@ -246,46 +242,23 @@ export class GoalSlide extends React.PureComponent {
           autoPlay
           loop
         />
-      </Animatable.View>
+      </View>
     );
   }
 
   render(){
     let deviceHeight = Dimensions.get('window').height;
-    console.log(this.iconContainerSize );
     const fontSize = 28;
     const paddingTop = (deviceHeight * 0.5) - (this.iconContainerSize / 2) - (fontSize + 15);
     return(
-      <Animatable.View 
-        style={styles.slide1}
-        useNativeDriver={true}
-      >
-        {this._renderIcon()}
-        <Animatable.Text 
-          style={{fontSize: 28, fontWeight: '900', color: 'white', marginTop: 15}}
-          animation={'fadeInUp'}
-          easing={'ease-in-out'}
-          duration={1000}
-        >
-          {'Our Goal'}
-        </Animatable.Text>
-        <Animatable.Text 
-          style={{fontSize: 24, fontWeight: '300', color: 'white', marginTop: 15, marginHorizontal: 10, textAlign: 'center'}}
-          animation={'fadeInUp'}
-          easing={'ease-in-out'}
-          duration={1250}
-        >
-          {'Lorum Ipsum Morbi leo risus, porta ac consectetur ac, vestibulum at eros.'}
-        </Animatable.Text>
-        <Animatable.View
-          style={{width: '50%', height: 1, backgroundColor: 'rgba(255, 255, 255, 0.5)', marginTop: 20}}
-          animation={'fadeInUp'}
-          easing={'ease-in-out'}
-          duration={1500}
-          useNativeDriver={true}
-        />
-        
-      </Animatable.View>
+      <View style={styles.slide}>
+        <AnimatedView duration={750}>
+          {this._renderIcon()}
+          <Text style={[styles.textTitle, {marginTop: 20}]}>{'Our Goal'}</Text>
+          <Text style={[styles.textBody]}>{'Lorum Ipsum Morbi leo risus, porta ac consectetur ac, vestibulum at eros.'}</Text>
+          <View style={styles.line}/>
+        </AnimatedView>
+      </View>
     );
   }
 }
@@ -306,13 +279,7 @@ export class ImproveSlide extends React.PureComponent {
     const marginOffset = (iconSize - this.iconContainerSize) / 4 * -1;
 
     return(
-      <Animatable.View
-        style={{width: this.iconContainerSize, height: this.iconContainerSize, borderRadius: this.iconContainerSize/2, overflow: 'hidden'}}
-        animation={'fadeInUp'}
-        easing={'ease-in-out'}
-        duration={750}
-        useNativeDriver={true}
-      >
+      <View style={{width: this.iconContainerSize, height: this.iconContainerSize, borderRadius: this.iconContainerSize/2, overflow: 'hidden'}}>
         <Lottie
           ref={r => this.animation = r}
           style={{width: iconSize, height: iconSize, marginTop: marginOffset, marginLeft: marginOffset, backgroundColor: 'white'}}
@@ -320,7 +287,7 @@ export class ImproveSlide extends React.PureComponent {
           autoPlay
           loop
         />
-      </Animatable.View>
+      </View>
     );
   }
 
@@ -330,36 +297,14 @@ export class ImproveSlide extends React.PureComponent {
     const fontSize = 28;
     const paddingTop = (deviceHeight * 0.5) - (this.iconContainerSize / 2) - (fontSize + 15);
     return(
-      <Animatable.View 
-        style={styles.slide1}
-        useNativeDriver={true}
-      >
-        {this._renderIcon()}
-        <Animatable.Text 
-          style={{fontSize: 28, fontWeight: '900', color: 'white', marginTop: 15}}
-          animation={'fadeInUp'}
-          easing={'ease-in-out'}
-          duration={1000}
-        >
-          {'Improve and Learn'}
-        </Animatable.Text>
-        <Animatable.Text 
-          style={{fontSize: 24, fontWeight: '300', color: 'white', marginTop: 15, marginHorizontal: 10, textAlign: 'center'}}
-          animation={'fadeInUp'}
-          easing={'ease-in-out'}
-          duration={1250}
-        >
-          {'Lorum Ipsum Morbi leo risus, porta ac consectetur ac, vestibulum at eros.'}
-        </Animatable.Text>
-        <Animatable.View
-          style={{width: '50%', height: 1, backgroundColor: 'rgba(255, 255, 255, 0.5)', marginTop: 20}}
-          animation={'fadeInUp'}
-          easing={'ease-in-out'}
-          duration={1500}
-          useNativeDriver={true}
-        />
-        
-      </Animatable.View>
+      <View style={styles.slide}>
+        <AnimatedView duration={750}>
+          {this._renderIcon()}
+          <Text style={[styles.textTitle, {marginTop: 20}]}>{'Improve and Learn'}</Text>
+          <Text style={[styles.textBody]}>{'Lorum Ipsum Morbi leo risus, porta ac consectetur ac, vestibulum at eros.'}</Text>
+          <View style={styles.line}/>
+        </AnimatedView>
+      </View>
     );
   }
 }
@@ -381,7 +326,7 @@ export class ContinueSlide extends React.PureComponent {
 
   _handleOnPressContinue = async () => {
     const { onPressContinue } = this.props;
-    await this.rootView.fadeOutLeft(500);
+    //await this.rootView.fadeOutLeft(500);
     onPressContinue && onPressContinue();
   }
 
@@ -390,13 +335,7 @@ export class ContinueSlide extends React.PureComponent {
     const marginOffset = (iconSize - this.iconContainerSize) / 4 * -1;
 
     return(
-      <Animatable.View
-        style={{width: this.iconContainerSize, height: this.iconContainerSize, borderRadius: this.iconContainerSize/2, overflow: 'hidden'}}
-        animation={'fadeInUp'}
-        easing={'ease-in-out'}
-        duration={750}
-        useNativeDriver={true}
-      >
+      <View style={{width: this.iconContainerSize, height: this.iconContainerSize, borderRadius: this.iconContainerSize/2, overflow: 'hidden'}}>
         <Lottie
           ref={r => this.animation = r}
           style={{width: iconSize, height: iconSize, marginTop: marginOffset, marginLeft: marginOffset, backgroundColor: 'white'}}
@@ -404,26 +343,18 @@ export class ContinueSlide extends React.PureComponent {
           autoPlay
           loop
         />
-      </Animatable.View>
+      </View>
     );
   }
 
   _renderButton(){
     return(
-      <Animatable.View
-        style={{marginTop: 30, marginBottom: 15}}
-        animation={'fadeInUp'}
-        easing={'ease-in-out'}
-        duration={1500}
-        useNativeDriver={true}
+      <TouchableOpacity
+        style={{marginTop: 30, padding: 15, paddingHorizontal: 40, backgroundColor: 'rgba(1, 1, 1, 0.1)', borderColor: 'rgba(255, 255, 255, 0.5)', borderWidth: 2, borderRadius: 15}}
+        onPress={this._handleOnPressContinue}
       >
-        <TouchableOpacity
-          style={{padding: 15, paddingHorizontal: 40, backgroundColor: 'rgba(1, 1, 1, 0.1)', borderColor: 'rgba(255, 255, 255, 0.5)', borderWidth: 2, borderRadius: 15}}
-          onPress={this._handleOnPressContinue}
-        >
-          <Text style={{fontSize: 24, fontWeight: '900', color: 'white'}}>Continue</Text>
-        </TouchableOpacity>
-      </Animatable.View>
+        <Text style={{fontSize: 20, fontWeight: '900', color: 'white'}}>Continue</Text>
+      </TouchableOpacity>
     );
   }
 
@@ -433,38 +364,15 @@ export class ContinueSlide extends React.PureComponent {
     const fontSize = 28;
     const paddingTop = (deviceHeight * 0.5) - (this.iconContainerSize / 2) - (fontSize + 15);
     return(
-      <Animatable.View 
-        style={styles.slide1}
-        ref={r => this.rootView = r}
-        easing={'ease-in-out'}
-        useNativeDriver={true}
-      >
-        {this._renderIcon()}
-        <Animatable.Text 
-          style={{fontSize: 28, fontWeight: '900', color: 'white', marginTop: 15}}
-          animation={'fadeInUp'}
-          easing={'ease-in-out'}
-          duration={1000}
-        >
-          {'Your Account'}
-        </Animatable.Text>
-        <Animatable.Text 
-          style={{fontSize: 24, fontWeight: '300', color: 'white', marginTop: 15, marginHorizontal: 10, textAlign: 'center'}}
-          animation={'fadeInUp'}
-          easing={'ease-in-out'}
-          duration={1250}
-        >
-          {'Create an account or login to keep track of lorum ipsum sit amit dolor aspicing'}
-        </Animatable.Text>
-        {this._renderButton()}
-        <Animatable.View
-          style={{width: '50%', height: 1, backgroundColor: 'rgba(255, 255, 255, 0.5)', marginTop: 20}}
-          animation={'fadeInUp'}
-          easing={'ease-in-out'}
-          duration={1750}
-          useNativeDriver={true}
-        />
-      </Animatable.View>
+      <View style={styles.slide}>
+        <AnimatedView duration={750}>
+          {this._renderIcon()}
+          <Text style={[styles.textTitle, {marginTop: 20}]}>{'Your Account'}</Text>
+          <Text style={[styles.textBody]}>{'Create an account or login to keep track of lorum ipsum sit amit dolor aspicing'}</Text>
+          {this._renderButton()}
+          <View style={styles.line}/>
+        </AnimatedView>
+      </View>
     );
   }
 }
@@ -477,75 +385,84 @@ export default class WelcomeScreen extends React.Component {
     }
   }
 
+  componentDidFocus = () => {
+    this.rootView.fadeInLeft(500);
+  }
+
   _handleOnIndexChanged = (index) => {
     this.setState({currentSlideIndex: index});
     console.log('index: ' + index);
   }
 
-  _handleOnPressContinue = () => {
+  _handleOnPressContinue = async () => {
     const { navigation } = this.props;
+    await this.rootView.fadeOutLeft(500);
     navigation.navigate('LoginRoute');
   }
 
-  render(){
+  _renderSwiper(){
     const { currentSlideIndex } = this.state;
     return(
-      <View style={{flex: 1}}>
-        <Swiper 
-          style={styles.wrapper}
-          onIndexChanged={this._handleOnIndexChanged}
-          dotColor={'rgba(255, 255, 255, 0.25)'}
-          activeDotColor={'rgba(255, 255, 255, 0.5)'}
-          loadMinimal={true}
-          loadMinimalSize={2}
-          bounces={true}
-          loop={false}
+      <Swiper 
+        style={styles.wrapper}
+        onIndexChanged={this._handleOnIndexChanged}
+        dotColor={'rgba(255, 255, 255, 0.25)'}
+        activeDotColor={'rgba(255, 255, 255, 0.5)'}
+        loadMinimal={true}
+        loadMinimalSize={2}
+        bounces={true}
+        loop={false}
+      >
+        <TitleSlide/>
+        <Slide slideNumber={1} {...{currentSlideIndex}}>
+          <VisionSlide/>
+        </Slide>
+        <Slide slideNumber={2} {...{currentSlideIndex}}>
+          <GoalSlide/>
+        </Slide>
+        <Slide slideNumber={3} {...{currentSlideIndex}}>
+          <ImproveSlide/>
+        </Slide>
+        <Slide slideNumber={4} {...{currentSlideIndex}}>
+          <ContinueSlide onPressContinue={this._handleOnPressContinue}/>
+        </Slide>
+      </Swiper>
+    );
+  }
+
+  render(){
+    return(
+      <Fragment>
+        <NavigationEvents 
+          onDidFocus={this.componentDidFocus}  
+        />
+        <Animatable.View 
+          style={{flex: 1}}
+          ref={r => this.rootView = r}
+          easing={'ease-in-out'}
+          useNativeDriver={true}
         >
-          <TitleSlide/>
-          <Slide slideNumber={1} {...{currentSlideIndex}}>
-            <VisionSlide/>
-          </Slide>
-          <Slide slideNumber={2} {...{currentSlideIndex}}>
-            <GoalSlide/>
-          </Slide>
-          <Slide slideNumber={3} {...{currentSlideIndex}}>
-            <ImproveSlide/>
-          </Slide>
-          <Slide slideNumber={4} {...{currentSlideIndex}}>
-            <ContinueSlide onPressContinue={this._handleOnPressContinue}/>
-          </Slide>
-        </Swiper>
-      </View>
+          {this._renderSwiper()}
+        </Animatable.View>
+      </Fragment>
     );
   }
 }
 
+const deviceWidth  = Dimensions.get('window').width;
 const styles = StyleSheet.create({
-  wrapper: {
-  },
-  slide1: {
+  slide: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  slide2: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  slide3: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  text: {
-    
-  },
+  
   textTitle: Platform.select({
     ios: {
-      color: 'white',
-      fontSize: 30,
-      fontWeight: '900',
+      fontSize: 28, 
+      fontWeight: '900', 
+      color: 'white', 
+      marginTop: 15
     },
     android: {
       color: 'white',
@@ -562,6 +479,20 @@ const styles = StyleSheet.create({
     android: {
       fontSize: 24,
       fontWeight: '100',
-    }
+    },
   }),
+  textBody: {
+    fontSize: 24, 
+    fontWeight: '300', 
+    color: 'white', 
+    marginTop: 15, 
+    marginHorizontal: 10, 
+    textAlign: 'center'
+  },
+  line: {
+    width: deviceWidth * 0.5, 
+    height: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+    marginTop: 20
+  }
 });

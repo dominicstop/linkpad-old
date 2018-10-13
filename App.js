@@ -92,7 +92,7 @@ export class AuthScreen extends React.Component {
     super(props);
     //shared between ios and android
     this.gradientProps = {
-      speed       : 25  ,
+      speed       : 100 ,
       numOfInterps: 1000,  
     }
   }
@@ -113,7 +113,7 @@ export class AuthScreen extends React.Component {
           easing="ease-in-out" 
           iterationCount="infinite"
           delay={2000}
-          duration={7500}
+          duration={13000}
           useNativeDriver={true}
         />
       </Animatable.View>
@@ -155,8 +155,8 @@ export class AuthScreen extends React.Component {
         <AnimatedGradient
           ref={r => this.animatedGradientRef = r}
           style={{position: 'absolute', width: '100%', height: '100%', opacity: 0.75}}
-          colorsTop   ={['#7F00FF', '#ff00cc', '#654ea3', '#FC466B', '#642B73', '#c0392b', ]}
-          colorsBottom={['#F100FF', '#333399', '#eaafc8', '#3F5EFB', '#C6426E', '#8e44ad', ]}
+          colorsTop   ={['#7F00FF', '#654ea3', '#642B73', '#c0392b', '#ff00cc',  '#FC466B', ]}
+          colorsBottom={['#F100FF', '#eaafc8', '#C6426E', '#8e44ad', '#333399',  '#3F5EFB', ]}
           {...this.gradientProps}          
         />
         <AuthStack
