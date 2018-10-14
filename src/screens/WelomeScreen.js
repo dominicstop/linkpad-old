@@ -8,6 +8,7 @@ import {  NavigationEvents } from 'react-navigation';
 import { Divider } from 'react-native-elements';
 
 import { DangerZone } from 'expo';
+import {STYLES} from '../Constants';
 let { Lottie } = DangerZone;
 
 export class AnimatedView extends React.PureComponent {
@@ -56,10 +57,6 @@ export class Slide extends React.PureComponent {
     }
   }
 
-  componentDidMount(){
-
-  }
-
   componentDidUpdate(prevProps, prevState){
     const { currentSlideIndex, slideNumber } = this.props;
     const { shouldRender } = this.state;
@@ -104,7 +101,7 @@ export class TitleSlide extends React.PureComponent {
 
     return(
       <Animatable.View
-        style={[containerStyle]}
+        style={[containerStyle, styles.circleShadow]}
         animation="pulse" 
         easing="ease-out" 
         iterationCount="infinite"
@@ -188,14 +185,16 @@ export class VisionSlide extends React.PureComponent {
     const marginOffset = (iconSize - this.iconContainerSize) / 4 * -1;
 
     return(
-      <View style={{width: this.iconContainerSize, height: this.iconContainerSize, borderRadius: this.iconContainerSize/2, overflow: 'hidden'}}>
-        <Lottie
-          ref={r => this.animation = r}
-          style={{width: iconSize, height: iconSize, marginTop: marginOffset, marginLeft: marginOffset}}
-          source={this.animationSource}
-          autoPlay
-          loop
-        />
+      <View style={styles.circleShadow}>
+        <View style={[{width: this.iconContainerSize, height: this.iconContainerSize, borderRadius: this.iconContainerSize/2, overflow: 'hidden'}]}>
+          <Lottie
+            ref={r => this.animation = r}
+            style={{width: iconSize, height: iconSize, marginTop: marginOffset, marginLeft: marginOffset}}
+            source={this.animationSource}
+            autoPlay
+            loop
+          />
+        </View>
       </View>
     );
   }
@@ -234,14 +233,16 @@ export class GoalSlide extends React.PureComponent {
     const marginOffset = (iconSize - this.iconContainerSize) / 4 * -1;
 
     return(
-      <View style={{width: this.iconContainerSize, height: this.iconContainerSize, borderRadius: this.iconContainerSize/2, overflow: 'hidden'}}>
-        <Lottie
-          ref={r => this.animation = r}
-          style={{width: iconSize, height: iconSize, marginTop: marginOffset, marginLeft: marginOffset}}
-          source={this.animationSource}
-          autoPlay
-          loop
-        />
+      <View style={styles.circleShadow}>
+        <View style={{width: this.iconContainerSize, height: this.iconContainerSize, borderRadius: this.iconContainerSize/2, overflow: 'hidden'}}>
+          <Lottie
+            ref={r => this.animation = r}
+            style={{width: iconSize, height: iconSize, marginTop: marginOffset, marginLeft: marginOffset}}
+            source={this.animationSource}
+            autoPlay
+            loop
+          />
+        </View>
       </View>
     );
   }
@@ -279,14 +280,16 @@ export class ImproveSlide extends React.PureComponent {
     const marginOffset = (iconSize - this.iconContainerSize) / 4 * -1;
 
     return(
-      <View style={{width: this.iconContainerSize, height: this.iconContainerSize, borderRadius: this.iconContainerSize/2, overflow: 'hidden'}}>
-        <Lottie
-          ref={r => this.animation = r}
-          style={{width: iconSize, height: iconSize, marginTop: marginOffset, marginLeft: marginOffset, backgroundColor: 'white'}}
-          source={this.animationSource}
-          autoPlay
-          loop
-        />
+      <View style={styles.circleShadow}>
+        <View style={{width: this.iconContainerSize, height: this.iconContainerSize, borderRadius: this.iconContainerSize/2, overflow: 'hidden'}}>
+          <Lottie
+            ref={r => this.animation = r}
+            style={{width: iconSize, height: iconSize, marginTop: marginOffset, marginLeft: marginOffset, backgroundColor: 'white'}}
+            source={this.animationSource}
+            autoPlay
+            loop
+          />
+        </View>
       </View>
     );
   }
@@ -335,14 +338,16 @@ export class ContinueSlide extends React.PureComponent {
     const marginOffset = (iconSize - this.iconContainerSize) / 4 * -1;
 
     return(
-      <View style={{width: this.iconContainerSize, height: this.iconContainerSize, borderRadius: this.iconContainerSize/2, overflow: 'hidden'}}>
-        <Lottie
-          ref={r => this.animation = r}
-          style={{width: iconSize, height: iconSize, marginTop: marginOffset, marginLeft: marginOffset, backgroundColor: 'white'}}
-          source={this.animationSource}
-          autoPlay
-          loop
-        />
+      <View style={styles.circleShadow}>
+        <View style={{width: this.iconContainerSize, height: this.iconContainerSize, borderRadius: this.iconContainerSize/2, overflow: 'hidden'}}>
+          <Lottie
+            ref={r => this.animation = r}
+            style={{width: iconSize, height: iconSize, marginTop: marginOffset, marginLeft: marginOffset, backgroundColor: 'white'}}
+            source={this.animationSource}
+            autoPlay
+            loop
+          />
+        </View>
       </View>
     );
   }
@@ -449,7 +454,7 @@ export default class WelcomeScreen extends React.Component {
   }
 }
 
-const deviceWidth  = Dimensions.get('window').width;
+const deviceWidth = Dimensions.get('window').width;
 const styles = StyleSheet.create({
   slide: {
     flex: 1,
@@ -494,5 +499,11 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: 'rgba(255, 255, 255, 0.5)',
     marginTop: 20
-  }
+  },
+  circleShadow: {
+    shadowOffset:{  width: 1,  height: 2,  },
+    shadowColor: 'black',
+    shadowRadius: 5,
+    shadowOpacity: 0.6,
+  },
 });
