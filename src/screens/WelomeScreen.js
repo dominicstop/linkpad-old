@@ -8,9 +8,10 @@ import {  NavigationEvents } from 'react-navigation';
 import { Divider } from 'react-native-elements';
 
 import { DangerZone } from 'expo';
-import {STYLES} from '../Constants';
+import {timeout} from '../functions/Utils';
 let { Lottie } = DangerZone;
 
+//wraps childern and animates with delay
 export class AnimatedView extends React.PureComponent {
   static propTypes = {
     animation: PropTypes.string,
@@ -66,10 +67,12 @@ export class Slide extends React.PureComponent {
 
     if(isFocused && !shouldRender){
       this.setState({shouldRender: true, ...{isFocused}});
+      console.log('first mount: ' + slideNumber);
     
-    } else if(isFocused && !prevState.isFocused){
+    } else {
       this.setState({...{isFocused}});
-
+      console.log('update: ' + slideNumber);
+      console.log('focus: ' + isFocused);
     }
   }
 
@@ -82,6 +85,103 @@ export class Slide extends React.PureComponent {
     };
 
     return( shouldRender? React.cloneElement(this.props.children, childProps) : null );
+  }
+}
+
+export class LottieCircle extends React.PureComponent {
+  static propTypes = {
+    circleSize: PropTypes.number,
+    iconSize  : PropTypes.number,
+    playDelay : PropTypes.number,
+  };
+
+  static defaultProps = {
+    circleSize: 100,
+    iconSize  : 450,
+    ...Platform.select({
+      ios: { 
+        playDelay: 0,
+        wrapperStyle: {
+          shadowOffset:{  width: 1,  height: 2,  },
+          shadowColor: 'black',
+          shadowRadius: 5,
+          shadowOpacity: 0.6,
+        },
+      },
+      android: {
+        //delay animation start due to lag
+        playDelay: 1000,
+      },
+    })
+  }
+
+  constructor(props){
+    super(props);
+    this.iconContainerSize = props.circleSize;
+  }
+
+  async componentDidMount(){
+    await timeout(this.props.playDelay);
+    this.animation.play();
+  }
+
+  play  = () => { this.animation.play () }
+  reset = () => { this.animation.reset() }
+
+  _renderCircle(){
+    const { circleSize, iconSize, containerStyle, containerProps, lottieStyle, ...lottieProps } = this.props;
+    //margins are handled differently on ios and android
+    const divisor = Platform.select({ios: 4, android: 2});
+    const marginOffset = (iconSize - circleSize) / divisor * -1;
+
+    //make view into a circle
+    const circleStyle = {
+      width : circleSize,
+      height: circleSize,
+      borderRadius: circleSize/2,
+      overflow: 'hidden',
+      backgroundColor: 'white',
+    };
+
+    //center lottie into view
+    const lottieLayoutStyle = {
+      width: iconSize, 
+      height: iconSize, 
+      marginTop: marginOffset, 
+      marginLeft: marginOffset
+    };
+
+    return(
+      <View style={[circleStyle, containerStyle]}>
+        <Lottie
+          ref={r => this.animation = r}
+          style={[lottieLayoutStyle, lottieStyle]}
+          hardwareAccelerationAndroid={true}
+          useHardwareAcceleration={true}
+          autoPlay={true}
+          loop={true}
+          speed={0.9}
+          cacheStrategy={'weak'}
+          {...lottieProps}
+        />
+      </View>
+    );
+  }
+
+  _renderWrapper(){
+    const { wrapperStyle, wrapperProps } = this.props;
+    return(
+      <View style={wrapperStyle} {...wrapperProps}>
+        {this._renderCircle()}
+      </View>
+    );
+  }
+
+  render(){
+    return Platform.select({
+      ios: this._renderWrapper(),
+      android: this._renderCircle(),
+    });
   }
 }
 
@@ -173,41 +273,28 @@ export class VisionSlide extends React.PureComponent {
   constructor(props){
     super(props);
     this.animationSource = require('../animations/eye.json');
-    this.iconContainerSize = 100;
   }
 
-  componentDidMount(){
-    this.animation.play();
-  }
+  componentDidUpdate = (prevProps, prevState) => {
+    if(!this.props.isFocused){
+      this.lottie.reset();
 
-  _renderIcon(){
-    const iconSize = 450;
-    const marginOffset = (iconSize - this.iconContainerSize) / 4 * -1;
-
-    return(
-      <View style={styles.circleShadow}>
-        <View style={[{width: this.iconContainerSize, height: this.iconContainerSize, borderRadius: this.iconContainerSize/2, overflow: 'hidden'}]}>
-          <Lottie
-            ref={r => this.animation = r}
-            style={{width: iconSize, height: iconSize, marginTop: marginOffset, marginLeft: marginOffset}}
-            source={this.animationSource}
-            autoPlay
-            loop
-          />
-        </View>
-      </View>
-    );
+    } else {
+      this.lottie.play();
+    }
   }
 
   render(){
     let deviceHeight = Dimensions.get('window').height;
-    console.log(this.iconContainerSize );
     const fontSize = 28;
     const paddingTop = (deviceHeight * 0.5) - (this.iconContainerSize / 2) - (fontSize + 15);
     return(
       <View style={styles.slide}>
         <AnimatedView duration={750}>
-          {this._renderIcon()}
+          <LottieCircle 
+            source={this.animationSource}
+            ref={r => this.lottie = r}
+          />
           <Text style={[styles.textTitle, {marginTop: 20}]}>{'Our Vision'}</Text>
           <Text style={[styles.textBody]}>{'Donec sed odio dui. Cras justo odio, dapibus ac facilisis in, egestas eget quam.'}</Text>
           <View style={styles.line}/>
@@ -221,30 +308,15 @@ export class GoalSlide extends React.PureComponent {
   constructor(props){
     super(props);
     this.animationSource = require('../animations/bar_chart.json');
-    this.iconContainerSize = 100;
   }
 
-  componentDidMount(){
-    this.animation.play();
-  }
-
-  _renderIcon(){
-    const iconSize = 450;
-    const marginOffset = (iconSize - this.iconContainerSize) / 4 * -1;
-
-    return(
-      <View style={styles.circleShadow}>
-        <View style={{width: this.iconContainerSize, height: this.iconContainerSize, borderRadius: this.iconContainerSize/2, overflow: 'hidden'}}>
-          <Lottie
-            ref={r => this.animation = r}
-            style={{width: iconSize, height: iconSize, marginTop: marginOffset, marginLeft: marginOffset}}
-            source={this.animationSource}
-            autoPlay
-            loop
-          />
-        </View>
-      </View>
-    );
+  componentDidUpdate = (prevProps, prevState) => {
+    if(!this.props.isFocused){
+      this.lottie.reset();
+      
+    } else {
+      this.lottie.play();
+    }
   }
 
   render(){
@@ -254,7 +326,10 @@ export class GoalSlide extends React.PureComponent {
     return(
       <View style={styles.slide}>
         <AnimatedView duration={750}>
-          {this._renderIcon()}
+          <LottieCircle 
+            source={this.animationSource}
+            ref={r => this.lottie = r}
+          />
           <Text style={[styles.textTitle, {marginTop: 20}]}>{'Our Goal'}</Text>
           <Text style={[styles.textBody]}>{'Lorum Ipsum Morbi leo risus, porta ac consectetur ac, vestibulum at eros.'}</Text>
           <View style={styles.line}/>
@@ -268,41 +343,28 @@ export class ImproveSlide extends React.PureComponent {
   constructor(props){
     super(props);
     this.animationSource = require('../animations/chart.json');
-    this.iconContainerSize = 100;
   }
 
-  componentDidMount(){
-    this.animation.play();
-  }
-
-  _renderIcon(){
-    const iconSize = 450;
-    const marginOffset = (iconSize - this.iconContainerSize) / 4 * -1;
-
-    return(
-      <View style={styles.circleShadow}>
-        <View style={{width: this.iconContainerSize, height: this.iconContainerSize, borderRadius: this.iconContainerSize/2, overflow: 'hidden'}}>
-          <Lottie
-            ref={r => this.animation = r}
-            style={{width: iconSize, height: iconSize, marginTop: marginOffset, marginLeft: marginOffset, backgroundColor: 'white'}}
-            source={this.animationSource}
-            autoPlay
-            loop
-          />
-        </View>
-      </View>
-    );
+  componentDidUpdate = (prevProps, prevState) => {
+    if(!this.props.isFocused){
+      this.lottie.reset();
+      
+    } else {
+      this.lottie.play();
+    }
   }
 
   render(){
     let deviceHeight = Dimensions.get('window').height;
-    console.log(this.iconContainerSize );
     const fontSize = 28;
     const paddingTop = (deviceHeight * 0.5) - (this.iconContainerSize / 2) - (fontSize + 15);
     return(
       <View style={styles.slide}>
         <AnimatedView duration={750}>
-          {this._renderIcon()}
+          <LottieCircle 
+            source={this.animationSource}
+            ref={r => this.lottie = r}
+          />          
           <Text style={[styles.textTitle, {marginTop: 20}]}>{'Improve and Learn'}</Text>
           <Text style={[styles.textBody]}>{'Lorum Ipsum Morbi leo risus, porta ac consectetur ac, vestibulum at eros.'}</Text>
           <View style={styles.line}/>
@@ -320,11 +382,15 @@ export class ContinueSlide extends React.PureComponent {
   constructor(props){
     super(props);
     this.animationSource = require('../animations/pencil.json');
-    this.iconContainerSize = 100;
   }
 
-  componentDidMount(){
-    this.animation.play();
+  componentDidUpdate = (prevProps, prevState) => {
+    if(!this.props.isFocused){
+      this.lottie.reset();
+      
+    } else {
+      this.lottie.play();
+    }
   }
 
   _handleOnPressContinue = async () => {
@@ -333,24 +399,6 @@ export class ContinueSlide extends React.PureComponent {
     onPressContinue && onPressContinue();
   }
 
-  _renderIcon(){
-    const iconSize = 450;
-    const marginOffset = (iconSize - this.iconContainerSize) / 4 * -1;
-
-    return(
-      <View style={styles.circleShadow}>
-        <View style={{width: this.iconContainerSize, height: this.iconContainerSize, borderRadius: this.iconContainerSize/2, overflow: 'hidden'}}>
-          <Lottie
-            ref={r => this.animation = r}
-            style={{width: iconSize, height: iconSize, marginTop: marginOffset, marginLeft: marginOffset, backgroundColor: 'white'}}
-            source={this.animationSource}
-            autoPlay
-            loop
-          />
-        </View>
-      </View>
-    );
-  }
 
   _renderButton(){
     return(
@@ -371,7 +419,10 @@ export class ContinueSlide extends React.PureComponent {
     return(
       <View style={styles.slide}>
         <AnimatedView duration={750}>
-          {this._renderIcon()}
+          <LottieCircle 
+            source={this.animationSource}
+            ref={r => this.lottie = r}
+          />          
           <Text style={[styles.textTitle, {marginTop: 20}]}>{'Your Account'}</Text>
           <Text style={[styles.textBody]}>{'Create an account or login to keep track of lorum ipsum sit amit dolor aspicing'}</Text>
           {this._renderButton()}
@@ -414,7 +465,7 @@ export default class WelcomeScreen extends React.Component {
         dotColor={'rgba(255, 255, 255, 0.25)'}
         activeDotColor={'rgba(255, 255, 255, 0.5)'}
         loadMinimal={true}
-        loadMinimalSize={2}
+        loadMinimalSize={1}
         bounces={true}
         loop={false}
       >
@@ -472,6 +523,7 @@ const styles = StyleSheet.create({
     android: {
       color: 'white',
       fontSize: 28,
+      color: 'white', 
       fontWeight: '900',
     }
   }),
@@ -484,6 +536,7 @@ const styles = StyleSheet.create({
     android: {
       fontSize: 24,
       fontWeight: '100',
+      color: 'rgba(255, 255, 255, 0.8)'
     },
   }),
   textBody: {

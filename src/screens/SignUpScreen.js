@@ -1171,6 +1171,7 @@ export class SignUpUI_android extends React.PureComponent {
       </Animatable.View>
     );
   }
+  
   //sign in form container
   _renderFormContainer(){
     const { titleText, subtitleText } = this.state;

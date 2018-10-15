@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {Fragment} from 'react';
 import { StyleSheet, Text, View, StatusBar, Platform } from 'react-native';
 
 import { createSwitchNavigator, createStackNavigator } from 'react-navigation';
@@ -90,11 +90,6 @@ export class AuthScreen extends React.Component {
 
   constructor(props){
     super(props);
-    //shared between ios and android
-    this.gradientProps = {
-      speed       : 100 ,
-      numOfInterps: 1000,  
-    }
   }
 
   _renderBG(){
@@ -120,44 +115,16 @@ export class AuthScreen extends React.Component {
     );
   }
 
-  render_android(){
-    const transparent = 'rgba(255, 255, 255, 0)';
-    const colors = shuffleArray(['#7F00FF', '#304FFE', '#651FFF', '#6A1B9A', '#311B92', '#8E24AA', '#673AB7', '#9C27B0' ]);
-    return (
-      <Animatable.View 
-        style={{flex: 1, backgroundColor: '#FAFAFA'}}
-        animation={'fadeIn'}
-        duration={1000}
-        useNativeDriver={true}
-      >
+  _renderBody(){
+    return(
+      <Fragment>
         <AnimatedGradient
           ref={r => this.animatedGradientRef = r}
-          style={{position: 'absolute', width: '100%', height: '70%'}}
-          colorsTop   ={colors}
-          colorsBottom={colors.map(() => transparent)}
-          {...this.gradientProps}
-        />
-        <AuthStack
-          navigation={this.props.navigation}
-          screenProps={{
-            ...this.props.screenProps,
-            getAuthBGGradientRef: () => this.animatedGradientRef,
-          }}
-        />
-      </Animatable.View>
-    );
-  }
-
-  render_iOS() {
-    return (
-      <View style={{flex: 1}}>
-        {this._renderBG()}
-        <AnimatedGradient
-          ref={r => this.animatedGradientRef = r}
-          style={{position: 'absolute', width: '100%', height: '100%', opacity: 0.75}}
+          style={{position: 'absolute', width: '100%', height: '100%', opacity: 0.7}}
           colorsTop   ={['#7F00FF', '#654ea3', '#642B73', '#c0392b', '#ff00cc',  '#FC466B', ]}
           colorsBottom={['#F100FF', '#eaafc8', '#C6426E', '#8e44ad', '#333399',  '#3F5EFB', ]}
-          {...this.gradientProps}          
+          speed={100} 
+          numOfInterps={1000}
         />
         <AuthStack
           navigation={this.props.navigation}
@@ -166,15 +133,22 @@ export class AuthScreen extends React.Component {
             getAuthBGGradientRef: () => this.animatedGradientRef,
           }}
         />
-      </View>
+      </Fragment>
     );
   }
 
   render(){
-    return Platform.select({
-      ios: this.render_iOS(),
-      android: this.render_android(),
-    });
+    return (
+      <Animatable.View 
+        style={{flex: 1}}
+        animation={'fadeIn'}
+        duration={1000}
+        useNativeDriver={true}
+      >
+        {this._renderBG  ()}
+        {this._renderBody()}
+      </Animatable.View>
+    );
   }
 }
 
