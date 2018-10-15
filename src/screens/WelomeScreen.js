@@ -397,6 +397,7 @@ export class ContinueSlide extends React.PureComponent {
     const { onPressContinue } = this.props;
     //await this.rootView.fadeOutLeft(500);
     onPressContinue && onPressContinue();
+    this.lottie.reset();
   }
 
 
@@ -441,8 +442,11 @@ export default class WelcomeScreen extends React.Component {
     }
   }
 
-  componentDidFocus = () => {
-    this.rootView.fadeInLeft(500);
+  componentDidFocus = async () => {
+    await this.rootView.fadeInLeft(500);
+    if(this.state.currentSlideIndex == 4){
+      this.continueSlide.lottie.play();
+    }
   }
 
   _handleOnIndexChanged = (index) => {
@@ -456,7 +460,7 @@ export default class WelcomeScreen extends React.Component {
     navigation.navigate('LoginRoute');
   }
 
-  _renderSwiper(){
+  _renderSwiper = () => {
     const { currentSlideIndex } = this.state;
     return(
       <Swiper 
@@ -480,7 +484,10 @@ export default class WelcomeScreen extends React.Component {
           <ImproveSlide/>
         </Slide>
         <Slide slideNumber={4} {...{currentSlideIndex}}>
-          <ContinueSlide onPressContinue={this._handleOnPressContinue}/>
+          <ContinueSlide 
+            ref={r => this.continueSlide = r}
+            onPressContinue={this._handleOnPressContinue}
+          />
         </Slide>
       </Swiper>
     );
