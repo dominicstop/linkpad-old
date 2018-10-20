@@ -80,15 +80,34 @@ const questionShape = {
   userAnswer: PropTypes.string,
 };
 
+class Grade {
+  constructor(totalItems = 0, correctItems = 0, incorrectItems = 0){
+    this.grade = {
+      timestamp      : this.getTimestamp(),
+      percentage     : (correctItems / totalItems) * 100,
+      unansweredItems: (correctItems + incorrectItems) - totalItems,
+      ...{totalItems, correctItems, incorrectItems}, 
+    }
+  }
+  
+  getTimestamp = () => {
+    const dateTime  = new Date().getTime();
+    return Math.floor(dateTime / 1000);
+  }
+
+  getGrade = () => {
+    return this.grade;
+  }
+}
+
 //
 class IncompletePracticeExams {
-  constructor(indexID_module = 0, indexID_subject = 0){
+  constructor(indexID_module = 0, indexID_subject = 0, totalItems = 0){
     this.DEBUG = false;
     //this is where IPE's are stored
     this.items = {
       //used for identifying
-      indexID_module : indexID_module,
-      indexID_subject: indexID_subject,
+      ...{indexID_module, indexID_subject, totalItems},
       //dates
       timestamp_started: this.getTimestamp(),
       timestamp_ended  : '',
@@ -113,6 +132,7 @@ class IncompletePracticeExams {
 
   //setter and getters
   getItems = () => _.cloneDeep(this.items);
+  
   setItems = (new_item) => {
     this.items = new_item;
     if(this.DEBUG){
@@ -171,7 +191,44 @@ class IncompletePracticeExams {
     //return created answer obj
     return new_answer;
   }
+
+  //compute grade
+  getGrade = () => {
+    let correct = 0, wrong = 0;
+    //count correct and wrong
+    this.getAnswers.forEach((item) => {
+      //increment counters
+      item.isCorrect? correct++ : wrong++;
+    });
+    //compute grade
+    const grade = new Grade(this.items.totalItems, correct, wrong);
+    return grade.getGrade();
+  };
 }
+
+class PracticeExamGrade {
+  constructor(indexID_module = 0, indexID_subject = 0){
+    this.grade = {
+      ...{indexID_module, indexID_subject},
+      grades: [],
+    }
+  };
+
+  getTimestamp = () => {
+    const dateTime  = new Date().getTime();
+    return Math.floor(dateTime / 1000);
+  }
+
+  addGrade = (totalItems = 0, correctItems = 0) => {
+    const gradeItem = {
+      timestamp: this.getTimestamp(),
+      percentage: (correctItems / totalItems) * 100,
+      ...{totalItems, correctItems} 
+    };
+    this.grade.grades.push();
+  }
+}
+
 
 //TODO: create a generic wrappper
 //renders a animated check
@@ -791,8 +848,10 @@ export class PracticeExamList extends React.Component {
     //extract id's from the current subject and modules
     const indexID_module  = props.moduleData .indexid;
     const indexID_subject = props.subjectData.indexid;
+    //count items
+    const totalItems = props.questions.length;
     //set ID's
-    this.incompletePE = new IncompletePracticeExams(indexID_module, indexID_subject);
+    this.incompletePE = new IncompletePracticeExams(indexID_module, indexID_subject, totalItems);
 
     //debug: print state
     if(this.DEBUG && false){
@@ -965,7 +1024,6 @@ export class PracticeExamList extends React.Component {
     );
   }
 }
-
 
 const styles = StyleSheet.create({
   questionCard: {

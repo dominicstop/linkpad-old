@@ -4,17 +4,24 @@ import _ from 'lodash';
 const KEY   = 'incomplete_practiceExams';
 const DEBUG = false;
 
+//timestamp where it was last updated
+let lastUpdate = 0;
+
 let _incompletePracticeExams = null;
+
+//returns the current timestamp
+function getTimestamp(){
+  const dateTime  = new Date().getTime();
+  return Math.floor(dateTime / 1000);
+}
 
 let structure = {
   grades: [
     {
       indexID_module : '',
       indexID_subject: '',
-
       timestamp_started: '',
       timestamp_ended  : '',
-
       answers: [
         {
           indexID_question: '',
@@ -37,6 +44,8 @@ function get(forceRefresh = false){
       let stored_iPE = await store.get(KEY);
       //update private global var
       _incompletePracticeExams = stored_iPE;
+      //set timestamp
+      lastUpadate = getTimestamp();
       //return iPE
       resolve(stored_iPE);
 
