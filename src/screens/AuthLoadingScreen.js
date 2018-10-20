@@ -11,7 +11,6 @@ import UserStore         from '../functions/UserStore'        ;
 import ResourcesStore    from '../functions/ResourcesStore'   ;
 import PreboardExamStore from '../functions/PreboardExamStore';
 
-import {PreboardExam, PreboardExamItem, PreboardExamModuleItem} from '../functions/PreboardExamStore';
 
 Animatable.initializeRegistryWithDefinitions({
   zoomInTransition: {
@@ -35,24 +34,6 @@ export default class AuthLoadingScreen extends React.Component {
       this.animatedLoading.zoomIn(1250),
     ]);
 
-    const pre = await PreboardExamStore.refresh();
-    //console.log(pre);
-
-    let preboard = new PreboardExam(pre);
-    //console.log(preboard.get());
-
-    let preboardExam = new PreboardExamItem(preboard.get().exams[0]);
-         
-    //console.log(preboardExam.get());
-    
-
-    let preboardExams = [
-      new PreboardExamItem(preboard.get().exams[0]),
-      new PreboardExamItem(preboard.get().exams[1]),
-    ];
-
-    console.log(preboard.getExams()[0].getExamModules()[0].get());
-
     //get UserData from promise
     const userData   = results[0];
     const isLoggedIn = userData != null;
@@ -63,6 +44,7 @@ export default class AuthLoadingScreen extends React.Component {
         ModuleStore.getModuleData(),
         TipsStore.getTips(),
         ResourcesStore.getResources(),
+        PreboardExamStore.get(),
       ])
     }
 

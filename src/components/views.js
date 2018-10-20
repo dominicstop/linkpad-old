@@ -123,10 +123,10 @@ export class IconText extends React.PureComponent {
 
 export class Card extends React.PureComponent {
   render(){
-    const { style, viewProps } = this.props;
+    const { style, ...viewProps } = this.props;
     return(
       <View
-        style={[{padding: 10, paddingHorizontal: 15, backgroundColor: 'white', borderRadius: 10}, STYLES.mediumShadow, style]}
+        style={[{marginHorizontal: 8, marginVertical: 15, marginBottom: 0, paddingHorizontal: 15, paddingVertical: 10, backgroundColor: 'white', borderRadius: 10}, STYLES.mediumShadow, style]}
         {...viewProps}
       >
         {this.props.children}
