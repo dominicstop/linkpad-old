@@ -170,6 +170,7 @@ export default class App extends React.Component {
     StatusBar.setBarStyle('light-content');
   }
 
+
   render() {
     return (
       <RootNavigator

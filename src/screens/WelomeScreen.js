@@ -7,7 +7,8 @@ import Swiper from 'react-native-swiper';
 import {  NavigationEvents } from 'react-navigation';
 import { Divider } from 'react-native-elements';
 
-import LottieCircle from '../components/LottieCircle';
+import LottieCircle  from '../components/LottieCircle';
+import { WelcomeScreenModalContent, SwipableModal } from '../components/SwipableModal';
 
 //wraps childern and animates with delay
 export class AnimatedView extends React.PureComponent {
@@ -42,6 +43,7 @@ export class AnimatedView extends React.PureComponent {
   }
 }
 
+//wrapper component for Swiper child
 export class Slide extends React.PureComponent {
   static propTypes = {
     slideNumber: PropTypes.number,
@@ -301,14 +303,26 @@ export class ContinueSlide extends React.PureComponent {
     this.lottie.reset();
   }
 
-
   _renderButton(){
     return(
+      <Fragment>
+        <TouchableOpacity
+          style={{marginTop: 20, padding: 15, paddingHorizontal: 40, backgroundColor: 'rgba(1, 1, 1, 0.1)', borderColor: 'rgba(255, 255, 255, 0.5)', borderWidth: 2, borderRadius: 15}}
+          onPress={this._handleOnPressContinue}
+        >
+          <Text style={{fontSize: 18, fontWeight: '900', color: 'white'}}>Continue</Text>
+        </TouchableOpacity>
+      </Fragment>
+    );
+  }
+
+  _renderMoreButton(){
+    return(
       <TouchableOpacity
-        style={{marginTop: 30, padding: 15, paddingHorizontal: 40, backgroundColor: 'rgba(1, 1, 1, 0.1)', borderColor: 'rgba(255, 255, 255, 0.5)', borderWidth: 2, borderRadius: 15}}
-        onPress={this._handleOnPressContinue}
+        style={{marginTop: 10}}
+        onPress={this.props.onPressMore}
       >
-        <Text style={{fontSize: 20, fontWeight: '900', color: 'white'}}>Continue</Text>
+        <Text style={{fontSize: 18, fontWeight: '300', color: 'white', textAlign: 'center', textDecorationLine: 'underline'}}>More Information</Text>
       </TouchableOpacity>
     );
   }
@@ -328,6 +342,7 @@ export class ContinueSlide extends React.PureComponent {
           <Text style={[styles.textTitle, {marginTop: 20}]}>{'Your Account'}</Text>
           <Text style={[styles.textBody]}>{'Create an account or login to keep track of lorum ipsum sit amit dolor aspicing'}</Text>
           {this._renderButton()}
+          {this._renderMoreButton()}
           <View style={styles.line}/>
         </AnimatedView>
       </View>
@@ -335,11 +350,20 @@ export class ContinueSlide extends React.PureComponent {
   }
 }
 
+//screen that renders the slides 
 export default class WelcomeScreen extends React.Component { 
   constructor(props){
     super(props);
     this.state = {
       currentSlideIndex: 0,
+      showModal: false,
+    }
+  }
+
+  async componentDidUpdate(prevProps, prevState){
+    const { currentSlideIndex, showModal } = this.state;
+    if (currentSlideIndex != 4 && showModal){
+      this.setState({showModal: false});
     }
   }
 
@@ -359,6 +383,38 @@ export default class WelcomeScreen extends React.Component {
     const { navigation } = this.props;
     await this.rootView.fadeOutLeft(500);
     navigation.navigate('LoginRoute');
+  }
+
+  _handleOnPressMore = () => {
+    if(!this.state.showModal){
+      this.setState({showModal: true});
+
+    } else {
+      this._modal._interactable.snapTo({ index: 0 });
+    }
+  };
+
+  _handleOnSnap = (isHidden) => {
+  }
+
+  _renderModal(){
+    if(!this.state.showModal) return null;
+    return(
+      <Animatable.View
+        ref={r => this._modalView = r}
+        style={{position: 'absolute', width: '100%', height: '100%'}}
+        animation={'bounceInUp'}
+        duration={1000}
+        pointerEvents={'box-none'}
+      >
+        <SwipableModal
+          ref={r => this._modal = r}
+          onSnap={this._handleOnSnap}
+        >
+          <WelcomeScreenModalContent/>
+        </SwipableModal>
+      </Animatable.View>
+    );
   }
 
   _renderSwiper = () => {
@@ -388,6 +444,7 @@ export default class WelcomeScreen extends React.Component {
           <ContinueSlide 
             ref={r => this.continueSlide = r}
             onPressContinue={this._handleOnPressContinue}
+            onPressMore={this._handleOnPressMore}
           />
         </Slide>
       </Swiper>
@@ -407,6 +464,7 @@ export default class WelcomeScreen extends React.Component {
           useNativeDriver={true}
         >
           {this._renderSwiper()}
+          {this._renderModal ()}
         </Animatable.View>
       </Fragment>
     );

@@ -26,19 +26,21 @@ export class IntroductionCard extends React.PureComponent {
 
   render(){
     return (
-      <View style={{alignItems: 'center', justifyContent: 'center', paddingVertical: 15}}>
-        <LottieCircle 
-          source={this.animationSource}
-          containerStyle={{backgroundColor: '#7C4DFF'}}
-          ref={r => this.lottie = r}
-          circleSize={100}
-          iconSize={600}
-        />
-        <Text style={{fontSize: 32, fontWeight: '700', marginTop: 10, color: '#311B92'}}>{'Prebaord Exam'}</Text>
-        <Text style={{flex: 1, fontSize: 22, marginTop: 5}}>
-          {'Aenean lacinia bibendum nulla sed consectetur. Vestibulum id ligula porta felis euismod semper. Praesent commodo cursus magna, vel scelerisque nisl consectetur et.'}
-        </Text>
-      </View>
+      <Card>
+        <View style={{alignItems: 'center', justifyContent: 'center', paddingVertical: 15}}>
+          <LottieCircle 
+            source={this.animationSource}
+            containerStyle={{backgroundColor: '#7C4DFF'}}
+            ref={r => this.lottie = r}
+            circleSize={100}
+            iconSize={600}
+          />
+          <Text style={{fontSize: 32, fontWeight: '700', marginTop: 10, color: '#311B92'}}>{'Prebaord Exam'}</Text>
+          <Text style={{flex: 1, fontSize: 22, marginTop: 5}}>
+            {'Aenean lacinia bibendum nulla sed consectetur. Vestibulum id ligula porta felis euismod semper. Praesent commodo cursus magna, vel scelerisque nisl consectetur et.'}
+          </Text>
+        </View>
+      </Card>
     );
   }
 }

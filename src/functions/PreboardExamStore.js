@@ -7,9 +7,9 @@ const KEY = 'preboard';
 
 let _preboardData = null;
 
-//structure of single exam item in preboard exams array
+//structure of single exammodule item in preboard exams.exammodule array
 export class PreboardExamModuleItem {
-  constructor(examModule = { description: '', iid: 0, premodulename: '', questions: []}){
+  constructor(examModule = { description: '', indexid: 0, premodulename: '', questions: []}){
     this.examModule = examModule;
   }
 
@@ -88,7 +88,7 @@ get = () => {
       //if stil empty after init with value from stotage
       if(_preboardData == null){
         //fetchPreboard from server
-        if (DEBUG) console.log('Getting preboard from server...');
+        if (DEBUG) console.log('Nothing stored. Getting preboard from server...');
         let new_preboard = await fetchPreboard();
         //assign to global variable
         _preboardData = new_preboard;
