@@ -386,34 +386,20 @@ export default class WelcomeScreen extends React.Component {
   }
 
   _handleOnPressMore = () => {
-    if(!this.state.showModal){
-      this.setState({showModal: true});
-
-    } else {
-      this._modal._interactable.snapTo({ index: 0 });
-    }
+    this._modal.showModal();
   };
 
   _handleOnSnap = (isHidden) => {
   }
 
   _renderModal(){
-    if(!this.state.showModal) return null;
     return(
-      <Animatable.View
-        ref={r => this._modalView = r}
-        style={{position: 'absolute', width: '100%', height: '100%'}}
-        animation={'bounceInUp'}
-        duration={1000}
-        pointerEvents={'box-none'}
+      <SwipableModal
+        ref={r => this._modal = r}
+        onSnap={this._handleOnSnap}
       >
-        <SwipableModal
-          ref={r => this._modal = r}
-          onSnap={this._handleOnSnap}
-        >
-          <WelcomeScreenModalContent/>
-        </SwipableModal>
-      </Animatable.View>
+        <WelcomeScreenModalContent/>
+      </SwipableModal>
     );
   }
 

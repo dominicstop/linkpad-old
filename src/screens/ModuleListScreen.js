@@ -266,10 +266,7 @@ export class ModuleListScreen extends React.Component {
   }
 
   componentDidMount(){
-    //set callbacks for modal when opened/closed
-    const { getRefSubjectModal, setDrawerSwipe } = this.props.screenProps;
-    getRefSubjectModal().modalClosedCallback = () => setDrawerSwipe(true );
-    getRefSubjectModal().modalOpenedCallback = () => setDrawerSwipe(false);
+    
   }
 
   _navigateToModule = (moduleList, moduleData) => {
@@ -281,7 +278,12 @@ export class ModuleListScreen extends React.Component {
 
   _onPressSubject = (subjectData, moduleData) => {
     const { getRefSubjectModal, setDrawerSwipe } = this.props.screenProps;
-    getRefSubjectModal().toggleSubjectModal(moduleData, subjectData);
+    const { modalClosedCallback, modalOpenedCallback } = getRefSubjectModal();
+    //set callbacks for modal when opened/closed
+    if(!modalClosedCallback) getRefSubjectModal().modalClosedCallback = () => setDrawerSwipe(true );
+    if(!modalOpenedCallback) getRefSubjectModal().modalOpenedCallback = () => setDrawerSwipe(false);
+
+    getRefSubjectModal().openSubjectModal(moduleData, subjectData);
   }
 
   _renderRefreshCotrol(){

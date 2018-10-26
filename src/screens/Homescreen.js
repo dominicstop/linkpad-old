@@ -3,7 +3,7 @@ import { Dimensions, Platform } from 'react-native';
 
 import Constants, { STYLES } from '../Constants';
 
-import { SubjectModal    } from '../components/Modals';
+import { SubjectModal    } from '../components/SwipableModal';
 import { ModuleListStack } from './ModuleListScreen';
 import { ResourcesStack  } from './ResourcesScreen';
 import { ExamsStack      } from './ExamsScreen';
@@ -168,7 +168,6 @@ export class Homescreen extends React.PureComponent {
         easing={'ease-in-out'}
         useNativeDriver={true}
       >
-        <SubjectModal ref={r => this.subjectModal = r}/>
         <TabNavigation
           navigation={this.props.navigation}
           screenProps={{
@@ -178,6 +177,7 @@ export class Homescreen extends React.PureComponent {
             setDrawerSwipe: this.setDrawerSwipe,
           }}
         />
+        <SubjectModal ref={r => this.subjectModal = r}/>
       </Animatable.View>
     );
   }
