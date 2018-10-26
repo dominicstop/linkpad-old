@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { Component, Fragment } from 'react';
 import { StyleSheet, View, Dimensions, Image, Text, TouchableOpacity, ScrollView } from 'react-native';
 import PropTypes from 'prop-types';
 
@@ -7,14 +7,18 @@ import { BlurView } from 'expo';
 
 import Interactable from './Interactable';
 import { IconText } from '../components/Views';
+import    { IconButton    } from '../components/Buttons'     ;
 import { timeout } from '../functions/Utils';
 
 import * as Animatable      from 'react-native-animatable'   ;
 
 const Screen = {
-  width : Dimensions.get('window').width,
-  height: Dimensions.get('window').height - 75,
+  width : Dimensions.get('window').width ,
+  height: Dimensions.get('window').height,
 };
+
+const MODAL_DISTANCE_FROM_TOP = 40;
+const MODAL_EXTRA_HEIGHT = 100;
 
 export class SwipableModal extends React.PureComponent {
   static propTypes = {
@@ -29,9 +33,9 @@ export class SwipableModal extends React.PureComponent {
   static defaultProps = {
     snapPoints: [
       //full screen
-      { y: 40 },
+      { y: MODAL_DISTANCE_FROM_TOP },
       //hidden
-      { y: Screen.height * 1.2 },
+      { y: Screen.height * 1 },
       //half screen
       { y: Screen.height - (Screen.height * 0.6) },
     ]
@@ -54,9 +58,10 @@ export class SwipableModal extends React.PureComponent {
 
   hideModal = async () => {
     const { mountModal } = this.state;
-    if(!mountModal){
-      await this._rootView.bounceOutDown(1000);
-      this.setState({mountModal: true});
+    if(mountModal){
+      this._modalShadow.fadeOut(750);
+      await this._rootView.bounceOutDown(750);
+      this.setState({mountModal: false});
     }
   };
 
@@ -93,13 +98,14 @@ export class SwipableModal extends React.PureComponent {
       backgroundColor: 'black',
       opacity: this._deltaY.interpolate({
         inputRange: [0, Screen.height - 100],
-        outputRange: [0.75, 0],
+        outputRange: [0.5, 0],
         extrapolateRight: 'clamp',
       }),
     };
 
     return(
       <Animatable.View
+        ref={r => this._modalShadow = r}
         style={styles.float}
         animation={'fadeIn'}
         duration={750}
@@ -129,7 +135,7 @@ export class SwipableModal extends React.PureComponent {
           <Interactable.View
             verticalOnly={true}
             boundaries={{ top: -300 }}
-            initialPosition={snapPoints[2]}
+            initialPosition={snapPoints[0]}
             animatedValueY={this._deltaY}
             ref={r => this._interactable = r}
             onSnap={this._handleOnSnap}
@@ -147,16 +153,19 @@ export class SwipableModal extends React.PureComponent {
   }
 }
 
-//used in welcome screen: wrap with SwipableModal
-export class WelcomeScreenModalContent extends React.PureComponent {
-  _renderTop(){
+//transparent line on top of modal
+export class ModalTopIndicator extends React.PureComponent {
+  render(){
     return(
       <View style={{width: '100%', alignItems: 'center', paddingVertical: 15}}>
         <View style={{width: 40, height: 8, borderRadius: 4, backgroundColor: '#00000040',}}/>
       </View>
     );
   }
+}
 
+//used in welcome screen: wrap with SwipableModal
+export class WelcomeScreenModalContent extends React.PureComponent {
   _renderBody(){
     return(
       <ScrollView style={{paddingTop: 5, paddingHorizontal: 15, marginBottom: 250}} contentContainerStyle={{paddingBottom: 100}}>
@@ -205,7 +214,7 @@ export class WelcomeScreenModalContent extends React.PureComponent {
     return(
       <BlurView style={{flex: 1}} intensity={100}>
         <View style={{flex: 1, backgroundColor: 'rgba(255, 255, 255, 0.5)'}}>
-          {this._renderTop ()}
+          <ModalTopIndicator/>
           {this._renderBody()}
         </View>
       </BlurView>
@@ -216,11 +225,22 @@ export class WelcomeScreenModalContent extends React.PureComponent {
 export class SubjectModal extends React.PureComponent {
   constructor(props){
     super(props);
+    this.state = {
+      moduleData  : null,
+      subjectData : null,
+      mountContent: false,
+    };
+
     this.modalClosedCallback = null;
     this.modalOpenedCallback = null;
   }
 
-  openSubjectModal = () => {
+  openSubjectModal = (moduleData, subjectData) => {
+    this.setState({moduleData, subjectData, mountContent: true});
+    this._modal.showModal();
+  }
+
+  closeSubjectModal = () => {
     this._modal.showModal();
   }
 
@@ -234,7 +254,91 @@ export class SubjectModal extends React.PureComponent {
     this.modalClosedCallback && this.modalClosedCallback();
   }
 
+  _handleOnPressClose = () => {
+    this._modal.hideModal();
+  }
+
+  _renderInfo(){
+    const { subjectData } = this.state;
+    return(
+      <View>
+        <IconText
+          //containerStyle={styles.subjectIconText}
+          textStyle={{fontSize: 20, fontWeight: 'bold'}}
+          subtitleStyle={{fontWeight: '200',}}
+          text     ={subjectData.subjectname}
+          subtitle ={'Choose an option'}
+          iconName ={'notebook'}
+          iconType ={'simple-line-icon'}
+          iconColor={'rgba(0, 0, 0, 0.6)'}
+          iconSize ={26}
+        />
+      </View>
+    );
+  }
+
+  _renderButtons(){
+    const borderRadius = 10;
+    //button text style
+    const textStyle = {
+      flex: 0,
+      color: 'white',
+      fontSize: 17,
+      textDecorationLine: 'underline'
+    }
+    //shared props
+    const buttonProps = {
+      iconSize: 22,
+      iconColor: 'white',
+      textStyle,
+    }
+    //shared container style
+    const buttonStyle = {
+      flex: 1,
+      padding: 10,
+      alignItems: 'center',
+      justifyContent: 'center',
+    };
+    
+    return(
+      <View style={{flexDirection: 'row', height: 75, padding: 10, paddingVertical: 15, borderTopColor: 'rgba(0, 0, 0, 0.2)', borderTopWidth: 1, shadowOffset:{  width: 2,  height: 3,  }, shadowColor: 'black', shadowRadius: 3, shadowOpacity: 0.5 }}>
+        <IconButton
+          text={'Start'}
+          containerStyle={[buttonStyle, {borderTopLeftRadius: borderRadius, borderBottomLeftRadius: borderRadius, backgroundColor: '#6200EA'}]}
+          iconName={'pencil-square-o'}
+          iconType={'font-awesome'}
+          onPress={this._handleOnPressStart}
+          textStyle={{}}
+          {...buttonProps}
+        />
+        <IconButton
+          text={'Cancel'}
+          containerStyle={[buttonStyle, {borderTopRightRadius: borderRadius, borderBottomRightRadius: borderRadius, backgroundColor: '#C62828'}]}
+          iconName={'close'}
+          iconType={'simple-line-icon'}
+          onPress={this._handleOnPressClose}
+          {...buttonProps}
+        />
+      </View>
+      
+    );
+  }
+
+  _renderContent(){
+    return(
+      <Fragment>
+        <ModalTopIndicator/>
+        <ScrollView style={{flex: 1, padding: 10, borderTopColor: 'rgba(0, 0, 0, 0.1)', borderTopWidth: 1}}>
+          {this._renderInfo()}
+        </ScrollView>
+        {this._renderButtons()}
+      </Fragment>
+    );
+  }
+
   render(){
+    const paddingBottom = MODAL_EXTRA_HEIGHT + MODAL_DISTANCE_FROM_TOP;
+    const { mountContent } = this.state;
     return(
       <SwipableModal 
         ref={r => this._modal = r}
@@ -242,8 +346,8 @@ export class SubjectModal extends React.PureComponent {
         onModalHide={this._handleOnModalHide}
       >
         <BlurView style={{flex: 1}} intensity={100}>
-          <View style={{flex: 1, backgroundColor: 'rgba(255, 255, 255, 0.5)'}}>
-
+          <View style={{flex: 1, backgroundColor: 'rgba(255, 255, 255, 0.5)', paddingBottom}}>
+            {mountContent && this._renderContent()}
           </View>
         </BlurView>
       </SwipableModal>
@@ -267,7 +371,7 @@ const styles = StyleSheet.create({
     right: 0,
   },
   panelContainer: {
-    height: Screen.height + 300,
+    height: Screen.height + MODAL_EXTRA_HEIGHT,
     shadowOffset: { width: -5, height: 0 },
     shadowRadius: 5,
     shadowOpacity: 0.4,
@@ -277,7 +381,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     shadowColor: '#000000',
-    overflow: 'hidden'
+    overflow: 'hidden',
   },
   textTitle: {
     fontSize: 30, fontWeight: '700', alignSelf: 'center', marginBottom: 2, color: 'rgba(0, 0, 0, 0.75)'
