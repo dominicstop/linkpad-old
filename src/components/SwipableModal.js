@@ -5,10 +5,12 @@ import PropTypes from 'prop-types';
 import Animated from 'react-native-reanimated';
 import { BlurView } from 'expo';
 
-import Interactable from './Interactable';
-import { IconText } from '../components/Views';
-import    { IconButton    } from '../components/Buttons'     ;
-import { timeout } from '../functions/Utils';
+import   Interactable              from './Interactable';
+import { AnimatedCollapsable     } from './Buttons';
+import { IconText                } from '../components/Views';
+import { IconButton              } from '../components/Buttons';
+import { SubjectItem, ModuleItem } from '../functions/ModuleStore';
+import { timeout                 } from '../functions/Utils';
 
 import * as Animatable      from 'react-native-animatable'   ;
 
@@ -258,22 +260,114 @@ export class SubjectModal extends React.PureComponent {
     this._modal.hideModal();
   }
 
-  _renderInfo(){
-    const { subjectData } = this.state;
+  _renderTitle(){
+    const { subjectData, moduleData } = this.state;
+    //wrap data into helper object for easier access
+    const subject = new SubjectItem(subjectData).get();
+    const module  = new ModuleItem (moduleData ).get();
+
     return(
-      <View>
-        <IconText
-          //containerStyle={styles.subjectIconText}
-          textStyle={{fontSize: 20, fontWeight: 'bold'}}
-          subtitleStyle={{fontWeight: '200',}}
-          text     ={subjectData.subjectname}
-          subtitle ={'Choose an option'}
-          iconName ={'notebook'}
-          iconType ={'simple-line-icon'}
-          iconColor={'rgba(0, 0, 0, 0.6)'}
-          iconSize ={26}
+      <IconText
+        containerStyle={{marginRight: 20}}
+        textStyle={{fontSize: 20, fontWeight: 'bold'}}
+        subtitleStyle={{fontWeight: '200', fontSize: 16}}
+        text     ={subject.subjectname}
+        subtitle ={module .modulename }
+        iconName ={'notebook'}
+        iconType ={'simple-line-icon'}
+        iconColor={'rgba(0, 0, 0, 0.6)'}
+        iconSize ={26}
+      />
+    );
+  }
+
+  _renderDescription(){
+    const { subjectData } = this.state;
+    //wrap data into helper object for easier access
+    const subject = new SubjectItem(subjectData).get();
+    //title comp for collapsable
+    const descriptionTitle = <IconText
+      //icon
+      iconName={'info'}
+      iconType={'feather'}
+      iconColor={'grey'}
+      iconSize={26}
+      //title
+      text={'Description'}
+      textStyle={{fontSize: 24, fontWeight: '800'}}
+    />
+    return(
+      <View style={{overflow: 'hidden', marginTop: 15}}>
+        <AnimatedCollapsable
+          extraAnimation={false}
+          text={subject.description}
+          maxChar={400}
+          collapsedNumberOfLines={6}
+          titleComponent={descriptionTitle}
+          style={{fontSize: 18, textAlign: 'justify'}}
         />
       </View>
+    );
+  }
+
+  _renderDetails(){
+    const { subjectData } = this.state;
+    //wrap data into helper object for easier access
+    const subject = new SubjectItem(subjectData).get();
+
+    const titleStyle = {
+      fontSize: 18,
+      fontWeight: '500'
+    };
+    const subtitleStyle = {
+      fontSize: 24,
+      fontWeight: '200'
+    };
+
+    return(
+      <Fragment>
+        <IconText
+          //icon
+          iconName={'file-text'}
+          iconType={'feather'}
+          iconColor={'grey'}
+          iconSize={26}
+          //title
+          text={'Subject Details'}
+          textStyle={{fontSize: 24, fontWeight: '800'}}
+        />
+        <View style={{flexDirection: 'row', marginTop: 3}}>
+          <View style={{flex: 1}}>
+            <Text numberOfLines={1} style={titleStyle   }>{'Questions: '}</Text>
+            <Text numberOfLines={1} style={subtitleStyle}>{subject.questions.length + ' items'}</Text>
+          </View>
+          <View style={{flex: 1}}>
+            <Text numberOfLines={1} style={titleStyle   }>{'Updated: '}</Text>
+            <Text numberOfLines={1} style={subtitleStyle}>{subject.lastupdated}</Text>
+          </View>
+        </View>
+      </Fragment>
+    );
+  }
+
+  _renderGrades(){
+    return(
+      <Fragment>
+        <IconText
+          //icon
+          iconName={'bar-chart'}
+          iconType={'feather'}
+          iconColor={'grey'}
+          iconSize={26}
+          //title
+          text={'Grades'}
+          textStyle={{fontSize: 24, fontWeight: '800'}}
+          //subtitle
+          subtitleStyle={{fontWeight: '200', fontSize: 16}}
+          subtitle ={'Previous grades'}
+
+        />
+      </Fragment>
     );
   }
 
@@ -301,7 +395,7 @@ export class SubjectModal extends React.PureComponent {
     };
     
     return(
-      <View style={{flexDirection: 'row', height: 75, padding: 10, paddingVertical: 15, borderTopColor: 'rgba(0, 0, 0, 0.2)', borderTopWidth: 1, shadowOffset:{  width: 2,  height: 3,  }, shadowColor: 'black', shadowRadius: 3, shadowOpacity: 0.5 }}>
+      <View style={{flexDirection: 'row', height: 80, padding: 10, paddingVertical: 15, borderTopColor: 'rgba(0, 0, 0, 0.2)', borderTopWidth: 1, shadowOffset:{  width: 2,  height: 3,  }, shadowColor: 'black', shadowRadius: 3, shadowOpacity: 0.5 }}>
         <IconButton
           text={'Start'}
           containerStyle={[buttonStyle, {borderTopLeftRadius: borderRadius, borderBottomLeftRadius: borderRadius, backgroundColor: '#6200EA'}]}
@@ -325,11 +419,17 @@ export class SubjectModal extends React.PureComponent {
   }
 
   _renderContent(){
+    const Separator = (props) =>  <View style={{alignSelf: 'center', width: '80%', height: 1, backgroundColor: 'rgba(0, 0, 0, 0.2)', margin: 15}} {...props}/>
     return(
       <Fragment>
         <ModalTopIndicator/>
         <ScrollView style={{flex: 1, padding: 10, borderTopColor: 'rgba(0, 0, 0, 0.1)', borderTopWidth: 1}}>
-          {this._renderInfo()}
+          {this._renderTitle()}
+          {this._renderDescription()}
+          <Separator/>
+          {this._renderDetails()}
+          <Separator/>
+          {this._renderGrades()}
         </ScrollView>
         {this._renderButtons()}
       </Fragment>
