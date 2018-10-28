@@ -131,7 +131,8 @@ export class SwipableModal extends React.PureComponent {
           ref={r => this._rootView = r}
           style={{position: 'absolute', width: '100%', height: '100%'}}
           animation={'bounceInUp'}
-          duration={1000}
+          duration={750}
+          easing={'ease-in-out'}
           pointerEvents={'box-none'}
         >
           <Interactable.View
@@ -365,7 +366,6 @@ export class SubjectModal extends React.PureComponent {
           //subtitle
           subtitleStyle={{fontWeight: '200', fontSize: 16}}
           subtitle ={'Previous grades'}
-
         />
       </Fragment>
     );

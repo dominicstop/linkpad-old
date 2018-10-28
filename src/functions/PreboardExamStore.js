@@ -1,13 +1,13 @@
 import store from 'react-native-simple-store';
 import _ from 'lodash';
 
-const DEBUG = true;
+const DEBUG = false;
 const URL = 'https://linkpad-pharmacy-reviewer.firebaseapp.com/getallpreboardexams';
 const KEY = 'preboard';
 
 let _preboardData = null;
 
-//structure of single exammodule item in preboard exams.exammodule array
+//model: structure of single exammodule item in preboard exams.exammodule array
 export class PreboardExamModuleItem {
   constructor(examModule = { description: '', indexid: 0, premodulename: '', questions: []}){
     this.examModule = examModule;
@@ -18,7 +18,7 @@ export class PreboardExamModuleItem {
   }
 }
 
-//structure of single exam item in preboard exams array
+//model: structure of single exam item in preboard exams array
 export class PreboardExamItem {
   constructor(exam = {dateposted: '', description: '', enddate: '', exammodules: []}){
     this.exam = exam;
@@ -40,12 +40,13 @@ export class PreboardExamItem {
   }
 }
 
-//represents the structure of the json response for exam
+//model: represents the structure of the json response for exam
 export class PreboardExam {
   constructor(response = {message: '', success: false, exams: [], active: false, examkey: 0}){
     this.response = response;
   }
 
+  //returns the json
   get = () => {
     return _.cloneDeep(this.response);
   }
@@ -61,6 +62,21 @@ export class PreboardExam {
     }
     return exams;
   }
+}
+
+export class PreboardExamManager {
+  //returns json wrapped in a object
+  getAsModel = async () => {
+    const json = await get();
+    let model = new PreboardExam(json);
+    return model;
+  }
+
+  isPreboardActive = async () => {
+    let model = await this.getAsModel();
+    return model.response.active;
+  }
+
 }
 
 fetchPreboard = () => {

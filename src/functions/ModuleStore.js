@@ -64,7 +64,7 @@ export class ModuleItem {
 fetchModuleData = () => {
   return new Promise(async (resolve, reject) => {
     try {
-      let results = await fetch();
+      let results = await fetch(URL);
       let json    = await results.json();
       resolve(json);
     } catch(error) {
