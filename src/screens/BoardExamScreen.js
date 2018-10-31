@@ -116,10 +116,17 @@ export class ActiveCard extends React.PureComponent {
     titleStyle: {
       fontSize: 18,
       fontWeight: '500',
+      ...Platform.select({ android: {
+        fontWeight: '900',
+      }})
     },
     subtitleStyle: {
       fontSize: 24,
       fontWeight: '200',
+      ...Platform.select({ android: {
+        fontWeight: '100',
+        color: 'grey'
+      }})
     },
   });
 
@@ -254,26 +261,6 @@ export class ActiveCard extends React.PureComponent {
           size ={27}
         /> 
       </PlatformTouchableIconButton>
-    );
-  }
-
-  __renderButton(){
-    return (
-      <IconButton 
-        containerStyle={[STYLES.mediumShadow, {padding: 15, marginTop: 15, backgroundColor: '#7C4DFF', borderRadius: 10}]}
-        textStyle={{color: 'white', fontSize: 20, fontWeight: 'bold', marginLeft: 20}}
-        iconType={'feather'}
-        iconColor={'white'}
-        iconSize={24}
-        onPress={this._handleOnPress}
-      >
-        <Icon
-          name ={'chevron-right'}
-          color={'rgba(255, 255, 255, 0.5)'}
-          type ={'feather'}
-          size ={27}
-        /> 
-      </IconButton>
     );
   }
 
