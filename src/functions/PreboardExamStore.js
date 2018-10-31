@@ -1,26 +1,36 @@
 import store from 'react-native-simple-store';
 import _ from 'lodash';
+//import Moment from 'react-moment';
 
-const DEBUG = false;
+const DEBUG = true;
 const URL = 'https://linkpad-pharmacy-reviewer.firebaseapp.com/getallpreboardexams';
 const KEY = 'preboard';
 
 let _preboardData = null;
 
 //model: structure of single exammodule item in preboard exams.exammodule array
-export class PreboardExamModuleItem {
-  constructor(examModule = { description: '', indexid: 0, premodulename: '', questions: []}){
-    this.examModule = examModule;
+export class PreboardExamModuleItem {  
+  constructor(examModule = { description: '', indexid: 0, premodulename: '', questions: []},  indexid_exam = null){
+    this.examModule = {
+      //used for identifying which exam the exammodule belongs to
+      indexid_exam,
+      ...examModule,
+    };
   }
 
   get = () => {
     return _.cloneDeep(this.examModule);
   }
+
+  getCompositeIndexid = () => {
+    const { indexid_exam, indexid} = this.examModule;
+    return `examid:${indexid_exam}-moduleid:${indexid}`;
+  }
 }
 
 //model: structure of single exam item in preboard exams array
 export class PreboardExamItem {
-  constructor(exam = {dateposted: '', description: '', enddate: '', exammodules: []}){
+  constructor(exam = {dateposted: '', description: '', enddate: '', exammodules: [], examname: '', indexid: -1, startdate: ''}){
     this.exam = exam;
   }
 
@@ -31,13 +41,20 @@ export class PreboardExamItem {
   getExamModules = () => {
     const { exam } = this;
     //note: written like this for VSCODE autocomplete to work
-    let exams = [new PreboardExamModuleItem(exam.exammodules[0])];
-    //could have used foreach but needed to skip index 0
-    for (let i = 1; i < exam.exammodules.length; i++) {
-      exams.push(new PreboardExamItem(exam.exammodules[i]));
-    }
+    let exams = [new PreboardExamModuleItem()];
+    exams = exam.exammodules.map((item) => 
+      //wrap inside a model, but return as object
+      new PreboardExamModuleItem(item, exam.indexid).examModule
+    );
     return exams;
-  }
+  };
+
+  getExamModulesModel = () => {
+    //note: written like this for VSCODE autocomplete to work
+    let exams = [new PreboardExamModuleItem()];
+    exams = this.getExamModules().map((item) => new PreboardExamModuleItem(item));
+    return exams;
+  };
 }
 
 //model: represents the structure of the json response for exam
@@ -51,6 +68,8 @@ export class PreboardExam {
     return _.cloneDeep(this.response);
   }
 
+  isActive = () => this.response.active;
+
   //returns an array of PreboardExamItem
   getExams = () => {
     const { response } = this;
@@ -62,21 +81,43 @@ export class PreboardExam {
     }
     return exams;
   }
+
+  getActiveExam = () => {
+    const { exams, examkey } = this.get();
+    return exams[examkey];
+  }
+  
+  //active exam wrapped inside of PreboardExamItem model
+  getActiveExamAsModel = () => {
+    const { exams, examkey } = this.get();
+    return new PreboardExamItem(exams[examkey]);
+  }
 }
 
 export class PreboardExamManager {
   //returns json wrapped in a object
+  constructor(){
+    this.data = _preboardData;
+  }
+
+  refresh = async () => {
+    this.data = await refresh();
+  };
+
+  //return preboard wrapped in model
   getAsModel = async () => {
-    const json = await get();
-    let model = new PreboardExam(json);
+    const data = await get();
+    this.data = data;
+    let model = new PreboardExam(data);
     return model;
   }
 
-  isPreboardActive = async () => {
-    let model = await this.getAsModel();
-    return model.response.active;
+  getActiveExamModel = async () => {
+    //get Preboard data as model
+    let preboardModel = await this.getAsModel();
+    //get active exam
+    return preboardModel.getActiveExamAsModel();
   }
-
 }
 
 fetchPreboard = () => {

@@ -10,9 +10,9 @@ import { AnimatedCollapsable     } from './Buttons';
 import { IconText                } from '../components/Views';
 import { IconButton              } from '../components/Buttons';
 import { SubjectItem, ModuleItem } from '../functions/ModuleStore';
-import { timeout                 } from '../functions/Utils';
+import { timeout                 , setStateAsync} from '../functions/Utils';
 
-import * as Animatable      from 'react-native-animatable'   ;
+import * as Animatable from 'react-native-animatable';
 
 const Screen = {
   width : Dimensions.get('window').width ,
@@ -63,7 +63,7 @@ export class SwipableModal extends React.PureComponent {
     if(mountModal){
       this._modalShadow.fadeOut(750);
       await this._rootView.bounceOutDown(750);
-      this.setState({mountModal: false});
+      await setStateAsync({mountModal: false});
     }
   };
 
@@ -225,6 +225,153 @@ export class WelcomeScreenModalContent extends React.PureComponent {
   }
 }
 
+//used in BoardExamScreen: shown when more info is pressed
+export class BoardExamModalContent extends React.PureComponent {
+  static styles = StyleSheet.create({
+    bigTitle: {
+      fontSize: 32, 
+      fontWeight: '700', 
+      marginTop: 5, 
+      color: '#311B92'
+    },
+    smallTitle: {
+      flex: 1,
+      fontSize: 26,
+      fontWeight: '700',
+      color: 'rgba(0, 0, 0, 0.7)',
+    },
+    body: {
+      flex: 1, 
+      fontSize: 20, 
+      marginTop: 5, 
+      textAlign: 'justify',
+    }
+  });
+
+  constructor(props){
+    super(props);
+    this.imageIntro    = require('../../assets/icons/cloud-book.png');
+    this.imageQuestion = require('../../assets/icons/qa.png');
+    this.imageHands    = require('../../assets/icons/hands.png');
+  
+  }
+
+  _renderIntroduction(){
+    const { styles } = BoardExamModalContent;
+    return(
+      <View style={{alignItems: 'center'}}>
+        <Animatable.Image
+          source={this.imageIntro}
+          style={{width: 90, height: 90, marginTop: 15}}
+          animation={'pulse'}
+          iterationCount={"infinite"}
+          duration={5000}
+          easing={'ease-in-out'}
+          useNativeDriver={true}
+        />
+        <Text style={styles.bigTitle}>{'What is Preboard?'}</Text>
+        <IconText
+          containerStyle={{marginTop: 10}}
+          textStyle={styles.smallTitle}
+          iconSize ={28}
+          text={'About'}
+          iconColor='rgba(0, 0, 0, 0.5)'
+          iconName ='ios-information-circle'
+          iconType ='ionicon'
+        />
+        <Text style={styles.body}>
+          {"Preboard Exam is an online mock exam that is updated yearly to asess the information you have learned whether its from the app's modules, practice quizes or the material discussed in class. The goal of this mock exam is to make sure you're prepared for the real thing and help you attain a passing score!"}
+        </Text>
+      </View>
+    );
+  }
+
+  _renderQuestion(){
+    const { styles } = BoardExamModalContent;
+    return(
+      <View style={{alignItems: 'center'}}>
+        <Animatable.Image
+          source={this.imageQuestion}
+          style={{width: 90, height: 90, marginTop: 5}}
+          animation={'pulse'}
+          iterationCount={"infinite"}
+          duration={5000}
+          easing={'ease-in-out'}
+          useNativeDriver={true}
+        />
+        <Text style={styles.bigTitle}>{'Realistic Questions'}</Text>
+
+        <IconText
+          containerStyle={{marginTop: 10}}
+          textStyle={[styles.smallTitle, {marginBottom: 3}]}
+          iconSize ={32}
+          text={'Content'}
+          iconColor='rgba(0, 0, 0, 0.5)'
+          iconName ='ios-book'
+          iconType ='ionicon'
+        />
+        <Text style={styles.body}>
+          {"The questions in each Preboard exam is different every year and is hand selected amongst all the modules provided in the app. The questions selected are Etiam porta sem malesuada magna mollis euismod."}
+        </Text>
+      </View>
+    );
+  }
+
+  _renderExplantion(){
+    const { styles } = BoardExamModalContent;
+    return(
+      <View style={{alignItems: 'center', marginTop: 25}}>
+        <Animatable.Image
+          source={this.imageHands}
+          style={{width: 90, height: 90}}
+          animation={'pulse'}
+          iterationCount={"infinite"}
+          duration={5000}
+          easing={'ease-in-out'}
+          useNativeDriver={true}
+        />
+        <Text style={styles.bigTitle}>{'How it Works'}</Text>
+
+        <IconText
+          containerStyle={{marginTop: 10}}
+          textStyle={[styles.smallTitle, {marginBottom: 3}]}
+          iconSize ={32}
+          text={'Mechanics'}
+          iconColor='rgba(0, 0, 0, 0.5)'
+          iconName ='ios-cog'
+          iconType ='ionicon'
+        />
+        <Text style={styles.body}>
+          {"You will be asked a series of questions and will select an answer from the choices. There is a time limit during the mock exam and when the timer runs out, the exam will end and you will be graded for the questions you managed to answer. Maecenas faucibus mollis interdum. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus."}
+        </Text>
+      </View>
+    );
+  }
+
+  _renderBody(){
+    return(
+      <ScrollView style={{paddingTop: 5, borderTopColor: 'rgba(0, 0, 0, 0.2)', borderTopWidth: 1, padding: 15}}>
+        {this._renderIntroduction()}
+        {this._renderQuestion()}
+        {this._renderExplantion()}
+        <View style={{marginBottom: 250}}/>
+      </ScrollView>
+    );
+  }
+
+  render(){
+    return(
+      <BlurView style={{flex: 1}} intensity={100}>
+        <View style={{flex: 1, backgroundColor: 'rgba(255, 255, 255, 0.5)'}}>
+          <ModalTopIndicator/>
+          {this._renderBody()}
+        </View>
+      </BlurView>
+    );
+  }
+}
+
+//used in homescreen: when a subject is pressed in module list
 export class SubjectModal extends React.PureComponent {
   constructor(props){
     super(props);

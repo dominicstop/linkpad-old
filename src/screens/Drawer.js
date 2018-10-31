@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Fragment } from 'react';
 import { Dimensions, Platform } from 'react-native';
 
 import { STYLES          } from '../Constants';
@@ -9,6 +9,7 @@ import { PaymentStack    } from './PaymentScreen';
 import { AboutStack      } from './AboutScreen';
 import { Homescreen      } from './Homescreen';
 
+import { SwipableModal, BoardExamModalContent } from '../components/SwipableModal' ;
 
 import { createDrawerNavigator } from 'react-navigation';
 import { Icon } from 'react-native-elements';
@@ -119,15 +120,31 @@ export const DrawerStack = createDrawerNavigator({
 export class DrawerStackContainer extends React.Component {
   static router = DrawerStack.router;
 
+  //used in boardexamscreen
+  _renderModal(){
+    return(
+      <SwipableModal
+        ref={r => this._modal = r}
+        onSnap={this._handleOnSnap}
+      >
+        <BoardExamModalContent/>
+      </SwipableModal>
+    );
+  }
+
   render(){
     return (
-      <DrawerStack
-        navigation={this.props.navigation}
-        screenProps={{
-          ...this.props.screenProps,
-          drawerNav: this.props.navigation,
-        }}
-      />
+      <Fragment>
+        <DrawerStack
+          navigation={this.props.navigation}
+          screenProps={{
+            ...this.props.screenProps,
+            drawerNav: this.props.navigation,
+            getBoardExamModelRef: () => this._modal,
+          }}
+        />
+        {this._renderModal()}
+      </Fragment>
     );
   }
 }

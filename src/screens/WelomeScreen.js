@@ -9,39 +9,8 @@ import { Divider } from 'react-native-elements';
 
 import LottieCircle  from '../components/LottieCircle';
 import { WelcomeScreenModalContent, SwipableModal } from '../components/SwipableModal';
+import { AnimateInView } from '../components/Views';
 
-//wraps childern and animates with delay
-export class AnimatedView extends React.PureComponent {
-  static propTypes = {
-    animation: PropTypes.string,
-    easing: PropTypes.string,
-    duration: PropTypes.number,
-    difference: PropTypes.number,
-  }
-
-  static defaultProps = {
-    animation: 'fadeInUp',
-    easing: 'ease-in-out',
-    duration: 1000,
-    difference: 250,
-  }
-
-  render(){
-    const { animation, duration, difference, ...otherProps } = this.props;
-    return this.props.children.map((child, index) => {
-      return(
-        <Animatable.View
-          key={'animatedView-' + index}
-          duration={duration + (index * difference)}
-          useNativeDriver={true}
-          {...{animation, ...otherProps}}
-        >
-          {child}
-        </Animatable.View>
-      );
-    });
-  }
-}
 
 //wrapper component for Swiper child
 export class Slide extends React.PureComponent {
@@ -193,7 +162,7 @@ export class VisionSlide extends React.PureComponent {
     const paddingTop = (deviceHeight * 0.5) - (this.iconContainerSize / 2) - (fontSize + 15);
     return(
       <View style={styles.slide}>
-        <AnimatedView duration={750}>
+        <AnimateInView duration={750}>
           <LottieCircle 
             source={this.animationSource}
             ref={r => this.lottie = r}
@@ -201,7 +170,7 @@ export class VisionSlide extends React.PureComponent {
           <Text style={[styles.textTitle, {marginTop: 20}]}>{'Our Vision'}</Text>
           <Text style={[styles.textBody]}>{'Donec sed odio dui. Cras justo odio, dapibus ac facilisis in, egestas eget quam.'}</Text>
           <View style={styles.line}/>
-        </AnimatedView>
+        </AnimateInView>
       </View>
     );
   }
@@ -228,7 +197,7 @@ export class GoalSlide extends React.PureComponent {
     const paddingTop = (deviceHeight * 0.5) - (this.iconContainerSize / 2) - (fontSize + 15);
     return(
       <View style={styles.slide}>
-        <AnimatedView duration={750}>
+        <AnimateInView duration={750}>
           <LottieCircle 
             source={this.animationSource}
             ref={r => this.lottie = r}
@@ -236,7 +205,7 @@ export class GoalSlide extends React.PureComponent {
           <Text style={[styles.textTitle, {marginTop: 20}]}>{'Our Goal'}</Text>
           <Text style={[styles.textBody]}>{'Lorum Ipsum Morbi leo risus, porta ac consectetur ac, vestibulum at eros.'}</Text>
           <View style={styles.line}/>
-        </AnimatedView>
+        </AnimateInView>
       </View>
     );
   }
@@ -263,7 +232,7 @@ export class ImproveSlide extends React.PureComponent {
     const paddingTop = (deviceHeight * 0.5) - (this.iconContainerSize / 2) - (fontSize + 15);
     return(
       <View style={styles.slide}>
-        <AnimatedView duration={750}>
+        <AnimateInView duration={750}>
           <LottieCircle 
             source={this.animationSource}
             ref={r => this.lottie = r}
@@ -271,7 +240,7 @@ export class ImproveSlide extends React.PureComponent {
           <Text style={[styles.textTitle, {marginTop: 20}]}>{'Improve and Learn'}</Text>
           <Text style={[styles.textBody]}>{'Lorum Ipsum Morbi leo risus, porta ac consectetur ac, vestibulum at eros.'}</Text>
           <View style={styles.line}/>
-        </AnimatedView>
+        </AnimateInView>
       </View>
     );
   }
@@ -334,7 +303,7 @@ export class ContinueSlide extends React.PureComponent {
     const paddingTop = (deviceHeight * 0.5) - (this.iconContainerSize / 2) - (fontSize + 15);
     return(
       <View style={styles.slide}>
-        <AnimatedView duration={750}>
+        <AnimateInView duration={750}>
           <LottieCircle 
             source={this.animationSource}
             ref={r => this.lottie = r}
@@ -344,7 +313,7 @@ export class ContinueSlide extends React.PureComponent {
           {this._renderButton()}
           {this._renderMoreButton()}
           <View style={styles.line}/>
-        </AnimatedView>
+        </AnimateInView>
       </View>
     );
   }

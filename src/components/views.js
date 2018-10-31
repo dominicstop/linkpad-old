@@ -126,7 +126,7 @@ export class Card extends React.PureComponent {
     const { style, ...viewProps } = this.props;
     return(
       <View
-        style={[{marginHorizontal: 8, marginVertical: 15, marginBottom: 0, paddingHorizontal: 15, paddingVertical: 10, backgroundColor: 'white', borderRadius: 10}, STYLES.mediumShadow, style]}
+        style={[{marginHorizontal: 12, marginVertical: 15, marginBottom: 0, paddingHorizontal: 15, paddingVertical: 10, backgroundColor: 'white', borderRadius: 10}, STYLES.mediumShadow, style]}
         {...viewProps}
       >
         {this.props.children}
@@ -250,6 +250,39 @@ export class AnimatedListItem extends React.PureComponent {
         {this.props.children}
       </Animatable.View>
     );
+  }
+}
+
+//wraps childern and animates with delay stagger
+export class AnimateInView extends React.PureComponent {
+  static propTypes = {
+    animation: PropTypes.string,
+    easing: PropTypes.string,
+    duration: PropTypes.number,
+    difference: PropTypes.number,
+  }
+
+  static defaultProps = {
+    animation: 'fadeInUp',
+    easing: 'ease-in-out',
+    duration: 1000,
+    difference: 250,
+  }
+
+  render(){
+    const { animation, duration, difference, ...otherProps } = this.props;
+    return this.props.children.map((child, index) => {
+      return(
+        <Animatable.View
+          key={'animateInView-' + index}
+          duration={duration + (index * difference)}
+          useNativeDriver={true}
+          {...{animation, ...otherProps}}
+        >
+          {child}
+        </Animatable.View>
+      );
+    });
   }
 }
 
