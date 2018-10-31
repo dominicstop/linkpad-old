@@ -1,27 +1,105 @@
-import React from 'react';
-import { StyleSheet, Text, View, Dimensions, ScrollView, ViewPropTypes, TouchableOpacity, Animated, Easing, Alert, FlatList } from 'react-native';
+import React, { Fragment } from 'react';
+import { StyleSheet, Text, View, Dimensions, ScrollView, ViewPropTypes, TouchableOpacity, Animated, Easing, Alert, FlatList, Platform } from 'react-native';
 import PropTypes from 'prop-types';
 
 import { setStateAsync, timeout, shuffleArray, randomElementFromArray , returnToZero} from '../functions/Utils';
 
-import { Button, ExpandCollapseTextWithHeader } from './Buttons';
-import { AnimatedListItem, IconText } from './Views';
+import { IconButton, ExpandCollapseTextWithHeader } from './Buttons';
+import { AnimatedListItem, IconText, Card } from './Views';
 import { PreboardExam, PreboardExamManager, PreboardExamItem, PreboardExamModuleItem } from '../functions/PreboardExamStore';
+import { STYLES } from '../Constants';
+import PlatformTouchable from './Touchable';
 
+import _ from 'lodash';
 import * as Animatable from 'react-native-animatable';
 import      Carousel   from 'react-native-snap-carousel';
-import    { Header   } from 'react-navigation';
-import    { Divider  } from 'react-native-elements';
-
+import { Header } from 'react-navigation';
+import { Icon } from 'react-native-elements';
 import { DangerZone } from 'expo';
-import _ from 'lodash';
-import {STYLES} from '../Constants';
 const { Lottie } = DangerZone;
 
-export class PreboardExamList extends React.Component {
+export class ExamModuleItem extends React.PureComponent {
+  static propTypes = {
+    module: PropTypes.object,
+  };
+
+  static styles = StyleSheet.create({
+    card: {
+      paddingHorizontal: 0, 
+      paddingVertical: 0,
+    },
+    container: {
+      paddingHorizontal: 15, 
+      paddingVertical: 10,
+    },
+    title: {
+      fontSize: 22,
+      fontWeight: '800',
+    },
+    subtitle: {
+      fontWeight: '100',
+      fontSize: 16,
+    },
+    description: {
+      fontSize: 18,
+      textAlign: 'justify',
+      marginTop: 5,
+    }
+  });
+
+  _renderBody(){
+    const { styles } = ExamModuleItem;
+    const { module, style } = this.props;
+    const model = new PreboardExamModuleItem(module);
+    const data  = model.examModule;
+    const questionCount = model.getQuestionCount();
+
+    return(
+      <View style={styles.container}>
+        <IconText
+          //icon
+          iconName={'file-text'}
+          iconType={'feather'}
+          iconColor={'rgba(74, 20, 140, 0.5)'}
+          iconSize={32}
+          //title
+          text={data.premodulename}
+          textStyle={styles.title}
+          //subtitle
+          subtitle={`Questions: ${questionCount} items`}
+          subtitleStyle={styles.subtitle}
+        />
+        <Text style={styles.description}>{data.description}</Text>
+      </View>
+    );
+  }
+
+  render(){
+    const { styles } = ExamModuleItem;
+    const { style } = this.props;
+
+    return(
+      <Card style={[styles.card, style]}>
+        <PlatformTouchable >
+          {this._renderBody()}
+        </PlatformTouchable>
+      </Card>
+    );
+  }
+}
+
+export class PreboardExamList extends React.PureComponent {
+  static styles = StyleSheet.create({
+    flatlist: {
+      flex: 1,
+      padding: 0,
+    }
+  });
+
   constructor(props){
     super(props);
     this.state = {
+      loading: true,
       modules: [new PreboardExamModuleItem(null).examModule],
     };
     //used for getting the preboard data
@@ -29,17 +107,17 @@ export class PreboardExamList extends React.Component {
   }
 
   async componentWillMount(){
+    this.setState({loading: true});
+    //get module data
     let exam = await this.preboardExam.getActiveExamModel();
     let modules = exam.getExamModules();
-    this.setState({modules});
+    this.setState({modules, loading: false});
   }
 
   _keyExtactor = (item) => {
     const model = new PreboardExamModuleItem(item);
     return model.getCompositeIndexid();
   }
-
-  
 
   _renderFlatlistHeader = () => {
     return(
@@ -54,24 +132,31 @@ export class PreboardExamList extends React.Component {
   }
 
   _renderItem = ({item, index}) => {
-    const model = new PreboardExamModuleItem({...item});
+    //fadeinup clips on android, use diff animation
+    const animation = Platform.select({
+      ios: 'fadeInUp',
+      android: 'fadeInLeft'
+    });
+
     return(
       <AnimatedListItem
-        index={index}
         delay={300}
         duration={500}
+        {...{index, animation}}
       >
-        <Text>{model.getCompositeIndexid()}</Text>
+        <ExamModuleItem module={item}/>
       </AnimatedListItem>
     );
   }
 
   render(){
+    const { styles } = PreboardExamList;
     const { style, ...flatListProps} = this.props;
-    const { modules } = this.state;
+    const { modules, loading} = this.state;
+    if(loading) return null;
     return(
       <FlatList
-        style={style}
+        style={[styles.flatlist, style]}
         data={_.compact(modules)}
         keyExtractor={this._keyExtactor}
         renderItem ={this._renderItem }
@@ -79,14 +164,14 @@ export class PreboardExamList extends React.Component {
         ListFooterComponent={this._renderFlatlistFooter}
         scrollEventThrottle={200}
         directionalLockEnabled={true}
-        removeClippedSubviews={true}
+        removeClippedSubviews={false}
         {...flatListProps}
       />
     );
   }
 }
 
-export class PreboardExamTest extends React.Component {
+export class PreboardExamTest extends React.PureComponent {
   static propTypes = {
 
   }

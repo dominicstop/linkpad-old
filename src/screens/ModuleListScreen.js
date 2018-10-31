@@ -299,13 +299,11 @@ export class ModuleListScreen extends React.Component {
   }
 
   render(){
-    const header_height = Header.HEIGHT + Expo.Constants.statusBarHeight;
     console.log('Module List rendering');
     return(
       <ViewWithBlurredHeader hasTabBar={true}>
         <NavigationEvents onDidFocus={this.componentDidFocus}/>
         <ModuleList
-          containerStyle={{marginTop: Platform.OS == 'android'? header_height + 15 : 0}}
           contentInset={{top: Header.HEIGHT + 17}}
           moduleList={this.state.modules}
           onPressModule ={this._navigateToModule}

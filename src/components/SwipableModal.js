@@ -253,7 +253,6 @@ export class BoardExamModalContent extends React.PureComponent {
     this.imageIntro    = require('../../assets/icons/cloud-book.png');
     this.imageQuestion = require('../../assets/icons/qa.png');
     this.imageHands    = require('../../assets/icons/hands.png');
-  
   }
 
   _renderIntroduction(){
@@ -361,11 +360,9 @@ export class BoardExamModalContent extends React.PureComponent {
 
   render(){
     return(
-      <BlurView style={{flex: 1}} intensity={100}>
-        <View style={{flex: 1, backgroundColor: 'rgba(255, 255, 255, 0.5)'}}>
-          <ModalTopIndicator/>
-          {this._renderBody()}
-        </View>
+      <BlurView style={{flex: 1}} intensity={100} tint={'light'}>
+        <ModalTopIndicator/>
+        {this._renderBody()}
       </BlurView>
     );
   }

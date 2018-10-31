@@ -1,5 +1,5 @@
 import React from 'react';
-import { Text, View, ViewPropTypes, Platform, StyleSheet } from 'react-native';
+import { Text, View, ViewPropTypes, Platform, StyleSheet, StatusBar } from 'react-native';
 import PropTypes from 'prop-types';
 
 import { STYLES } from '../Constants';
@@ -126,7 +126,8 @@ export class Card extends React.PureComponent {
     const { style, ...viewProps } = this.props;
     return(
       <View
-        style={[{marginHorizontal: 12, marginVertical: 15, marginBottom: 0, paddingHorizontal: 15, paddingVertical: 10, backgroundColor: 'white', borderRadius: 10}, STYLES.mediumShadow, style]}
+        style={[{overflow: 'visible', marginHorizontal: 12, marginTop: 5, marginBottom: 10, paddingHorizontal: 15, paddingVertical: 10, backgroundColor: 'white', borderRadius: 10}, STYLES.mediumShadow, style]}
+        elevation={7}
         {...viewProps}
       >
         {this.props.children}
@@ -201,9 +202,12 @@ export class ViewWithBlurredHeader extends React.PureComponent {
   }
 
   render_Android(){
+    const paddingTop = StatusBar.currentHeight + Header.HEIGHT;
     return(
       <View style={{flex: 1}}>
-        {this.props.children}
+        <View style={{flex: 1, paddingTop}}>
+          {this.props.children}
+        </View>
         {this._renderHeader()}
       </View>
     );

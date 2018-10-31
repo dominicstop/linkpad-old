@@ -9,8 +9,8 @@ import { CustomHeader          } from '../components/Header';
 import { DrawerButton, IconButton          } from '../components/Buttons';
 
 import PreboardExamStore from '../functions/PreboardExamStore';
-import { BoardExamTestScreen } from './BoardExamTestScreen';
 import LottieCircle from '../components/LottieCircle';
+import { BoardExamTestScreen } from './BoardExamTestScreen';
 import { PreboardExam, PreboardExamManager, PreboardExamItem, PreboardExamModuleItem } from '../functions/PreboardExamStore';
 import { setStateAsync } from '../functions/Utils';
 import { AnimateInView } from '../components/Views';
@@ -104,7 +104,23 @@ export class ActiveCard extends React.PureComponent {
   static propTypes = {
     preboardData: PropTypes.object.isRequired,
     onPressStart: PropTypes.func,
-  }
+  };
+
+  static styles = StyleSheet.create({
+    detailRow: {
+      flex: 1, 
+      flexDirection: 'row', 
+      marginTop: 7,
+    },
+    titleStyle: {
+      fontSize: 18,
+      fontWeight: '500',
+    },
+    subtitleStyle: {
+      fontSize: 24,
+      fontWeight: '200',
+    },
+  });
 
   constructor(props){
     super(props);
@@ -162,21 +178,15 @@ export class ActiveCard extends React.PureComponent {
   }
 
   _renderDetails(){
+    const { styles } = ActiveCard;
     const { preboardData } = this.props;
     const model = new PreboardExam(preboardData);
-    const exams = model.getExams();
+    const exam = model.getActiveExamAsModel();
+    const examData = exam.get();
     
-    let examData = exams[0].get();
-    let questionCount = examData.exammodules.length;
+    let countModules  = exam.getTotalModules();
+    let countQuestion = exam.getTotalQuestions();
  
-    const titleStyle = {
-      fontSize: 18,
-      fontWeight: '500'
-    };
-    const subtitleStyle = {
-      fontSize: 24,
-      fontWeight: '200'
-    };
 
     return(
       <View style={{alignSelf: 'stretch', marginTop: 15}}>
@@ -190,22 +200,34 @@ export class ActiveCard extends React.PureComponent {
           text={'Exam Details'}
           textStyle={{fontSize: 24, fontWeight: '800', color: '#311B92'}}
         />
-        <View style={{flex: 1, flexDirection: 'row', marginTop: 3}}>
+        <View style={styles.detailRow}>
           <View style={{flex: 1}}>
-            <Text numberOfLines={1} style={titleStyle   }>{'Start: '}</Text>
-            <Text numberOfLines={1} style={subtitleStyle}>{examData.dateposted}</Text>
+            <Text numberOfLines={1} style={styles.titleStyle   }>{'Start: '}</Text>
+            <Text numberOfLines={1} style={styles.subtitleStyle}>{examData.startdate}</Text>
           </View>
           <View style={{flex: 1}}>
-            <Text numberOfLines={1} style={titleStyle   }>{'End: '}</Text>
-            <Text numberOfLines={1} style={subtitleStyle}>{examData.enddate}</Text>
+            <Text numberOfLines={1} style={styles.titleStyle   }>{'End: '}</Text>
+            <Text numberOfLines={1} style={styles.subtitleStyle}>{examData.enddate}</Text>
           </View>
         </View>
-        <View style={{flex: 1, flexDirection: 'row', marginTop: 5}}>
+        <View style={styles.detailRow}>
           <View style={{flex: 1}}>
-            <Text numberOfLines={1} style={titleStyle   }>{'Questions: '}</Text>
-            <Text numberOfLines={1} style={subtitleStyle}>
-              {questionCount + ' item' + (questionCount > 1? 's' : '')}
+            <Text numberOfLines={1} style={styles.titleStyle   }>{'Modules: '}</Text>
+            <Text numberOfLines={1} style={styles.subtitleStyle}>
+              {countModules + ' module' + (countModules > 1? 's' : '')}
             </Text>
+          </View>
+          <View style={{flex: 1}}>
+            <Text numberOfLines={1} style={styles.titleStyle   }>{'Questions: '}</Text>
+            <Text numberOfLines={1} style={styles.subtitleStyle}>
+              {countQuestion + ' item' + (countModules > 1? 's' : '')}
+            </Text>
+          </View>
+        </View>
+        <View style={styles.detailRow}>
+          <View style={{flex: 1}}>
+            <Text numberOfLines={1} style={styles.titleStyle   }>{'Date Posted: '}</Text>
+            <Text numberOfLines={1} style={styles.subtitleStyle}>{examData.dateposted}</Text>
           </View>
         </View>
       </View>

@@ -22,6 +22,11 @@ export class PreboardExamModuleItem {
     return _.cloneDeep(this.examModule);
   }
 
+  getQuestionCount = () => {
+    const { examModule } = this;
+    return examModule && examModule.questions.length;
+  }
+
   getCompositeIndexid = () => {
     const { indexid_exam, indexid} = this.examModule;
     return `examid:${indexid_exam}-moduleid:${indexid}`;
@@ -54,6 +59,20 @@ export class PreboardExamItem {
     let exams = [new PreboardExamModuleItem()];
     exams = this.getExamModules().map((item) => new PreboardExamModuleItem(item));
     return exams;
+  };
+
+  getTotalModules = () => {
+    return this.exam.exammodules.length;
+  }
+
+  getTotalQuestions = () => {
+    const modules = this.getExamModules();
+    let questionsCount = 0;
+    modules.forEach(item => {
+      let module =  new PreboardExamModuleItem(item);
+      questionsCount += module.examModule.questions.length;
+    });
+    return questionsCount;
   };
 }
 
