@@ -6,7 +6,7 @@ import   NavigationService       from '../NavigationService';
 import { HEADER_PROPS, STYLES          } from '../Constants';
 import { ViewWithBlurredHeader, IconText, Card } from '../components/Views' ;
 import { CustomHeader          } from '../components/Header';
-import { DrawerButton, IconButton          } from '../components/Buttons';
+import { DrawerButton, IconButton, PlatformTouchableIconButton } from '../components/Buttons';
 
 import PreboardExamStore from '../functions/PreboardExamStore';
 import LottieCircle from '../components/LottieCircle';
@@ -18,6 +18,7 @@ import { AnimateInView } from '../components/Views';
 import * as Animatable from 'react-native-animatable';
 import { Header, createStackNavigator } from 'react-navigation';
 import { Icon, Divider } from 'react-native-elements';
+import PlatformTouchable from '../components/Touchable';
 
 
 //first card: explains what preboard exam is
@@ -37,10 +38,10 @@ export class IntroductionCard extends React.PureComponent {
   }
 
   _renderButton(){
-    return (
-      <IconButton 
-        containerStyle={[STYLES.mediumShadow, {width: '100%', alignItems: 'center', justifyContent: 'center', padding: 15, marginTop: 15, backgroundColor: '#7C4DFF', borderRadius: 10}]}
-        textStyle={{flex: 0, color: 'white', fontSize: 20, fontWeight: 'bold', marginLeft: 10}}
+    return(
+      <PlatformTouchableIconButton
+        wrapperStyle={[{width: '100%', backgroundColor: '#7C4DFF', marginTop: 15}, STYLES.mediumShadow]}
+        textStyle={{color: 'white', fontSize: 20, fontWeight: 'bold', marginLeft: 10}}
         iconName={'bookmark'}
         iconType={'feather'}
         iconColor={'white'}
@@ -83,7 +84,7 @@ export class InactiveCard extends React.PureComponent {
       <Card style={{alignItems: 'center', justifyContent: 'center', paddingVertical: 15}}>
         <Animatable.Image
           source={this.image}
-          style={{width: 75, height: 75, marginTop: 10}}
+          style={{width: 75, height: 75}}
           animation={'pulse'}
           iterationCount={"infinite"}
           duration={5000}
@@ -135,8 +136,8 @@ export class ActiveCard extends React.PureComponent {
   _renderHeading(){
     return(
       <Fragment>
-        <Animatable.Image
-          source={this.image}
+        <Image
+          source={require('../../assets/icons/tablet.png')}
           style={{width: 75, height: 75, marginTop: 10}}
           animation={'pulse'}
           iterationCount={"infinite"}
@@ -235,15 +236,35 @@ export class ActiveCard extends React.PureComponent {
   }
 
   _renderButton(){
-    return (
-      <IconButton 
-        containerStyle={[STYLES.mediumShadow, {padding: 15, marginTop: 15, backgroundColor: '#7C4DFF', borderRadius: 10}]}
-        textStyle={{color: 'white', fontSize: 20, fontWeight: 'bold', marginLeft: 20}}
+    return(
+      <PlatformTouchableIconButton
+        wrapperStyle={[{width: '100%', backgroundColor: '#7C4DFF', marginTop: 15}, STYLES.mediumShadow]}
+        textStyle={{flex: 1, color: 'white', fontSize: 20, fontWeight: 'bold', marginLeft: 10}}
         iconName={'edit-3'}
         iconType={'feather'}
         iconColor={'white'}
         iconSize={24}
         text={'Start Exam'}
+        onPress={this._handleOnPress}
+      >
+        <Icon
+          name ={'chevron-right'}
+          color={'rgba(255, 255, 255, 0.5)'}
+          type ={'feather'}
+          size ={27}
+        /> 
+      </PlatformTouchableIconButton>
+    );
+  }
+
+  __renderButton(){
+    return (
+      <IconButton 
+        containerStyle={[STYLES.mediumShadow, {padding: 15, marginTop: 15, backgroundColor: '#7C4DFF', borderRadius: 10}]}
+        textStyle={{color: 'white', fontSize: 20, fontWeight: 'bold', marginLeft: 20}}
+        iconType={'feather'}
+        iconColor={'white'}
+        iconSize={24}
         onPress={this._handleOnPress}
       >
         <Icon
@@ -279,6 +300,14 @@ export class BoardExamScreen extends React.Component {
     title: 'Board Exam',
     headerTitle: BoardExamHeader,
     headerLeft : <DrawerButton drawerNav={screenProps.drawerNav}/>,
+  });
+
+  static styles = StyleSheet.create({
+    scrollview: Platform.select({
+      android: {
+        paddingTop: 15,
+      }
+    }),
   });
 
   constructor(props){
@@ -343,9 +372,11 @@ export class BoardExamScreen extends React.Component {
   }
 
   render(){
+    const { styles } = BoardExamScreen;
     return(
       <ViewWithBlurredHeader hasTabBar={false}>
-        <ScrollView 
+        <ScrollView
+          contentContainerStyle={styles.scrollview}
           contentInset={{top: Header.HEIGHT}}
           contentOffset={{x: 0, y: -70}}
           ref={r => this.scrollview = r}
@@ -377,7 +408,7 @@ export const BoardExamStack = createStackNavigator({
       }
     },
   }, {
-    initialRouteName: 'BoardExamTestRoute',
+    initialRouteName: 'BoardExamRoute',
     headerMode: 'float',
     headerTransitionPreset: 'uikit',
     headerTransparent: true,

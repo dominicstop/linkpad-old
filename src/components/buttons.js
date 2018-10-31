@@ -5,7 +5,9 @@ import PropTypes from 'prop-types';
 import * as Animatable from 'react-native-animatable';
 import { LinearGradient } from 'expo';
 import { Icon } from 'react-native-elements';
-import {STYLES} from '../Constants';
+import PlatformTouchable from './Touchable';
+import { STYLES } from '../Constants';
+
 
 
 
@@ -52,6 +54,7 @@ export class IconButton extends React.PureComponent {
 
   render(){
     const {text, iconName, iconColor, iconType, iconSize, containerStyle, wrapperStyle, textStyle, children, iconProps, ...otherProps} = this.props;
+    
     return(Platform.select({
       ios: (
         <TouchableOpacity
@@ -75,6 +78,54 @@ export class IconButton extends React.PureComponent {
         </View>
       ),
     }));
+  }
+}
+
+
+export class PlatformTouchableIconButton extends React.PureComponent {
+  static propTypes = {
+    text: PropTypes.oneOfType([
+      PropTypes.string,
+      PropTypes.number,
+    ]),
+    onPress: PropTypes.func,
+    //icon props
+    iconName : PropTypes.string,
+    iconColor: PropTypes.string,
+    iconType : PropTypes.string,
+    iconSize : PropTypes.number,
+    iconProps: PropTypes.object,
+    //style
+    containerStyle: ViewPropTypes.style ,
+    wrapperStyle  : ViewPropTypes.style ,
+    textStyle     : Text.propTypes.style,
+  }
+
+  render(){
+    const {text, iconName, iconColor, iconType, iconSize, containerStyle, wrapperStyle, textStyle, children, iconProps, onPress, ...otherProps} = this.props;
+    
+    return(
+      <View style={[{flex: 1, borderRadius: 10}, wrapperStyle]} elevation={7}>
+        <PlatformTouchable 
+          background={PlatformTouchable.Ripple('#fff', true)}
+          {...{onPress}}
+        >
+          <View style={[{flex: 1, flexDirection: 'row', padding: 15, alignItems: 'center', justifyContent: 'center'}, containerStyle]}>
+            <Icon
+              name ={iconName }
+              color={iconColor}
+              type ={iconType }
+              size ={iconSize }
+              {...iconProps}
+            />
+            <Text style={[{marginLeft: 8, flex: this.props.children > 0? 1 : 0}, textStyle]}>
+              {text}
+            </Text>
+            {this.props.children}  
+          </View>
+        </PlatformTouchable>
+      </View>
+    );
   }
 }
 

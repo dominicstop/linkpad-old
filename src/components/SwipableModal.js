@@ -1,5 +1,5 @@
 import React, { Component, Fragment } from 'react';
-import { StyleSheet, View, Dimensions, Image, Text, TouchableOpacity, ScrollView } from 'react-native';
+import { StyleSheet, View, Dimensions, Image, Text, TouchableOpacity, ScrollView, Platform } from 'react-native';
 import PropTypes from 'prop-types';
 
 import Animated from 'react-native-reanimated';
@@ -40,7 +40,12 @@ export class SwipableModal extends React.PureComponent {
       { y: Screen.height * 1 },
       //half screen
       { y: Screen.height - (Screen.height * 0.6) },
-    ]
+    ],
+    ...Platform.select({
+      android: {
+        hitSlop: { bottom: -(Screen.height + MODAL_EXTRA_HEIGHT - 50) }
+      }
+    })
   }
 
   constructor(props) {
@@ -122,7 +127,7 @@ export class SwipableModal extends React.PureComponent {
   }
 
   render(){
-    const { snapPoints } = this.props;
+    const { snapPoints, hitSlop } = this.props;
     if(!this.state.mountModal) return null;
     return (
       <View style={styles.float}>
@@ -142,7 +147,7 @@ export class SwipableModal extends React.PureComponent {
             animatedValueY={this._deltaY}
             ref={r => this._interactable = r}
             onSnap={this._handleOnSnap}
-            {...{snapPoints}}
+            {...{snapPoints, hitSlop}}
           >
             <View style={styles.panelContainer}>
               <View style={styles.panel}>
@@ -255,6 +260,11 @@ export class BoardExamModalContent extends React.PureComponent {
     this.imageHands    = require('../../assets/icons/hands.png');
   }
 
+  componentDidMount() {
+		// Dirty hack
+		//this._scrollView.scrollResponderHandleStartShouldSetResponder = () => true
+	}
+
   _renderIntroduction(){
     const { styles } = BoardExamModalContent;
     return(
@@ -349,7 +359,10 @@ export class BoardExamModalContent extends React.PureComponent {
 
   _renderBody(){
     return(
-      <ScrollView style={{paddingTop: 5, borderTopColor: 'rgba(0, 0, 0, 0.2)', borderTopWidth: 1, padding: 15}}>
+      <ScrollView 
+        style={{paddingTop: 5, borderTopColor: 'rgba(0, 0, 0, 0.2)', borderTopWidth: 1, padding: 15}} nestedScrollEnabled={true}
+        ref={r => this._scrollView = r}
+      >
         {this._renderIntroduction()}
         {this._renderQuestion()}
         {this._renderExplantion()}
@@ -359,12 +372,20 @@ export class BoardExamModalContent extends React.PureComponent {
   }
 
   render(){
-    return(
-      <BlurView style={{flex: 1}} intensity={100} tint={'light'}>
-        <ModalTopIndicator/>
-        {this._renderBody()}
-      </BlurView>
-    );
+    return Platform.select({
+      ios: (
+        <BlurView style={{flex: 1}} intensity={100} tint={'light'}>
+          <ModalTopIndicator/>
+          {this._renderBody()}
+        </BlurView>
+      ),
+      android: (
+        <View style={{flex: 1, backgroundColor: 'white'}}>
+          <ModalTopIndicator/>
+          {this._renderBody()}  
+        </View>
+      ),
+    });
   }
 }
 
@@ -604,8 +625,11 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#efefef',
     overflow: 'hidden',
+    backgroundColor: Platform.select({
+      android: 'white',
+      ios: '#efefef'
+    }),
   },
   float: {
     position: 'absolute',
