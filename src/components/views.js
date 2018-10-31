@@ -192,12 +192,14 @@ export class ViewWithBlurredHeader extends React.PureComponent {
   _renderHeader(){
     const header_height = Header.HEIGHT + Expo.Constants.statusBarHeight;
     return(
-      <LinearGradient
-        style={{position: 'absolute', width: '100%', height: header_height, paddingTop: Expo.Constants.statusBarHeight}}
-        colors={['#8400ea', '#651FFF']}
-        start={[0, 1]} 
-        end={[1, 0]}
-      />
+      <View style={{position: 'absolute', elevation: 20, marginBottom: 20, width: '100%', height: header_height, backgroundColor: 'white'}}>
+        <LinearGradient
+          style={{flex: 1}}
+          colors={['#8400ea', '#651FFF']}
+          start={[0, 1]} 
+          end={[1, 0]}
+        />
+      </View>
     );
   }
 
@@ -205,7 +207,7 @@ export class ViewWithBlurredHeader extends React.PureComponent {
     const paddingTop = StatusBar.currentHeight + Header.HEIGHT;
     return(
       <View style={{flex: 1}}>
-        <View style={{flex: 1, paddingTop}}>
+        <View style={{flex: 1, paddingTop, elevation: 0}}>
           {this.props.children}
         </View>
         {this._renderHeader()}
