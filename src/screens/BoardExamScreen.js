@@ -14,6 +14,7 @@ import { BoardExamTestScreen } from './BoardExamTestScreen';
 import { PreboardExam, PreboardExamManager, PreboardExamItem, PreboardExamModuleItem } from '../functions/PreboardExamStore';
 import { setStateAsync } from '../functions/Utils';
 import { AnimateInView } from '../components/Views';
+import { ExamDetails } from '../components/PreboardExam';
 
 import * as Animatable from 'react-native-animatable';
 import { Header, createStackNavigator } from 'react-navigation';
@@ -107,29 +108,6 @@ export class ActiveCard extends React.PureComponent {
     onPressStart: PropTypes.func,
   };
 
-  static styles = StyleSheet.create({
-    detailRow: {
-      flex: 1, 
-      flexDirection: 'row', 
-      marginTop: 7,
-    },
-    titleStyle: {
-      fontSize: 18,
-      fontWeight: '500',
-      ...Platform.select({ android: {
-        fontWeight: '900',
-      }})
-    },
-    subtitleStyle: {
-      fontSize: 24,
-      fontWeight: '200',
-      ...Platform.select({ android: {
-        fontWeight: '100',
-        color: 'grey'
-      }})
-    },
-  });
-
   constructor(props){
     super(props);
     this.image = require('../../assets/icons/tablet.png');
@@ -165,7 +143,7 @@ export class ActiveCard extends React.PureComponent {
     const model = new PreboardExam(preboardData);
     const exams = model.getExams();
 
-    let   examData = exams[0].get();
+    let examData = exams[0].get();
     return(
       <View style={{alignSelf: 'stretch', marginTop: 15}}>
         <IconText
@@ -188,16 +166,13 @@ export class ActiveCard extends React.PureComponent {
   _renderDetails(){
     const { styles } = ActiveCard;
     const { preboardData } = this.props;
+
     const model = new PreboardExam(preboardData);
     const exam = model.getActiveExamAsModel();
     const examData = exam.get();
     
-    let countModules  = exam.getTotalModules();
-    let countQuestion = exam.getTotalQuestions();
- 
-
     return(
-      <View style={{alignSelf: 'stretch', marginTop: 15}}>
+      <Fragment>
         <IconText
           //icon
           iconName={'file-text'}
@@ -206,39 +181,11 @@ export class ActiveCard extends React.PureComponent {
           iconSize={26}
           //title
           text={'Exam Details'}
-          textStyle={{fontSize: 24, fontWeight: '800', color: '#311B92'}}
+          textStyle={{flex: 1, fontSize: 24, fontWeight: '800', color: '#311B92'}}
+          containerStyle={{flex: 1, marginTop: 15}}
         />
-        <View style={styles.detailRow}>
-          <View style={{flex: 1}}>
-            <Text numberOfLines={1} style={styles.titleStyle   }>{'Start: '}</Text>
-            <Text numberOfLines={1} style={styles.subtitleStyle}>{examData.startdate}</Text>
-          </View>
-          <View style={{flex: 1}}>
-            <Text numberOfLines={1} style={styles.titleStyle   }>{'End: '}</Text>
-            <Text numberOfLines={1} style={styles.subtitleStyle}>{examData.enddate}</Text>
-          </View>
-        </View>
-        <View style={styles.detailRow}>
-          <View style={{flex: 1}}>
-            <Text numberOfLines={1} style={styles.titleStyle   }>{'Modules: '}</Text>
-            <Text numberOfLines={1} style={styles.subtitleStyle}>
-              {countModules + ' module' + (countModules > 1? 's' : '')}
-            </Text>
-          </View>
-          <View style={{flex: 1}}>
-            <Text numberOfLines={1} style={styles.titleStyle   }>{'Questions: '}</Text>
-            <Text numberOfLines={1} style={styles.subtitleStyle}>
-              {countQuestion + ' item' + (countModules > 1? 's' : '')}
-            </Text>
-          </View>
-        </View>
-        <View style={styles.detailRow}>
-          <View style={{flex: 1}}>
-            <Text numberOfLines={1} style={styles.titleStyle   }>{'Date Posted: '}</Text>
-            <Text numberOfLines={1} style={styles.subtitleStyle}>{examData.dateposted}</Text>
-          </View>
-        </View>
-      </View>
+        <ExamDetails {...{examData}}/>
+      </Fragment>
     );
   }
 
@@ -395,7 +342,7 @@ export const BoardExamStack = createStackNavigator({
       }
     },
   }, {
-    initialRouteName: 'BoardExamRoute',
+    initialRouteName: 'BoardExamTestRoute',
     headerMode: 'float',
     headerTransitionPreset: 'uikit',
     headerTransparent: true,
