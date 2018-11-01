@@ -53,13 +53,19 @@ export class PreboardExamListScreen extends React.Component {
       preboard: null,
     }
     this.preboard = new PreboardExamManager();
-    
   }
 
   async componentWillMount(){
     //get preboard exams
     let preboardModel = await this.preboard.getAsModel();
     this.setState({preboard: preboardModel.get()});
+  };
+
+  _handleOnPressModule = (module, modules) => {
+    const { navigation } = this.props;
+    //pass selected module and modules to next screen
+    const params = { module, modules };
+    navigation.navigate('BoardExamTestRoute', params);
   }
 
   render(){
@@ -68,6 +74,7 @@ export class PreboardExamListScreen extends React.Component {
         <PreboardExamList
           contentInset={{top: Header.HEIGHT}}
           contentOffset={{x: 0, y: -70}}
+          onPressModule={this._handleOnPressModule}
         />
       </ViewWithBlurredHeader>
     );

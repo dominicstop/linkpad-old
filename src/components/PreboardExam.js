@@ -21,6 +21,7 @@ const { Lottie } = DangerZone;
 export class ExamModuleItem extends React.PureComponent {
   static propTypes = {
     module: PropTypes.object,
+    onPress: PropTypes.func,
   };
 
   static styles = StyleSheet.create({
@@ -46,6 +47,11 @@ export class ExamModuleItem extends React.PureComponent {
       marginTop: 5,
     }
   });
+
+  _handleOnPress = () => {
+    const { onPress, module } = this.props;
+    onPress && onPress(module);
+  };
 
   _renderBody(){
     const { styles } = ExamModuleItem;
@@ -80,7 +86,7 @@ export class ExamModuleItem extends React.PureComponent {
 
     return(
       <Card style={[styles.card, style]}>
-        <PlatformTouchable >
+        <PlatformTouchable onPress={this._handleOnPress}>
           {this._renderBody()}
         </PlatformTouchable>
       </Card>
@@ -219,9 +225,9 @@ export class PreboardExamList extends React.PureComponent {
     }
   });
 
-  static styles = StyleSheet.create({
-
-  });
+  static propTypes = {
+    onPressModule: PropTypes.func,
+  }
 
   constructor(props){
     super(props);
@@ -249,6 +255,13 @@ export class PreboardExamList extends React.PureComponent {
   _keyExtactor = (item) => {
     const model = new PreboardExamModuleItem(item);
     return model.getCompositeIndexid();
+  }
+
+  _handleOnPress = (module) => {
+    const { onPressModule } = this.props;
+    const { modules       } = this.state;
+    //pass down to callback
+    onPressModule && onPressModule(module, modules);
   }
 
   //title comp for collapsable  
@@ -346,7 +359,10 @@ export class PreboardExamList extends React.PureComponent {
         duration={500}
         {...{index, animation}}
       >
-        <ExamModuleItem module={item}/>
+        <ExamModuleItem 
+          module={item}
+          onPress={this._handleOnPress}
+        />
       </AnimatedListItem>
     );
   }

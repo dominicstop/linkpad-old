@@ -11,6 +11,7 @@ import { DrawerButton, IconButton, PlatformTouchableIconButton } from '../compon
 import PreboardExamStore from '../functions/PreboardExamStore';
 import LottieCircle from '../components/LottieCircle';
 import { PreboardExamListScreen } from './BoardExamListScreen';
+import { BoardExamTestStack     } from './BoardExamTestScreen';
 import { PreboardExam, PreboardExamManager, PreboardExamItem, PreboardExamModuleItem } from '../functions/PreboardExamStore';
 import { setStateAsync } from '../functions/Utils';
 import { AnimateInView } from '../components/Views';
@@ -192,7 +193,7 @@ export class ActiveCard extends React.PureComponent {
   _renderButton(){
     return(
       <PlatformTouchableIconButton
-        wrapperStyle={[{width: '100%', backgroundColor: '#7C4DFF', marginTop: 15}, STYLES.mediumShadow]}
+        wrapperStyle={[{width: '100%', backgroundColor: '#7C4DFF', marginTop: 15, paddingHorizontal: 5}, STYLES.mediumShadow]}
         textStyle={{flex: 1, color: 'white', fontSize: 20, fontWeight: 'bold', marginLeft: 10}}
         iconName={'edit-3'}
         iconType={'feather'}
@@ -359,7 +360,8 @@ export const styles = StyleSheet.create({
 
 });
 
-export const BoardExamStack = createStackNavigator({
+//stack for Preboard and PreboardList
+export const BoardExamMainStack = createStackNavigator({
     BoardExamRoute: {
       screen: BoardExamScreen,
     },
@@ -376,5 +378,19 @@ export const BoardExamStack = createStackNavigator({
     headerTransparent: true,
     //mode: 'modal',
     navigationOptions: HEADER_PROPS,
+  }
+);
+
+export const BoardExamStack = createStackNavigator({
+    BoardExamMainRoute: {
+      screen: BoardExamMainStack,
+    },
+    BoardExamTestRoute: {
+      screen: BoardExamTestStack,
+    },
+  }, {
+    initialRouteName: 'BoardExamMainRoute',
+    headerMode: 'none',
+    mode: 'modal',
   }
 );
