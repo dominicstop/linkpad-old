@@ -35,17 +35,16 @@ const CloseButton = (props) => {
   )
 }
 
-const BoardExamTestHeader = (props) => <CustomHeader {...props}
-  iconName='menu'
-  iconType='simple-line-icon'
+const PreboardExamListHeader = (props) => <CustomHeader {...props}
+  iconName='clipboard-pencil'
+  iconType='foundation'
   iconSize={22}
 />
 
-export class BoardExamTestScreen extends React.Component {
+export class PreboardExamListScreen extends React.Component {
   static navigationOptions=({navigation, screenProps}) => ({
     title: 'Preboard Exam',
-    headerTitle: BoardExamTestHeader,
-    headerLeft : <CloseButton onPress={() => navigation.navigate('BoardExamRoute')}/>,
+    headerTitle: PreboardExamListHeader,
   });
 
   constructor(props){
@@ -74,7 +73,3 @@ export class BoardExamTestScreen extends React.Component {
     );
   }
 }
-
-export const styles = StyleSheet.create({
-
-});

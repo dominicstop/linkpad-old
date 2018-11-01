@@ -199,13 +199,13 @@ export class ExamDetails extends React.PureComponent {
   }
 
   render(){
-    const { showStartEnd, showItemCount, showLastRow   , style } = this.props;
+    const { showStartEnd, showItemCount, showLastRow, style } = this.props;
  
     return(
       <View style={[{alignSelf: 'stretch'}, style]}>
-        {showStartEnd   && this._renderStartEnd  ()}
-        {showItemCount  && this._renderItemCount ()}
-        {showLastRow    && this._renderDatePosted()}
+        {showStartEnd  && this._renderStartEnd  ()}
+        {showItemCount && this._renderItemCount ()}
+        {showLastRow   && this._renderDatePosted()}
       </View>
     );
   }
@@ -217,6 +217,10 @@ export class PreboardExamList extends React.PureComponent {
       flex: 1,
       padding: 0,
     }
+  });
+
+  static styles = StyleSheet.create({
+
   });
 
   constructor(props){
@@ -268,6 +272,7 @@ export class PreboardExamList extends React.PureComponent {
     //helper object for easier access
     const model = new PreboardExamItem(exam);
     const data  = model.get();
+
     return(
       <Animatable.View 
         style={{margin: 10, marginBottom: 10}}
@@ -287,7 +292,7 @@ export class PreboardExamList extends React.PureComponent {
         <View style={{overflow: 'hidden'}}>
           <AnimatedCollapsable
             extraAnimation={false}
-            text={'Nulla vitae elit libero, a pharetra augue. Nulla vitae elit libero, a pharetra augue. Nulla vitae elit libero, a pharetra augue. Nulla vitae elit libero, a pharetra augue.vv vNulla vitae elit libero, a pharetra augue. Nulla vitae elit libero, a pharetra augue. Cras mattis consectetur purus sit amet fermentum. Donec sed odio dui. Cras mattis consectetur purus sit amet fermentum. Donec sed odio dui. Cras mattis consectetur purus sit amet fermentum. Donec sed odio dui. Cras mattis consectetur purus sit amet fermentum. Donec sed odio dui. Cras mattis consectetur purus sit amet fermentum. Donec sed odio dui. '}
+            text={data.description}
             maxChar={200}
             collapsedNumberOfLines={4}
             titleComponent={this._renderDescriptionTitle()}

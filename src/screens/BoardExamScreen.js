@@ -10,7 +10,7 @@ import { DrawerButton, IconButton, PlatformTouchableIconButton } from '../compon
 
 import PreboardExamStore from '../functions/PreboardExamStore';
 import LottieCircle from '../components/LottieCircle';
-import { BoardExamTestScreen } from './BoardExamTestScreen';
+import { PreboardExamListScreen } from './BoardExamListScreen';
 import { PreboardExam, PreboardExamManager, PreboardExamItem, PreboardExamModuleItem } from '../functions/PreboardExamStore';
 import { setStateAsync } from '../functions/Utils';
 import { AnimateInView } from '../components/Views';
@@ -121,7 +121,7 @@ export class ActiveCard extends React.PureComponent {
   _renderHeading(){
     return(
       <Fragment>
-        <Image
+        <Animatable.Image
           source={require('../../assets/icons/tablet.png')}
           style={{width: 75, height: 75, marginTop: 10}}
           animation={'pulse'}
@@ -224,8 +224,8 @@ export class ActiveCard extends React.PureComponent {
 }
 
 const BoardExamHeader = (props) => <CustomHeader {...props}
-  iconName='menu'
-  iconType='simple-line-icon'
+  iconName='pencil-square-o'
+  iconType='font-awesome'
   iconSize={22}
 />
 
@@ -238,9 +238,8 @@ export class BoardExamScreen extends React.Component {
 
   static styles = StyleSheet.create({
     scrollview: Platform.select({
-      android: {
-        paddingTop: 15,
-      }
+      ios    : { paddingTop: 5  },
+      android: { paddingTop: 15 },
     }),
   });
 
@@ -276,7 +275,7 @@ export class BoardExamScreen extends React.Component {
 
   _handleOnPressStart = () => {
     const { navigation } = this.props;
-    navigation && navigation.navigate('BoardExamTestRoute');
+    navigation && navigation.navigate('BoardExamListRoute');
   }
 
   _renderCards = () => {
@@ -305,6 +304,35 @@ export class BoardExamScreen extends React.Component {
     );
   }
 
+  _renderFooter(){
+    return(
+      <Animatable.View
+        style={{marginTop: 5, marginBottom: 75}}
+        animation={'fadeInUp'}
+        delay={3000}
+        duration={750}
+        easing={'ease-in-out'}
+        useNativeDriver={true}
+      >
+        <Animatable.View
+          animation={'pulse'}
+          delay={3750}
+          iterationCount={"infinite"}
+          duration={1500}
+          easing={'ease-in-out'}
+          useNativeDriver={true}
+        >
+          <Icon
+            name ={'heart'}
+            type ={'foundation'}
+            color={'#6200EA'}
+            size ={37}
+          /> 
+        </Animatable.View>
+      </Animatable.View>
+    );
+  }
+
   render(){
     const { styles } = BoardExamScreen;
     return(
@@ -320,7 +348,7 @@ export class BoardExamScreen extends React.Component {
             <IntroductionCard onPressMore={this._handleOnPressMore}/>
             {this._renderCards()}
           </AnimateInView>
-          <View style={{height: 125}}/>
+          {this._renderFooter()}
         </ScrollView>
       </ViewWithBlurredHeader>
     );
@@ -335,14 +363,14 @@ export const BoardExamStack = createStackNavigator({
     BoardExamRoute: {
       screen: BoardExamScreen,
     },
-    BoardExamTestRoute: {
-      screen: BoardExamTestScreen,
+    BoardExamListRoute: {
+      screen: PreboardExamListScreen,
       navigationOptions: {
         gesturesEnabled: false,
       }
     },
   }, {
-    initialRouteName: 'BoardExamTestRoute',
+    initialRouteName: 'BoardExamRoute',
     headerMode: 'float',
     headerTransitionPreset: 'uikit',
     headerTransparent: true,
