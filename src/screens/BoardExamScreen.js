@@ -252,7 +252,6 @@ export class BoardExamScreen extends React.Component {
       refreshing: false
     }
     this.preboard = new PreboardExamManager();
-    
   }
 
   async componentWillMount(){

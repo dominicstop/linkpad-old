@@ -235,11 +235,13 @@ export class ModuleListScreen extends React.Component {
     this.state = {
       modules: [], 
       refreshing: false,
+      mount: false,
     };
   }
 
   shouldComponentUpdate(nextProps, nextState){
-    return this.state.modules != nextState.modules;
+    const { modules, mount } = this.state;
+    return modules != nextState.modules || mount != nextState.mount;
   }
 
   componentDidFocus = () => {
@@ -247,6 +249,11 @@ export class ModuleListScreen extends React.Component {
     const { setDrawerSwipe } = this.props.screenProps;
     setDrawerSwipe(true);
     //close the modal if it's open
+  }
+
+  componentDidMount = async () => {
+    //delay rendering
+    setTimeout(() => { this.setState({mount: true}) }, 0);
   }
 
   _onRefresh = async () => {
@@ -265,15 +272,11 @@ export class ModuleListScreen extends React.Component {
     this.setState({modules: modules});
   }
 
-  componentDidMount(){
-    
-  }
-
   _navigateToModule = (moduleList, moduleData) => {
     this.props.navigation.navigate('SubjectListRoute', {
       moduleList: moduleList,
       moduleData: moduleData,
-    })
+    });
   }
 
   _onPressSubject = (subjectData, moduleData) => {
@@ -299,17 +302,18 @@ export class ModuleListScreen extends React.Component {
   }
 
   render(){
+    const { mount } = this.state;
     console.log('Module List rendering');
     return(
       <ViewWithBlurredHeader hasTabBar={true}>
         <NavigationEvents onDidFocus={this.componentDidFocus}/>
-        <ModuleList
+        {mount && <ModuleList
           contentInset={{top: Header.HEIGHT + 17}}
           moduleList={this.state.modules}
           onPressModule ={this._navigateToModule}
           onPressSubject={this._onPressSubject}
           refreshControl={this._renderRefreshCotrol()}
-        />
+        />}
       </ViewWithBlurredHeader>
     );
   }

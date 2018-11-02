@@ -1,5 +1,5 @@
 import React from 'react';
-import { Dimensions, Platform } from 'react-native';
+import { View, Platform } from 'react-native';
 
 import Constants, { STYLES } from '../Constants';
 
@@ -161,13 +161,7 @@ export class Homescreen extends React.PureComponent {
 
   render(){
     return (
-      <Animatable.View 
-        style={{flex: 1, height: '100%', width: '100%', backgroundColor: 'rgb(233, 232, 239)'}}
-        animation={'fadeIn'}
-        duration={500}
-        easing={'ease-in-out'}
-        useNativeDriver={true}
-      >
+      <View style={{flex: 1, height: '100%', width: '100%', backgroundColor: 'rgb(233, 232, 239)'}}>
         <TabNavigation
           navigation={this.props.navigation}
           screenProps={{
@@ -178,7 +172,7 @@ export class Homescreen extends React.PureComponent {
           }}
         />
         <SubjectModal ref={r => this.subjectModal = r}/>
-      </Animatable.View>
+      </View>
     );
   }
 }

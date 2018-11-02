@@ -39,6 +39,7 @@ export class ResourcesScreen extends React.Component {
       resources: [],
       refreshing: false,
       showContent: false,
+      mount: false,
     };
   }
 
@@ -46,6 +47,11 @@ export class ResourcesScreen extends React.Component {
     //load data from storage
     let resources = await ResourcesStore.getResources();
     await setStateAsync(this, {resources: resources});
+  }
+
+  componentDidMount = async () => {
+    //delay rendering
+    setTimeout(() => { this.setState({mount: true}) }, 0);
   }
 
   shouldComponentUpdate(nextProps, nextState){
@@ -118,11 +124,12 @@ export class ResourcesScreen extends React.Component {
   }
 
   render(){
+    const { mount, showContent } = this.state;
     console.log('Resource Screen rendering');
     return(
       <ViewWithBlurredHeader hasTabBar={true}>
         <NavigationEvents onDidFocus={this.componentDidFocus}/>
-        {this.state.showContent && <ResourceList
+        {mount && showContent && <ResourceList
           contentInset={{top: Header.HEIGHT + 12}}
           resources={this.state.resources}
           refreshControl={this._renderRefreshCotrol()}
