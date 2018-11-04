@@ -303,7 +303,6 @@ export class ModuleListScreen extends React.Component {
 
   render(){
     const { mount } = this.state;
-    console.log('Module List rendering');
     return(
       <ViewWithBlurredHeader hasTabBar={true}>
         <NavigationEvents onDidFocus={this.componentDidFocus}/>

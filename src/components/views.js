@@ -204,13 +204,13 @@ export class ViewWithBlurredHeader extends React.PureComponent {
   }
 
   render_Android(){
-    const paddingTop = StatusBar.currentHeight + Header.HEIGHT;
+    const marginTop = StatusBar.currentHeight + Header.HEIGHT;
+    //return(this.props.children);
     return(
       <View style={{flex: 1}}>
-        <View style={{flex: 1, paddingTop, elevation: 0}}>
+        <View style={{flex: 1, marginTop, elevation: 0}}>
           {this.props.children}
         </View>
-        {this._renderHeader()}
       </View>
     );
   }

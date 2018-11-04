@@ -2,16 +2,22 @@ import React from 'react';
 import { View, Platform } from 'react-native';
 
 import Constants, { STYLES } from '../Constants';
+import { CustomHeader          } from '../components/Header' ;
 
 import { SubjectModal    } from '../components/SwipableModal';
-import { ModuleListStack } from './ModuleListScreen';
-import { ResourcesStack  } from './ResourcesScreen';
-import { ExamsStack      } from './ExamsScreen';
+import { ModuleListStack, ModuleListScreen } from './ModuleListScreen';
+import { ResourcesStack , ResourcesScreen  } from './ResourcesScreen';
+import { ExamsStack     , ExamScreen       } from './ExamsScreen';
 import { TipsStack       } from './TipsScreen';
+import { DrawerButton } from '../components/Buttons';
 
-import { createBottomTabNavigator, createMaterialTopTabNavigator } from 'react-navigation';
+import { createBottomTabNavigator, createMaterialTopTabNavigator, createStackNavigator, Header } from 'react-navigation';
 import * as Animatable from 'react-native-animatable';
 import { Icon } from 'react-native-elements';
+import { LinearGradient } from 'expo';
+import SubjectListScreen from './SubjectListScreen';
+
+
 
 //TODO: fork on github, export BottomTabBar and npm install
 //import {  } from 'react-navigation-tabs/dist/views/BottomTabBar';
@@ -77,8 +83,9 @@ const TabNavigation_ios = createBottomTabNavigator({
 
 const TabNavigation_android = createBottomTabNavigator({
     TabModuleListRoute: {
-      screen: ModuleListStack,
+      screen: ModuleListScreen,
       navigationOptions: {
+        title: 'Modules',
         tabBarLabel: 'Modules',
         tabBarIcon: ({ focused, tintColor }) => {
           const iconName = focused? 'ios-albums' : 'ios-albums-outline';
@@ -133,11 +140,102 @@ const TabNavigation_android = createBottomTabNavigator({
   }
 );
 
+TabNavigation_android.navigationOptions = ({ navigation, screenProps }) => {
+  const { routeName } = navigation.state.routes[navigation.state.index];
+
+  // You can do whatever you like here to pick the title based on the route name
+  let title = '';
+  let headerProps = {};
+
+  if(routeName == 'TabModuleListRoute'){
+    title = 'Modules';
+    headerProps = {
+      iconName: 'briefcase',
+      iconType: 'simple-line-icon',
+    };
+
+  } else if (routeName == 'TabExamsRoute') {
+    title = 'Exams';
+    headerProps = {
+      iconName: 'briefcase',
+      iconType: 'simple-line-icon',
+    };
+
+  } else if (routeName == 'TabResourcesRoute') {
+    title = 'Resources';
+    headerProps = {
+      iconName: 'star-outlined',
+      iconType: 'entypo',
+    };
+
+  } else if (routeName == 'TabTipsRoute') {
+    title = 'Tips';
+    headerProps = {
+      iconName: 'briefcase',
+      iconType: 'simple-line-icon',
+    };
+
+  }
+
+  const CustomHeaderTitle = (props) => <CustomHeader 
+    {...props} {...headerProps}
+    iconSize={22}
+    color={'white'}
+  />
+  
+
+  return {
+    title,
+    headerTitle: CustomHeaderTitle, 
+    headerLeft: <DrawerButton drawerNav={screenProps.drawerNav}/>,
+  };
+};
+
 const TabNavigation = Platform.select({ios: TabNavigation_ios, android: TabNavigation_android});
+
+//shared header for each stack
+export const TabNavigationStack = createStackNavigator({
+    HomeTabRoute: {
+      screen: TabNavigation,
+    },
+    SubjectListRoute: {
+      screen: SubjectListScreen,
+    }, 
+  }, {
+    navigationOptions: {
+      headerTransparent: true,
+      headerTintColor: 'white',
+      headerTitleStyle: {
+        fontWeight: 'bold',
+        color: 'white'
+      },
+      headerStyle: {
+        backgroundColor: 'transparent',
+      },
+    },
+    headerTransparent: true,
+    cardStyle: {
+      backgroundColor: 'transparent',
+      opacity: 1,
+    },
+    transitionConfig : () => ({
+      containerStyle: {
+        backgroundColor: 'transparent',
+      },
+      transitionSpec: {
+        duration: 0,
+      },
+    }),
+
+  }
+);
+
+
+
 
 //container for tab navigation
 export class Homescreen extends React.PureComponent {
-  static router = TabNavigation.router;
+  static router = TabNavigationStack.router;
 
   static navigationOptions = {
     drawerLockMode: 'locked-closed',
@@ -159,10 +257,25 @@ export class Homescreen extends React.PureComponent {
     this.props.navigation.setParams({enableDrawerSwipe: mode});
   }
 
+  _renderSharedHeaderAndroid(){
+    const header_height = Header.HEIGHT + Expo.Constants.statusBarHeight;
+    return(
+      <View style={{position: 'absolute', marginBottom: 20, width: '100%', height: header_height, backgroundColor: 'white'}}>
+        <LinearGradient
+          style={{flex: 1}}
+          colors={['#8400ea', '#651FFF']}
+          start={[0, 1]} 
+          end={[1, 0]}
+        />
+      </View>
+    );
+  }
+
   render(){
     return (
       <View style={{flex: 1, height: '100%', width: '100%', backgroundColor: 'rgb(233, 232, 239)'}}>
-        <TabNavigation
+        {this._renderSharedHeaderAndroid()}
+        <TabNavigationStack
           navigation={this.props.navigation}
           screenProps={{
             ...this.props.screenProps,
