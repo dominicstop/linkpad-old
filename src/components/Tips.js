@@ -99,14 +99,6 @@ export class TipList extends React.PureComponent {
     ),
   }
 
-  componentDidMount(){
-    //fix for contentInset bug
-    setTimeout(() => {
-      this.flatlist.scrollToOffset({animated: false, offset: 100});
-      this.flatlist.scrollToOffset({animated: false, offset: -80});
-    }, 1);
-  }
-
   _renderItemTip = ({item, index}) => {
     return(
       <AnimatedListItem

@@ -112,12 +112,14 @@ export class ResourcesScreen extends React.Component {
 
   render(){
     const { mount, showContent } = this.state;
-    console.log('Resource Screen rendering');
+    const offset = Header.HEIGHT + 15;
+    
     return(
       <ViewWithBlurredHeader hasTabBar={true}>
         <NavigationEvents onDidFocus={this.componentDidFocus}/>
         {mount && showContent && <ResourceList
-          contentInset={{top: Header.HEIGHT + 12}}
+          contentInset={{top: offset}}
+          contentOffset={{x: 0, y: -offset}}
           resources={this.state.resources}
           refreshControl={this._renderRefreshCotrol()}
           ListFooterComponent={this._renderFooter()}

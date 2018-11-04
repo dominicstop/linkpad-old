@@ -115,15 +115,6 @@ export class ResourceList extends React.PureComponent {
     this.DEBUG = false;
   }
 
-  componentDidMount(){
-    //fix for contentInset bug
-    if(this.DEBUG) console.log('\n\n\nReceived Resources Prop: \n' + this.props.resources);
-    setTimeout(() => {
-      this.flatlist.scrollToOffset({animated: false, offset: 100});
-      this.flatlist.scrollToOffset({animated: false, offset: -80});
-    }, 1);
-  }
-
   _renderItemResources = ({item, index}) => {
     return(
       <AnimatedListItem

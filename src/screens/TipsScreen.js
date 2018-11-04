@@ -103,12 +103,14 @@ export class TipsScreen extends React.Component {
   }
 
   render(){
-    console.log('Tips Screen rendering');
+    const offset = Header.HEIGHT + 15;
+
     return(
       <ViewWithBlurredHeader hasTabBar={true}>
         <NavigationEvents onDidFocus={this.componentDidFocus}/>
         {this.state.showContent && <TipList
-          contentInset={{top: Header.HEIGHT + 12}}
+          contentInset={{top: offset}}
+          contentOffset={{x: 0, y: -offset}}
           tips={this.state.tips}
           refreshControl={this._renderRefreshCotrol()}
           ListFooterComponent={this._renderFooter()}

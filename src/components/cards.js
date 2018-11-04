@@ -429,14 +429,6 @@ export class ModuleList extends React.PureComponent {
     //style
     containerStyle: ViewPropTypes.style,
   }
-  
-  componentDidMount(){
-    //fix for contentInset bug
-    setTimeout(() => {
-      this.flatlist.scrollToOffset({animated: false, offset: 100});
-      this.flatlist.scrollToOffset({animated: false, offset: -80});
-    }, 500)
-  }
 
   _renderItem = ({item, index}) => {
     return(
