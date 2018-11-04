@@ -7,6 +7,7 @@ import { LinearGradient } from 'expo';
 import { Icon } from 'react-native-elements';
 import PlatformTouchable from './Touchable';
 import { STYLES } from '../Constants';
+import NavigationService from '../NavigationService';
 
 
 
@@ -414,8 +415,8 @@ export class ExpandableWithHeader extends React.PureComponent {
 }
 
 export class DrawerButton extends React.PureComponent {
-  static propTypes = {
-    drawerNav: PropTypes.object
+  _handleOnPress = () => {
+    NavigationService.navigateDrawerToggle();
   }
 
   render(){
@@ -423,7 +424,7 @@ export class DrawerButton extends React.PureComponent {
     return(
       <TouchableOpacity
         style={[STYLES.glow, { marginLeft: 10, shadowOpacity: 0.5, shadowRadius: 3 } , style]}
-        onPress={() => drawerNav.openDrawer()}
+        onPress={this._handleOnPress}
         {...touchableProps}
       >
         <Icon

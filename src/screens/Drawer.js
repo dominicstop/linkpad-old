@@ -13,6 +13,7 @@ import { SwipableModal, BoardExamModalContent } from '../components/SwipableModa
 
 import { createDrawerNavigator } from 'react-navigation';
 import { Icon } from 'react-native-elements';
+import NavigationService from '../NavigationService';
 
 
 const { width, height } = Dimensions.get('window');
@@ -137,6 +138,7 @@ export class DrawerStackContainer extends React.Component {
       <Fragment>
         <DrawerStack
           navigation={this.props.navigation}
+          ref={r => NavigationService.setDrawerNavigator(r)}  
           screenProps={{
             ...this.props.screenProps,
             drawerNav: this.props.navigation,

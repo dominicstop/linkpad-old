@@ -18,20 +18,8 @@ import { Icon } from 'react-native-elements';
 import * as Animatable from 'react-native-animatable';
 import _ from 'lodash';
 
-const TipsHeader = (props) => <CustomHeader {...props}
-  iconName='star-outlined'
-  iconType='entypo'
-  iconSize={22}
-/>
-
 //show the setting screen
 export class TipsScreen extends React.Component {
-  static navigationOptions=({navigation, screenProps}) => ({
-    title: 'Tips',
-    headerTitle: TipsHeader,
-    headerLeft : <DrawerButton drawerNav={screenProps.drawerNav}/>,
-  });
-
   constructor(props){
     super(props);
     this.state = {
@@ -129,16 +117,4 @@ export class TipsScreen extends React.Component {
     );
   }
 }
-
-export const TipsStack = createStackNavigator({
-  TipsRoute: {
-      screen: TipsScreen,
-    },
-  }, {
-    headerMode: 'float',
-    headerTransitionPreset: 'uikit',
-    headerTransparent: true,
-    navigationOptions: HEADER_PROPS,
-  }
-);
 

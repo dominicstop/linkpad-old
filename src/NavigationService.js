@@ -1,4 +1,4 @@
-import { NavigationActions } from 'react-navigation';
+import { NavigationActions, DrawerActions } from 'react-navigation';
 
 let _rootNavigator;
 function setRootNavigator(navigatorRef) {
@@ -44,9 +44,19 @@ function navigateAuth(routeName, params) {
   );
 }
 
+let _drawerNavigator;
+function setDrawerNavigator(navigatorRef){
+  _drawerNavigator = navigatorRef;
+}
+
+function navigateDrawerToggle() {
+  _drawerNavigator.dispatch(
+    DrawerActions.toggleDrawer()
+  );
+}
+
 export default {
-  setRootNavigator,
-  navigateRoot,
-  setAppNavigator,
-  navigateApp,
+  setRootNavigator  , navigateRoot        ,
+  setAppNavigator   , navigateApp         ,
+  setDrawerNavigator, navigateDrawerToggle,
 };

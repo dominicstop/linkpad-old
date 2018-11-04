@@ -56,7 +56,7 @@ export class IntroductionCard extends React.PureComponent {
 
   render(){
     return (
-      <Card style={{paddingTop: 15, paddingBottom: 20, alignItems: 'center', justifyContent: 'center'}}>
+      <Card style={{paddingVertical: 15, alignItems: 'center', justifyContent: 'center'}}>
         <LottieCircle 
           containerStyle={{backgroundColor: '#7C4DFF', marginTop: 15}}
           source={this.animationSource}

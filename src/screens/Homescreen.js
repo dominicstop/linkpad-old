@@ -5,10 +5,10 @@ import Constants, { STYLES } from '../Constants';
 import { CustomHeader          } from '../components/Header' ;
 
 import { SubjectModal    } from '../components/SwipableModal';
-import { ModuleListStack, ModuleListScreen } from './ModuleListScreen';
-import { ResourcesStack , ResourcesScreen  } from './ResourcesScreen';
-import { ExamsStack     , ExamsScreen      } from './ExamsScreen';
-import { TipsStack, TipsScreen       } from './TipsScreen';
+import { ModuleListScreen } from './ModuleListScreen';
+import { ResourcesScreen  } from './ResourcesScreen';
+import { ExamsScreen      } from './ExamsScreen';
+import { TipsScreen       } from './TipsScreen';
 import { DrawerButton } from '../components/Buttons';
 
 import { createBottomTabNavigator, createStackNavigator, Header } from 'react-navigation';
@@ -19,13 +19,13 @@ import { LinearGradient } from 'expo';
 import SubjectListScreen from './SubjectListScreen';
 import { IconText } from '../components/Views';
 
-
+/**
+ * each tab has a shared header because tabnav it is wrapped inside a stack
+ * and is overriden manually when changing tabs
+ */
 const routeConfig = {
   TabModuleListRoute: {
-    screen: Platform.select({
-      ios    : ModuleListStack ,
-      android: ModuleListScreen,
-    }),
+    screen: ModuleListScreen,
     navigationOptions: {
       title: 'Modules',
       tabBarLabel: 'Modules',
@@ -36,10 +36,7 @@ const routeConfig = {
     }
   },
   TabExamsRoute: {
-    screen: Platform.select({
-      ios    : ExamsStack ,
-      android: ExamsScreen,
-    }),
+    screen: ExamsScreen,
     navigationOptions: {
       tabBarLabel: 'Exams',
       tabBarIcon: ({ focused, tintColor }) => {
@@ -49,10 +46,7 @@ const routeConfig = {
     }
   },
   TabResourcesRoute: {
-    screen: Platform.select({
-      ios    : ResourcesStack ,
-      android: ResourcesScreen,
-    }),
+    screen: ResourcesScreen,
     navigationOptions: {
       tabBarLabel: 'Resources',
       tabBarIcon: ({ focused, tintColor }) => {
@@ -62,10 +56,7 @@ const routeConfig = {
     }
   },
   TabTipsRoute: {
-    screen: Platform.select({
-      ios    : TipsStack ,
-      android: TipsScreen,
-    }),
+    screen: TipsScreen,
     navigationOptions: {
       tabBarLabel: 'Tips',
       tabBarIcon: ({ focused, tintColor }) => {
@@ -76,7 +67,6 @@ const routeConfig = {
   },
 }
 
-//tab navigation for  homescreen
 const TabNavigation_ios = createBottomTabNavigator(routeConfig, {
     initialRouteName: 'TabModuleListRoute',
     lazy: false,
@@ -100,6 +90,7 @@ const TabNavigation_android = createMaterialBottomTabNavigator(routeConfig, {
   }
 );
 
+//shared android header
 export class CustomAndroidHeader extends React.PureComponent {
   render(){
     const statusbar_height = Expo.Constants.statusBarHeight;
@@ -119,49 +110,37 @@ export class CustomAndroidHeader extends React.PureComponent {
   }
 }
 
+function getHeaderProps(routeName){
+  switch(routeName){
+    case 'TabModuleListRoute': return {
+      title   : 'Modules',
+      iconName: 'briefcase',
+      iconType: 'simple-line-icon',
+    };
+    case 'TabExamsRoute': return {
+      title   : 'Exams',
+      iconName: 'bookmark',
+      iconType: 'feather',
+    };
+    case 'TabResourcesRoute': return {
+      title   : 'Modules',
+      iconName: 'star-outlined',
+      iconType: 'entypo',
+    };
+    case 'TabTipsRoute': return {
+      title   : 'Modules',
+      iconName: 'star-outlined',
+      iconType: 'entypo',
+    };
+  }
+}
+
 //android: configure shared header
 TabNavigation_android.navigationOptions = ({ navigation, screenProps }) => {
   const { routeName } = navigation.state.routes[navigation.state.index];
 
-  // You can do whatever you like here to pick the title based on the route name
-  let title = '';
-  let headerProps = {};
-
-  if(routeName == 'TabModuleListRoute'){
-    title = 'Modules';
-    headerProps = {
-      iconName: 'briefcase',
-      iconType: 'simple-line-icon',
-    };
-
-  } else if (routeName == 'TabExamsRoute') {
-    title = 'Exams';
-    headerProps = {
-      iconName: 'briefcase',
-      iconType: 'simple-line-icon',
-    };
-
-  } else if (routeName == 'TabResourcesRoute') {
-    title = 'Resources';
-    headerProps = {
-      iconName: 'star-outlined',
-      iconType: 'entypo',
-    };
-
-  } else if (routeName == 'TabTipsRoute') {
-    title = 'Tips';
-    headerProps = {
-      iconName: 'briefcase',
-      iconType: 'simple-line-icon',
-    };
-
-  }
-
-  const CustomHeaderTitle = (props) => <CustomHeader 
-    {...props} {...headerProps}
-    iconSize={22}
-    color={'white'}
-  />
+  const { title, iconName, iconType } = getHeaderProps(routeName);
+  const headerProps = { iconName, iconType };
 
   const Header = (props) => <CustomAndroidHeader>
     <DrawerButton drawerNav={screenProps.drawerNav}/>
@@ -174,11 +153,30 @@ TabNavigation_android.navigationOptions = ({ navigation, screenProps }) => {
       iconColor={'white'}
     />
   </CustomAndroidHeader>
-  
 
   return {
     title,
     header: Header,
+  };
+};
+
+//ios: configure shared header
+TabNavigation_ios.navigationOptions = ({ navigation, screenProps }) => {
+  const { routeName } = navigation.state.routes[navigation.state.index];
+
+  const { title, iconName, iconType } = getHeaderProps(routeName);
+  const headerProps = { iconName, iconType };
+
+  const headerTitle = (props) => <CustomHeader 
+    {...props} {...headerProps}
+    iconSize={22}
+    color={'white'}
+  />
+
+  return {
+    title,
+    headerTitle,
+    headerLeft: <DrawerButton/>
   };
 };
 
@@ -192,28 +190,26 @@ export const TabNavigationStack = createStackNavigator({
     SubjectListRoute: {
       screen: SubjectListScreen,
     }, 
-  }, {
-    ...Platform.select({
-      ios: {
-        //configured in each tab's stack
-        headerMode: 'hidden',
-      },
-      android: {
-        //overriden in tabnav
-        navigationOptions: {
-          headerTransparent: true,
-          headerTintColor: 'white',
-          headerTitleStyle: {
-            fontWeight: 'bold',
-            color: 'white'
-          },
+  }, Platform.select({
+    ios: {
+      navigationOptions: Constants.HEADER_PROPS, 
+      headerMode: 'float',
+      headerTransitionPreset: 'uikit',
+      headerTransparent: true,
+    },
+    android: {
+      //overriden in tabnav
+      navigationOptions: {
+        headerTransparent: true,
+        headerTintColor: 'white',
+        headerTitleStyle: {
+          fontWeight: 'bold',
+          color: 'white'
         },
-      }
-    }),
-  }
+      },
+    }
+  })
 );
-
-
 
 
 //container for tab navigation

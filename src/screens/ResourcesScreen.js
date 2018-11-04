@@ -17,21 +17,8 @@ import { Header, createStackNavigator, NavigationEvents } from 'react-navigation
 import { Icon } from 'react-native-elements';
 import _ from 'lodash';
 
-const ResourcesHeader = (props) => <CustomHeader {...props}
-  iconName='star-outlined'
-  iconType='entypo'
-  iconSize={22}
-/>
-
 //show the setting screen
 export class ResourcesScreen extends React.Component {
-  static navigationOptions=({navigation, screenProps}) => ({
-    title: 'Resources',
-    headerTitle: ResourcesHeader,
-    headerLeft : <DrawerButton drawerNav={screenProps.drawerNav}/>,
-  });
-  
-
   constructor(props){
     super(props);
     this.DEBUG = false;
@@ -139,16 +126,4 @@ export class ResourcesScreen extends React.Component {
     );
   }
 }
-
-export const ResourcesStack = createStackNavigator({
-  resourcesRoute: {
-      screen: ResourcesScreen,
-    },
-  }, {
-    headerMode: 'float',
-    headerTransitionPreset: 'uikit',
-    headerTransparent: true,
-    navigationOptions: HEADER_PROPS,
-  }
-);
 
