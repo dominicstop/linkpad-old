@@ -3,7 +3,7 @@ import { StyleSheet, Text, View, Platform, NavigatorIOS, TouchableOpacity, Layou
 
 import   SubjectListScreen       from './SubjectListScreen'  ;
 import   Constants               from '../Constants'         ;
-import { ModuleList            } from '../components/Cards'  ;
+import { ModuleList            } from '../components/Modules';
 import { CustomHeader          } from '../components/Header' ;
 import { DrawerButton          } from '../components/Buttons';
 import { ViewWithBlurredHeader } from '../components/Views'  ;
@@ -97,7 +97,7 @@ export class ModuleListScreen extends React.Component {
         {mount && <ModuleList
           contentInset={{top: offset}}
           contentOffset={{x: 0, y: -offset}}
-          moduleList={this.state.modules}
+          modules={this.state.modules}
           onPressModule ={this._navigateToModule}
           onPressSubject={this._onPressSubject}
           refreshControl={this._renderRefreshCotrol()}

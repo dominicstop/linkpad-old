@@ -254,6 +254,33 @@ export class SubjectItem extends React.PureComponent {
     const color = selectedGradient[0];
 
     return(
+      <View
+        style={{
+          height, 
+          paddingTop: 7, paddingLeft: 5, paddingRight: 9, paddingBottom: 15,
+        }} 
+      >
+        <View 
+          style={{ elevation: 10, borderRadius: 15, flexDirection: 'row', paddingHorizontal: 15, paddingVertical: 15, backgroundColor: 'white'}} 
+          overflow='visible'
+        >
+          {true && <SubjectProgress 
+            progressData={DUMMY_PROGRESS} 
+            color={Chroma(color).saturate(2).hex()}         
+            backgroundColor={Chroma(color).brighten(2).hex()}         
+          />}
+          <SubjectDetails
+            numberOfLinesDesc={this.props.numberOfLinesDesc}
+            containerStyle={{marginLeft: 13}}
+            subjectData={subjectData}
+            onPress={this._onPressSubject}
+            color={Chroma(color).darken().hex()}
+          />
+        </View>
+      </View>
+    );
+
+    return(
       <View style={[{ height: height, paddingTop: 10, paddingBottom: 35, shadowOffset:{  width: 4,  height: 5}, shadowColor: '#686868', shadowOpacity: 0.5, shadowRadius: 5}, containerStyle]} removeClippedSubviews={false}>
         <View style={{flex: 1, height: '100%', borderRadius: 15, flexDirection: 'row', paddingHorizontal: 20, paddingVertical: 15, backgroundColor: 'white'}} overflow='hidden' >
           {true && <SubjectProgress 
@@ -302,17 +329,15 @@ export class ModuleDescription extends React.PureComponent {
   static propTypes = {
     moduleData  : PropTypes.shape(moduleProps).isRequired,
     detailedView: PropTypes.bool,
-  }
+  };
+
+  
 
   render(){
-    const { moduleData, detailedView } = this.props;  
+    const { styles } = ModuleDescription;
+    const { moduleData, detailedView } = this.props;
     return(
-      <Text 
-        style={[{textAlign: 'justify'}, styles.subtitle]}
-        numberOfLines={ detailedView? undefined : 2}
-      >
-        {moduleData.description}
-      </Text>
+      null
     );
   }
 }
@@ -348,19 +373,31 @@ export class ModuleHeader extends React.PureComponent {
 }
 
 //displays a single module item and a list of subjects
-export class ModuleGroup extends React.PureComponent {
+export class ModuleItem extends React.PureComponent {
   static propTypes = {
-    //extra data
-    moduleList: PropTypes.arrayOf(
-      PropTypes.shape(moduleProps)
-    ).isRequired,
-    //actual data used
-    moduleData       : PropTypes.shape(moduleProps).isRequired,
+    moduleData: PropTypes.shape(moduleProps).isRequired,
     numberOfLinesDesc: PropTypes.number,
     //callbacks
     onPressSubject: PropTypes.func,
     onPressModule : PropTypes.func,
-  }
+  };
+
+  static defaultProps = {
+    numberOfLinesDesc: 3
+  };
+
+  static styles = StyleSheet.create({
+    title: {
+      fontWeight: '600',
+      fontSize: 24,
+      color: '#150a44'
+    },
+    subtitle: {
+      fontWeight: '200',
+      fontSize: 18,
+      textAlign: 'justify'
+    },
+  });
 
   _onPressModule = () => {
     const { moduleList, moduleData } = this.props;
@@ -379,6 +416,32 @@ export class ModuleGroup extends React.PureComponent {
     );
   }
 
+  _renderHeader(){
+    const { styles } = ModuleItem;
+    const { moduleData } = this.props;
+
+    return(
+      <TouchableOpacity 
+        style={{paddingHorizontal: 12}} 
+        onPress={this._onPressModule}
+      >
+        <IconText
+          //text
+          textStyle={styles.title}
+          text={moduleData.modulename}
+          //icon
+          iconName='file-text-o'
+          iconType='font-awesome'
+          iconColor='#7E57C2'
+          iconSize ={20}
+        />
+        <Text style={styles.subtitle} numberOfLines={2}>
+          {moduleData.description}
+        </Text>
+      </TouchableOpacity>
+    );
+  }
+
   render() {
     const { moduleData } = this.props;
 
@@ -386,31 +449,38 @@ export class ModuleGroup extends React.PureComponent {
     const sliderWidth = Dimensions.get('window').width;
     const itemWidth   = sliderWidth - 20;
 
+    const platformSpecificProps = Platform.select({
+      ios: {
+        layout: 'tinder',
+        activeSlideAlignment: 'center',
+
+      },
+      android: {
+        layout: 'default',
+        activeSlideAlignment: 'start',
+        itemWidth: sliderWidth - 50,
+        inactiveSlideShift: 0,
+        inactiveSlideOpacity: 0.9,
+        inactiveSlideScale: 1,
+        containerCustomStyle: { paddingLeft: 5 },
+      }
+    });
+
     return(
       <View style={{justifyContent: 'center', marginBottom: 5}}>
-        {/*Header*/}
-        <TouchableOpacity 
-          style={{paddingHorizontal: 12}} 
-          onPress={this._onPressModule}
-        >
-          <ModuleHeader 
-            moduleData={moduleData}
-            detailedView={false}
-          />
-        </TouchableOpacity>
-        {/*Subject List*/}
+        {this._renderHeader()}
         <Carousel
-          //containerCustomStyle={{marginTop: -5}}
-          ref={(c) => { this._carousel = c; }}
+          ref={r => this._carousel = r }
           data={_.compact(moduleData.subjects)}
           renderItem={this._renderItem}
           sliderWidth={sliderWidth}
           itemWidth={itemWidth}
           activeSlideAlignment={'center'}
-          layout={'tinder'}
-          layoutCardOffset={14}
+          layoutCardOffset={0}
           enableSnap={true}
           removeClippedSubviews={false}
+          
+          {...platformSpecificProps}
         />
       </View>
     );
@@ -420,7 +490,7 @@ export class ModuleGroup extends React.PureComponent {
 //displays the list of modules
 export class ModuleList extends React.PureComponent {
   static propTypes = {
-    moduleList: PropTypes.arrayOf(
+    modules: PropTypes.arrayOf(
       PropTypes.shape(moduleProps)
     ).isRequired,
     //callbacks
@@ -439,7 +509,7 @@ export class ModuleList extends React.PureComponent {
         multiplier={300}
         animation='fadeInUp'
       >
-        <ModuleGroup
+        <ModuleItem
           moduleList={this.props.moduleList}
           moduleData={item}
           onPressSubject={this.props.onPressSubject}
@@ -450,18 +520,22 @@ export class ModuleList extends React.PureComponent {
     );
   }
 
+  _renderFooter = () => {
+    return(
+      <View style={{padding: 100}}/>
+    );
+  }
+
   render(){
-    const { moduleList, containerStyle, ...flatListProps} = this.props;
+    const { modules, containerStyle, ...flatListProps} = this.props;
     return(
       <FlatList
         style={[containerStyle]}
-        data={_.compact(moduleList)}
+        data={_.compact(modules)}
         ref={r => this.flatlist = r}
         keyExtractor={(item) => item.indexid + ''}
         renderItem ={this._renderItem }
-        ListFooterComponent={<View style={{padding: 100}}/>}
-        //scrollEventThrottle={200}
-        //directionalLockEnabled={true}
+        ListFooterComponent={this._renderFooter}
         removeClippedSubviews={false}
         {...flatListProps}
       />

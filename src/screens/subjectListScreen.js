@@ -1,7 +1,7 @@
 import React from 'react';
 import { Text, View } from 'react-native';
 
-import { SubjectList, ModuleTitle, ModuleDescription } from '../components/Cards';
+import { SubjectList, ModuleTitle, ModuleDescription } from '../components/Modules';
 import { ViewWithBlurredHeader, IconText      } from '../components/Views'  ;
 import { ExpandCollapse, ExpandableWithHeader } from '../components/Buttons';
 import { CustomHeader } from '../components/Header' ;
