@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Platform } from 'react-native';
+import { View, Platform, Text, Clipboard } from 'react-native';
 
 import Constants, { STYLES } from '../Constants';
 import { CustomHeader          } from '../components/Header' ;
@@ -7,64 +7,77 @@ import { CustomHeader          } from '../components/Header' ;
 import { SubjectModal    } from '../components/SwipableModal';
 import { ModuleListStack, ModuleListScreen } from './ModuleListScreen';
 import { ResourcesStack , ResourcesScreen  } from './ResourcesScreen';
-import { ExamsStack     , ExamScreen       } from './ExamsScreen';
-import { TipsStack       } from './TipsScreen';
+import { ExamsStack     , ExamsScreen      } from './ExamsScreen';
+import { TipsStack, TipsScreen       } from './TipsScreen';
 import { DrawerButton } from '../components/Buttons';
 
-import { createBottomTabNavigator, createMaterialTopTabNavigator, createStackNavigator, Header } from 'react-navigation';
+import { createBottomTabNavigator, createStackNavigator, Header } from 'react-navigation';
+import { createMaterialBottomTabNavigator } from 'react-navigation-material-bottom-tabs';
 import * as Animatable from 'react-native-animatable';
 import { Icon } from 'react-native-elements';
 import { LinearGradient } from 'expo';
 import SubjectListScreen from './SubjectListScreen';
+import { IconText } from '../components/Views';
 
 
-
-//TODO: fork on github, export BottomTabBar and npm install
-//import {  } from 'react-navigation-tabs/dist/views/BottomTabBar';
+const routeConfig = {
+  TabModuleListRoute: {
+    screen: Platform.select({
+      ios    : ModuleListStack ,
+      android: ModuleListScreen,
+    }),
+    navigationOptions: {
+      title: 'Modules',
+      tabBarLabel: 'Modules',
+      tabBarIcon: ({ focused, tintColor }) => {
+        const iconName = focused? 'ios-albums' : 'ios-albums-outline';
+        return <Icon name={iconName} size={25} color={tintColor} type='ionicon' containerStyle={focused? STYLES.glow : null}/>;
+      }
+    }
+  },
+  TabExamsRoute: {
+    screen: Platform.select({
+      ios    : ExamsStack ,
+      android: ExamsScreen,
+    }),
+    navigationOptions: {
+      tabBarLabel: 'Exams',
+      tabBarIcon: ({ focused, tintColor }) => {
+        const iconName = focused? 'ios-bookmarks' : 'ios-bookmarks-outline';
+        return <Icon name={iconName} size={25} color={tintColor} type='ionicon' containerStyle={focused? STYLES.glow : null}/>;
+      }
+    }
+  },
+  TabResourcesRoute: {
+    screen: Platform.select({
+      ios    : ResourcesStack ,
+      android: ResourcesScreen,
+    }),
+    navigationOptions: {
+      tabBarLabel: 'Resources',
+      tabBarIcon: ({ focused, tintColor }) => {
+        const iconName = focused? 'ios-information-circle' : 'ios-information-circle-outline';
+        return <Icon name={iconName} size={25} color={tintColor} type='ionicon' containerStyle={focused? STYLES.glow : null}/>;
+      }
+    }
+  },
+  TabTipsRoute: {
+    screen: Platform.select({
+      ios    : TipsStack ,
+      android: TipsScreen,
+    }),
+    navigationOptions: {
+      tabBarLabel: 'Tips',
+      tabBarIcon: ({ focused, tintColor }) => {
+        const iconName = focused? 'ios-star' : 'ios-star-outline';
+        return <Icon name={iconName} size={25} color={tintColor} type='ionicon' containerStyle={focused? STYLES.glow : null}/>;
+      }
+    }
+  },
+}
 
 //tab navigation for  homescreen
-const TabNavigation_ios = createBottomTabNavigator({
-    TabModuleListRoute: {
-      screen: ModuleListStack,
-      navigationOptions: {
-        tabBarLabel: 'Modules',
-        tabBarIcon: ({ focused, tintColor }) => {
-          const iconName = focused? 'ios-albums' : 'ios-albums-outline';
-          return <Icon name={iconName} size={25} color={tintColor} type='ionicon' containerStyle={focused? STYLES.glow : null}/>;
-        }
-      }
-    },
-    TabExamsRoute: {
-      screen: ExamsStack,
-      navigationOptions: {
-        tabBarLabel: 'Exams',
-        tabBarIcon: ({ focused, tintColor }) => {
-          const iconName = focused? 'ios-bookmarks' : 'ios-bookmarks-outline';
-          return <Icon name={iconName} size={25} color={tintColor} type='ionicon' containerStyle={focused? STYLES.glow : null}/>;
-        }
-      }
-    },
-    TabResourcesRoute: {
-      screen: ResourcesStack,
-      navigationOptions: {
-        tabBarLabel: 'Resources',
-        tabBarIcon: ({ focused, tintColor }) => {
-          const iconName = focused? 'ios-information-circle' : 'ios-information-circle-outline';
-          return <Icon name={iconName} size={25} color={tintColor} type='ionicon' containerStyle={focused? STYLES.glow : null}/>;
-        }
-      }
-    },
-    TabTipsRoute: {
-      screen: TipsStack,
-      navigationOptions: {
-        tabBarLabel: 'Tips',
-        tabBarIcon: ({ focused, tintColor }) => {
-          const iconName = focused? 'ios-star' : 'ios-star-outline';
-          return <Icon name={iconName} size={25} color={tintColor} type='ionicon' containerStyle={focused? STYLES.glow : null}/>;
-        }
-      }
-    },
-  }, {
+const TabNavigation_ios = createBottomTabNavigator(routeConfig, {
     initialRouteName: 'TabModuleListRoute',
     lazy: false,
     tabBarOptions: {
@@ -81,65 +94,32 @@ const TabNavigation_ios = createBottomTabNavigator({
   }
 );
 
-const TabNavigation_android = createBottomTabNavigator({
-    TabModuleListRoute: {
-      screen: ModuleListScreen,
-      navigationOptions: {
-        title: 'Modules',
-        tabBarLabel: 'Modules',
-        tabBarIcon: ({ focused, tintColor }) => {
-          const iconName = focused? 'ios-albums' : 'ios-albums-outline';
-          return <Icon name={iconName} size={25} color={tintColor} type='ionicon' containerStyle={focused? STYLES.glow : null}/>;
-        }
-      }
-    },
-    TabExamsRoute: {
-      screen: ExamsStack,
-      navigationOptions: {
-        tabBarLabel: 'Exams',
-        tabBarIcon: ({ focused, tintColor }) => {
-          const iconName = focused? 'ios-bookmarks' : 'ios-bookmarks-outline';
-          return <Icon name={iconName} size={25} color={tintColor} type='ionicon' containerStyle={focused? STYLES.glow : null}/>;
-        }
-      }
-    },
-    TabResourcesRoute: {
-      screen: ResourcesStack,
-      navigationOptions: {
-        tabBarLabel: 'Resources',
-        tabBarIcon: ({ focused, tintColor }) => {
-          const iconName = focused? 'ios-information-circle' : 'ios-information-circle-outline';
-          return <Icon name={iconName} size={25} color={tintColor} type='ionicon' containerStyle={focused? STYLES.glow : null}/>;
-        }
-      }
-    },
-    TabTipsRoute: {
-      screen: TipsStack,
-      navigationOptions: {
-        tabBarLabel: 'Tips',
-        tabBarIcon: ({ focused, tintColor }) => {
-          const iconName = focused? 'ios-star' : 'ios-star-outline';
-          return <Icon name={iconName} size={25} color={tintColor} type='ionicon' containerStyle={focused? STYLES.glow : null}/>;
-        }
-      }
-    },
-  }, {
+const TabNavigation_android = createMaterialBottomTabNavigator(routeConfig, {
     initialRouteName: 'TabModuleListRoute',
-    lazy: false,
-    tabBarOptions: {
-      activeTintColor: 'rgba(255, 255, 255, 0.8)',
-      inactiveTintColor: 'rgba(255, 255, 255, 0.4)',
-      style: {
-        backgroundColor: Platform.OS == 'ios'? null : Constants.NAV_BGCOLOR,
-        position: 'absolute',
-        left: 0,
-        right: 0,
-        bottom: 0,
-      }
-    }
+    lazy: true,
   }
 );
 
+export class CustomAndroidHeader extends React.PureComponent {
+  render(){
+    const statusbar_height = Expo.Constants.statusBarHeight;
+    const header_height = Header.HEIGHT + Expo.Constants.statusBarHeight;
+    return(
+      <View style={{elevation: 20, width: '100%', height: header_height, backgroundColor: 'white'}}>
+        <LinearGradient
+          style={{flex: 1, alignItems: 'center', paddingTop: statusbar_height, paddingHorizontal: 10, flexDirection: 'row'}}
+          colors={['#8400ea', '#651FFF']}
+          start={[0, 1]} 
+          end={[1, 0]}
+        >
+          {this.props.children}
+        </LinearGradient>
+      </View>
+    );
+  }
+}
+
+//android: configure shared header
 TabNavigation_android.navigationOptions = ({ navigation, screenProps }) => {
   const { routeName } = navigation.state.routes[navigation.state.index];
 
@@ -182,12 +162,23 @@ TabNavigation_android.navigationOptions = ({ navigation, screenProps }) => {
     iconSize={22}
     color={'white'}
   />
+
+  const Header = (props) => <CustomAndroidHeader>
+    <DrawerButton drawerNav={screenProps.drawerNav}/>
+    <IconText
+      {...headerProps}
+      containerStyle={{marginLeft: 15}}
+      text={title}
+      textStyle={{color: 'white', fontSize: 18, fontWeight: 'bold'}}
+      iconSize={22}
+      iconColor={'white'}
+    />
+  </CustomAndroidHeader>
   
 
   return {
     title,
-    headerTitle: CustomHeaderTitle, 
-    headerLeft: <DrawerButton drawerNav={screenProps.drawerNav}/>,
+    header: Header,
   };
 };
 
@@ -202,31 +193,23 @@ export const TabNavigationStack = createStackNavigator({
       screen: SubjectListScreen,
     }, 
   }, {
-    navigationOptions: {
-      headerTransparent: true,
-      headerTintColor: 'white',
-      headerTitleStyle: {
-        fontWeight: 'bold',
-        color: 'white'
+    ...Platform.select({
+      ios: {
+        //configured in each tab's stack
+        headerMode: 'hidden',
       },
-      headerStyle: {
-        backgroundColor: 'transparent',
-      },
-    },
-    headerTransparent: true,
-    cardStyle: {
-      backgroundColor: 'transparent',
-      opacity: 1,
-    },
-    transitionConfig : () => ({
-      containerStyle: {
-        backgroundColor: 'transparent',
-      },
-      transitionSpec: {
-        duration: 0,
-      },
+      android: {
+        //overriden in tabnav
+        navigationOptions: {
+          headerTransparent: true,
+          headerTintColor: 'white',
+          headerTitleStyle: {
+            fontWeight: 'bold',
+            color: 'white'
+          },
+        },
+      }
     }),
-
   }
 );
 
@@ -251,30 +234,28 @@ export class Homescreen extends React.PureComponent {
 
   constructor(props){
     super(props);
+    this.state = { 
+      mount: false 
+    }
+  }
+
+  componentDidMount(){
+    setTimeout(() => this.setState({mount: true}), 0);
   }
 
   setDrawerSwipe = (mode) => {
     this.props.navigation.setParams({enableDrawerSwipe: mode});
   }
 
-  _renderSharedHeaderAndroid(){
-    const header_height = Header.HEIGHT + Expo.Constants.statusBarHeight;
+  _renderContents(){
     return(
-      <View style={{position: 'absolute', marginBottom: 20, width: '100%', height: header_height, backgroundColor: 'white'}}>
-        <LinearGradient
-          style={{flex: 1}}
-          colors={['#8400ea', '#651FFF']}
-          start={[0, 1]} 
-          end={[1, 0]}
-        />
-      </View>
-    );
-  }
-
-  render(){
-    return (
-      <View style={{flex: 1, height: '100%', width: '100%', backgroundColor: 'rgb(233, 232, 239)'}}>
-        {this._renderSharedHeaderAndroid()}
+      <Animatable.View
+        style={{flex: 1}}
+        animation={'fadeIn'}
+        duration={250}
+        easing={'ease-in-out'}
+        useNativeDriver={true}
+      >
         <TabNavigationStack
           navigation={this.props.navigation}
           screenProps={{
@@ -284,6 +265,15 @@ export class Homescreen extends React.PureComponent {
             setDrawerSwipe: this.setDrawerSwipe,
           }}
         />
+      </Animatable.View>
+    );
+  }
+
+  render(){
+    const { mount } = this.state;
+    return (
+      <View style={{flex: 1, height: '100%', width: '100%', backgroundColor: 'rgb(233, 232, 239)'}}>
+        {mount && this._renderContents()}
         <SubjectModal ref={r => this.subjectModal = r}/>
       </View>
     );

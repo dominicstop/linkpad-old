@@ -253,7 +253,7 @@ export class ModuleListScreen extends React.Component {
 
   componentDidMount = async () => {
     //delay rendering
-    setTimeout(() => { this.setState({mount: true}) }, 0);
+    setTimeout(() => { this.setState({mount: true}) }, 500);
   }
 
   _onRefresh = async () => {
@@ -303,6 +303,7 @@ export class ModuleListScreen extends React.Component {
 
   render(){
     const { mount } = this.state;
+    console.log('Module List rendering');
     return(
       <ViewWithBlurredHeader hasTabBar={true}>
         <NavigationEvents onDidFocus={this.componentDidFocus}/>

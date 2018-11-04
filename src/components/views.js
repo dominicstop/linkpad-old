@@ -126,7 +126,7 @@ export class Card extends React.PureComponent {
     const { style, ...viewProps } = this.props;
     return(
       <View
-        style={[{overflow: 'visible', marginHorizontal: 12, marginTop: 5, marginBottom: 10, paddingHorizontal: 15, paddingVertical: 10, backgroundColor: 'white', borderRadius: 10}, STYLES.mediumShadow, style]}
+        style={[{overflow: 'visible', marginHorizontal: 12, marginTop: 5, marginBottom: 12, paddingHorizontal: 15, paddingVertical: 10, backgroundColor: 'white', borderRadius: 10}, STYLES.mediumShadow, style]}
         elevation={7}
         {...viewProps}
       >
@@ -205,7 +205,7 @@ export class ViewWithBlurredHeader extends React.PureComponent {
 
   render_Android(){
     const marginTop = StatusBar.currentHeight + Header.HEIGHT;
-    //return(this.props.children);
+    return(this.props.children);
     return(
       <View style={{flex: 1}}>
         <View style={{flex: 1, marginTop, elevation: 0}}>
