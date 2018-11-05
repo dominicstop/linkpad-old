@@ -113,9 +113,9 @@ export class ResourcesScreen extends React.Component {
   render(){
     const { mount, showContent } = this.state;
     const offset = Header.HEIGHT + 15;
-    
+
     return(
-      <ViewWithBlurredHeader hasTabBar={true}>
+      <ViewWithBlurredHeader hasTabBar={true} enableAndroid={false}>
         <NavigationEvents onDidFocus={this.componentDidFocus}/>
         {mount && showContent && <ResourceList
           contentInset={{top: offset}}

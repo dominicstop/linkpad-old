@@ -106,7 +106,7 @@ export class TipsScreen extends React.Component {
     const offset = Header.HEIGHT + 15;
 
     return(
-      <ViewWithBlurredHeader hasTabBar={true}>
+      <ViewWithBlurredHeader hasTabBar={true} enableAndroid={false}>
         <NavigationEvents onDidFocus={this.componentDidFocus}/>
         {this.state.showContent && <TipList
           contentInset={{top: offset}}

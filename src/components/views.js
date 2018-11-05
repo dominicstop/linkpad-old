@@ -139,11 +139,13 @@ export class Card extends React.PureComponent {
 //ios only: used woth react-nav for a blurred floating header
 export class ViewWithBlurredHeader extends React.PureComponent {
   static propTypes = {
-    hasTabBar: PropTypes.bool
+    hasTabBar: PropTypes.bool,
+    enableAndroid: PropTypes.bool
   }
 
   static defaultProps = {
-    hasTabBar: false
+    hasTabBar: false,
+    enableAndroid: true,
   }
 
   //ios blurred header overlay
@@ -204,8 +206,9 @@ export class ViewWithBlurredHeader extends React.PureComponent {
   }
 
   render_Android(){
+    const { enableAndroid } = this.props;
     const marginTop = StatusBar.currentHeight + Header.HEIGHT;
-    return(this.props.children);
+    if(!enableAndroid) return(this.props.children);
     return(
       <View style={{flex: 1}}>
         <View style={{flex: 1, marginTop, elevation: 0}}>

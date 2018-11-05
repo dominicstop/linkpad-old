@@ -39,6 +39,8 @@ export default class SubjectListScreen extends React.Component {
     const moduleData   = navigation.getParam('moduleData', null);
     const subjectCount = _.compact(moduleData.subjects).length;
 
+    return null;
+
     const Header = (
       <IconText
         textStyle={{fontSize: 30, fontWeight: '900', marginLeft: 10}}
@@ -87,21 +89,22 @@ export default class SubjectListScreen extends React.Component {
 
   render(){
     const { navigation } = this.props;
+    const offset = Header.HEIGHT;
     //get data from previous screen: module list
-    const moduleList = navigation.getParam('moduleList', null);
+    const modules    = navigation.getParam('modules'   , null);
     const moduleData = navigation.getParam('moduleData', null);
 
     return(
       <ViewWithBlurredHeader hasTabBar={true}>
         <NavigationEvents onDidFocus={this.componentDidFocus}/>
         <SubjectList
-          containerStyle={{paddingTop: Header.HEIGHT + 10}}
+          contentInset={{top: offset}}
+          contentOffset={{x: 0, y: -offset}}
+          containerStyle={{paddingTop: 25}}
           ListHeaderComponent={this._renderHeader}
-          subjectListData={moduleData.subjects}
           onPressSubject={this._onPressSubject}
-          //extra props/data
-          moduleData={moduleData}
-          moduleList={moduleList}
+          //pass down props
+          {...{moduleData, modules}}
         />
       </ViewWithBlurredHeader>
     );

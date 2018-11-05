@@ -59,10 +59,9 @@ export class ModuleListScreen extends React.Component {
     this.setState({modules: modules});
   }
 
-  _navigateToModule = (moduleList, moduleData) => {
+  _navigateToModule = (modules, moduleData) => {
     this.props.navigation.navigate('SubjectListRoute', {
-      moduleList: moduleList,
-      moduleData: moduleData,
+      modules, moduleData
     });
   }
 
@@ -93,7 +92,7 @@ export class ModuleListScreen extends React.Component {
     const { mount } = this.state;
     const offset = Header.HEIGHT;
     return(
-      <ViewWithBlurredHeader hasTabBar={true}>
+      <ViewWithBlurredHeader hasTabBar={true} enableAndroid={false}>
         <NavigationEvents onDidFocus={this.componentDidFocus}/>
         {mount && <ModuleList
           contentInset={{top: offset}}

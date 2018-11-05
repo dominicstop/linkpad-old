@@ -16,7 +16,7 @@ import { Icon } from 'react-native-elements';
 export class ExamsScreen extends React.Component {
   render(){
     return(
-      <ViewWithBlurredHeader hasTabBar={true}>
+      <ViewWithBlurredHeader hasTabBar={true} enableAndroid={false}>
         <ScrollView style={{paddingTop: Header.HEIGHT + 15, paddingHorizontal: 20}}>
         </ScrollView>
       </ViewWithBlurredHeader>

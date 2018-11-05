@@ -280,7 +280,7 @@ export class SubjectItem extends React.PureComponent {
 
   _renderDescription(){
     const { styles } = SubjectItem;
-    const { subjectData } = this.props;
+    const { subjectData, numberOfLinesDesc } = this.props;
 
     return(
       <TouchableOpacity 
@@ -288,7 +288,7 @@ export class SubjectItem extends React.PureComponent {
         activeOpacity={0.7}
       >
         <Text 
-          style={[styles.title]}
+          style={styles.title}
           numberOfLines={1}
           ellipsizeMode={'tail'} 
           lineBreakMode={'tail'}
@@ -297,7 +297,7 @@ export class SubjectItem extends React.PureComponent {
         </Text>
         <Text 
           style={styles.description} 
-          numberOfLines={3}
+          numberOfLines={numberOfLinesDesc}
           ellipsizeMode={'tail'} 
           lineBreakMode={'tail'}
         >
@@ -498,15 +498,25 @@ export class ModuleList extends React.PureComponent {
     onPressModule : PropTypes.func,
   }
 
+  _renderFooter = () => {
+    return(
+      <View style={{padding: 100}}/>
+    );
+  }
+
   _renderItem = ({item, index}) => {
     const { modules, onPressModule, onPressSubject } = this.props;
+    const animation = Platform.select({
+      ios    : 'fadeInUp', 
+      android: 'zoomIn'
+    });
+
     return(
       <AnimatedListItem
-        index={index}
-        delay={0}
+        delay={250}
         duration={500}
-        multiplier={300}
-        animation='fadeInUp'
+        multiplier={200}
+        {...{animation, index}}
       >
         <ModuleItem
           moduleData={item}
@@ -515,12 +525,6 @@ export class ModuleList extends React.PureComponent {
           {...{modules, onPressModule, onPressSubject}}
         />
       </AnimatedListItem>
-    );
-  }
-
-  _renderFooter = () => {
-    return(
-      <View style={{padding: 100}}/>
     );
   }
 
@@ -543,49 +547,54 @@ export class ModuleList extends React.PureComponent {
 export class SubjectList extends React.Component {
   static propTypes = {
     //extra props
-    moduleList: PropTypes.arrayOf(
+    modules: PropTypes.arrayOf(
       PropTypes.shape(moduleProps)
     ).isRequired,
     moduleData: PropTypes.shape(moduleProps).isRequired,
-    //actual props used for data
-    subjectListData: PropTypes.arrayOf(
-      PropTypes.shape(subjectProps)
-    ).isRequired,
     //callbacks
     onPressSubject: PropTypes.func,
     //style
     containerStyle: ViewPropTypes.style,
-  }
+  };
+
+  static styles = StyleSheet.create({
+
+  });
   
   _renderItem = ({item, index}) => {
+    const { onPressSubject, moduleData } = this.props;
+    const animation = Platform.select({
+      ios    : 'fadeInUp', 
+      android: 'fadeInLeft'
+    });
+
     return(
       <AnimatedListItem
-        index={index}
-        delay={300}
+        delay={0}
         duration={500}
+        multiplier={200}
+        {...{animation, index}}
       >
         <SubjectItem
           containerStyle={{height: null, marginHorizontal: 13, paddingTop: 0, paddingBottom: 20}}
           numberOfLinesDesc={6}
           subjectData={item}
-          onPressSubject={this.props.onPressSubject}
-          moduleData={this.props.moduleData}
+          //pass dowm props
+          {...{moduleData, onPressSubject}}
         />
       </AnimatedListItem>
     );
   }
 
   render(){
-    const { subjectListData, containerStyle, ...flatListProps} = this.props;
+    const { moduleData, containerStyle, ...flatListProps} = this.props;
+    const data = _.compact(moduleData.subjects);
     return(
       <FlatList
-        style={[containerStyle]}
-        data={_.compact(subjectListData)}
+        {...{data}}
         keyExtractor={(item) => item.indexid + ''}
         renderItem ={this._renderItem }
         ListFooterComponent={<View style={{padding: 70}}/>}
-        scrollEventThrottle={200}
-        directionalLockEnabled={true}
         removeClippedSubviews={true}
         {...flatListProps}
       />
