@@ -96,7 +96,7 @@ export class CustomAndroidHeader extends React.PureComponent {
     const statusbar_height = Expo.Constants.statusBarHeight;
     const header_height = Header.HEIGHT + Expo.Constants.statusBarHeight;
     return(
-      <View style={{elevation: 20, width: '100%', height: header_height, backgroundColor: 'white'}}>
+      <View style={{elevation: 30, width: '100%', height: header_height, backgroundColor: 'white'}}>
         <LinearGradient
           style={{flex: 1, alignItems: 'center', paddingTop: statusbar_height, paddingHorizontal: 10, flexDirection: 'row'}}
           colors={['#8400ea', '#651FFF']}
@@ -210,7 +210,6 @@ export const TabNavigationStack = createStackNavigator({
     }
   })
 );
-
 
 //container for tab navigation
 export class Homescreen extends React.PureComponent {

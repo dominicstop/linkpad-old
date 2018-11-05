@@ -90,13 +90,14 @@ export class ModuleListScreen extends React.Component {
 
   render(){
     const { mount } = this.state;
-    const offset = Header.HEIGHT + 15;
+    const offset = Header.HEIGHT;
     return(
       <ViewWithBlurredHeader hasTabBar={true}>
         <NavigationEvents onDidFocus={this.componentDidFocus}/>
         {mount && <ModuleList
           contentInset={{top: offset}}
           contentOffset={{x: 0, y: -offset}}
+          contentContainerStyle={{paddingTop: 15}}
           modules={this.state.modules}
           onPressModule ={this._navigateToModule}
           onPressSubject={this._onPressSubject}

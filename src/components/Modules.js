@@ -166,13 +166,13 @@ export class SubjectDetails extends React.PureComponent {
     const { subjectData, onPress, containerStyle, color, numberOfLinesDesc } = this.props;
     return(
       <TouchableOpacity 
-        style={[{flex: 1, alignItems: 'stretch'}, containerStyle]} 
+        style={[{flex: 1,}, containerStyle]} 
         onPress={() => onPress(subjectData)}
         activeOpacity={0.7}
       >
         {/*Title*/}
         <Text 
-          style={styles.subjectTitle}
+          style={[styles.subjectTitle]}
           numberOfLines={1}
           ellipsizeMode={'tail'} 
           lineBreakMode={'tail'}
@@ -206,8 +206,62 @@ export class SubjectItem extends React.PureComponent {
   }
 
   static defaultProps = {
-    height:  177,
-  }
+    height: Platform.select({ios: 165, android: 150}),
+  };
+
+  static styles = StyleSheet.create({
+    title: {
+      fontWeight: '500',
+      fontSize: 24,
+      color: 'black',
+    },
+    description: {
+      textAlign: 'justify',
+      marginTop: 1, 
+      fontWeight: '300',
+      fontSize: 16,
+      color: 'rgba(0, 0, 0, 0.9)',
+    },
+    wrapper: Platform.select({
+      ios: {
+        paddingTop: 10, 
+        paddingBottom: 35, 
+        shadowColor: '#686868', 
+        shadowOpacity: 0.5, 
+        shadowRadius: 5,
+        shadowOffset: {  
+          width: 4,
+          height: 5
+        }, 
+      },
+      android: {
+        flex: 1, 
+        paddingTop: 7, 
+        paddingLeft: 5, 
+        paddingRight: 9, 
+        paddingBottom: 15,
+      }
+    }),
+    container: Platform.select({
+      ios: {
+        flex: 1, 
+        borderRadius: 15, 
+        flexDirection: 'row', 
+        paddingHorizontal: 20, 
+        paddingVertical: 15, 
+        backgroundColor: 'white',
+        overflow: 'hidden',
+      },
+      android: {
+        flex: 1, 
+        elevation: 10, 
+        borderRadius: 15, 
+        paddingHorizontal: 15, 
+        paddingVertical: 15, 
+        backgroundColor: 'white'
+      }
+    }),
+  });
 
   constructor() {
     super();
@@ -219,82 +273,43 @@ export class SubjectItem extends React.PureComponent {
     onPressSubject(subjectData, moduleData);
   }
 
-  render() {
-    const { subjectData, height, containerStyle } = this.props;
-
-    const GRADIENTS = [
-      ['#36e3da', '#1b74fd'],
-      ['#4fb2fb', '#6f12e0'],
-      ['#ff2af2', '#5f1691'],
-      ['#ff4e88', '#9a45d4'],
-      ['#fb255e', '#ff5420'],
-      ['#fd1226', '#ff8b0d'],
-      ['#f0ff5b', '#ff6500'],
-    ];
-
-    const unused = [
-      ['#85fc28', '#02692c'],
-      ['#1ffc5d', '#005d40'],
-      ['#00f994', '#02757c'],
-    ];
-
-    //const randColor = _.sample(GRADIENTS);
-    //const selectedGradient = [colorShift(randColor[0], 20), colorShift(randColor[1], 15)];
-    //console.log(selectedGradient);
-    //const selectedGradient = GRADIENTS[8]
-    //const selectedGradient = ['#D1C4E9', '#BBDEFB']
-    const selectedGradient = ['#D1C4E9', '#BBDEFB']
-
-    const DUMMY_PROGRESS = {
-      correct  : 90,
-      mistakes : 0,
-      questions: 100,
-    };
-
-    const color = selectedGradient[0];
+  _renderDescription(){
+    const { styles } = SubjectItem;
+    const { subjectData } = this.props;
 
     return(
-      <View
-        style={{
-          height, 
-          paddingTop: 7, paddingLeft: 5, paddingRight: 9, paddingBottom: 15,
-        }} 
+      <TouchableOpacity 
+        //onPress={() => onPress(subjectData)}
+        activeOpacity={0.7}
       >
-        <View 
-          style={{ elevation: 10, borderRadius: 15, flexDirection: 'row', paddingHorizontal: 15, paddingVertical: 15, backgroundColor: 'white'}} 
-          overflow='visible'
+        <Text 
+          style={[styles.title]}
+          numberOfLines={1}
+          ellipsizeMode={'tail'} 
+          lineBreakMode={'tail'}
         >
-          {true && <SubjectProgress 
-            progressData={DUMMY_PROGRESS} 
-            color={Chroma(color).saturate(2).hex()}         
-            backgroundColor={Chroma(color).brighten(2).hex()}         
-          />}
-          <SubjectDetails
-            numberOfLinesDesc={this.props.numberOfLinesDesc}
-            containerStyle={{marginLeft: 13}}
-            subjectData={subjectData}
-            onPress={this._onPressSubject}
-            color={Chroma(color).darken().hex()}
-          />
-        </View>
-      </View>
+          {subjectData.subjectname}
+        </Text>
+        <Text 
+          style={styles.description} 
+          numberOfLines={3}
+          ellipsizeMode={'tail'} 
+          lineBreakMode={'tail'}
+        >
+          {subjectData.description}
+        </Text>
+      </TouchableOpacity>
     );
+  }
+
+  render() {
+    const { styles } = SubjectItem;
+    const { height } = this.props;
 
     return(
-      <View style={[{ height: height, paddingTop: 10, paddingBottom: 35, shadowOffset:{  width: 4,  height: 5}, shadowColor: '#686868', shadowOpacity: 0.5, shadowRadius: 5}, containerStyle]} removeClippedSubviews={false}>
-        <View style={{flex: 1, height: '100%', borderRadius: 15, flexDirection: 'row', paddingHorizontal: 20, paddingVertical: 15, backgroundColor: 'white'}} overflow='hidden' >
-          {true && <SubjectProgress 
-            progressData={DUMMY_PROGRESS} 
-            color={Chroma(color).saturate(2).hex()}         
-            backgroundColor={Chroma(color).brighten(2).hex()}         
-          />}
-          <SubjectDetails
-            numberOfLinesDesc={this.props.numberOfLinesDesc}
-            containerStyle={{marginLeft: 13}}
-            subjectData={subjectData}
-            onPress={this._onPressSubject}
-            color={Chroma(color).darken().hex()}
-          />
+      <View style={[{height}, styles.wrapper]}>
+        <View style={styles.container}>
+          {this._renderDescription()}
         </View>
       </View>
     );
@@ -387,12 +402,30 @@ export class ModuleItem extends React.PureComponent {
   };
 
   static styles = StyleSheet.create({
-    title: {
-      fontWeight: '600',
-      fontSize: 24,
-      color: '#150a44'
-    },
-    subtitle: {
+    title: Platform.select({
+      ios: {
+        fontSize: 24,
+        fontWeight: '600',
+        color: '#150a44'
+      },
+      android: {
+        fontSize: 24,
+        fontWeight: '900',
+        color: '#150a44'
+      }
+    }),
+    subtitle: Platform.select({
+      ios: {
+
+      },
+      android: {
+        marginTop: -3,
+        fontSize: 18,
+        fontWeight: '100',
+        color: '#424242'
+      }
+    }),
+    description: {
       fontWeight: '200',
       fontSize: 18,
       textAlign: 'justify'
@@ -427,15 +460,17 @@ export class ModuleItem extends React.PureComponent {
       >
         <IconText
           //text
-          textStyle={styles.title}
           text={moduleData.modulename}
+          textStyle={styles.title}
+          subtitle={'16 subjects'}
+          subtitleStyle={styles.subtitle}
           //icon
           iconName='file-text-o'
           iconType='font-awesome'
           iconColor='#7E57C2'
-          iconSize ={20}
+          iconSize ={25}
         />
-        <Text style={styles.subtitle} numberOfLines={2}>
+        <Text style={styles.description} numberOfLines={2}>
           {moduleData.description}
         </Text>
       </TouchableOpacity>
@@ -447,18 +482,19 @@ export class ModuleItem extends React.PureComponent {
 
     //ui values
     const sliderWidth = Dimensions.get('window').width;
-    const itemWidth   = sliderWidth - 20;
-
     const platformSpecificProps = Platform.select({
       ios: {
         layout: 'tinder',
         activeSlideAlignment: 'center',
-
+        itemWidth: sliderWidth - 20,
+        enableSnap: true,
+        layoutCardOffset: 10,
       },
       android: {
         layout: 'default',
         activeSlideAlignment: 'start',
         itemWidth: sliderWidth - 50,
+        enableSnap: false,
         inactiveSlideShift: 0,
         inactiveSlideOpacity: 0.9,
         inactiveSlideScale: 1,
@@ -474,12 +510,8 @@ export class ModuleItem extends React.PureComponent {
           data={_.compact(moduleData.subjects)}
           renderItem={this._renderItem}
           sliderWidth={sliderWidth}
-          itemWidth={itemWidth}
           activeSlideAlignment={'center'}
-          layoutCardOffset={0}
-          enableSnap={true}
           removeClippedSubviews={false}
-          
           {...platformSpecificProps}
         />
       </View>
@@ -496,8 +528,6 @@ export class ModuleList extends React.PureComponent {
     //callbacks
     onPressSubject: PropTypes.func,
     onPressModule : PropTypes.func,
-    //style
-    containerStyle: ViewPropTypes.style,
   }
 
   _renderItem = ({item, index}) => {
@@ -530,7 +560,6 @@ export class ModuleList extends React.PureComponent {
     const { modules, containerStyle, ...flatListProps} = this.props;
     return(
       <FlatList
-        style={[containerStyle]}
         data={_.compact(modules)}
         ref={r => this.flatlist = r}
         keyExtractor={(item) => item.indexid + ''}
@@ -595,25 +624,3 @@ export class SubjectList extends React.Component {
     );
   }
 }
-
-const styles = StyleSheet.create({
-  title: {
-    fontWeight: '600',
-    fontSize: 24,
-  },
-  subtitle: {
-    fontWeight: '200',
-    fontSize: 18,
-  },
-  subjectTitle: {
-    fontWeight: '500',
-    fontSize: 24,
-    color: 'black',
-
-  },
-  subjectSubtitle: {
-    fontWeight: '300',
-    fontSize: 16,
-    color: 'rgba(0, 0, 0, 0.9)',
-  }
-});
