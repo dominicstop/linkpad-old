@@ -5,14 +5,15 @@ import PropTypes from 'prop-types';
 import Animated from 'react-native-reanimated';
 import { BlurView } from 'expo';
 
-import   Interactable              from './Interactable';
-import { AnimatedCollapsable     } from './Buttons';
-import { IconText                } from '../components/Views';
-import { IconButton              } from '../components/Buttons';
-import { SubjectItem, ModuleItem } from '../functions/ModuleStore';
-import { timeout                 , setStateAsync} from '../functions/Utils';
+import   Interactable                   from './Interactable';
+import { AnimatedCollapsable          } from './Buttons';
+import { IconText                     } from '../components/Views';
+import { IconButton                   } from '../components/Buttons';
+import { SubjectItem, ModuleItemModel } from '../functions/ModuleStore';
+import { timeout, setStateAsync       } from '../functions/Utils';
 
 import * as Animatable from 'react-native-animatable';
+import NavigationService from '../NavigationService';
 
 const Screen = {
   width : Dimensions.get('window').width ,
@@ -165,7 +166,7 @@ export class SwipableModal extends React.PureComponent {
 export class ModalTopIndicator extends React.PureComponent {
   render(){
     return(
-      <View style={{width: '100%', alignItems: 'center', paddingVertical: 15}}>
+      <View style={{width: '100%', alignItems: 'center', paddingTop: 10, paddingBottom: 10}}>
         <View style={{width: 40, height: 8, borderRadius: 4, backgroundColor: '#00000040',}}/>
       </View>
     );
@@ -259,11 +260,6 @@ export class BoardExamModalContent extends React.PureComponent {
     this.imageQuestion = require('../../assets/icons/qa.png');
     this.imageHands    = require('../../assets/icons/hands.png');
   }
-
-  componentDidMount() {
-		// Dirty hack
-		//this._scrollView.scrollResponderHandleStartShouldSetResponder = () => true
-	}
 
   _renderIntroduction(){
     const { styles } = BoardExamModalContent;
@@ -401,7 +397,43 @@ export class SubjectModal extends React.PureComponent {
 
     this.modalClosedCallback = null;
     this.modalOpenedCallback = null;
-  }
+  };
+
+  static styles = StyleSheet.create({
+    container: {
+      flex: 1, 
+      backgroundColor: Platform.select({
+        ios    : 'transparent',
+        android: 'white',
+      }),
+    },
+    //conatainer for buttons
+    buttonsContainer: {
+      flexDirection: 'row', 
+      height: 80, 
+      padding: 10, 
+      paddingVertical: 15, 
+      borderTopColor: 'rgba(0, 0, 0, 0.25)', 
+      borderTopWidth: 1, 
+      shadowOffset:{  width: 2,  height: 3,  }, 
+      shadowColor: 'black', 
+      shadowRadius: 3, 
+      shadowOpacity: 0.5 
+    },
+    //shared styles for buttons
+    buttonContainer: {
+      flex: 1,
+      padding: 10,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    buttonText: {
+      flex: 0,
+      color: 'white',
+      fontSize: 17,
+      textDecorationLine: 'underline'
+    }
+  });
 
   openSubjectModal = (moduleData, subjectData) => {
     this.setState({moduleData, subjectData, mountContent: true});
@@ -422,15 +454,23 @@ export class SubjectModal extends React.PureComponent {
     this.modalClosedCallback && this.modalClosedCallback();
   }
 
+  _handleOnPressStart = () => {
+    const { moduleData, subjectData } = this.state;
+    NavigationService.navigateApp('PracticeExamRoute', {
+      moduleData, subjectData,
+    });
+  }
+
   _handleOnPressClose = () => {
     this._modal.hideModal();
   }
 
   _renderTitle(){
     const { subjectData, moduleData } = this.state;
+    
     //wrap data into helper object for easier access
-    const subject = new SubjectItem(subjectData).get();
-    const module  = new ModuleItem (moduleData ).get();
+    const subject = new SubjectItem    (subjectData).get();
+    const module  = new ModuleItemModel(moduleData ).get();
 
     return(
       <IconText
@@ -537,42 +577,30 @@ export class SubjectModal extends React.PureComponent {
   }
 
   _renderButtons(){
+    const { styles } = SubjectModal;
     const borderRadius = 10;
-    //button text style
-    const textStyle = {
-      flex: 0,
-      color: 'white',
-      fontSize: 17,
-      textDecorationLine: 'underline'
-    }
     //shared props
     const buttonProps = {
       iconSize: 22,
       iconColor: 'white',
-      textStyle,
+      textStyle: styles.buttonText,
     }
-    //shared container style
-    const buttonStyle = {
-      flex: 1,
-      padding: 10,
-      alignItems: 'center',
-      justifyContent: 'center',
-    };
     
     return(
-      <View style={{flexDirection: 'row', height: 80, padding: 10, paddingVertical: 15, borderTopColor: 'rgba(0, 0, 0, 0.2)', borderTopWidth: 1, shadowOffset:{  width: 2,  height: 3,  }, shadowColor: 'black', shadowRadius: 3, shadowOpacity: 0.5 }}>
+      <View style={styles.buttonsContainer}>
         <IconButton
           text={'Start'}
-          containerStyle={[buttonStyle, {borderTopLeftRadius: borderRadius, borderBottomLeftRadius: borderRadius, backgroundColor: '#6200EA'}]}
+          wrapperStyle={{flex: 1}}
+          containerStyle={[styles.buttonContainer, {borderTopLeftRadius: borderRadius, borderBottomLeftRadius: borderRadius, backgroundColor: '#6200EA'}]}
           iconName={'pencil-square-o'}
           iconType={'font-awesome'}
           onPress={this._handleOnPressStart}
-          textStyle={{}}
           {...buttonProps}
         />
         <IconButton
           text={'Cancel'}
-          containerStyle={[buttonStyle, {borderTopRightRadius: borderRadius, borderBottomRightRadius: borderRadius, backgroundColor: '#C62828'}]}
+          wrapperStyle={{flex: 1}}
+          containerStyle={[styles.buttonContainer, {borderTopRightRadius: borderRadius, borderBottomRightRadius: borderRadius, backgroundColor: '#C62828'}]}
           iconName={'close'}
           iconType={'simple-line-icon'}
           onPress={this._handleOnPressClose}
@@ -603,6 +631,7 @@ export class SubjectModal extends React.PureComponent {
 
   render(){
     const paddingBottom = MODAL_EXTRA_HEIGHT + MODAL_DISTANCE_FROM_TOP;
+    const { styles } = SubjectModal;
     const { mountContent } = this.state;
     return(
       <SwipableModal 
@@ -610,8 +639,8 @@ export class SubjectModal extends React.PureComponent {
         onModalShow={this._handleOnModalShow}
         onModalHide={this._handleOnModalHide}
       >
-        <BlurView style={{flex: 1}} intensity={100}>
-          <View style={{flex: 1, backgroundColor: 'rgba(255, 255, 255, 0.5)', paddingBottom}}>
+        <BlurView style={{flex: 1}} intensity={100} tint={'light'}>
+          <View style={[styles.container, {paddingBottom}]}>
             {mountContent && this._renderContent()}
           </View>
         </BlurView>

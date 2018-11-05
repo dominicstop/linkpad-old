@@ -35,11 +35,18 @@ export class SubjectItem {
       questions.push(new SubjectItem(subject.questions[i]));
     }
     return questions;
+  };
+
+  getQuestionLength = () => {
+    if( this.subject == null || this.subject.questions == null){
+      return 0;
+    };
+    return this.subject.questions.length;
   }
 }
 
 //represents the structure for a single module item
-export class ModuleItem {
+export class ModuleItemModel {
   constructor(module = {description: '', indexid: 0, lastupdated: '', modulename: '', subjects: []}){
     this.module = module;
   }
@@ -51,13 +58,26 @@ export class ModuleItem {
   //returns an array of SubjectItem
   getSubjects = () => {
     const { module } = this;
-    //note: written like this for VSCODE autocomplete to work
-    let subjects = [new SubjectItem(module.subjects[0])];
-    //could have used foreach but needed to skip index 0
-    for (let i = 1; i < module.subjects.length; i++) {
-      subjects.push(new SubjectItem(module.subjects[i]));
-    }
-    return subjects;
+    return module.subjects.map((item) => new SubjectItem(item));
+  }
+
+  getLenghtSubjects = () => this.module.subjects.length;
+
+  getTotalQuestions = () => {
+    const subjectModels = this.getSubjects();
+    let total = 0;
+    subjectModels.forEach((subject) => 
+      total += subject.getQuestionLength()
+    );
+    return total;
+  }
+}
+
+export class ModulesManager {
+
+  getModuAsModel = async () => {
+    const modules = await getModuleData();
+    //return new M
   }
 }
 

@@ -146,7 +146,7 @@ TabNavigation_android.navigationOptions = ({ navigation, screenProps }) => {
     <DrawerButton drawerNav={screenProps.drawerNav}/>
     <IconText
       {...headerProps}
-      containerStyle={{marginLeft: 15}}
+      containerStyle={{marginLeft: 20}}
       text={title}
       textStyle={{color: 'white', fontSize: 18, fontWeight: 'bold'}}
       iconSize={22}

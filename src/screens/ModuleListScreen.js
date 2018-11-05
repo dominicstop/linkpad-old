@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, Text, View, Platform, NavigatorIOS, TouchableOpacity, LayoutAnimation, UIManager, RefreshControl } from 'react-native';
+import { StyleSheet, Text, View, Platform, NavigatorIOS, TouchableOpacity, LayoutAnimation, UIManager, RefreshControl, Clipboard } from 'react-native';
 
 import   SubjectListScreen       from './SubjectListScreen'  ;
 import   Constants               from '../Constants'         ;
@@ -69,6 +69,7 @@ export class ModuleListScreen extends React.Component {
   _onPressSubject = (subjectData, moduleData) => {
     const { getRefSubjectModal, setDrawerSwipe } = this.props.screenProps;
     const { modalClosedCallback, modalOpenedCallback } = getRefSubjectModal();
+
     //set callbacks for modal when opened/closed
     if(!modalClosedCallback) getRefSubjectModal().modalClosedCallback = () => setDrawerSwipe(true );
     if(!modalOpenedCallback) getRefSubjectModal().modalOpenedCallback = () => setDrawerSwipe(false);

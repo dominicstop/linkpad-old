@@ -15,6 +15,7 @@ import { material, human, systemWeights } from 'react-native-typography';
 import _ from 'lodash';
 import ProgressBar from 'react-native-progress/Bar';
 import { Bar } from 'react-native-progress';
+import {ModuleItemModel} from '../functions/ModuleStore';
 
 const cardGroupHeight = 150;
 
@@ -195,7 +196,6 @@ export class SubjectDetails extends React.PureComponent {
 //shows a single subject card and holds SubjectDetails and SubjectProgess
 export class SubjectItem extends React.PureComponent {
   static propTypes = {
-    moduleData: PropTypes.shape(moduleProps),
     subjectData: PropTypes.shape(subjectProps),
     height: PropTypes.number,
     numberOfLinesDesc: PropTypes.number,
@@ -267,6 +267,11 @@ export class SubjectItem extends React.PureComponent {
     super();
   }
 
+  _handleOnPress = () => {
+    const { subjectData, onPressSubject } = this.props;
+    onPressSubject && onPressSubject(subjectData);
+  }
+
   _onPressSubject = () => {
     const { onPressSubject, subjectData, moduleData } = this.props;
     //pass subject data as param to callback
@@ -279,7 +284,7 @@ export class SubjectItem extends React.PureComponent {
 
     return(
       <TouchableOpacity 
-        //onPress={() => onPress(subjectData)}
+        onPress={this._handleOnPress}
         activeOpacity={0.7}
       >
         <Text 
@@ -316,81 +321,15 @@ export class SubjectItem extends React.PureComponent {
   }
 }
 
-//displays the module title
-export class ModuleTitle extends React.PureComponent {
-  static propTypes = {
-    moduleData  : PropTypes.shape(moduleProps).isRequired,
-  }
-
-  render(){
-    const { moduleData } = this.props;  
-    return(
-      <IconText
-        textStyle={[styles.title, {}]}
-        iconSize ={20}
-        text={moduleData.modulename}
-        iconColor='grey'
-        iconName ='heart'
-        iconType ='entypo'
-      >
-        {this.props.children}
-      </IconText>
-    );
-  }
-}
-
-//displays the module description
-export class ModuleDescription extends React.PureComponent {
-  static propTypes = {
-    moduleData  : PropTypes.shape(moduleProps).isRequired,
-    detailedView: PropTypes.bool,
-  };
-
-  
-
-  render(){
-    const { styles } = ModuleDescription;
-    const { moduleData, detailedView } = this.props;
-    return(
-      null
-    );
-  }
-}
-
-//displays the title and other details about the module
-export class ModuleHeader extends React.PureComponent {
-  static propTypes = {
-    moduleData  : PropTypes.shape(moduleProps).isRequired,
-    detailedView: PropTypes.bool,
-  }
-
-  render(){
-    const { moduleData, detailedView } = this.props;  
-    return(
-      <View>
-        {/*Title*/}
-        <Text 
-          style={[styles.title]}
-          numberOfLines={1}
-        >
-          {moduleData.modulename }
-        </Text>
-        {/*Description*/}
-        <Text 
-          style={[{textAlign: 'justify'}, styles.subtitle]}
-          numberOfLines={ detailedView? undefined : 2}
-        >
-          {moduleData.description}
-        </Text>
-      </View>
-    );
-  }
-}
-
 //displays a single module item and a list of subjects
 export class ModuleItem extends React.PureComponent {
   static propTypes = {
-    moduleData: PropTypes.shape(moduleProps).isRequired,
+    modules: PropTypes.arrayOf(
+      PropTypes.shape(moduleProps)
+    ).isRequired,
+    moduleData: PropTypes.shape(
+      moduleProps
+    ).isRequired,
     numberOfLinesDesc: PropTypes.number,
     //callbacks
     onPressSubject: PropTypes.func,
@@ -411,12 +350,13 @@ export class ModuleItem extends React.PureComponent {
       android: {
         fontSize: 24,
         fontWeight: '900',
-        color: '#150a44'
+        color: '#150a44',
+        textDecorationLine: 'underline', 
       }
     }),
     subtitle: Platform.select({
       ios: {
-
+        fontSize: 22,
       },
       android: {
         marginTop: -3,
@@ -425,6 +365,14 @@ export class ModuleItem extends React.PureComponent {
         color: '#424242'
       }
     }),
+    column: {
+      flex: 1,
+    },
+    detail: {
+      fontSize: 16,
+      fontWeight: '100',
+      color: 'grey'
+    },
     description: {
       fontWeight: '200',
       fontSize: 18,
@@ -433,20 +381,13 @@ export class ModuleItem extends React.PureComponent {
   });
 
   _onPressModule = () => {
-    const { moduleList, moduleData } = this.props;
-    this.props.onPressModule(moduleList, moduleData);
-  }
+    const { modules, moduleData, onPressModule } = this.props;
+    onPressModule && onPressModule(modules, moduleData);
+  };
 
-  //renders a single subject item
-  _renderItem = ({item, index}) => {
-    return(
-      <SubjectItem 
-        moduleData={this.props.moduleData}
-        subjectData={item}
-        onPressSubject={this.props.onPressSubject}
-        numberOfLinesDesc={this.props.numberOfLinesDesc}
-      />
-    );
+  _handleOnPressSubject = (subjectData) => {
+    const { modules, moduleData, onPressSubject } = this.props;
+    onPressSubject && onPressSubject(subjectData, moduleData);
   }
 
   _renderHeader(){
@@ -462,18 +403,44 @@ export class ModuleItem extends React.PureComponent {
           //text
           text={moduleData.modulename}
           textStyle={styles.title}
-          subtitle={'16 subjects'}
-          subtitleStyle={styles.subtitle}
           //icon
           iconName='file-text-o'
           iconType='font-awesome'
           iconColor='#7E57C2'
-          iconSize ={25}
+          iconSize ={20}
         />
         <Text style={styles.description} numberOfLines={2}>
           {moduleData.description}
         </Text>
       </TouchableOpacity>
+    );
+  };
+
+  _renderDetails(){
+    const { styles } = ModuleItem;
+    const { moduleData } = this.props;
+    const model = new ModuleItemModel(moduleData);
+
+    return(
+      <View style={{flexDirection: 'row', paddingHorizontal: 12}}>
+        <Text style={styles.detail}>
+          {`Updated on: ${moduleData.lastupdated}`}
+        </Text>
+      </View>
+    );
+  }
+
+  //renders a single subject item
+  _renderItem = ({item, index}) => {
+    const { modules, moduleData } = this.props;
+    return(
+      <SubjectItem 
+        subjectData={item}
+        numberOfLinesDesc={this.props.numberOfLinesDesc}
+        onPressSubject={this._handleOnPressSubject}
+        //pass down props
+        {...{modules, moduleData}}
+      />
     );
   }
 
@@ -505,6 +472,7 @@ export class ModuleItem extends React.PureComponent {
     return(
       <View style={{justifyContent: 'center', marginBottom: 5}}>
         {this._renderHeader()}
+        {this._renderDetails()}
         <Carousel
           ref={r => this._carousel = r }
           data={_.compact(moduleData.subjects)}
@@ -531,6 +499,7 @@ export class ModuleList extends React.PureComponent {
   }
 
   _renderItem = ({item, index}) => {
+    const { modules, onPressModule, onPressSubject } = this.props;
     return(
       <AnimatedListItem
         index={index}
@@ -540,11 +509,10 @@ export class ModuleList extends React.PureComponent {
         animation='fadeInUp'
       >
         <ModuleItem
-          moduleList={this.props.moduleList}
           moduleData={item}
-          onPressSubject={this.props.onPressSubject}
-          onPressModule ={this.props.onPressModule }
           numberOfLinesDesc={3}
+          //pass down props
+          {...{modules, onPressModule, onPressSubject}}
         />
       </AnimatedListItem>
     );
