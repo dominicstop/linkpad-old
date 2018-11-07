@@ -69,7 +69,7 @@ export class SwipableModal extends React.PureComponent {
     if(mountModal){
       this._modalShadow.fadeOut(750);
       await this._rootView.bounceOutDown(750);
-      await setStateAsync({mountModal: false});
+      this.setState({mountModal: false});
     }
   };
 
