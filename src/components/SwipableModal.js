@@ -177,7 +177,7 @@ export class ModalTopIndicator extends React.PureComponent {
 export class WelcomeScreenModalContent extends React.PureComponent {
   _renderBody(){
     return(
-      <ScrollView style={{paddingTop: 5, paddingHorizontal: 15, marginBottom: 250}} contentContainerStyle={{paddingBottom: 100}}>
+      <ScrollView style={{paddingTop: 5, paddingHorizontal: 15}} contentContainerStyle={{paddingBottom: 100}}>
         <IconText
           textStyle={styles.textTitle}
           iconSize ={32}
@@ -225,6 +225,7 @@ export class WelcomeScreenModalContent extends React.PureComponent {
         <View style={{flex: 1, backgroundColor: 'rgba(255, 255, 255, 0.5)'}}>
           <ModalTopIndicator/>
           {this._renderBody()}
+          <View style={{marginBottom: 100}}/>
         </View>
       </BlurView>
     );
@@ -411,14 +412,14 @@ export class SubjectModal extends React.PureComponent {
     buttonsContainer: {
       flexDirection: 'row', 
       height: 80, 
-      padding: 10, 
+      padding: 10,
       paddingVertical: 15, 
       borderTopColor: 'rgba(0, 0, 0, 0.25)', 
       borderTopWidth: 1, 
       shadowOffset:{  width: 2,  height: 3,  }, 
       shadowColor: 'black', 
       shadowRadius: 3, 
-      shadowOpacity: 0.5 
+      shadowOpacity: 0.5,
     },
     //shared styles for buttons
     buttonContainer: {
@@ -426,6 +427,7 @@ export class SubjectModal extends React.PureComponent {
       padding: 10,
       alignItems: 'center',
       justifyContent: 'center',
+      elevation: 5
     },
     buttonText: {
       flex: 0,
@@ -623,6 +625,7 @@ export class SubjectModal extends React.PureComponent {
           {this._renderDetails()}
           <Separator/>
           {this._renderGrades()}
+          <View style={{marginBottom: 50}}/>
         </ScrollView>
         {this._renderButtons()}
       </Fragment>
@@ -633,17 +636,29 @@ export class SubjectModal extends React.PureComponent {
     const paddingBottom = MODAL_EXTRA_HEIGHT + MODAL_DISTANCE_FROM_TOP;
     const { styles } = SubjectModal;
     const { mountContent } = this.state;
+
+    const Wrapper = (props) => Platform.select({
+      ios: (
+        <BlurView style={props.style} intensity={100} tint={'light'}>
+          {props.children}
+        </BlurView>
+      ),
+      android: (
+        <View style={props.style}>
+          {props.children}
+        </View>
+      ),
+    });
+
     return(
       <SwipableModal 
         ref={r => this._modal = r}
         onModalShow={this._handleOnModalShow}
         onModalHide={this._handleOnModalHide}
       >
-        <BlurView style={{flex: 1}} intensity={100} tint={'light'}>
-          <View style={[styles.container, {paddingBottom}]}>
-            {mountContent && this._renderContent()}
-          </View>
-        </BlurView>
+        <Wrapper style={[{flex: 1}, styles.container, {paddingBottom}]}>
+          {mountContent && this._renderContent()}
+        </Wrapper>
       </SwipableModal>
     );
   }

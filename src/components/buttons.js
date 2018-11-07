@@ -541,23 +541,45 @@ export class ExpandCollapseText extends React.PureComponent {
       console.log('numOfLines: ' + numOfLines);
       console.log('viewHeight: ' + viewHeight);
     }
+
+    const Wrapper = (props) => Platform.select({
+      ios: (
+        <TouchableOpacity
+          activeOpacity={0.5}
+          {...props}
+        >
+          {props.children}
+        </TouchableOpacity>
+      ),
+      android: (
+        <TouchableNativeFeedback
+          background={TouchableNativeFeedback.Ripple('#6200EA', true)}
+          useForeground={true}
+          {...props}
+        >
+          {props.children}
+        </TouchableNativeFeedback>
+      ),
+    });
+
     return (
-      <TouchableOpacity
-        style={[containerStyle, {marginBottom: 0 - viewHeight}]}
+      <Wrapper
         onPress={this._onPress}
         activeOpacity={0.5}
       >
-        <Text
-          numberOfLines={numOfLines}
-          onLayout={this._onLayout}
-          selectable={false}
-          ellipsizeMode={'tail'}
-          {...textProps}
-        >
-          {text}
-        </Text>
-        <View style={{marginTop: 0 - viewHeight, height: viewHeight, width: '100%', backgroundColor: 'white'}}/>
-      </TouchableOpacity>
+        <View style={[containerStyle, {marginBottom: 0 - viewHeight}]}>
+          <Text
+            numberOfLines={numOfLines}
+            onLayout={this._onLayout}
+            selectable={false}
+            ellipsizeMode={'tail'}
+            {...textProps}
+          >
+            {text}
+          </Text>
+          <View style={{marginTop: 0 - viewHeight, height: viewHeight, width: '100%', backgroundColor: 'white'}}/>
+        </View>
+      </Wrapper>
     );
   }
 }
@@ -589,27 +611,47 @@ export class ExpandCollapseTextWithHeader extends React.PureComponent {
 
   _renderHeader(){
     const { titleComponent, titleContainerStyle } = this.props;
-    return(
-      <TouchableOpacity 
-        style={[{flexDirection: 'row'}, titleContainerStyle]}
-        onPress={this._onPressHeader}
-      >
-        <View style={[{flex: 1}]}>
-          {titleComponent}
-        </View>
-        <Animatable.View
-          style={{alignItems: 'center', justifyContent: 'center', transform: [{ rotate : '0deg' }]}}
-          ref={r => this.chevron = r}
-          useNativeDriver={true}
+
+    const Wrapper = (props) => Platform.select({
+      ios: (
+        <TouchableOpacity
+          activeOpacity={0.5}
+          {...props}
         >
-          <Icon
-            name='chevron-down'
-            type='feather'
-            color='grey'
-            size={30}
-          />
-        </Animatable.View>
-      </TouchableOpacity>
+          {props.children}
+        </TouchableOpacity>
+      ),
+      android: (
+        <TouchableNativeFeedback
+          background={TouchableNativeFeedback.Ripple('#6200EA', true)}
+          useForeground={true}
+          {...props}
+        >
+          {props.children}
+        </TouchableNativeFeedback>
+      ),
+    });
+
+    return(
+      <Wrapper onPress={this._onPressHeader}>
+        <View style={[{flexDirection: 'row'}, titleContainerStyle]}>
+          <View style={[{flex: 1}]}>
+            {titleComponent}
+          </View>
+          <Animatable.View
+            style={{alignItems: 'center', justifyContent: 'center', transform: [{ rotate : '0deg' }]}}
+            ref={r => this.chevron = r}
+            useNativeDriver={true}
+          >
+            <Icon
+              name='chevron-down'
+              type='feather'
+              color='grey'
+              size={30}
+            />
+          </Animatable.View>
+        </View>
+      </Wrapper>
     );
   }
 

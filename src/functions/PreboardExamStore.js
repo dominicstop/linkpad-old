@@ -114,7 +114,6 @@ export class PreboardExam {
 }
 
 export class PreboardExamManager {
-  //returns json wrapped in a object
   constructor(){
     this.data = _preboardData;
   }
