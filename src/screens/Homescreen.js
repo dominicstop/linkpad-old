@@ -101,9 +101,9 @@ class TabNavigationAndroidContainer extends React.Component {
 
   render(){
     return (
-      <View style={{flex: 1}}>
+      <View style={{flex: 1, height: '100%', width: '100%'}}>
         <LinearGradient
-          style={{position: 'absolute', height: 56, width: '100%', bottom: 0}}
+          style={{position: 'absolute', height: 56, width: '100%', bottom: 0, left: 0, right: 0}}
           colors={['#8400ea', '#651FFF']}
           start={[0, 1]} 
           end={[1, 0]}
