@@ -219,14 +219,16 @@ export class SubjectListItem extends React.PureComponent {
     },
     description: {
       textAlign: 'justify',
-      marginTop: 1, 
+      marginTop: 3, 
       fontWeight: '300',
       fontSize: 16,
       color: 'rgba(0, 0, 0, 0.9)',
     },
     detail: Platform.select({
       ios: {
-
+        fontSize: 20,
+        fontWeight: '300',
+        color: 'rgba(0, 0, 0, 0.60)'
       },
       android: {
         fontSize: 18,
