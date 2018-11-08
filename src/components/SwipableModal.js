@@ -434,7 +434,38 @@ export class SubjectModal extends React.PureComponent {
       color: 'white',
       fontSize: 17,
       textDecorationLine: 'underline'
-    }
+    },
+    title: Platform.select({
+      ios: {
+        fontSize: 24, 
+        fontWeight: '800'
+      },
+      android: {
+        fontSize: 26, 
+        fontWeight: '900'
+      }
+    }),
+    detailTitle: Platform.select({
+      ios: {
+        fontSize: 18,
+        fontWeight: '500'
+      },
+      android: {
+        fontSize: 18,
+        fontWeight: '900'
+      }
+    }),
+    detailSubtitle: Platform.select({
+      ios: {
+        fontSize: 24,
+        fontWeight: '200'
+      },
+      android: {
+        fontSize: 24,
+        fontWeight: '100',
+        color: '#424242'
+      },
+    }),
   });
 
   openSubjectModal = (moduleData, subjectData) => {
@@ -489,21 +520,27 @@ export class SubjectModal extends React.PureComponent {
     );
   }
 
+  _renderDescriptionTitle(){
+    const { styles } = SubjectModal;
+    return(
+      <IconText
+        //icon
+        iconName={'info'}
+        iconType={'feather'}
+        iconColor={'grey'}
+        iconSize={26}
+        //title
+        text={'Description'}
+        textStyle={styles.title}
+      />
+    );
+  }
+
   _renderDescription(){
     const { subjectData } = this.state;
     //wrap data into helper object for easier access
     const subject = new SubjectItem(subjectData).get();
     //title comp for collapsable
-    const descriptionTitle = <IconText
-      //icon
-      iconName={'info'}
-      iconType={'feather'}
-      iconColor={'grey'}
-      iconSize={26}
-      //title
-      text={'Description'}
-      textStyle={{fontSize: 24, fontWeight: '800'}}
-    />
     return(
       <View style={{overflow: 'hidden', marginTop: 15}}>
         <AnimatedCollapsable
@@ -511,7 +548,7 @@ export class SubjectModal extends React.PureComponent {
           text={subject.description}
           maxChar={400}
           collapsedNumberOfLines={6}
-          titleComponent={descriptionTitle}
+          titleComponent={this._renderDescriptionTitle()}
           style={{fontSize: 18, textAlign: 'justify'}}
         />
       </View>
@@ -519,18 +556,10 @@ export class SubjectModal extends React.PureComponent {
   }
 
   _renderDetails(){
+    const { styles } = SubjectModal;
     const { subjectData } = this.state;
     //wrap data into helper object for easier access
     const subject = new SubjectItem(subjectData).get();
-
-    const titleStyle = {
-      fontSize: 18,
-      fontWeight: '500'
-    };
-    const subtitleStyle = {
-      fontSize: 24,
-      fontWeight: '200'
-    };
 
     return(
       <Fragment>
@@ -542,16 +571,16 @@ export class SubjectModal extends React.PureComponent {
           iconSize={26}
           //title
           text={'Subject Details'}
-          textStyle={{fontSize: 24, fontWeight: '800'}}
+          textStyle={styles.title}
         />
         <View style={{flexDirection: 'row', marginTop: 3}}>
           <View style={{flex: 1}}>
-            <Text numberOfLines={1} style={titleStyle   }>{'Questions: '}</Text>
-            <Text numberOfLines={1} style={subtitleStyle}>{subject.questions.length + ' items'}</Text>
+            <Text numberOfLines={1} style={styles.detailTitle   }>{'Questions: '}</Text>
+            <Text numberOfLines={1} style={styles.detailSubtitle}>{subject.questions.length + ' items'}</Text>
           </View>
           <View style={{flex: 1}}>
-            <Text numberOfLines={1} style={titleStyle   }>{'Updated: '}</Text>
-            <Text numberOfLines={1} style={subtitleStyle}>{subject.lastupdated}</Text>
+            <Text numberOfLines={1} style={styles.detailTitle   }>{'Updated: '}</Text>
+            <Text numberOfLines={1} style={styles.detailSubtitle}>{subject.lastupdated}</Text>
           </View>
         </View>
       </Fragment>
