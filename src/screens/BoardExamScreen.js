@@ -252,7 +252,7 @@ export class BoardExamScreen extends React.Component {
 
   static styles = StyleSheet.create({
     scrollview: Platform.select({
-      ios    : { paddingTop: 5  },
+      ios    : { paddingTop: 10 },
       android: { paddingTop: 15 },
     }),
   });
@@ -262,7 +262,8 @@ export class BoardExamScreen extends React.Component {
     this.state = {
       preboard: null,
       isActive: false,
-      refreshing: false
+      refreshing: false,
+      mount: false,
     }
     this.preboard = new PreboardExamManager();
   }
@@ -272,6 +273,11 @@ export class BoardExamScreen extends React.Component {
     let preboardModel = await this.preboard.getAsModel();
     const isActive = true;//preboardModel.response.active;
     this.setState({preboard: preboardModel.get(), isActive});
+  }
+
+  componentDidMount(){
+    //delay rendering
+    setTimeout(() => this.setState({mount: true}), 0);
   }
 
   _onRefresh = async () => {
@@ -348,12 +354,14 @@ export class BoardExamScreen extends React.Component {
 
   render(){
     const { styles } = BoardExamScreen;
+    const offset = Header.HEIGHT;    
+    if( !this.state.mount ) return null;
     return(
       <ViewWithBlurredHeader hasTabBar={false}>
         <ScrollView
           contentContainerStyle={styles.scrollview}
-          contentInset={{top: Header.HEIGHT}}
-          contentOffset={{x: 0, y: -70}}
+          contentInset={{top: offset}}
+          contentOffset={{x: 0, y: -offset}}
           ref={r => this.scrollview = r}
           refreshControl={this._renderRefreshCotrol()}
         >
