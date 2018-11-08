@@ -118,7 +118,6 @@ export default class SubjectListScreen extends React.Component {
 
   _onPressSubject = (subjectData, moduleData) => {
     const { getRefSubjectModal } = this.props.screenProps;
-    console.log(moduleData);
     getRefSubjectModal().openSubjectModal(moduleData, subjectData);    
   }
 
@@ -149,15 +148,28 @@ export default class SubjectListScreen extends React.Component {
   _renderHeader = () => {
     const { styles } = SubjectListScreen;
     const { navigation } = this.props;
-    //extract details
+    //platform specific animations
+    const animation = Platform.select({
+      ios    : 'fadeInUp', 
+      android: 'zoomIn'
+    });
+    //get data from prev. screen
     const moduleData = navigation.getParam('moduleData', null);
+    //wrap data in model
     const model = new ModuleItemModel(moduleData);
+    //extract details
     const { description, lastupdated } = model.module;
     const countSubject  = model.getLenghtSubjects();
     const countQuestion = model.getTotalQuestions();
 
     return(
-      <View style={styles.headerContainer}>
+      <Animatable.View 
+        style={styles.headerContainer}
+        duration={500}
+        easing={'ease-in-out'}
+        useNativeDriver={true}
+        {...{animation}}
+      >
         <AnimatedCollapsable
           titleComponent={this._renderHeaderTitle()}
           text={description}
@@ -180,7 +192,7 @@ export default class SubjectListScreen extends React.Component {
             <Text numberOfLines={1} style={styles.detailSubtitle}>{lastupdated}</Text>
           </View>
         </View>
-      </View>
+      </Animatable.View>
     );
   }
 

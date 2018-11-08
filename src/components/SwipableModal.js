@@ -509,7 +509,6 @@ export class SubjectModal extends React.PureComponent {
     const subject = new SubjectItem    (subjectData).get();
     const module  = new ModuleItemModel(moduleData ).get();
 
-
     return(
       <IconText
         containerStyle={{marginRight: 20}}
