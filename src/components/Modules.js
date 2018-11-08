@@ -15,7 +15,7 @@ import { material, human, systemWeights } from 'react-native-typography';
 import _ from 'lodash';
 import ProgressBar from 'react-native-progress/Bar';
 import { Bar } from 'react-native-progress';
-import {ModuleItemModel} from '../functions/ModuleStore';
+import {ModuleItemModel, SubjectItem} from '../functions/ModuleStore';
 
 const cardGroupHeight = 150;
 
@@ -194,11 +194,12 @@ export class SubjectDetails extends React.PureComponent {
 }
 
 //shows a single subject card and holds SubjectDetails and SubjectProgess
-export class SubjectItem extends React.PureComponent {
+export class SubjectListItem extends React.PureComponent {
   static propTypes = {
     subjectData: PropTypes.shape(subjectProps),
     height: PropTypes.number,
     numberOfLinesDesc: PropTypes.number,
+    showDetails: PropTypes.bool,
     //callbacks
     onPressSubject: PropTypes.func,
     //styles
@@ -206,6 +207,7 @@ export class SubjectItem extends React.PureComponent {
   }
 
   static defaultProps = {
+    showDetails: false,
     height: Platform.select({ios: 165, android: 150}),
   };
 
@@ -222,6 +224,16 @@ export class SubjectItem extends React.PureComponent {
       fontSize: 16,
       color: 'rgba(0, 0, 0, 0.9)',
     },
+    detail: Platform.select({
+      ios: {
+
+      },
+      android: {
+        fontSize: 18,
+        fontWeight: '100',
+        color: 'grey'
+      }
+    }),
     wrapper: Platform.select({
       ios: {
         paddingTop: 10, 
@@ -236,10 +248,10 @@ export class SubjectItem extends React.PureComponent {
       },
       android: {
         flex: 1, 
-        paddingTop: 7, 
+        paddingTop: 6, 
         paddingLeft: 5, 
         paddingRight: 9, 
-        paddingBottom: 15,
+        paddingBottom: 13,
       }
     }),
     container: Platform.select({
@@ -257,7 +269,7 @@ export class SubjectItem extends React.PureComponent {
         elevation: 10, 
         borderRadius: 15, 
         paddingHorizontal: 15, 
-        paddingVertical: 15, 
+        paddingVertical: 10, 
         backgroundColor: 'white'
       }
     }),
@@ -278,12 +290,30 @@ export class SubjectItem extends React.PureComponent {
     onPressSubject(subjectData, moduleData);
   }
 
+  _renderDetails(){
+    const { styles } = SubjectListItem;
+    const { subjectData, showDetails } = this.props;
+    if(!showDetails) return null;
+
+    const model = new SubjectItem(subjectData);
+    const { lastupdated } = model.subject;
+    const questionCount = model.getQuestionLength();
+
+    return(
+      <View style={{flexDirection: 'row', marginBottom: 2}}>
+        <Text style={styles.detail}>{`${questionCount} items `}</Text>
+        <Text style={styles.detail}>{` (Updated: ${lastupdated})`}</Text>
+      </View>
+    );
+  }
+
   _renderDescription(){
-    const { styles } = SubjectItem;
+    const { styles } = SubjectListItem;
     const { subjectData, numberOfLinesDesc } = this.props;
 
     return(
-      <TouchableOpacity 
+      <TouchableOpacity
+        style={{flex: 1}}
         onPress={this._handleOnPress}
         activeOpacity={0.7}
       >
@@ -295,6 +325,7 @@ export class SubjectItem extends React.PureComponent {
         >
           {subjectData.subjectname}
         </Text>
+        {this._renderDetails()}
         <Text 
           style={styles.description} 
           numberOfLines={numberOfLinesDesc}
@@ -308,11 +339,11 @@ export class SubjectItem extends React.PureComponent {
   }
 
   render() {
-    const { styles } = SubjectItem;
-    const { height } = this.props;
+    const { styles } = SubjectListItem;
+    const { height, containerStyle } = this.props;
 
     return(
-      <View style={[{height}, styles.wrapper]}>
+      <View style={[{height}, styles.wrapper, containerStyle]}>
         <View style={styles.container}>
           {this._renderDescription()}
         </View>
@@ -434,7 +465,7 @@ export class ModuleItem extends React.PureComponent {
   _renderItem = ({item, index}) => {
     const { modules, moduleData } = this.props;
     return(
-      <SubjectItem 
+      <SubjectListItem 
         subjectData={item}
         numberOfLinesDesc={this.props.numberOfLinesDesc}
         onPressSubject={this._handleOnPressSubject}
@@ -565,7 +596,7 @@ export class SubjectList extends React.Component {
     const { onPressSubject, moduleData } = this.props;
     const animation = Platform.select({
       ios    : 'fadeInUp', 
-      android: 'fadeInLeft'
+      android: 'zoomIn'
     });
 
     return(
@@ -575,8 +606,9 @@ export class SubjectList extends React.Component {
         multiplier={200}
         {...{animation, index}}
       >
-        <SubjectItem
-          containerStyle={{height: null, marginHorizontal: 13, paddingTop: 0, paddingBottom: 20}}
+        <SubjectListItem
+          showDetails={true}
+          containerStyle={{height: null}}
           numberOfLinesDesc={6}
           subjectData={item}
           //pass dowm props

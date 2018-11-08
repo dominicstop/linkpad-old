@@ -101,7 +101,7 @@ export default class SubjectListScreen extends React.Component {
         <SubjectList
           contentInset={{top: offset}}
           contentOffset={{x: 0, y: -offset}}
-          containerStyle={{paddingTop: 25}}
+          contentContainerStyle={{paddingTop: 15, paddingHorizontal: 5}}
           ListHeaderComponent={this._renderHeader}
           onPressSubject={this._onPressSubject}
           //pass down props
