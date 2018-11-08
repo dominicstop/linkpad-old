@@ -435,16 +435,19 @@ export class SubjectModal extends React.PureComponent {
       fontSize: 17,
       textDecorationLine: 'underline'
     },
-    title: Platform.select({
-      ios: {
-        fontSize: 24, 
-        fontWeight: '800'
-      },
-      android: {
-        fontSize: 26, 
-        fontWeight: '900'
-      }
-    }),
+    title: {
+      color: '#160656',
+      ...Platform.select({
+        ios: {
+          fontSize: 24, 
+          fontWeight: '800'
+        },
+        android: {
+          fontSize: 26, 
+          fontWeight: '900'
+        }
+      })
+    },
     detailTitle: Platform.select({
       ios: {
         fontSize: 18,
@@ -508,13 +511,13 @@ export class SubjectModal extends React.PureComponent {
     return(
       <IconText
         containerStyle={{marginRight: 20}}
-        textStyle={{fontSize: 20, fontWeight: 'bold'}}
+        textStyle={{fontSize: 20, fontWeight: 'bold', color: '#160656'}}
         subtitleStyle={{fontWeight: '200', fontSize: 16}}
         text     ={subject.subjectname}
         subtitle ={module .modulename }
         iconName ={'notebook'}
         iconType ={'simple-line-icon'}
-        iconColor={'rgba(0, 0, 0, 0.6)'}
+        iconColor={'#512DA8'}
         iconSize ={26}
       />
     );
@@ -527,7 +530,7 @@ export class SubjectModal extends React.PureComponent {
         //icon
         iconName={'info'}
         iconType={'feather'}
-        iconColor={'grey'}
+        iconColor={'#512DA8'}
         iconSize={26}
         //title
         text={'Description'}
@@ -567,7 +570,7 @@ export class SubjectModal extends React.PureComponent {
           //icon
           iconName={'file-text'}
           iconType={'feather'}
-          iconColor={'grey'}
+          iconColor={'#512DA8'}
           iconSize={26}
           //title
           text={'Subject Details'}
@@ -588,19 +591,20 @@ export class SubjectModal extends React.PureComponent {
   }
 
   _renderGrades(){
+    const { styles } = SubjectModal;
     return(
       <Fragment>
         <IconText
           //icon
           iconName={'bar-chart'}
           iconType={'feather'}
-          iconColor={'grey'}
+          iconColor={'#512DA8'}
           iconSize={26}
           //title
           text={'Grades'}
-          textStyle={{fontSize: 24, fontWeight: '800'}}
+          textStyle={styles.title}
           //subtitle
-          subtitleStyle={{fontWeight: '200', fontSize: 16}}
+          subtitleStyle={{fontWeight: '200', fontSize: 16, }}
           subtitle ={'Previous grades'}
         />
       </Fragment>
