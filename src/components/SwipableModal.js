@@ -502,16 +502,18 @@ export class SubjectModal extends React.PureComponent {
   }
 
   _renderTitle(){
+    const { styles } = SubjectModal;
     const { subjectData, moduleData } = this.state;
     
     //wrap data into helper object for easier access
     const subject = new SubjectItem    (subjectData).get();
     const module  = new ModuleItemModel(moduleData ).get();
 
+
     return(
       <IconText
         containerStyle={{marginRight: 20}}
-        textStyle={{fontSize: 20, fontWeight: 'bold', color: '#160656'}}
+        textStyle={styles.title}
         subtitleStyle={{fontWeight: '200', fontSize: 16}}
         text     ={subject.subjectname}
         subtitle ={module .modulename }

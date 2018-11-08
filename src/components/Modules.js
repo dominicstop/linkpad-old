@@ -610,10 +610,16 @@ export class SubjectList extends React.Component {
       android: { elevation: 5 }
     }),
   });
+
+  //only receives subject data
+  _handleOnPressSubject = (subjectData) => {
+    const { onPressSubject, moduleData } = this.props;
+    onPressSubject && onPressSubject(subjectData, moduleData);
+  }
   
   _renderItem = ({item, index}) => {
     const { styles } = SubjectList;
-    const { onPressSubject, moduleData } = this.props;
+    const { moduleData } = this.props;
     const animation = Platform.select({
       ios    : 'fadeInUp', 
       android: 'zoomIn'
@@ -632,8 +638,9 @@ export class SubjectList extends React.Component {
           containerStyle={styles.container}
           numberOfLinesDesc={6}
           subjectData={item}
+          onPressSubject={this._handleOnPressSubject}
           //pass dowm props
-          {...{moduleData, onPressSubject}}
+          {...{moduleData}}
         />
       </AnimatedListItem>
     );

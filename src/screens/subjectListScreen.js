@@ -118,7 +118,8 @@ export default class SubjectListScreen extends React.Component {
 
   _onPressSubject = (subjectData, moduleData) => {
     const { getRefSubjectModal } = this.props.screenProps;
-    getRefSubjectModal().toggleSubjectModal(moduleData, subjectData);
+    console.log(moduleData);
+    getRefSubjectModal().openSubjectModal(moduleData, subjectData);    
   }
 
   _renderHeaderTitle(){
