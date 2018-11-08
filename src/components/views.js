@@ -79,7 +79,7 @@ export class IconText extends React.PureComponent {
     const Title = (props) => <Text 
       style={[textStyle]}
       numberOfLines={1}
-      ellipsizeMode='tail'
+      ellipsizeMode={'tail'}
       {...props}
     >
       {text}

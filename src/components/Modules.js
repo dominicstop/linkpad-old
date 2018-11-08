@@ -251,7 +251,7 @@ export class SubjectListItem extends React.PureComponent {
       android: {
         flex: 1, 
         paddingTop: 6, 
-        paddingLeft: 5, 
+        paddingLeft: 7, 
         paddingRight: 9, 
         paddingBottom: 15,
       }
@@ -268,7 +268,7 @@ export class SubjectListItem extends React.PureComponent {
       },
       android: {
         flex: 1, 
-        elevation: 10, 
+        elevation: 9, 
         borderRadius: 15, 
         paddingHorizontal: 15, 
         paddingVertical: 10, 
@@ -374,19 +374,21 @@ export class ModuleItem extends React.PureComponent {
   };
 
   static styles = StyleSheet.create({
-    title: Platform.select({
-      ios: {
-        fontSize: 24,
-        fontWeight: '600',
-        color: '#150a44'
-      },
-      android: {
-        fontSize: 24,
-        fontWeight: '900',
-        color: '#150a44',
-        textDecorationLine: 'underline', 
-      }
-    }),
+    title: {
+      flex: 1,
+      color: '#150a44',
+      ...Platform.select({
+        ios: {
+          fontSize: 24,
+          fontWeight: '600',
+        },
+        android: {
+          fontSize: 24,
+          fontWeight: '900',
+          textDecorationLine: 'underline', 
+        }
+      }),
+    },
     subtitle: Platform.select({
       ios: {
         fontSize: 22,
@@ -498,7 +500,7 @@ export class ModuleItem extends React.PureComponent {
         inactiveSlideShift: 0,
         inactiveSlideOpacity: 0.9,
         inactiveSlideScale: 1,
-        containerCustomStyle: { paddingLeft: 5 },
+        containerCustomStyle: { paddingLeft: 0 },
       }
     });
 
@@ -606,7 +608,7 @@ export class SubjectList extends React.Component {
     },
     container: Platform.select({
       android: { elevation: 5 }
-    })
+    }),
   });
   
   _renderItem = ({item, index}) => {

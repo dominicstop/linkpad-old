@@ -61,7 +61,7 @@ export class ModuleItemModel {
     return module.subjects.map((item) => new SubjectItem(item));
   }
 
-  getLenghtSubjects = () => this.module.subjects.length;
+  getLenghtSubjects = () => _.compact(this.module.subjects).length;
 
   getTotalQuestions = () => {
     const subjectModels = this.getSubjects();

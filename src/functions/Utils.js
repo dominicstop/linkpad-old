@@ -54,3 +54,7 @@ export function colorShift(color, max){
   alert(result);
   return result;
 }
+
+export function plural(string = "", count = 0){
+  return string + (count > 1? 's' : '');
+}
