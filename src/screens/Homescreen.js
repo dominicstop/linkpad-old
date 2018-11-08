@@ -18,6 +18,7 @@ import { Icon } from 'react-native-elements';
 import { LinearGradient } from 'expo';
 import SubjectListScreen from './SubjectListScreen';
 import { IconText } from '../components/Views';
+import { AndroidHeader } from '../components/AndroidHeader';
 
 /**
  * each tab has a shared header because tabnav it is wrapped inside a stack
@@ -90,47 +91,27 @@ const TabNavigation_android = createMaterialBottomTabNavigator(routeConfig, {
   }
 );
 
-//shared android header
-export class CustomAndroidHeader extends React.PureComponent {
-  render(){
-    const statusbar_height = Expo.Constants.statusBarHeight;
-    const header_height = Header.HEIGHT + Expo.Constants.statusBarHeight;
-    return(
-      <View style={{elevation: 30, width: '100%', height: header_height, backgroundColor: 'white'}}>
-        <LinearGradient
-          style={{flex: 1, alignItems: 'center', paddingTop: statusbar_height, paddingHorizontal: 10, flexDirection: 'row'}}
-          colors={['#8400ea', '#651FFF']}
-          start={[0, 1]} 
-          end={[1, 0]}
-        >
-          {this.props.children}
-        </LinearGradient>
-      </View>
-    );
-  }
-}
-
 function getHeaderProps(routeName){
   switch(routeName){
     case 'TabModuleListRoute': return {
-      title   : 'Modules',
-      iconName: 'briefcase',
-      iconType: 'simple-line-icon',
+      title: 'Modules',
+      name : 'briefcase',
+      type : 'simple-line-icon',
     };
     case 'TabExamsRoute': return {
-      title   : 'Exams',
-      iconName: 'bookmark',
-      iconType: 'feather',
+      title: 'Exams',
+      name : 'bookmark',
+      type : 'feather',
     };
     case 'TabResourcesRoute': return {
-      title   : 'Modules',
-      iconName: 'star-outlined',
-      iconType: 'entypo',
+      title: 'Modules',
+      name : 'star-outlined',
+      type : 'entypo',
     };
     case 'TabTipsRoute': return {
-      title   : 'Modules',
-      iconName: 'star-outlined',
-      iconType: 'entypo',
+      title: 'Modules',
+      name : 'star-outlined',
+      type : 'entypo',
     };
   }
 }
@@ -139,24 +120,16 @@ function getHeaderProps(routeName){
 TabNavigation_android.navigationOptions = ({ navigation, screenProps }) => {
   const { routeName } = navigation.state.routes[navigation.state.index];
 
-  const { title, iconName, iconType } = getHeaderProps(routeName);
-  const headerProps = { iconName, iconType };
+  const { title, name, type } = getHeaderProps(routeName);
+  const iconProps = { name, type };
 
-  const Header = (props) => <CustomAndroidHeader>
-    <DrawerButton drawerNav={screenProps.drawerNav}/>
-    <IconText
-      {...headerProps}
-      containerStyle={{marginLeft: 20}}
-      text={title}
-      textStyle={{color: 'white', fontSize: 18, fontWeight: 'bold'}}
-      iconSize={22}
-      iconColor={'white'}
-    />
-  </CustomAndroidHeader>
+  const titleIcon = <Icon {...iconProps} color={'white'} size={22}/>
 
   return {
     title,
-    header: Header,
+    headerLeft: <DrawerButton/>,
+    //custom header
+    header: props => <AndroidHeader {...{titleIcon, ...props}}/>
   };
 };
 
@@ -164,8 +137,8 @@ TabNavigation_android.navigationOptions = ({ navigation, screenProps }) => {
 TabNavigation_ios.navigationOptions = ({ navigation, screenProps }) => {
   const { routeName } = navigation.state.routes[navigation.state.index];
 
-  const { title, iconName, iconType } = getHeaderProps(routeName);
-  const headerProps = { iconName, iconType };
+  const { title, name, type } = getHeaderProps(routeName);
+  const headerProps = { name, type };
 
   const headerTitle = (props) => <CustomHeader 
     {...props} {...headerProps}
@@ -200,7 +173,7 @@ export const TabNavigationStack = createStackNavigator({
     android: {
       //overriden in tabnav
       navigationOptions: {
-        headerTransparent: true,
+        headerTransparent: false,
         headerTintColor: 'white',
         headerTitleStyle: {
           fontWeight: 'bold',

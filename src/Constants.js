@@ -4,17 +4,25 @@ import { StyleSheet, Platform } from 'react-native';
 export const NAV_BGCOLOR = 'rgba(48, 0, 247, 0.6)';
 export const BG_COLOR    = 'rgb(233, 232, 239)'   ;
 
-export const HEADER_PROPS = {
-  headerTransparent: true,
-  headerTintColor: 'white',
-  headerTitleStyle: {
-    fontWeight: 'bold',
-    color: 'white'
+export const HEADER_PROPS = Platform.select({
+  ios: {
+    headerTransparent: true,
+    headerTintColor: 'white',
+    headerTitleStyle: {
+      fontWeight: 'bold',
+      color: 'white'
+    },
   },
-  headerStyle: {
-    //backgroundColor: NAV_BGCOLOR,
+  android: {
+    headerTransparent: false,
+    headerTintColor: 'white',
+    headerTitleStyle: {
+      fontWeight: 'bold',
+      color: 'white'
+    },
   },
-}
+});
+
 
 export const STACKNAV_PROPS = {
   transitionConfig: () => ({

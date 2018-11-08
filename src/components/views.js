@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Fragment } from 'react';
 import { Text, View, ViewPropTypes, Platform, StyleSheet, StatusBar } from 'react-native';
 import PropTypes from 'prop-types';
 
@@ -190,32 +190,8 @@ export class ViewWithBlurredHeader extends React.PureComponent {
     );
   }
 
-  //android header overlay
-  _renderHeader(){
-    const header_height = Header.HEIGHT + Expo.Constants.statusBarHeight;
-    return(
-      <View style={{position: 'absolute', elevation: 20, marginBottom: 20, width: '100%', height: header_height, backgroundColor: 'white'}}>
-        <LinearGradient
-          style={{flex: 1}}
-          colors={['#8400ea', '#651FFF']}
-          start={[0, 1]} 
-          end={[1, 0]}
-        />
-      </View>
-    );
-  }
-
   render_Android(){
-    const { enableAndroid } = this.props;
-    const marginTop = StatusBar.currentHeight + Header.HEIGHT;
-    if(!enableAndroid) return(this.props.children);
-    return(
-      <View style={{flex: 1}}>
-        <View style={{flex: 1, marginTop, elevation: 0}}>
-          {this.props.children}
-        </View>
-      </View>
-    );
+    return(this.props.children);
   }
 
   render(){

@@ -1,9 +1,10 @@
 import React from 'react';
-import { Text, View } from 'react-native';
+import { Text, View, Platform } from 'react-native';
 
 import { SubjectList, ModuleTitle, ModuleDescription } from '../components/Modules';
-import { ViewWithBlurredHeader, IconText      } from '../components/Views'  ;
-import { ExpandCollapse, ExpandableWithHeader } from '../components/Buttons';
+import { ViewWithBlurredHeader, IconText } from '../components/Views';
+import { AndroidHeader } from '../components/AndroidHeader';
+import { ExpandableWithHeader } from '../components/Buttons';
 import { CustomHeader } from '../components/Header' ;
 
 import { Header, NavigationEvents  } from 'react-navigation';
@@ -11,16 +12,16 @@ import { Divider, colors } from 'react-native-elements' ;
 import * as Animatable from 'react-native-animatable';
 import _ from 'lodash';
 
-
-const getModuleTitle = (moduleData) => moduleData != null ? moduleData.moduleName : 'View Module';
-
 const SubjectListHeader = (props) => <CustomHeader {...props}/>
 
 export default class SubjectListScreen extends React.Component {
   static navigationOptions = {
     title: 'View Module',
-    headerTitle: SubjectListHeader,    
-    drawerLockMode: 'locked-close'
+    headerTitle: SubjectListHeader,
+    //custom android header
+    ...Platform.select({
+      android: { header: props => <AndroidHeader {...props}/> }
+    }),
   };
 
   componentDidFocus = () => {

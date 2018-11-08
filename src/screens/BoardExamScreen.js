@@ -14,6 +14,7 @@ import { PreboardExamListScreen } from './BoardExamListScreen';
 import { BoardExamTestStack     } from './BoardExamTestScreen';
 import { PreboardExam, PreboardExamManager, PreboardExamItem, PreboardExamModuleItem } from '../functions/PreboardExamStore';
 import { setStateAsync } from '../functions/Utils';
+import { AndroidHeader } from '../components/AndroidHeader';
 import { AnimateInView } from '../components/Views';
 import { ExamDetails } from '../components/PreboardExam';
 
@@ -224,17 +225,29 @@ export class ActiveCard extends React.PureComponent {
   }
 }
 
-const BoardExamHeader = (props) => <CustomHeader {...props}
-  iconName='pencil-square-o'
-  iconType='font-awesome'
-  iconSize={22}
-/>
+//shared icon betw ios/android
+const iconProps = { 
+  name : 'pencil-square-o', 
+  type : 'font-awesome', 
+  color: 'white',
+  size : 22, 
+};
+
+//android and ios icons
+const titleIcon = <Icon {...iconProps} containerStyle={{marginTop: 3}}/>
+const headerTitle = (props) => <CustomHeader {...props} {...iconProps}/>
 
 export class BoardExamScreen extends React.Component {
   static navigationOptions=({navigation, screenProps}) => ({
+    //ios icon + text
+    headerTitle,
     title: 'Board Exam',
-    headerTitle: BoardExamHeader,
-    headerLeft : <DrawerButton drawerNav={screenProps.drawerNav}/>,
+    headerLeft : <DrawerButton/>,
+    //custom android header
+    ...Platform.select({
+      android: { header: props => 
+        <AndroidHeader {...{titleIcon, ...props}}/> 
+    }}),
   });
 
   static styles = StyleSheet.create({
@@ -355,10 +368,6 @@ export class BoardExamScreen extends React.Component {
   }
 }
 
-export const styles = StyleSheet.create({
-
-});
-
 //stack for Preboard and PreboardList
 export const BoardExamMainStack = createStackNavigator({
     BoardExamRoute: {
@@ -372,11 +381,14 @@ export const BoardExamMainStack = createStackNavigator({
     },
   }, {
     initialRouteName: 'BoardExamRoute',
-    headerMode: 'float',
-    headerTransitionPreset: 'uikit',
-    headerTransparent: true,
-    //mode: 'modal',
     navigationOptions: HEADER_PROPS,
+    ...Platform.select({
+      ios: {
+        headerMode: 'float',
+        headerTransitionPreset: 'uikit',
+        headerTransparent: true,
+      },
+    })
   }
 );
 

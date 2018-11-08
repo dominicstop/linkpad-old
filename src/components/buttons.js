@@ -419,23 +419,40 @@ export class DrawerButton extends React.PureComponent {
     NavigationService.navigateDrawerToggle();
   }
 
-  render(){
-    const {drawerNav, style, ...touchableProps} = this.props;
+  _renderIcon(){
     return(
-      <TouchableOpacity
-        style={[STYLES.glow, { marginLeft: 10, shadowOpacity: 0.5, shadowRadius: 3 } , style]}
-        onPress={this._handleOnPress}
-        {...touchableProps}
-      >
-        <Icon
-          name='ios-menu'
-          type='ionicon'
-          size={26}
-          color='white'
-          containerStyle={[STYLES.glow]}
-        />
-      </TouchableOpacity>
+      <Icon
+        name='ios-menu'
+        type='ionicon'
+        size={26}
+        color='white'
+        containerStyle={[STYLES.glow]}
+      />
     );
+  }
+
+
+  render(){
+    return Platform.select({
+      ios: (
+        <TouchableOpacity
+          style={[STYLES.glow, { marginLeft: 10, shadowOpacity: 0.5, shadowRadius: 3 }]}
+          onPress={this._handleOnPress}
+        >
+          {this._renderIcon()}
+        </TouchableOpacity>
+      ),
+      android: (
+        <View style={{borderRadius: 100, overflow: 'hidden', padding: 20}}>
+          <TouchableNativeFeedback
+            background={TouchableNativeFeedback.Ripple('white', true)}
+            onPress={this._handleOnPress}
+          >
+            {this._renderIcon()}
+          </TouchableNativeFeedback>
+        </View>
+      )
+    });
   }
 }
 

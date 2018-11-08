@@ -11,9 +11,9 @@ export class CustomHeader extends React.PureComponent {
     style: Text.propTypes.style,
     color: PropTypes.string,
     //icon props
-    iconName: PropTypes.string,
-    iconType: PropTypes.string,
-    iconSize: PropTypes.number,
+    name: PropTypes.string,
+    type: PropTypes.string,
+    size: PropTypes.number,
   }
 
   static defaultProps = {
@@ -26,10 +26,10 @@ export class CustomHeader extends React.PureComponent {
         text={this.props.children}
         textStyle={[{color: this.props.color, fontSize: 18, fontWeight: 'bold'}, this.props.style]}
         containerStyle={STYLES.glow}
-        iconColor={this.props.color   }
-        iconName ={this.props.iconName}
-        iconType ={this.props.iconType}
-        iconSize ={this.props.iconSize}
+        iconColor={this.props.color}
+        iconName ={this.props.name }
+        iconType ={this.props.type }
+        iconSize ={this.props.size }
       />
     );
   }
