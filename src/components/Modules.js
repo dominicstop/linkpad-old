@@ -251,7 +251,7 @@ export class SubjectListItem extends React.PureComponent {
         paddingTop: 6, 
         paddingLeft: 5, 
         paddingRight: 9, 
-        paddingBottom: 13,
+        paddingBottom: 15,
       }
     }),
     container: Platform.select({
@@ -340,11 +340,11 @@ export class SubjectListItem extends React.PureComponent {
 
   render() {
     const { styles } = SubjectListItem;
-    const { height, containerStyle } = this.props;
+    const { height, wrapperStyle, containerStyle } = this.props;
 
     return(
-      <View style={[{height}, styles.wrapper, containerStyle]}>
-        <View style={styles.container}>
+      <View style={[{height}, styles.wrapper, wrapperStyle]}>
+        <View style={[styles.container, containerStyle]}>
           {this._renderDescription()}
         </View>
       </View>
@@ -589,10 +589,22 @@ export class SubjectList extends React.Component {
   };
 
   static styles = StyleSheet.create({
-
+    wrapper: {
+      height: null,
+      ...Platform.select({
+        android: {
+          paddingTop: 7, 
+          paddingBottom: 8,
+        }
+      })
+    },
+    container: Platform.select({
+      android: { elevation: 5 }
+    })
   });
   
   _renderItem = ({item, index}) => {
+    const { styles } = SubjectList;
     const { onPressSubject, moduleData } = this.props;
     const animation = Platform.select({
       ios    : 'fadeInUp', 
@@ -608,7 +620,8 @@ export class SubjectList extends React.Component {
       >
         <SubjectListItem
           showDetails={true}
-          containerStyle={{height: null}}
+          wrapperStyle={styles.wrapper}
+          containerStyle={styles.container}
           numberOfLinesDesc={6}
           subjectData={item}
           //pass dowm props
