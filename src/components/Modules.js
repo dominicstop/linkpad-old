@@ -592,6 +592,10 @@ export class SubjectList extends React.Component {
     wrapper: {
       height: null,
       ...Platform.select({
+        ios: {
+          paddingTop: 5, 
+          paddingBottom: 10, 
+        },
         android: {
           paddingTop: 7, 
           paddingBottom: 8,

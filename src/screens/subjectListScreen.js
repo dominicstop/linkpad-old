@@ -1,5 +1,5 @@
 import React from 'react';
-import { Text, View, Platform } from 'react-native';
+import { Text, View, Platform, StyleSheet } from 'react-native';
 
 import { SubjectList, ModuleTitle, ModuleDescription } from '../components/Modules';
 import { ViewWithBlurredHeader, IconText } from '../components/Views';
@@ -23,6 +23,19 @@ export default class SubjectListScreen extends React.Component {
       android: { header: props => <AndroidHeader {...props}/> }
     }),
   };
+
+  static styles = StyleSheet.create({
+    subjectList: Platform.select({
+      ios: {
+        paddingTop: 10,
+        paddingHorizontal: 10,
+      },
+      android: {
+        paddingTop: 15,
+        paddingHorizontal: 5
+      }
+    })
+  });
 
   componentDidFocus = () => {
     const { setDrawerSwipe } = this.props.screenProps;
@@ -89,6 +102,7 @@ export default class SubjectListScreen extends React.Component {
   }
 
   render(){
+    const { styles } = SubjectListScreen;
     const { navigation } = this.props;
     const offset = Header.HEIGHT;
     //get data from previous screen: module list
@@ -96,12 +110,12 @@ export default class SubjectListScreen extends React.Component {
     const moduleData = navigation.getParam('moduleData', null);
 
     return(
-      <ViewWithBlurredHeader hasTabBar={true}>
+      <ViewWithBlurredHeader hasTabBar={false}>
         <NavigationEvents onDidFocus={this.componentDidFocus}/>
         <SubjectList
           contentInset={{top: offset}}
           contentOffset={{x: 0, y: -offset}}
-          contentContainerStyle={{paddingTop: 15, paddingHorizontal: 5}}
+          contentContainerStyle={styles.subjectList}
           ListHeaderComponent={this._renderHeader}
           onPressSubject={this._onPressSubject}
           //pass down props
