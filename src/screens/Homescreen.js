@@ -88,8 +88,34 @@ const TabNavigation_ios = createBottomTabNavigator(routeConfig, {
 const TabNavigation_android = createMaterialBottomTabNavigator(routeConfig, {
     initialRouteName: 'TabModuleListRoute',
     lazy: true,
+    barStyle: {
+      backgroundColor: 'rgba(0, 0, 0, 0)', 
+    },
   }
 );
+
+//android: overlay custom gradient bg
+class TabNavigationAndroidContainer extends React.Component {
+  static router = TabNavigation_android.router;
+
+
+  render(){
+    return (
+      <View style={{flex: 1}}>
+        <LinearGradient
+          style={{position: 'absolute', height: 56, width: '100%', bottom: 0}}
+          colors={['#8400ea', '#651FFF']}
+          start={[0, 1]} 
+          end={[1, 0]}
+        />
+        <TabNavigation_android
+          navigation={this.props.navigation}
+          screenProps={this.props.screenProps}
+        />
+      </View>
+    );
+  }
+}
 
 function getHeaderProps(routeName){
   switch(routeName){
@@ -117,7 +143,7 @@ function getHeaderProps(routeName){
 }
 
 //android: configure shared header
-TabNavigation_android.navigationOptions = ({ navigation, screenProps }) => {
+TabNavigationAndroidContainer.navigationOptions = ({ navigation, screenProps }) => {
   const { routeName } = navigation.state.routes[navigation.state.index];
 
   const { title, name, type } = getHeaderProps(routeName);
@@ -153,7 +179,7 @@ TabNavigation_ios.navigationOptions = ({ navigation, screenProps }) => {
   };
 };
 
-const TabNavigation = Platform.select({ios: TabNavigation_ios, android: TabNavigation_android});
+const TabNavigation = Platform.select({ios: TabNavigation_ios, android: TabNavigationAndroidContainer});
 
 //shared header for each stack
 export const TabNavigationStack = createStackNavigator({
