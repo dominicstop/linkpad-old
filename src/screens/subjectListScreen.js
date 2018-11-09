@@ -79,7 +79,7 @@ export default class SubjectListScreen extends React.Component {
     detailTitle: Platform.select({
       ios: {
         fontSize: 18,
-        fontWeight: '500',
+        fontWeight: '700',
         color: 'rgba(0, 0, 0, 0.75)'
       },
       android: {
