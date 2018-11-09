@@ -298,7 +298,7 @@ export class SubjectListItem extends React.PureComponent {
     if(!showDetails) return null;
 
     const model = new SubjectItem(subjectData);
-    const { lastupdated } = model.subject;
+    const { lastupdated } = model.get();
     const questionCount = model.getQuestionLength();
 
     return(

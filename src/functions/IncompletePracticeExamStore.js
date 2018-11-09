@@ -1,11 +1,161 @@
 import store from 'react-native-simple-store';
 import _ from 'lodash';
+import * as Utils from './Utils'
+import {ModuleItemModel, QuestionItem} from './ModuleStore';
 
 const KEY   = 'incomplete_practiceExams';
 const DEBUG = false;
 
-//timestamp where it was last updated
-let lastUpdate = 0;
+
+export class AnswerModel {
+  constructor(data = {
+    //used for checking which module/subject it belongs to
+    indexID_module  : -1,
+    indexID_subject : -1,
+    indexID_question: -1,
+    //store the answer results
+    answer   : '',
+    answerKey: '',
+    isCorrect: false,
+    //store when question was answered
+    timestamp_answered: 0,
+  }){
+    this.data = data;
+  };
+
+  get(){
+    return this.data;
+  }
+
+  getCopy(){
+    //returns a copy w/o reference
+    return _.clone(this.data);
+  }
+
+  getIndexIDs(){
+    const  { indexID_module, indexID_subject, indexID_question } = this.data;
+    return { indexID_module, indexID_subject, indexID_question };
+  };
+
+  getCompositeID(){
+    const  { indexID_module, indexID_subject, indexID_question } = this.data;
+    return (`${indexID_module}-${indexID_subject}-${indexID_question}`);
+  };
+
+  setIndexIDs = (indexIDs = {indexID_module: -1, indexID_subject: -1, indexID_question: -1}) => {
+    this.data.indexID_module   = indexIDs.indexID_module  ;
+    this.data.indexID_subject  = indexIDs.indexID_subject ;
+    this.data.indexID_question = indexIDs.indexID_question;
+  };
+
+  setAnswerKey(answerKey = ''){
+    this.data.answerKey = answerKey;
+  };
+
+  setAnswer(answer = ''){
+    const { answerKey } = this.data;
+    //show warning when correct answer is not set
+    if(answerKey == ''){
+      console.warn('correct answer is not set');
+    };
+
+    //set the answer and check if correct
+    this.data.answer    = answer;
+    this.data.isCorrect = answer == answerKey;
+    //set timestamp 
+    this.timestamp_answered = Utils.getTimestamp();
+  };
+
+  isAnswered(){
+    const { answer } = this.data;
+    return answer == '';
+  };
+
+  isInitialized(){
+    const { indexID_module, indexID_question, indexID_subject, answerKey } = this.data;
+    return(
+      //not init. when id's are -1
+      indexID_module   != -1 ||
+      indexID_subject  != -1 ||
+      indexID_question != -1 ||
+      //not init. when answerKey is empty
+      answerKey != '' 
+    );
+  }
+
+}
+
+export class IncompletePracticeExamModel {
+  constructor(data = {
+    //used for checking which module/subject it belongs to
+    indexID_module : -1,
+    indexID_subject: -1,
+    //used for checking when it started/ended
+    timestamp_started: 0,
+    timestamp_ended  : 0,
+    //holds the answered questions
+    answers: [new AnswerModel().data],
+  }){
+    this.data = data;
+    //wrap first answer in model
+    const model = new AnswerModel(data.answers[0]);
+    if(!model.isInitialized()){
+      //overwrite answers with empty array
+      this.data.answers = [];
+    };
+  };
+
+  get(){
+    return this.data;
+  };
+
+  getCopy(){
+    //returns a copy w/o reference
+    return _.clone(this.data);
+  };
+
+  setIndexIDs(indexIDs = {indexID_module: -1, indexID_subject: -1}){
+    this.data.indexID_module  = indexIDs.indexID_module ;
+    this.data.indexID_subject = indexIDs.indexID_subject;
+  };
+
+  setTimestampStart(){
+    this.data.timestamp_started = Utils.getTimestamp();
+  };
+
+  setTimestampEnd(){
+    this.data.timestamp_ended = Utils.getTimestamp();
+  };
+
+  getAnswersAsModel(){
+    const { answers } = this.data;
+    //wraps the answers inside a model
+    return answers.map((item) => new AnswerModel(item));
+  };
+
+  isInitialized(){
+    const { indexID_module, indexID_subject } = this.data;
+    //not init when indexes are -1
+    return (indexID_module == -1 || indexID_subject == -1);
+  };
+
+  isActive(){
+    const { timestamp_started, timestamp_ended } = this.data;
+    return (timestamp_started != 0 && timestamp_ended == 0);
+  };
+  
+  //
+  insertAnswerFromQuestion(question = new QuestionItem()){
+    const { indexID_module, indexID_subject } = this.data;
+    let answerModel = new AnswerModel({
+      //append id's
+      indexID_module, indexID_subject
+    });
+  };
+
+};
+
+
 
 let _incompletePracticeExams = null;
 

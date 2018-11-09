@@ -58,3 +58,8 @@ export function colorShift(color, max){
 export function plural(string = "", count = 0){
   return string + (count > 1? 's' : '');
 }
+
+export function getTimestamp(){
+  const dateTime  = new Date().getTime();
+  return Math.floor(dateTime / 1000);
+}

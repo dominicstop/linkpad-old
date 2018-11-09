@@ -1,5 +1,6 @@
 import store from 'react-native-simple-store';
 import _ from 'lodash';
+import {IncompletePracticeExamModel, AnswerModel} from './IncompletePracticeExamStore';
 
 const URL = 'https://linkpad-pharmacy-reviewer.firebaseapp.com/getallmodules';
 let _moduleData = null;
@@ -7,61 +8,160 @@ let _moduleData = null;
 
 //structure of single question item in module subject.questions array
 export class QuestionItem {
-  constructor(question = { answer: '', choices: [], explanation: '', question: '' }){
+  constructor(question = {
+    //modeled from backend response
+    question   : '', 
+    explanation: '', 
+    answer     : '', 
+    choices    : [],
+    //used for identification
+    indexID_module  : -1,
+    indexID_subject : -1,
+    indexID_question: -1,
+  }){
     this.question = question;
-  }
+  };
 
   get = () => {
+    return this.question;
+  };
+
+  getCopy = () => {
     return _.cloneDeep(this.question);
-  }
+  };
+
+  setIndexIDs = (indexIDs = {indexID_module: -1, indexID_subject: -1, indexID_question: -1}) => {
+    this.question.indexID_module   = indexIDs.indexID_module  ;
+    this.question.indexID_subject  = indexIDs.indexID_subject ;
+    this.question.indexID_question = indexIDs.indexID_question;
+  };
+
+  getAnswerModel(){
+    const { indexID_module, indexID_subject, indexID_question, answer } = this.getCopy();
+
+    let model = new AnswerModel();
+    //append indexid's to answer model + answerKey
+    model.setIndexIDs({indexID_module, indexID_subject, indexID_question});
+    model.setAnswerKey(answer);
+
+    return model;
+  };
 }
 
 //structure of single subject item in modules.subjects array
 export class SubjectItem {
-  constructor(subject = {description: '', indexid: 0, lastupdated: '', questions: [], subjectname: ''}){
-    this.subject = subject;
-  }
+  constructor(subject = {
+    //modeled from backend response
+    indexid    : -1, 
+    subjectname: '',
+    description: '', 
+    lastupdated: '', 
+    questions  : [],
+    //used for identification
+    indexID_module: -1,
+  }){
+    this.data = {
+      //to avoid null when param does not set indexID_module
+      indexID_module: -1,
+      ...subject
+    };
+  };
+
+  setModuleIndexID(indexID_module = -1){
+    this.data.indexID_module = indexID_module;
+  };
 
   get = () => {
-    return _.cloneDeep(this.subject);
+    return this.data;
+  };
+
+  getCopy = () => {
+    return _.cloneDeep(this.data);
   };
 
   getQuestions = () => {
-    const { subject } = this;
-    //note: written like this for VSCODE autocomplete to work
-    let questions = [new QuestionItem(subject.questions[0])];
-    //could have used foreach but needed to skip index 0
-    for (let i = 1; i < subject.questions.length; i++) {
-      questions.push(new SubjectItem(subject.questions[i]));
-    }
-    return questions;
+    //to avoid mutations by ref
+    const { questions, indexID_module, indexid } = this.getCopy();
+    //wrap questions inside a model
+    return questions.map((item, index) => {
+      let model = new QuestionItem(item);
+      //append index id's
+      model.setIndexIDs({
+        indexID_module,
+        indexID_subject : indexid,
+        indexID_question: index  
+      });
+      return model;
+    });
   };
 
   getQuestionLength = () => {
-    if( this.subject == null || this.subject.questions == null){
+    if( this.data == null || this.data.questions == null){
       return 0;
     };
-    return this.subject.questions.length;
-  }
+    return this.data.questions.length;
+  };
+
+  //returns an iPE model that is initialized
+  getIncompletePracticeExamModel = () => {
+    //to avoid mutations by ref
+    const { indexid, indexID_module } = this.getCopy();
+
+    let model = new IncompletePracticeExamModel();
+    //append indexid's to model
+    model.setIndexIDs({indexID_module, indexID_subject: indexid});
+    return model;
+  };
 }
 
 //represents the structure for a single module item
 export class ModuleItemModel {
-  constructor(module = {description: '', indexid: 0, lastupdated: '', modulename: '', subjects: []}){
+  constructor(module = {
+    //modeled from backend response
+    description: '', 
+    modulename : '', 
+    lastupdated: '', 
+    indexid    : 0 , 
+    subjects   : [],
+  }){
     this.module = module;
   }
 
   get = () => {
+    //returns a copy as a ref    
+    return this.module;
+  };
+
+  getCopy = () => {
+    //returns a copy w/o a ref
     return _.cloneDeep(this.module);
-  }
+  };
 
   //returns an array of SubjectItem
   getSubjects = () => {
-    const { module } = this;
-    return module.subjects.map((item) => new SubjectItem(item));
-  }
+    //to avoid mutations by reference
+    const { subjects, indexid } = this.getCopy();
+    //wraps subjects inside a model object
+    return subjects.map((item) => {
+      let model = new SubjectItem(item);
+      //append module indexid to model
+      model.setModuleIndexID(indexid);
+      return model;
+    });
+  };
 
-  getLenghtSubjects = () => _.compact(this.module.subjects).length;
+  getSubjectByID(index_id){
+    let subjectModels = this.getSubjects();
+    //return matching subject
+    return subjectModels.find((subject) => 
+      subject.data.indexid == index_id
+    );
+  };
+
+  getLenghtSubjects = () => {
+    const { subjects } = this.module;
+    return _.compact(subjects).length;
+  };
 
   getTotalQuestions = () => {
     const subjectModels = this.getSubjects();
@@ -70,7 +170,7 @@ export class ModuleItemModel {
       total += subject.getQuestionLength()
     );
     return total;
-  }
+  };
 }
 
 export class ModulesManager {

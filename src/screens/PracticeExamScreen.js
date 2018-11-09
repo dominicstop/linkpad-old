@@ -11,6 +11,7 @@ import IncompletePracticeExamStore from '../functions/IncompletePracticeExamStor
 import * as Animatable          from 'react-native-animatable';
 import { createStackNavigator } from 'react-navigation';
 import { Icon                 } from 'react-native-elements';
+import {ModuleItemModel, SubjectItem} from '../functions/ModuleStore';
 
 export class PracticeExamHeader extends React.PureComponent {
   constructor(props){
@@ -62,28 +63,37 @@ export class PracticeExamListScreen extends React.Component {
 
   constructor(props){
     super(props);
-    //get subjectsdata from prev. screen
+    //get data from prev. screen
     const { navigation } = this.props;
-    this.DEBUG = false;
     this.state = {
       moduleData : navigation.getParam('moduleData' , null),
       subjectData: navigation.getParam('subjectData', null),
     };
 
+    this.DEBUG = false;
+
     this.updateTitleIndex(1);
-    //debug: print state
-    if(this.DEBUG && false){
-      console.log('\n-------------------------------------START');
-      console.log('Constructor: PracticeExamListScreen - State:');
-      console.log(this.state);
-      console.log('-----------------------------------------END');
-    }
-  }
+  };
 
   async componentDidMount(){
     const last_index    = await this.getLastAnsweredIndex();
     const display_index = last_index > 0? last_index + 2 : 1;
     this.updateTitleIndex(display_index);
+
+    //test
+    const { moduleData, subjectData } = this.state;
+
+    //wrap data inside models
+    let moduleModel  = new ModuleItemModel(moduleData );
+    let subjectModel = new SubjectItem    (subjectData);
+    //extract indexid from subjectdata
+    const { indexid } = subjectModel.get();
+    //get matching subject and overwrite
+    subjectModel = moduleModel.getSubjectByID(indexid);
+    //get initialized iPE model
+    let practiceExamModel = subjectModel.getIncompletePracticeExamModel();
+    
+    console.log(practiceExamModel.data);
   }
 
   //returns the last item's index in iPE's store
