@@ -3,7 +3,7 @@ import { StyleSheet, Text, View, Dimensions, ScrollView, ViewPropTypes, Touchabl
 import PropTypes from 'prop-types';
 
 import { setStateAsync, timeout, shuffleArray, randomElementFromArray , returnToZero} from '../functions/Utils';
-import IncompletePracticeExamStore from '../functions/IncompletePracticeExamStore';
+import IncompletePracticeExamStore, { IncompletePracticeExamModel } from '../functions/IncompletePracticeExamStore';
 
 
 import { Button, ExpandCollapseTextWithHeader } from './Buttons';
@@ -17,6 +17,7 @@ import    { Divider  } from 'react-native-elements';
 import { DangerZone } from 'expo';
 import _ from 'lodash';
 import {STYLES} from '../Constants';
+import {SubjectItem, ModuleItemModel} from '../functions/ModuleStore';
 const { Lottie } = DangerZone;
 
 const QUESTIONS = [
@@ -825,15 +826,15 @@ export class PracticeQuestion extends React.PureComponent {
 
 export class PracticeExamList extends React.Component {
   static propTypes = {
-    questions: PropTypes.array,
-    onEndReached: PropTypes.func,
-    moduleData: PropTypes.object,
+    moduleData : PropTypes.object,
     subjectData: PropTypes.object,
+    //callbacks
+    onEndReached: PropTypes.func,
   }
 
   constructor(props){
     super(props);
-    this.DEBUG = false;
+    
     this.state = {
       //true when read/writng to storage
       loading: true,
@@ -843,101 +844,46 @@ export class PracticeExamList extends React.Component {
       questionList: [],
       //determines which question to show
       currentIndex: 0,
-    }
+    };
 
-    //extract id's from the current subject and modules
-    const indexID_module  = props.moduleData .indexid;
-    const indexID_subject = props.subjectData.indexid;
-    //count items
-    const totalItems = props.questions.length;
-    //set ID's
-    this.incompletePE = new IncompletePracticeExams(indexID_module, indexID_subject, totalItems);
+    this.initializeModels();
+  };
 
-    //debug: print state
-    if(this.DEBUG && false){
-      console.log('\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~START');
-      console.log('Constructor - PracticeExamList State:');
-      console.log(this.state);
-      console.log('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~END');
-    }
-  }
-
-  async componentWillMount(){
+  initializeModels(){
     const { moduleData, subjectData } = this.props;
-    //extract id's from the current subject and modules
-    const indexID_module  = moduleData .indexid;
-    const indexID_subject = subjectData.indexid;
-  
-    await setStateAsync(this, {loading: true});
-    //get questions from props
-    const questions = this.getQuestions();
 
-    //read incomplete PE's from storage
-    let iPE_fromStore = await IncompletePracticeExamStore.get(true);
+    //wrap data inside models
+    let moduleModel  = new ModuleItemModel(moduleData );
+    let subjectModel = new SubjectItem    (subjectData);
+    //extract indexid from subjectdata
+    const { indexid } = subjectModel.get();
 
-    if(iPE_fromStore != null){
-      //find the answers that corresponds to the subject
-      let match = await IncompletePracticeExamStore.findMatch({indexID_module, indexID_subject}, true);
-      if(match.hasMatch){
-        if(this.DEBUG) console.log('\nFound Match: setting iPE item...');
-        this.incompletePE.setItems(match.match_iPE);
-      }
-    } 
+    //set models as properties 
+    this.moduleModel  = moduleModel;
+    this.subjectModel = moduleModel.getSubjectByID(indexid);
+  };
+
+  async componentDidMount(){
+    const { subjectModel } = this;
+
+    let iPE_model = subjectModel.getIncompletePracticeExamModel();
     
-    //for storing the previous questions
-    let answered_questions = [];
-    //for determining which question to show
-    let current_index = 0;
-    //debug: print iPE items in obj
-    if(this.DEBUG){
-      console.log('\n>>>>>>>>>>>>>>>>>>>>>>>>START');
-      console.log('iPE items in: this.incompletePE');
-      console.log(this.incompletePE.getItems()     );
-      console.log('>>>>>>>>>>>>>>>>>>>>>>>>>>>>END');
-    } 
+
+    let newItem = new IncompletePracticeExamModel({
+      indexID_module : 11,
+      indexID_subject: 11,
+      answers: [],
+      timestamp_ended: 9900,
+      timestamp_started: 9090,
+    });
     
-    //no questions have been answered yet
-    if(this.incompletePE.getAnswersLength() == 0){
-      //add the first item in the question array
-      answered_questions.push(questions[0]);
+    await IncompletePracticeExamStore.add(iPE_model);
+    await IncompletePracticeExamStore.add(newItem);
 
-    } else {
-      //get the answered questions
-      answered_questions = this.incompletePE.mergeAnswersWithQuestions(questions)
-      //get the last question from array
-      let last_question = answered_questions.slice().pop();
-      //extract index from last question
-      current_index = last_question.indexID;
-      //count the number of questions
-      let total_questions = subjectData.questions.length - 1;
-
-      //append a new question if not the last
-      if(current_index < total_questions){
-        current_index += 1;
-        answered_questions.push(questions[current_index]);
-      }
-    }
-
-    this.setState({
-      loading: false,
-      questionList: answered_questions,
-      questions: questions,
-      currentIndex: current_index,
-    });
-  }
-
-  getQuestions(){
-    //add properties to question item
-    let questions = this.props.questions.map((item, index) => {
-      return {
-        ...item,
-        userAnswer: null,
-        indexID: index,
-      }
-    });
-
-    return _.compact(questions);
-  }
+    let model = await IncompletePracticeExamStore.getAsModel();
+    console.log(model.get());
+    
+  };
 
   //adds a new question at the end
   async nextQuestion(){
@@ -975,7 +921,14 @@ export class PracticeExamList extends React.Component {
   }
   
   _renderItem = ({item, index}) => {
+    return(
+      <View style={{backgroundColor: 'red', height: '50%', width: '50%'}}>
+        <Text>Item</Text>
+      </View>
+    );
+
     const isLast = index == this.state.questions.length - 1;
+    
     return (
       <PracticeQuestion
         question={item}
@@ -990,18 +943,15 @@ export class PracticeExamList extends React.Component {
 
   render(){
     const {onEndReached, ...flatListProps } = this.props;
+
     //ui values for carousel
     const headerHeight = Header.HEIGHT + 15;
     const screenHeight = Dimensions.get('window').height;
+
     const carouselHeight = {
       sliderHeight: screenHeight, 
       itemHeight  : screenHeight - headerHeight,
     };
-
-    if(this.DEBUG && false){
-      console.log('\n\Rendering PracticeExamList... STATE:');
-      console.log(this.state);
-    }
 
     if(this.state.loading) return null;
 

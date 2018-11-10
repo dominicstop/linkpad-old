@@ -63,41 +63,44 @@ export class PracticeExamListScreen extends React.Component {
 
   constructor(props){
     super(props);
-    //get data from prev. screen
     const { navigation } = this.props;
     this.state = {
+      //get data from prev. screen
       moduleData : navigation.getParam('moduleData' , null),
       subjectData: navigation.getParam('subjectData', null),
     };
 
     this.DEBUG = false;
 
-    this.updateTitleIndex(1);
+    //this.updateTitleIndex(1);
   };
 
   async componentDidMount(){
+    return;
     const last_index    = await this.getLastAnsweredIndex();
     const display_index = last_index > 0? last_index + 2 : 1;
     this.updateTitleIndex(display_index);
 
+
     //test
     const { moduleData, subjectData } = this.state;
-
     //wrap data inside models
     let moduleModel  = new ModuleItemModel(moduleData );
     let subjectModel = new SubjectItem    (subjectData);
+
     //extract indexid from subjectdata
     const { indexid } = subjectModel.get();
     //get matching subject and overwrite
     subjectModel = moduleModel.getSubjectByID(indexid);
+
     //get initialized iPE model
     let practiceExamModel = subjectModel.getIncompletePracticeExamModel();
-    
     console.log(practiceExamModel.data);
   }
 
   //returns the last item's index in iPE's store
   async getLastAnsweredIndex(){
+    return;
     const { subjectData, moduleData } = this.state;
     //extract id's from the current subject and modules
     const indexID_module  = moduleData .indexid;
@@ -122,6 +125,7 @@ export class PracticeExamListScreen extends React.Component {
   }
 
   updateTitleIndex = (index) => {
+    return;
     const { subjectData } = this.state;
     const items = subjectData.questions.length;
     const prefix = 'Question ';
@@ -134,6 +138,7 @@ export class PracticeExamListScreen extends React.Component {
   }
 
   _onSnapToItem = (index) => {
+    return;
     this.updateTitleIndex(index+1)
   }
   
@@ -148,8 +153,10 @@ export class PracticeExamListScreen extends React.Component {
           delay={750}
         >
           <PracticeExamList
+            {...{moduleData, subjectData}}
             moduleData={moduleData}
             subjectData={subjectData}
+
             questions={subjectData.questions}
             onSnapToItem={this._onSnapToItem}
             onEndReached={() => alert('PracticeExamListScreen')}

@@ -6,6 +6,8 @@ import {ModuleItemModel, QuestionItem} from './ModuleStore';
 const KEY   = 'incomplete_practiceExams';
 const DEBUG = false;
 
+let _incompletePracticeExams = null;
+
 
 export class AnswerModel {
   constructor(data = {
@@ -81,10 +83,10 @@ export class AnswerModel {
       //not init. when answerKey is empty
       answerKey != '' 
     );
-  }
+  };
+};
 
-}
-
+/** a model that holds a single item of incompletePracticeExam */
 export class IncompletePracticeExamModel {
   constructor(data = {
     //used for checking which module/subject it belongs to
@@ -96,11 +98,14 @@ export class IncompletePracticeExamModel {
     //holds the answered questions
     answers: [new AnswerModel().data],
   }){
-    this.data = data;
-    //wrap first answer in model
-    const model = new AnswerModel(data.answers[0]);
-    if(!model.isInitialized()){
-      //overwrite answers with empty array
+    this.data = {
+      answers: [],
+      ...data,
+    };
+
+    const { indexID_module, indexID_subject } = data;
+    //if answers is not init., replace with empty array
+    if(indexID_module == -1 && indexID_subject == -1){
       this.data.answers = [];
     };
   };
@@ -112,6 +117,11 @@ export class IncompletePracticeExamModel {
   getCopy(){
     //returns a copy w/o reference
     return _.clone(this.data);
+  };
+
+  getCompositeID(){
+    const  { indexID_module, indexID_subject} = this.data;
+    return (`${indexID_module}-${indexID_subject}`);
   };
 
   setIndexIDs(indexIDs = {indexID_module: -1, indexID_subject: -1}){
@@ -155,15 +165,43 @@ export class IncompletePracticeExamModel {
 
 };
 
+/** a model that holds an array of incompletePracticeExam */
+export class IncompletePracticeExamsModel {
+  constructor(items = [new IncompletePracticeExamModel().data]){
+    this.items = items;
+  };
+
+  get(){
+    return this.items;
+  };
+
+  /** returns undefined when no match is found */
+  findMatchFromIDs(indexIDs = {indexID_module: -1, indexID_subject: -1}){
+    const { indexID_module, indexID_subject } = indexIDs;
+
+    return this.items.find((item) => 
+      item.indexID_module  == indexID_module || 
+      item.indexID_subject == indexID_subject
+    );
+  };
+
+  replaceExistingItem(item = new IncompletePracticeExamModel()){
+    //extract id's from  new 'item' param
+    const { indexID_module, indexID_subject } = item.get();
+
+    //array without the old 'item' element
+    let filtered = this.items.filter((items) => 
+      items.indexID_module  != indexID_module ||
+      items.indexID_subject != indexID_subject
+    );
+
+    //insert the new 'item' and update property
+    filtered.push(item.get());
+    this.items = filtered;
+  };
+};
 
 
-let _incompletePracticeExams = null;
-
-//returns the current timestamp
-function getTimestamp(){
-  const dateTime  = new Date().getTime();
-  return Math.floor(dateTime / 1000);
-}
 
 let structure = {
   grades: [
@@ -184,28 +222,27 @@ let structure = {
   ]
 }
 
-function get(forceRefresh = false){
-  return new Promise(async (resolve, reject) => {
-    //return iPE from private global var
-    if(!forceRefresh) resolve(_incompletePracticeExams);
+async function get(){
+  //read from store
+  let items = [];
+  items = items.concat(await store.get(KEY));
 
-    try {
-      //read from store
-      let stored_iPE = await store.get(KEY);
-      //update private global var
-      _incompletePracticeExams = stored_iPE;
-      //set timestamp
-      lastUpadate = getTimestamp();
-      //return iPE
-      resolve(stored_iPE);
+  //update private global var
+  _incompletePracticeExams = items;
 
-    } catch(error){
-      //debug: print error
-      if(DEBUG) console.log('iPE Get Error: ' + error);
-      reject(error);
-    }
-  });
-}
+  return(items);
+};
+
+/** will return null if store is empty */
+async function getAsModel(){
+  let items = await get();
+
+  //return null if store is empty
+  if(items.length == 0 || items[0] == null) return null;
+
+  //wrap items inside model
+  return new IncompletePracticeExamsModel(items);
+};
 
 async function findMatch({indexID_module, indexID_subject}, forceRefresh = true){
   //debug: print params to console
@@ -278,7 +315,7 @@ function set(incompletePracticeExams_array){
   }); 
 }
 
-function add(new_iPE){
+function _add(new_iPE){
   return new Promise(async (resolve, reject) => {
     try {
       //debug print parameter
@@ -341,6 +378,35 @@ function add(new_iPE){
   });
 }
 
+async function add(item = new IncompletePracticeExamModel()){
+  //read from storage
+  let model = await getAsModel(true);
+
+  //extract ids from item param
+  const { indexID_module, indexID_subject } = item.get();
+  
+  let match = undefined;
+  
+  //only check for match when store is not empty
+  if(model != null){
+    //check if item already exists in store
+    match = model.findMatchFromIDs({
+      indexID_module, indexID_subject
+    });
+  };
+
+  if(match == undefined){
+    //add item to store since it doesn't exist yet
+    await store.push(KEY, item.get());
+
+  } else {
+    //replace since it already exists
+    model.replaceExistingItem(item);
+    //overwrite with updated item
+    await store.save(KEY, model.get());
+  };
+};
+
 export default {
-  get, set, add, findMatch,
+  get, set, add, findMatch, getAsModel
 }
