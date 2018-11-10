@@ -72,7 +72,27 @@ export class PracticeExamListScreen extends React.Component {
 
     this.DEBUG = false;
 
+    this.initializeModels();
+
     //this.updateTitleIndex(1);
+  };
+
+  componentWillMount(){
+    this.updateTitleIndex(1);
+  };
+
+  initializeModels(){
+    const { moduleData, subjectData } = this.state;
+
+    //wrap data inside models
+    let moduleModel  = new ModuleItemModel(moduleData );
+    let subjectModel = new SubjectItem    (subjectData);
+    //extract indexid from subjectdata
+    const { indexid } = subjectModel.get();
+
+    //set models as properties 
+    this.moduleModel  = moduleModel;
+    this.subjectModel = moduleModel.getSubjectByID(indexid);
   };
 
   async componentDidMount(){
@@ -119,28 +139,27 @@ export class PracticeExamListScreen extends React.Component {
     return (last_index);
   }
 
-  updateTitle = (title) => {
+  /** Set the screen's title */
+  updateTitle = (title = '') => {
     const {setParams} = this.props.navigation;
     setParams({ title: title })
   }
 
-  updateTitleIndex = (index) => {
-    return;
-    const { subjectData } = this.state;
-    const items = subjectData.questions.length;
-    const prefix = 'Question ';
-    const suffix = index == 0? 1 : index + '/' + items;
-    this.updateTitle(prefix + suffix);
-  }
+  /** Set the title with the current index */
+  updateTitleIndex = (index = 0) => {
+    const { subjectModel } = this;
+
+    const total = subjectModel.getQuestionLength();
+    this.updateTitle(`Question ${index}/${total}`);
+  };
+
+  _handleOnSnapToItem = (index) => {
+    this.updateTitleIndex(index+1)
+  };
 
   _handleOnEndReached = () => {
     console.log('onEndReached');
-  }
-
-  _onSnapToItem = (index) => {
-    return;
-    this.updateTitleIndex(index+1)
-  }
+  };
   
   render() {
     const { subjectData, moduleData } = this.state;
@@ -153,13 +172,10 @@ export class PracticeExamListScreen extends React.Component {
           delay={750}
         >
           <PracticeExamList
+            onSnapToItem={this._handleOnSnapToItem}
+            onEndReached={this._handleOnEndReached}
+            //pass down props
             {...{moduleData, subjectData}}
-            moduleData={moduleData}
-            subjectData={subjectData}
-
-            questions={subjectData.questions}
-            onSnapToItem={this._onSnapToItem}
-            onEndReached={() => alert('PracticeExamListScreen')}
           />
         </Animatable.View>
       </ViewWithBlurredHeader>
