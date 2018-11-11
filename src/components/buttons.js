@@ -578,6 +578,8 @@ export class ExpandCollapseText extends React.PureComponent {
         </TouchableNativeFeedback>
       ),
     });
+    
+    const backgroundColor = Platform.select({ios: 'transparent', android: 'white'});
 
     return (
       <Wrapper
@@ -595,7 +597,7 @@ export class ExpandCollapseText extends React.PureComponent {
           >
             {text}
           </Text>
-          <View style={{marginTop: 0 - viewHeight, height: viewHeight, width: '100%'}}/>
+          <View style={{marginTop: 0 - viewHeight, height: viewHeight, width: '100%', backgroundColor}}/>
         </View>
       </Wrapper>
     );
