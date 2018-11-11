@@ -1,6 +1,7 @@
 import store from 'react-native-simple-store';
 import _ from 'lodash';
 import {IncompletePracticeExamModel, AnswerModel} from './IncompletePracticeExamStore';
+import { Question } from '../components/Exam';
 
 const URL = 'https://linkpad-pharmacy-reviewer.firebaseapp.com/getallmodules';
 let _moduleData = null;
@@ -18,8 +19,13 @@ export class QuestionItem {
     indexID_module  : -1,
     indexID_subject : -1,
     indexID_question: -1,
+    //store the answer
+    user_answer: ''
   }){
-    this.question = question;
+    this.question = {
+      user_answer: '',
+      ...question,
+    };
   };
 
   get = () => {
@@ -36,15 +42,30 @@ export class QuestionItem {
     this.question.indexID_question = indexIDs.indexID_question;
   };
 
+  setUserAnswer(user_answer = ''){
+    this.question.user_answer = user_answer;
+  };
+
   getAnswerModel(){
     const { indexID_module, indexID_subject, indexID_question, answer } = this.getCopy();
 
     let model = new AnswerModel();
-    //append indexid's to answer model + answerKey
+    //append indexid's to answer model
     model.setIndexIDs({indexID_module, indexID_subject, indexID_question});
+    //append answers to answer model
     model.setAnswerKey(answer);
 
     return model;
+  };
+
+  isAnswered(){
+    const { user_answer } = this.get();
+    return user_answer != '';
+  };
+
+  isCorrect(){
+    const { answer, user_answer } = this.get();
+    return answer == user_answer;
   };
 }
 
@@ -56,14 +77,21 @@ export class SubjectItem {
     subjectname: '',
     description: '', 
     lastupdated: '', 
-    questions  : [],
+    questions  : [new QuestionItem().get()],
     //used for identification
     indexID_module: -1,
   }){
     this.data = {
-      //to avoid null when param does not set indexID_module
+      //to avoid null when param is incomplete/invalid
+      questions: [],
       indexID_module: -1,
       ...subject
+    };
+
+    const { indexID_module, indexid } = subject;
+    //if subj is not init., replace with empty array
+    if(indexID_module == -1 && indexid == -1){
+      this.subject.questions = [];
     };
   };
 
@@ -71,17 +99,18 @@ export class SubjectItem {
     this.data.indexID_module = indexID_module;
   };
 
-  get = () => {
+  get(){
     return this.data;
   };
 
-  getCopy = () => {
+  getCopy(){
     return _.cloneDeep(this.data);
   };
 
-  getQuestions = () => {
+  getQuestions(){
     //to avoid mutations by ref
     const { questions, indexID_module, indexid } = this.getCopy();
+
     //wrap questions inside a model
     return questions.map((item, index) => {
       let model = new QuestionItem(item);
@@ -95,14 +124,37 @@ export class SubjectItem {
     });
   };
 
-  getQuestionLength = () => {
+  getQuestionLength() {
     if( this.data == null || this.data.questions == null){
       return 0;
     };
     return this.data.questions.length;
   };
 
-  //returns an iPE model that is initialized
+  /** returns null when there is no match */
+  getQuestionModelByIndex(index = 0){
+    const { questions, indexID_module, indexid } = this.getCopy();
+
+    //invalid index given
+    if(questions.length == 0 || questions.length < index + 1 || index < 0){
+      console.warn(`Invalid index: ${index} with length: ${questions.length}`);
+      return null;
+    };
+
+    //wrap data inside a model
+    let model = new QuestionItem(questions[index]);
+
+    //append index id's
+    model.setIndexIDs({
+      indexID_module,
+      indexID_subject : indexid,
+      indexID_question: index  
+    });
+
+    return model;
+  }
+
+  /** returns an iPE model that is initialized with this subject details */
   getIncompletePracticeExamModel = () => {
     //to avoid mutations by ref
     const { indexid, indexID_module } = this.getCopy();
@@ -112,7 +164,37 @@ export class SubjectItem {
     model.setIndexIDs({indexID_module, indexID_subject: indexid});
     return model;
   };
-}
+
+  getIndexIDs(){
+    const  { indexID_module, indexid } = this.getCopy();
+    return { indexID_module, indexID_subject: indexid };
+  };
+
+  isQuestionsEmpty(){
+    const { questions } = this.data;
+    return questions.length == 0;
+  };
+
+  /** returns undefined when there is no match */
+  getAnsweredQuestions(){
+    const { questions } = this.get();
+
+    //return questions that has user_answer set
+    return questions.filter((question) => 
+      question.user_answer != ''
+    );
+  };
+
+  /** returns undefined when there is no match */
+  getUnansweredQuestions(){
+    const { questions } = this.get();
+
+    //return questions that has user_answer set
+    return questions.filter((question) => 
+      question.user_answer == ''
+    );
+  };
+};
 
 //represents the structure for a single module item
 export class ModuleItemModel {
@@ -162,6 +244,8 @@ export class ModuleItemModel {
     const { subjects } = this.module;
     return _.compact(subjects).length;
   };
+
+  getUnansweredQuestions
 
   getTotalQuestions = () => {
     const subjectModels = this.getSubjects();

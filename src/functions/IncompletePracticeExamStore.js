@@ -1,7 +1,7 @@
 import store from 'react-native-simple-store';
 import _ from 'lodash';
 import * as Utils from './Utils'
-import {ModuleItemModel, QuestionItem} from './ModuleStore';
+import {ModuleItemModel, QuestionItem, SubjectItem} from './ModuleStore';
 
 const KEY   = 'incomplete_practiceExams';
 const DEBUG = false;
@@ -65,7 +65,7 @@ export class AnswerModel {
     this.data.answer    = answer;
     this.data.isCorrect = answer == answerKey;
     //set timestamp 
-    this.timestamp_answered = Utils.getTimestamp();
+    this.data.timestamp_answered = Utils.getTimestamp();
   };
 
   isAnswered(){
@@ -143,6 +143,34 @@ export class IncompletePracticeExamModel {
     return answers.map((item) => new AnswerModel(item));
   };
 
+  /** appends the answers to subjectModel's user_answer */
+  appendAnswersToSubject(subjectModel = new SubjectItem()){
+    const { answers } = this.data;
+    let questions = subjectModel.getQuestions();
+
+    //append the answer from answers to questions
+    let combined = questions.map((question) => {
+      //extract indexid from questions
+      const {indexID_module, indexID_subject, indexID_question} = question.get();
+
+      //get corresponding answer
+      let match = answers.find((answer) => 
+        answer.indexID_module   == indexID_module   &&
+        answer.indexID_subject  == indexID_subject  &&
+        answer.indexID_question == indexID_question 
+      );
+
+      //if has a match replace answer
+      if(match != undefined){
+        question.setUserAnswer(match.answer);
+      };
+      return question;
+    });
+
+    //replace questions with combined
+    subjectModel.data.questions = combined.map((item) => item.get());
+  };
+
   isInitialized(){
     const { indexID_module, indexID_subject } = this.data;
     //not init when indexes are -1
@@ -153,79 +181,92 @@ export class IncompletePracticeExamModel {
     const { timestamp_started, timestamp_ended } = this.data;
     return (timestamp_started != 0 && timestamp_ended == 0);
   };
-  
-  //
-  insertAnswerFromQuestion(question = new QuestionItem()){
-    const { indexID_module, indexID_subject } = this.data;
-    let answerModel = new AnswerModel({
-      //append id's
-      indexID_module, indexID_subject
-    });
-  };
 
+  isAnswersEmpty(){
+    const { answers } = this.data;
+    return answers.length == 0;
+  };
+  
+  insertAnswer(item = new AnswerModel()){
+    const { answers } = this.data;
+
+    //check if answer to be added is init.
+    if(!item.isInitialized()){
+      console.warn('Cant insert Answer: Answer is not initialized.');
+      return null;
+    };
+
+    //extract ids from 'item' param
+    const { indexID_module, indexID_subject, indexID_question } = item.getIndexIDs();
+    //avoid duplicates: answers without 'item' param
+    let filtered = answers.filter((element) => 
+      element.indexID_module   != indexID_module   &&
+      element.indexID_subject  != indexID_subject  &&
+      element.indexID_question != indexID_question 
+    );
+    
+    //append to answers
+    filtered.push(item.get());
+    //overwrite property
+    this.data.answers = filtered;
+  };
 };
 
 /** a model that holds an array of incompletePracticeExam */
 export class IncompletePracticeExamsModel {
   constructor(items = [new IncompletePracticeExamModel().data]){
-    this.items = items;
+    this.elements = items;
+
+    //check if empty
+    
   };
 
   get(){
-    return this.items;
+    return this.elements;
   };
 
   /** returns undefined when no match is found */
   findMatchFromIDs(indexIDs = {indexID_module: -1, indexID_subject: -1}){
     const { indexID_module, indexID_subject } = indexIDs;
 
-    return this.items.find((item) => 
-      item.indexID_module  == indexID_module || 
+    return this.elements.find((item) => 
+      item.indexID_module  == indexID_module && 
       item.indexID_subject == indexID_subject
     );
   };
+
+  /** returns undefined when no match is found */
+  findMatchFromIDsAsModel(indexIDs = {indexID_module: -1, indexID_subject: -1}){
+    let match = this.findMatchFromIDs(indexIDs);
+
+    //check if has match
+    if(match == undefined) return undefined;
+    //wrap match inside model
+    return new IncompletePracticeExamModel(match);
+  }
 
   replaceExistingItem(item = new IncompletePracticeExamModel()){
     //extract id's from  new 'item' param
     const { indexID_module, indexID_subject } = item.get();
 
     //array without the old 'item' element
-    let filtered = this.items.filter((items) => 
-      items.indexID_module  != indexID_module ||
+    let filtered = this.elements.filter((items) => 
+      items.indexID_module  != indexID_module &&
       items.indexID_subject != indexID_subject
     );
 
     //insert the new 'item' and update property
     filtered.push(item.get());
-    this.items = filtered;
+    this.elements = filtered;
   };
 };
-
-
-
-let structure = {
-  grades: [
-    {
-      indexID_module : '',
-      indexID_subject: '',
-      timestamp_started: '',
-      timestamp_ended  : '',
-      answers: [
-        {
-          indexID_question: '',
-          answer: '',
-          isCorrect: false,
-          timestamp: '',
-        }
-      ]
-    }
-  ]
-}
 
 async function get(){
   //read from store
   let items = [];
   items = items.concat(await store.get(KEY));
+  //remove null elements
+  items = items.filter(item => item != null);
 
   //update private global var
   _incompletePracticeExams = items;
@@ -380,7 +421,7 @@ function _add(new_iPE){
 
 async function add(item = new IncompletePracticeExamModel()){
   //read from storage
-  let model = await getAsModel(true);
+  let model = await getAsModel();
 
   //extract ids from item param
   const { indexID_module, indexID_subject } = item.get();

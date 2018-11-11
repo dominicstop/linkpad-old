@@ -159,19 +159,36 @@ export class SwipableModal extends React.PureComponent {
         </Animatable.View>
       </View>
     );
-  }
-}
+  };
+};
 
 //transparent line on top of modal
 export class ModalTopIndicator extends React.PureComponent {
+  static styles = StyleSheet.create({
+    container: {
+      width: '100%', 
+      alignItems: 'center', 
+      paddingTop: 10, 
+      paddingBottom: 10
+    },
+    indicator: {
+      width: 40, 
+      height: 8, 
+      borderRadius: 4, 
+      backgroundColor: '#00000040',
+    }
+  });
+
   render(){
+    const { styles } = ModalTopIndicator;
+    
     return(
-      <View style={{width: '100%', alignItems: 'center', paddingTop: 10, paddingBottom: 10}}>
-        <View style={{width: 40, height: 8, borderRadius: 4, backgroundColor: '#00000040',}}/>
+      <View style={styles.container}>
+        <View style={styles.indicator}/>
       </View>
     );
-  }
-}
+  };
+};
 
 //used in welcome screen: wrap with SwipableModal
 export class WelcomeScreenModalContent extends React.PureComponent {
@@ -235,6 +252,17 @@ export class WelcomeScreenModalContent extends React.PureComponent {
 //used in BoardExamScreen: shown when more info is pressed
 export class BoardExamModalContent extends React.PureComponent {
   static styles = StyleSheet.create({
+    scrollview: {
+      paddingTop: 5, 
+      borderTopColor: 'rgba(0, 0, 0, 0.2)', 
+      borderTopWidth: 1, 
+      padding: 15
+    },
+    image: {
+      width: 90, 
+      height: 90, 
+      marginTop: 15
+    },
     bigTitle: {
       fontSize: 32, 
       fontWeight: '700', 
@@ -255,35 +283,44 @@ export class BoardExamModalContent extends React.PureComponent {
     }
   });
 
+  static sharedImageProps = {
+    animation      : 'pulse'      ,
+    iterationCount : "infinite"   ,
+    easing         : 'ease-in-out',
+    duration       : 5000         ,
+    useNativeDriver: true         ,
+  };
+
   constructor(props){
     super(props);
     this.imageIntro    = require('../../assets/icons/cloud-book.png');
     this.imageQuestion = require('../../assets/icons/qa.png');
     this.imageHands    = require('../../assets/icons/hands.png');
-  }
+  };
 
   _renderIntroduction(){
-    const { styles } = BoardExamModalContent;
+    const { styles, sharedImageProps } = BoardExamModalContent;
     return(
       <View style={{alignItems: 'center'}}>
         <Animatable.Image
           source={this.imageIntro}
-          style={{width: 90, height: 90, marginTop: 15}}
-          animation={'pulse'}
-          iterationCount={"infinite"}
-          duration={5000}
-          easing={'ease-in-out'}
-          useNativeDriver={true}
+          style={styles.image}
+          {...sharedImageProps}
         />
-        <Text style={styles.bigTitle}>{'What is Preboard?'}</Text>
+        <Text style={styles.bigTitle}>
+          {'What is Preboard?'}
+        </Text>
+
         <IconText
           containerStyle={{marginTop: 10}}
-          textStyle={styles.smallTitle}
-          iconSize ={28}
+          //text props
           text={'About'}
-          iconColor='rgba(0, 0, 0, 0.5)'
+          textStyle={styles.smallTitle}
+          //icon props
           iconName ='ios-information-circle'
           iconType ='ionicon'
+          iconColor='rgba(0, 0, 0, 0.5)'
+          iconSize ={28}
         />
         <Text style={styles.body}>
           {"Preboard Exam is an online mock exam that is updated yearly to asess the information you have learned whether its from the app's modules, practice quizes or the material discussed in class. The goal of this mock exam is to make sure you're prepared for the real thing and help you attain a passing score!"}
@@ -293,17 +330,13 @@ export class BoardExamModalContent extends React.PureComponent {
   }
 
   _renderQuestion(){
-    const { styles } = BoardExamModalContent;
+    const { styles, sharedImageProps } = BoardExamModalContent;
     return(
       <View style={{alignItems: 'center'}}>
         <Animatable.Image
           source={this.imageQuestion}
-          style={{width: 90, height: 90, marginTop: 5}}
-          animation={'pulse'}
-          iterationCount={"infinite"}
-          duration={5000}
-          easing={'ease-in-out'}
-          useNativeDriver={true}
+          style={styles.image}
+          {...sharedImageProps}
         />
         <Text style={styles.bigTitle}>{'Realistic Questions'}</Text>
 
@@ -324,17 +357,13 @@ export class BoardExamModalContent extends React.PureComponent {
   }
 
   _renderExplantion(){
-    const { styles } = BoardExamModalContent;
+    const { styles, sharedImageProps } = BoardExamModalContent;
     return(
       <View style={{alignItems: 'center', marginTop: 25}}>
         <Animatable.Image
           source={this.imageHands}
-          style={{width: 90, height: 90}}
-          animation={'pulse'}
-          iterationCount={"infinite"}
-          duration={5000}
-          easing={'ease-in-out'}
-          useNativeDriver={true}
+          style={styles.image}
+          {...sharedImageProps}
         />
         <Text style={styles.bigTitle}>{'How it Works'}</Text>
 
@@ -355,14 +384,13 @@ export class BoardExamModalContent extends React.PureComponent {
   }
 
   _renderBody(){
+    const { styles } = BoardExamModalContent;
+
     return(
-      <ScrollView 
-        style={{paddingTop: 5, borderTopColor: 'rgba(0, 0, 0, 0.2)', borderTopWidth: 1, padding: 15}} nestedScrollEnabled={true}
-        ref={r => this._scrollView = r}
-      >
+      <ScrollView style={styles.scrollview}>
         {this._renderIntroduction()}
-        {this._renderQuestion()}
-        {this._renderExplantion()}
+        {this._renderQuestion    ()}
+        {this._renderExplantion  ()}
         <View style={{marginBottom: 250}}/>
       </ScrollView>
     );

@@ -63,18 +63,15 @@ export class PracticeExamListScreen extends React.Component {
 
   constructor(props){
     super(props);
-    const { navigation } = this.props;
-    this.state = {
-      //get data from prev. screen
-      moduleData : navigation.getParam('moduleData' , null),
-      subjectData: navigation.getParam('subjectData', null),
-    };
-
-    this.DEBUG = false;
-
+    
     this.initializeModels();
+    const { moduleModel, subjectModel } = this;
 
-    //this.updateTitleIndex(1);
+    this.state = {
+      //get data from models
+      moduleData : moduleModel .get(),
+      subjectData: subjectModel.get(),
+    };
   };
 
   componentWillMount(){
@@ -82,7 +79,11 @@ export class PracticeExamListScreen extends React.Component {
   };
 
   initializeModels(){
-    const { moduleData, subjectData } = this.state;
+    const { navigation } = this.props;
+
+    //get data from prev. screen
+    const moduleData  = navigation.getParam('moduleData' , null);
+    const subjectData = navigation.getParam('subjectData', null);
 
     //wrap data inside models
     let moduleModel  = new ModuleItemModel(moduleData );
@@ -94,29 +95,6 @@ export class PracticeExamListScreen extends React.Component {
     this.moduleModel  = moduleModel;
     this.subjectModel = moduleModel.getSubjectByID(indexid);
   };
-
-  async componentDidMount(){
-    return;
-    const last_index    = await this.getLastAnsweredIndex();
-    const display_index = last_index > 0? last_index + 2 : 1;
-    this.updateTitleIndex(display_index);
-
-
-    //test
-    const { moduleData, subjectData } = this.state;
-    //wrap data inside models
-    let moduleModel  = new ModuleItemModel(moduleData );
-    let subjectModel = new SubjectItem    (subjectData);
-
-    //extract indexid from subjectdata
-    const { indexid } = subjectModel.get();
-    //get matching subject and overwrite
-    subjectModel = moduleModel.getSubjectByID(indexid);
-
-    //get initialized iPE model
-    let practiceExamModel = subjectModel.getIncompletePracticeExamModel();
-    console.log(practiceExamModel.data);
-  }
 
   //returns the last item's index in iPE's store
   async getLastAnsweredIndex(){
@@ -137,13 +115,13 @@ export class PracticeExamListScreen extends React.Component {
       last_index = last_question.indexID_question;
     } 
     return (last_index);
-  }
+  };
 
   /** Set the screen's title */
   updateTitle = (title = '') => {
     const {setParams} = this.props.navigation;
     setParams({ title: title })
-  }
+  };
 
   /** Set the title with the current index */
   updateTitleIndex = (index = 0) => {
@@ -162,7 +140,7 @@ export class PracticeExamListScreen extends React.Component {
   };
   
   render() {
-    const { subjectData, moduleData } = this.state;
+    const { moduleData, subjectData } = this.state;
     return (
       <ViewWithBlurredHeader>
         <Animatable.View

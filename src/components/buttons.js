@@ -581,6 +581,7 @@ export class ExpandCollapseText extends React.PureComponent {
 
     return (
       <Wrapper
+        style={{overflow: 'hidden'}}
         onPress={this._onPress}
         activeOpacity={0.5}
       >
@@ -594,7 +595,7 @@ export class ExpandCollapseText extends React.PureComponent {
           >
             {text}
           </Text>
-          <View style={{marginTop: 0 - viewHeight, height: viewHeight, width: '100%', backgroundColor: 'white'}}/>
+          <View style={{marginTop: 0 - viewHeight, height: viewHeight, width: '100%'}}/>
         </View>
       </Wrapper>
     );
@@ -670,10 +671,6 @@ export class ExpandCollapseTextWithHeader extends React.PureComponent {
         </View>
       </Wrapper>
     );
-  }
-
-  renderNormal(){
-
   }
 
   render(){

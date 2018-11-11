@@ -15,7 +15,7 @@ export function timeout(ms) {
 }
 
 //returns a shuffled an array
-export function shuffleArray(array) {
+export function shuffleArray(array = []) {
   var newArray = array.slice();
   for (let i = newArray.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -62,4 +62,14 @@ export function plural(string = "", count = 0){
 export function getTimestamp(){
   const dateTime  = new Date().getTime();
   return Math.floor(dateTime / 1000);
+}
+
+/** returns undefined when index is invalid */
+export function getLast(array) {
+  return array[array.length - 1];
+}
+
+/** returns undefined when index is invalid */
+export function getFirst(array) {
+  return array[0];
 }

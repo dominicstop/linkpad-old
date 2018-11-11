@@ -2,11 +2,11 @@ import React from 'react';
 import { StyleSheet, Text, View, Dimensions, ScrollView, ViewPropTypes, TouchableOpacity, Animated, Easing, Alert } from 'react-native';
 import PropTypes from 'prop-types';
 
-import { setStateAsync, timeout, shuffleArray, randomElementFromArray , returnToZero} from '../functions/Utils';
+import { setStateAsync, shuffleArray , returnToZero, getLast, getFirst} from '../functions/Utils';
 import IncompletePracticeExamStore, { IncompletePracticeExamModel } from '../functions/IncompletePracticeExamStore';
 
 
-import { Button, ExpandCollapseTextWithHeader } from './Buttons';
+import { Button, ExpandCollapseTextWithHeader, AnimatedCollapsable } from './Buttons';
 import { FlipView, IconText } from './Views';
 
 import * as Animatable from 'react-native-animatable';
@@ -17,61 +17,8 @@ import    { Divider  } from 'react-native-elements';
 import { DangerZone } from 'expo';
 import _ from 'lodash';
 import {STYLES} from '../Constants';
-import {SubjectItem, ModuleItemModel} from '../functions/ModuleStore';
+import { SubjectItem, ModuleItemModel, QuestionItem } from '../functions/ModuleStore';
 const { Lottie } = DangerZone;
-
-const QUESTIONS = [
-  {
-    question: 'Lorum ipsum sit amit dolor aspicing?',
-    explanation: 'Hello world world hello explanation lorum ipsum sit amit dolor aspicing',
-    answer: 'Correct Answer',
-    choices: [
-      'Dummy Choice',
-      'Wrong Choice',
-      'Ladies Choice' ,
-    ],
-  },
-  {
-    question: 'Lorum ipsum sit amit dolor aspicing?',
-    explanation: 'Hello world world hello explanation',
-    answer: 'Correct Answer',
-    choices: [
-      'Dummy Choice',
-      'Wrong Choice',
-      'Ladies Choice' ,
-    ],
-  },
-  {
-    question: 'Lorum ipsum sit amit dolor aspicing?',
-    explanation: 'Hello world world hello explanation',
-    answer: 'Correct Answer',
-    choices: [
-      'Dummy Choice',
-      'Wrong Choice',
-      'Ladies Choice' ,
-    ],
-  },
-  {
-    question: 'Lorum ipsum sit amit dolor aspicing?',
-    explanation: 'Hello world world hello explanation',
-    answer: 'Correct Answer',
-    choices: [
-      'Dummy Choice',
-      'Wrong Choice',
-      'Ladies Choice' ,
-    ],
-  },
-  {
-    question: 'Lorum ipsum sit amit dolor aspicing?',
-    explanation: 'Hello world world hello explanation1',
-    answer: 'Correct Answer',
-    choices: [
-      'Dummy Choice',
-      'Wrong Choice',
-      'Ladies Choice' ,
-    ],
-  },
-];
 
 const questionShape = {
   question: PropTypes.string,
@@ -80,156 +27,6 @@ const questionShape = {
   //used for keeping track of ans, score etc.
   userAnswer: PropTypes.string,
 };
-
-class Grade {
-  constructor(totalItems = 0, correctItems = 0, incorrectItems = 0){
-    this.grade = {
-      timestamp      : this.getTimestamp(),
-      percentage     : (correctItems / totalItems) * 100,
-      unansweredItems: (correctItems + incorrectItems) - totalItems,
-      ...{totalItems, correctItems, incorrectItems}, 
-    }
-  }
-  
-  getTimestamp = () => {
-    const dateTime  = new Date().getTime();
-    return Math.floor(dateTime / 1000);
-  }
-
-  getGrade = () => {
-    return this.grade;
-  }
-}
-
-//
-class IncompletePracticeExams {
-  constructor(indexID_module = 0, indexID_subject = 0, totalItems = 0){
-    this.DEBUG = false;
-    //this is where IPE's are stored
-    this.items = {
-      //used for identifying
-      ...{indexID_module, indexID_subject, totalItems},
-      //dates
-      timestamp_started: this.getTimestamp(),
-      timestamp_ended  : '',
-      //array of ans to question
-      answers: []
-    };
-
-    //debug: print items
-    if(this.DEBUG){
-      console.log('\n+++++++++++++++++++++++++++++START');
-      console.log('New IncompletePracticeExams Created:');
-      console.log(this.items);
-      console.log('+++++++++++++++++++++++++++++++++END');
-    }
-  }
-
-  //returns the current timestamp
-  getTimestamp = () => {
-    const dateTime  = new Date().getTime();
-    return Math.floor(dateTime / 1000);
-  }
-
-  //setter and getters
-  getItems = () => _.cloneDeep(this.items);
-  
-  setItems = (new_item) => {
-    this.items = new_item;
-    if(this.DEBUG){
-      console.log('\n##########START');
-      console.log('Set Grades with: ');
-      console.log(new_item);
-      console.log('##############END');
-    }
-  };
-
-  getAnswers = () => this.items.answers;
-  setTimestamp_ended = () => this.items.timestamp_ended = this.getTimestamp();
-  getLastAnswer = () => this.getItems().answers.pop();
-  getAnswersLength = () => this.items["answers"].length;
-  
-  //return questions with the corresponding userAnswers from iPE
-  mergeAnswersWithQuestions = (questions) => {
-    //get the answers from the iPE items
-    const answers_iPE = this.getAnswers();
-    //return an array of questions merged with the matching answer from iPE
-    return answers_iPE.map((answer_item, index) => {
-      //find the matching question item
-      let matching_question = questions.find((question) => question.indexID == answer_item.indexID_question);
-      return {
-        //append the question item
-        ...matching_question,
-        //insert the answers from the iPE
-        userAnswer: answer_item.answer,
-      }
-    });
-  }
-
-  //add an answer
-  addAnswer = (indexID = 0, answer = '', isCorrect = false) => {
-    //create an answer object
-    let new_answer = {
-      indexID_question: indexID,
-      //add a timestamp
-      timestamp: this.getTimestamp(),
-      //append data
-      answer, isCorrect,
-    };
-
-    //append to answers
-    this.items.answers.push(new_answer);
-    //debug: print answers and new_answer
-    if(this.DEBUG){
-      console.log('\n^^^^^^^^^^^START');
-      console.log('New Answer Added: ');
-      console.log(new_answer          );
-      console.log('Current Answeres: ');
-      console.log(this.items.answers  );
-      console.log('^^^^^^^^^^^^^^^END');
-    }
-
-    //return created answer obj
-    return new_answer;
-  }
-
-  //compute grade
-  getGrade = () => {
-    let correct = 0, wrong = 0;
-    //count correct and wrong
-    this.getAnswers.forEach((item) => {
-      //increment counters
-      item.isCorrect? correct++ : wrong++;
-    });
-    //compute grade
-    const grade = new Grade(this.items.totalItems, correct, wrong);
-    return grade.getGrade();
-  };
-}
-
-class PracticeExamGrade {
-  constructor(indexID_module = 0, indexID_subject = 0){
-    this.grade = {
-      ...{indexID_module, indexID_subject},
-      grades: [],
-    }
-  };
-
-  getTimestamp = () => {
-    const dateTime  = new Date().getTime();
-    return Math.floor(dateTime / 1000);
-  }
-
-  addGrade = (totalItems = 0, correctItems = 0) => {
-    const gradeItem = {
-      timestamp: this.getTimestamp(),
-      percentage: (correctItems / totalItems) * 100,
-      ...{totalItems, correctItems} 
-    };
-    this.grade.grades.push();
-  }
-}
-
 
 //TODO: create a generic wrappper
 //renders a animated check
@@ -422,11 +219,7 @@ export class Question extends React.PureComponent {
     question: PropTypes.shape(questionShape),    
   }
 
-  _onPress = (isCollapsed) => {
-    this.animatedRootViewRef.pulse(750);
-  }
-
-  _renderQuestionHeader = () => {
+  _renderHeader(){
     return(
       <IconText
         //icon
@@ -436,62 +229,36 @@ export class Question extends React.PureComponent {
         iconSize={26}
         //title
         text={'Question'}
-        textStyle={{fontSize: 28, fontWeight: '800'}}
+        textStyle={sharedStyles.headerTitle}
       />
     );
-  }
-
-  _renderCollapsable(){
-    return(
-      <Animatable.View 
-        ref={r => this.animatedRootViewRef = r}
-        useNativeDriver={true}
-        {...this.props}
-      >
-        <ExpandCollapseTextWithHeader
-          collapsedNumberOfLines={4}
-          style={{fontSize: 20, fontWeight: '300', textAlign: 'justify'}}
-          text={this.props.question.question}
-          titleComponent={this._renderQuestionHeader()}
-          onPress={this._onPress}
-        />
-      </Animatable.View>
-    );
-  }
-
-  _renderNormal(){ 
-    return(
-      <View collapsable={true}>
-        {this._renderQuestionHeader()}
-        <Text style={{fontSize: 22, fontWeight: '300', textAlign: 'justify'}}>
-            {this.props.question.question}
-        </Text>
-      </View>
-    );
-  }
+  };
 
   render(){
-    const { question } = this.props;
-    //console.log('question.question.length: ' + question.question.length);
-    const isTextLong = question.question.length > 140;
-    return(
-      isTextLong? this._renderCollapsable() : this._renderNormal()
-    );
-  }
+    //wrap question inside model
+    const model = new QuestionItem(this.props.question);
+    const { question } = model.get();
 
-}
+    return(
+      <AnimatedCollapsable
+        extraAnimation={true}
+        text={question}
+        maxChar={140}
+        collapsedNumberOfLines={4}
+        titleComponent={this._renderHeader()}
+        style={sharedStyles.body}
+      />
+    );
+  };
+};
 
 //shows a explanation + title that can collapsed/expanded
 export class Explanation extends React.PureComponent {
   static propTypes = {
-    question: PropTypes.shape(questionShape),    
-  }
+    question: PropTypes.object,    
+  };
 
-  _onPress = (isCollapsed) => {
-    this.animatedRootViewRef.pulse(750);
-  }
-
-  _renderQuestionHeader = () => {
+  _renderHeader(){
     return(
       <IconText
         //icon
@@ -501,185 +268,228 @@ export class Explanation extends React.PureComponent {
         iconSize={26}
         //title
         text={'Explanation'}
-        textStyle={{fontSize: 28, fontWeight: '800'}}
+        textStyle={sharedStyles.headerTitle}
       />
     );
-  }
-
-  _renderCollapsable(){
-    return(
-      <Animatable.View 
-        ref={r => this.animatedRootViewRef = r}
-        useNativeDriver={true}
-        {...this.props}
-      >
-        <ExpandCollapseTextWithHeader
-          collapsedNumberOfLines={4}
-          style={{fontSize: 20, fontWeight: '300', textAlign: 'justify'}}
-          text={this.props.question.explanation}
-          titleComponent={this._renderQuestionHeader()}
-          onPress={this._onPress}
-        />
-      </Animatable.View>
-    );
-  }
-
-  _renderNormal(){ 
-    return(
-      <View collapsable={true}>
-        {this._renderQuestionHeader()}
-        <Text style={{fontSize: 22, fontWeight: '300', textAlign: 'justify'}}>
-            {this.props.question.explanation}
-        </Text>
-      </View>
-    );
-  }
+  };
 
   render(){
     const { question } = this.props;
-    //console.log('question.question.length: ' + question.question.length);
-    const isTextLong = question.explanation.length > 140;
+
+    //wrap question inside model
+    const model = new QuestionItem(question);
+    const { explanation } = model.get();
+
     return(
-      isTextLong? this._renderCollapsable() : this._renderNormal()
+      <AnimatedCollapsable
+        extraAnimation={true}
+        text={explanation}
+        maxChar={140}
+        collapsedNumberOfLines={4}
+        titleComponent={this._renderHeader()}
+        style={sharedStyles.body}
+      />
     );
-  }
+  };
+};
 
-}
-
-//shows the answer
+//shows the answer and user_answer
 export class Answer extends React.PureComponent {
   static propTypes = {
     question: PropTypes.shape(questionShape),    
-  }
+  };
+
+  static prefixCorrect = shuffleArray([
+    "Yup! The answer is ",
+    "Right! The answer is ",
+    "Correct! the answer is ",
+    "Your answer is correct ",
+    "Perfect! The answer is ",
+    "You answered correctly ",
+    "Great job! the answer is ",
+    "You're right, the answer is ",
+  ]);
+
+  static prefixWrong = shuffleArray([
+    "Sorry, the right answer is ",
+    "Oops, the correct choice is ",
+    "Wrong! The correct answer is ",
+    "Try again! The right choice is ",
+    "Incorrect, the right answer is ",
+    "You're wrong, the right answer is ",
+    "Keep trying! the correct answer is ",
+    "Nice try but the correct answer is ",
+  ]);
+
+  static styles = StyleSheet.create({
+    text: {
+      fontSize: 20, 
+      fontWeight: '300', 
+      textAlign: 'justify'
+    },
+    correct: {
+      fontWeight: 'bold', 
+      color: '#1B5E20', 
+      textDecorationLine: 'underline'
+    },
+    wrong: {
+      fontWeight: 'bold', 
+      color: '#BF360C', 
+      textDecorationLine: 'underline'
+    },
+  });
 
   constructor(props){
     super(props);
-    this.DEBUG = false;
-  }
+  };
 
   _renderCorrect(){
+    //extract static properties
+    const { prefixCorrect, styles } = Answer;
     const { question } = this.props;
-    //possible prefixes
-    const prefixes = [
-      "Correct! the answer is: ",
-      "You're right, the answer is: ",
-      "Great job! the answer is: ",
-      "Your answer is correct: ",
-      "Perfect! The answer is: ",
-      "You answered correctly: ",
-      "Right! The answer is: ",
-    ];
+
+    //wrap question in model
+    const model = new QuestionItem(question);
+    //unwrap question data
+    const { indexID_question, answer } = model.get();
+
     //pick an index/prefix based on the indexid
-    const index = returnToZero(question.indexID, prefixes.length-1);
-    const prefix = prefixes[index];
+    const index  = returnToZero(indexID_question, (prefixCorrect.length - 1));
+    const prefix = prefixCorrect[index];
+
     return (
-      <Text style={{fontSize: 20, fontWeight: '300', textAlign: 'justify'}}>
+      <Text style={styles.text}>
         {prefix}
-        <Text style={[{fontWeight: 'bold', color: '#1B5E20', textDecorationLine: 'underline'}]}>
-          {question.answer}
+        <Text style={styles.correct}>
+          {answer}
         </Text>
       </Text>
     );
   };
 
   _renderWrong(){
+    //extract static properties
+    const { prefixWrong, styles } = Answer;
     const { question } = this.props;
-    //possible prefixes
-    const prefixes = [
-      "Nice try but the correct answer is: ",
-      "You're wrong, the right answer is: ",
-      "Keep trying! the correct answer is: ",
-      "Sorry, the right answer: ",
-      "Oops, the correct choice is: ",
-      "Incorrect, the right answer is: ",
-      "Wrong! The correct answer is: ",
-      "Try again! The right choice is: ",
-    ];
+
+    //wrap question in model
+    const model = new QuestionItem(question);
+    //unwrap question data
+    const { indexID_question, answer, user_answer } = model.get();
+
     //pick an index/prefix based on the indexid
-    const index = returnToZero(question.indexID, prefixes.length-1);
-    const prefix = prefixes[index];
+    const index  = returnToZero(indexID_question, (prefixWrong.length - 1));
+    const prefix = prefixWrong[index];
+
     return (
-      <Text style={{fontSize: 20, fontWeight: '300', textAlign: 'justify'}}>
+      <Text style={styles.text}>
         {prefix}
-        <Text style={{fontWeight: 'bold', color: '#1B5E20', textDecorationLine: 'underline'}}>
-          {question.answer}
+        <Text style={styles.correct}>
+          {answer}
         </Text> 
-        {' but you answered: '}
-        <Text style={{fontWeight: 'bold', color: '#BF360C', textDecorationLine: 'underline'}}>
-          {question.userAnswer}
+        {' but you answered '}
+        <Text style={styles.wrong}>
+          {user_answer}
         </Text>
+        {'.'}
       </Text>
     );
-  }
+  };
+
+  _renderHeader(){
+    return(
+      <IconText
+        //icon
+        iconName={'check-circle'}
+        iconType={'feather'}
+        iconColor={'grey'}
+        iconSize={26}
+        //title
+        text={'Answer'}
+        textStyle={sharedStyles.headerTitle}
+      />
+    );
+  };
 
   render(){
     const { question } = this.props;
 
-    //check if the an
-    let isCorrect = question.answer == question.userAnswer;
-    if(question.userAnswer == null) isCorrect = true;
+    //wrap question in model
+    const model = new QuestionItem(question);
+    const isCorrect = model.isCorrect();
 
     return(
       <View collapsable={true}>
-        <IconText
-          //icon
-          iconName={'check-circle'}
-          iconType={'feather'}
-          iconColor={'grey'}
-          iconSize={26}
-          //title
-          text={'Answer'}
-          textStyle={{fontSize: 28, fontWeight: '800'}}
-        />
-          {isCorrect? this._renderCorrect() : this._renderWrong()}
+        {this._renderHeader()}
+        {isCorrect? this._renderCorrect() : this._renderWrong()}
       </View>
     );
   }
 }
 
-//shows a question, ans + explanation
+//shows a question, answer + explanation
 export class QuestionExplanation extends React.PureComponent {
   static propTypes = {
     question: PropTypes.shape(questionShape),    
-  }
+  };
+
+  static styles = StyleSheet.create({
+    scrollview: {
+      flex: 1, 
+      padding: 15
+    },
+    seperator: {
+      marginVertical: 13, 
+      marginHorizontal: 15
+    }
+  });
 
   render(){
-    return(
-      <ScrollView style={{flex: 1, padding: 15}}>
-        <Question question={this.props.question}/>
-        <Divider style={{marginVertical: 13, marginHorizontal: 15}}/>
-        <Answer question={this.props.question}/>
-        <Divider style={{marginVertical: 13, marginHorizontal: 15}}/>
-        <Explanation question={this.props.question}/>
+    const { styles } = QuestionExplanation;
+    const { question } = this.props;
+
+    return (
+      <ScrollView style={styles.scrollview}>
+        <Question {...{question}}/>
+        <Divider style={styles.seperator}/>
+
+        <Answer {...{question}}/>
+        <Divider style={styles.seperator}/>
+
+        <Explanation {...{question}}/>
       </ScrollView>
     );
-  }
-}
+  };
+};
 
-export class PracticeQuestion extends React.PureComponent {
+export class PracticeQuestion extends React.Component {
   static propTypes = {
-    //whether the question is the last one
-    isLast: PropTypes.bool,
-    question: PropTypes.shape(questionShape),
+    isLast        : PropTypes.bool  ,
+    question      : PropTypes.object,
     questionNumber: PropTypes.number,
-    //called when the next question is pressed in the back explantion
-    onPressNextQuestion: PropTypes.func,
-    //called when there are no more questions to add
-    onEndReached: PropTypes.func,
-    //called when a choice is pressed
-    onAnswerSelected: PropTypes.func
-  }
+    //callback functions
+    onEndReached       : PropTypes.func, //called when there are no more questions to add
+    onAnswerSelected   : PropTypes.func, //called when a choice is pressed
+    onPressNextQuestion: PropTypes.func, //called when the next question is pressed in the back explantion
+  };
+
+  static styles = StyleSheet.create({
+
+  });
 
   constructor(props){
     super(props);
-    //check if question is answered
-    let hasAnswer = props.question.userAnswer != null;
+
+    //wrap question inside model
+    const model = new QuestionItem(props.question);
+    const { user_answer } = model.get();
+    
     this.state = {
-      isExplanationOnly: hasAnswer,
+      user_answer,
+      showBackCard: model.isAnswered(),
       disableTouch: false,
-      userAnswer: null ,
     };
-  }
+  };
 
   _handleOnPressChoices = async (choice, key) => {
     const { question, questionNumber, onAnswerSelected } = this.props;
@@ -711,12 +521,15 @@ export class PracticeQuestion extends React.PureComponent {
   }
 
   _handleOnPressNextQuestion = async () => {
-    //call callback prop
-    this.props.onPressNextQuestion();
+    const { onPressNextQuestion } = this.props;
+
+    //call callback
+    onPressNextQuestion && onPressNextQuestion();
+
     //hide flipper after trans
     await this.nextButtonContainer.fadeOut(750);
-    await setStateAsync(this, {isExplanationOnly: true});
-  }
+    this.setState({showBackCard: true});
+  };
 
   _handleOnPressLast = () => {
     this.props.onEndReached();
@@ -749,51 +562,54 @@ export class PracticeQuestion extends React.PureComponent {
     );
   }
 
-  _renderBackExplaination = () => {
-    const { isExplanationOnly, userAnswer } = this.state;
-    const { isLast, question } = this.props;
-
-    const question_withUserAnswer = {
-      ...question,
-      userAnswer: userAnswer
-    }
+  _renderButtons(){
+    const { showBackCard } = this.state;
+    const { isLast } = this.props;
     
-    const shouldShowNextButton = !isExplanationOnly && !isLast;
+    const showNextButton = !showBackCard && !isLast;
     return(
-      <View 
-        style={isExplanationOnly? [styles.questionCard, styles.shadow, {flex: 1, overflow: 'visible'}] : {flex: 1}}
-        collapsable={true}
+      <Animatable.View
+        ref={r => this.nextButtonContainer = r}
+        useNativeDriver={true}
       >
+        {showNextButton && <Button
+          text={'Next Question'}
+          style={{backgroundColor: '#6200EA', margin: 10}}
+          iconName={'pencil-square-o'}
+          iconType={'font-awesome'}
+          iconSize={22}
+          iconColor={'white'}
+          onPress={this._handleOnPressNextQuestion}
+        />}
+        {isLast && <Button
+          text={'Finish Exam'}
+          style={{backgroundColor: '#6200EA', margin: 10}}
+          iconName={'check'}
+          iconType={'font-awesome'}
+          iconSize={22}
+          iconColor={'white'}
+          onPress={this._handleOnPressLast}
+        />}
+      </Animatable.View>
+    );
+  };
+
+  _renderBackExplaination = () => {
+    const { showBackCard, userAnswer } = this.state;
+    const { question } = this.props;
+
+    const style = showBackCard? [sharedStyles.questionCard, sharedStyles.shadow, {flex: 1, overflow: 'visible'}] : {flex: 1};
+    
+    return(
+      <View {...{style}} collapsable={true}>
         <QuestionExplanation
-          question={userAnswer == null? question : question_withUserAnswer}
           onPressNextQuestion={this._handleOnPressNextQuestion}
+          {...{question}}
         />
-        <Animatable.View
-          ref={r => this.nextButtonContainer = r}
-          useNativeDriver={true}
-        >
-          {shouldShowNextButton && <Button
-            text={'Next Question'}
-            style={{backgroundColor: '#6200EA', margin: 10}}
-            iconName={'pencil-square-o'}
-            iconType={'font-awesome'}
-            iconSize={22}
-            iconColor={'white'}
-            onPress={this._handleOnPressNextQuestion}
-          />}
-          {isLast && <Button
-            text={'Finish Exam'}
-            style={{backgroundColor: '#6200EA', margin: 10}}
-            iconName={'check'}
-            iconType={'font-awesome'}
-            iconSize={22}
-            iconColor={'white'}
-            onPress={this._handleOnPressLast}
-          />}
-        </Animatable.View>
+        {this._renderButtons()}
       </View>
     );
-  }
+  };
 
   _renderFlipper = () => {
     const { disableTouch } = this.state;
@@ -806,20 +622,21 @@ export class PracticeQuestion extends React.PureComponent {
       >
         <FlipView 
           ref={r => this.questionFlipView = r}
-          containerStyle={[{flex: 1}, styles.shadow]}
+          containerStyle={[{flex: 1}, sharedStyles.shadow]}
           frontComponent={this._renderFrontQuestion()}
-          frontContainerStyle={styles.questionCard}
+          frontContainerStyle={sharedStyles.questionCard}
           backComponent={this._renderBackExplaination()}
-          backContainerStyle={styles.questionCard}
+          backContainerStyle={sharedStyles.questionCard}
         />
       </Animatable.View>
     );
   }
 
   render(){
-    const { isExplanationOnly } = this.state;
+    const { showBackCard } = this.state;
+
     return(
-      isExplanationOnly? this._renderBackExplaination() : this._renderFlipper()
+      showBackCard? this._renderBackExplaination() : this._renderFlipper()
     );
   }
 }
@@ -836,13 +653,12 @@ export class PracticeExamList extends React.Component {
     super(props);
     
     this.state = {
-      //true when read/writng to storage
       loading: true,
-      //list of all the questions in an subject
+      //array of questions to show in the UI
+      list     : [],
+      answers  : [],
       questions: [],
-      //list of questions to show in the UI
-      questionList: [],
-      //determines which question to show
+      //determines which current question to show
       currentIndex: 0,
     };
 
@@ -852,54 +668,105 @@ export class PracticeExamList extends React.Component {
   initializeModels(){
     const { moduleData, subjectData } = this.props;
 
-    //wrap data inside models
-    let moduleModel  = new ModuleItemModel(moduleData );
-    let subjectModel = new SubjectItem    (subjectData);
-    //extract indexid from subjectdata
-    const { indexid } = subjectModel.get();
+    //wrap data inside models and set as property
+    this.moduleModel  = new ModuleItemModel(moduleData );
+    this.subjectModel = new SubjectItem    (subjectData);
+  };
 
-    //set models as properties 
-    this.moduleModel  = moduleModel;
-    this.subjectModel = moduleModel.getSubjectByID(indexid);
+  async initlializeList(){
+    let store = await IncompletePracticeExamStore.get();
+    console.log(store);
+
+    //get prev. answered questions
+    let {questions, answers} = await this.getQuestionsFromStore();
+
+    let list  = [];
+    list = list.concat(answers);
+    
+    let first = getFirst(questions);
+    first && list.push(first);
+
+    let currentIndex = list.length - 1;
+    if(currentIndex < 0){
+      currentIndex = 0;
+    };
+
+    this.setState({questions, answers, list, currentIndex});
+  };
+
+  async getQuestionsFromStore(){
+    //init. variables
+    let match      = null ;
+    let hasMatch   = false;
+    let hasAnswers = false;
+
+    //init. return values
+    let questions = [];
+    let answers   = [];
+
+    //read from store
+    let storeModel = await IncompletePracticeExamStore.getAsModel();
+    
+    //when store is not empty
+    if(storeModel != null){
+      //extract index id's
+      const { indexID_module, indexID_subject } = this.subjectModel.getIndexIDs();
+
+      //check if subject has been partially answered
+      match = storeModel.findMatchFromIDsAsModel({indexID_module, indexID_subject });
+      hasMatch = match != undefined;
+      
+      //check if match has answers
+      match && (hasAnswers = !match.isAnswersEmpty());
+    };
+
+    //if at least one question is answered
+    if(hasMatch && hasAnswers){
+      //append the answers from match to subject
+      match.appendAnswersToSubject(this.subjectModel);
+
+      //get questions
+      let answered   = this.subjectModel.getAnsweredQuestions  ();
+      let unanswered = this.subjectModel.getUnansweredQuestions();
+
+      //update variables
+      answers   = answers  .concat(answered  );
+      questions = questions.concat(unanswered);
+
+    } else {
+      //no question has been answered yet
+      let unanswered = this.subjectModel.getUnansweredQuestions();
+
+      //update variable
+      questions = questions.concat(unanswered);
+    };
+
+    return {questions, answers};
   };
 
   async componentDidMount(){
-    const { subjectModel } = this;
+    await this.initlializeList();
 
-    let iPE_model = subjectModel.getIncompletePracticeExamModel();
-    
-
-    let newItem = new IncompletePracticeExamModel({
-      indexID_module : 11,
-      indexID_subject: 11,
-      answers: [],
-      timestamp_ended: 9900,
-      timestamp_started: 9090,
-    });
-    
-    await IncompletePracticeExamStore.add(iPE_model);
-    await IncompletePracticeExamStore.add(newItem);
-
-    let model = await IncompletePracticeExamStore.getAsModel();
-    console.log(model.get());
-    
+    //get next question
+    //this.nextQuestion();
+    this.setState({loading: false});
   };
 
   //adds a new question at the end
   async nextQuestion(){
-    const { questions, questionList, currentIndex } = this.state;
-    //add question to list
-    let list = questionList.slice();
-    list.push(questions[currentIndex+1]);
-
-    //update question list
-    await setStateAsync(this, {
-      questionList: list,
-      currentIndex: currentIndex+1,
-    });
+    const { questions, answers, list, currentIndex } = this.state;
+    
+    let last = getLast(list);
+    last && answers.push(last);
+    
+    let next = questions.shift();
+    next && list.push(next);
+    
+    this.setState({questions, answers, list});
 
     //show new question
-    this._questionListCarousel.snapToNext();
+    const { _carousel } = this;
+    _carousel && this._carousel.snapToNext();
   }
 
   _onPressNextQuestion = () => {
@@ -921,25 +788,20 @@ export class PracticeExamList extends React.Component {
   }
   
   _renderItem = ({item, index}) => {
-    return(
-      <View style={{backgroundColor: 'red', height: '50%', width: '50%'}}>
-        <Text>Item</Text>
-      </View>
-    );
-
-    const isLast = index == this.state.questions.length - 1;
-    
+    const {} = this.props;
+    const isLast = index == this.subjectModel.getQuestionLength() - 1;
+    //console.log(item);
     return (
       <PracticeQuestion
         question={item}
         questionNumber={index}
-        isLast={isLast}
         onPressNextQuestion={this._onPressNextQuestion}
         onEndReached={this.props.onEndReached}
         onAnswerSelected={this._onAnswerSelected}
+        {...{isLast}}
       />
     );
-  }
+  };
 
   render(){
     const {onEndReached, ...flatListProps } = this.props;
@@ -957,8 +819,8 @@ export class PracticeExamList extends React.Component {
 
     return(
       <Carousel
-        ref={(c) => { this._questionListCarousel = c; }}
-        data={this.state.questionList}
+        ref={r => this._carousel = r }
+        data={this.state.list}
         renderItem={this._renderItem}
         firstItem={this.state.currentIndex}
         activeSlideAlignment={'end'}
@@ -975,7 +837,7 @@ export class PracticeExamList extends React.Component {
   }
 }
 
-const styles = StyleSheet.create({
+const sharedStyles = StyleSheet.create({
   questionCard: {
     flex: 1,
     backgroundColor: 'white', 
@@ -990,4 +852,14 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     shadowOpacity: 0.6,
   },
+
+  headerTitle: {
+    fontSize: 28, 
+    fontWeight: '800'
+  },
+  body: {
+    fontSize: 20, 
+    fontWeight: '300', 
+    textAlign: 'justify'
+  }
 });
