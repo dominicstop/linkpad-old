@@ -8,7 +8,6 @@ const DEBUG = false;
 
 let _incompletePracticeExams = null;
 
-
 export class AnswerModel {
   constructor(data = {
     //used for checking which module/subject it belongs to
@@ -162,7 +161,8 @@ export class IncompletePracticeExamModel {
 
       //if has a match replace answer
       if(match != undefined){
-        question.setUserAnswer(match.answer);
+        let answerModel = new AnswerModel(match);
+        question.initFromAnswer(answerModel);
       };
       return question;
     });
@@ -196,13 +196,11 @@ export class IncompletePracticeExamModel {
       return null;
     };
 
-    //extract ids from 'item' param
-    const { indexID_module, indexID_subject, indexID_question } = item.getIndexIDs();
     //avoid duplicates: answers without 'item' param
     let filtered = answers.filter((element) => 
-      element.indexID_module   != indexID_module   &&
-      element.indexID_subject  != indexID_subject  &&
-      element.indexID_question != indexID_question 
+      element.indexID_module   != item.indexID_module   &&
+      element.indexID_subject  != item.indexID_subject  &&
+      element.indexID_question != item.indexID_question
     );
     
     //append to answers
@@ -356,68 +354,6 @@ function set(incompletePracticeExams_array){
   }); 
 }
 
-function _add(new_iPE){
-  return new Promise(async (resolve, reject) => {
-    try {
-      //debug print parameter
-      if(DEBUG){
-        console.log('\n,,,,,,,,,,,START');
-        console.log('iPE - adding item:');
-        console.log(new_iPE);
-        console.log(',,,,,,,,,,,,,,,,END');
-      }
-      
-      //get iPE's from store 
-      let current_iPE = await get(true);
-      //debug: print current_iPE
-      if(DEBUG){
-        console.log('\n+++++++++++++++START');
-        console.log('Read iPE from store:  ');
-        console.log(current_iPE             );
-        console.log('+++++++++++++++++++END');
-      }
-
-      //store matching iPE item from store
-      let match_iPE = null;
-
-      //if the store is not empty, check if iPE to be added already exists
-      if(current_iPE != null){
-        if(DEBUG) console.log('\ncurrent_iPE not null');
-
-        //find match from store
-        match_iPE = await findMatch(new_iPE, false);
-
-        //if a matching iPE is found from the store
-        if(match_iPE.hasMatch){
-          //overwrite the new iPE to the old iPE
-          current_iPE[match_iPE.match_index] = new_iPE;
-          //print the current iPE after changing it
-          if(DEBUG){
-            console.log('\n.........START');
-            console.log('After changing: ');
-            console.log(current_iPE       );
-            console.log('.............END');
-          }
-        }
-      }
-
-      //store isnt empty and current iPE doesnt exist yet
-      if(current_iPE == null || !match_iPE.hasMatch){
-        if(DEBUG) console.log('current iPE doesnt exist yet, Append: ');
-        await store.push(KEY, new_iPE);
-
-      } else {
-        await store.save(KEY, current_iPE);
-      }
-
-    } catch(error){
-      //print error to console
-      if(DEBUG) console.log('Add iPE Error: ' + error);
-      reject(error)
-    }
-    resolve();
-  });
-}
 
 async function add(item = new IncompletePracticeExamModel()){
   //read from storage
@@ -443,11 +379,16 @@ async function add(item = new IncompletePracticeExamModel()){
   } else {
     //replace since it already exists
     model.replaceExistingItem(item);
+
     //overwrite with updated item
     await store.save(KEY, model.get());
   };
 };
 
+async function reset(){
+  await store.delete(KEY);
+};
+
 export default {
-  get, set, add, findMatch, getAsModel
+  get, set, add, findMatch, getAsModel, reset
 }

@@ -104,11 +104,10 @@ export class ExamChoice extends React.PureComponent {
     const { model } = this;
     const { onPress, choiceText, choiceKey} = this.props;
 
-    //check if user's answer is correct
+    //set answer on model
     model.setUserAnswer(choiceText);
+    model.setAnswerTimestamp();
     const isCorrect = model.isCorrect();
-
-    console.log(model);
 
     onPress && onPress(model.get());
     if(!isCorrect) this.animateColor();
@@ -707,7 +706,8 @@ export class PracticeExamList extends React.Component {
     subjectData: PropTypes.object,
     //callbacks
     onEndReached: PropTypes.func,
-  }
+    onListInit  : PropTypes.func
+  };
 
   constructor(props){
     super(props);
@@ -731,6 +731,9 @@ export class PracticeExamList extends React.Component {
     //wrap data inside models and set as property
     this.moduleModel  = new ModuleItemModel(moduleData );
     this.subjectModel = new SubjectItem    (subjectData);
+    //generate iPE model for storing the answers
+    this.practiceExamModel = this.subjectModel.getIncompletePracticeExamModel();
+    this.practiceExamModel.setTimestampStart();
   };
 
   async initlializeList(){
@@ -751,11 +754,7 @@ export class PracticeExamList extends React.Component {
       currentIndex = 0;
     };
 
-    this.setState({questions, answers, list, currentIndex});
-    
-    if(list.length == 0){
-      this.nextQuestion();
-    };
+    await setStateAsync(this, {questions, answers, list, currentIndex});
   };
 
   async getQuestionsFromStore(){
@@ -797,12 +796,12 @@ export class PracticeExamList extends React.Component {
       answers   = answers  .concat(answered  );
       questions = questions.concat(unanswered);
 
+      //replace iPE
+      this.practiceExamModel = match;
+
     } else {
       //no question has been answered yet
       let unanswered = this.subjectModel.getUnansweredQuestions();
-
-      console.log('unanswered');
-      console.log(unanswered);
 
       //update variable
       questions = questions.concat(unanswered);
@@ -812,15 +811,19 @@ export class PracticeExamList extends React.Component {
   };
 
   async componentDidMount(){
+    //await IncompletePracticeExamStore.reset();
     await this.initlializeList();
+
+    const { onListInit } = this.props;
+    //call callback and pass iPE
+    onListInit && onListInit(this.practiceExamModel);
+
     this.setState({loading: false});
   };
 
   //adds a new question at the end
   async nextQuestion(){
     const { questions, answers, list } = this.state;
-
-    console.log('next question: ');
     
     let last = getLast(list);
     last && answers.push(last);
@@ -846,11 +849,14 @@ export class PracticeExamList extends React.Component {
   //callback: when answer is selected
   _onAnswerSelected = (question) => {
     //wrap question inside model
-    const model = new QuestionItem(question);
+    const questionModel = new QuestionItem(question);
+    const answerModel   = questionModel.getAnswerModel();
 
-    console.log('_onAnswerSelected - question');
-    //console.log(question);
+    //append answer to iPE
+    this.practiceExamModel.insertAnswer(answerModel);
 
+    //write to store
+    IncompletePracticeExamStore.add(this.practiceExamModel);
   };
   
   _renderItem = ({item, index}) => {
@@ -900,7 +906,7 @@ export class PracticeExamList extends React.Component {
         {...flatListProps}
       />
     );
-  }
+  };
 };
 
 const sharedStyles = StyleSheet.create({

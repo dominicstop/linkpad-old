@@ -48,8 +48,18 @@ export class QuestionItem {
   setUserAnswer(user_answer = ''){
     //set answer
     this.question.user_answer = user_answer;
+  };
+
+  setAnswerTimestamp(){
     //set timestamp
     this.question.timestamp_answered = getTimestamp();
+  };
+
+  initFromAnswer(model = new AnswerModel()){
+    const { answer, timestamp_answered } = model.get();
+
+    this.question.user_answer        = answer;
+    this.question.timestamp_answered = timestamp_answered;
   };
 
   getAnswerModel(){
@@ -179,7 +189,7 @@ export class SubjectItem {
     });
 
     return model;
-  }
+  };
 
   /** returns an iPE model that is initialized with this subject details */
   getIncompletePracticeExamModel = () => {
@@ -214,12 +224,13 @@ export class SubjectItem {
 
   /** returns undefined when there is no match */
   getUnansweredQuestions(){
-    const { questions } = this.get();
+    const questions = this.getQuestions();
 
     //return questions that has user_answer set
-    return questions.filter((question) => 
-      question.user_answer == ''  ||
-      !('user_answer' in question)
+    return (
+      questions
+        .filter((question) => !question.isAnswered())
+        .map   ((question) =>  question.get       ())
     );
   };
 };

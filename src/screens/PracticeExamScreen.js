@@ -5,7 +5,7 @@ import   Constants, { STYLES   } from '../Constants'       ;
 import { ViewWithBlurredHeader } from '../components/Views';
 import { PracticeExamList      } from '../components/Exam' ;
 
-import IncompletePracticeExamStore from '../functions/IncompletePracticeExamStore';
+import IncompletePracticeExamStore, {IncompletePracticeExamModel} from '../functions/IncompletePracticeExamStore';
 
 
 import * as Animatable          from 'react-native-animatable';
@@ -98,23 +98,7 @@ export class PracticeExamListScreen extends React.Component {
 
   //returns the last item's index in iPE's store
   async getLastAnsweredIndex(){
-    return;
-    const { subjectData, moduleData } = this.state;
-    //extract id's from the current subject and modules
-    const indexID_module  = moduleData .indexid;
-    const indexID_subject = subjectData.indexid;
-
-    //find match from store
-    let matched_iPE = await IncompletePracticeExamStore.findMatch({indexID_module, indexID_subject}, true);
-    let last_index = 0;
-
-    if(matched_iPE.hasMatch){
-      //get the last question from array
-      let last_question = matched_iPE.match_iPE.answers.slice().pop();
-      //update last index
-      last_index = last_question.indexID_question;
-    } 
-    return (last_index);
+    
   };
 
   /** Set the screen's title */
@@ -131,12 +115,17 @@ export class PracticeExamListScreen extends React.Component {
     this.updateTitle(`Question ${index}/${total}`);
   };
 
-  _handleOnSnapToItem = (index) => {
+  _handleOnSnapToItem = (index = 0) => {
     this.updateTitleIndex(index+1)
   };
 
   _handleOnEndReached = () => {
     console.log('onEndReached');
+  };
+
+  _handleOnListInit = (practiceExamModel = new IncompletePracticeExamModel()) => {
+    const { answers } = practiceExamModel.get();
+    this.updateTitleIndex(answers.length + 1);
   };
   
   render() {
@@ -152,14 +141,15 @@ export class PracticeExamListScreen extends React.Component {
           <PracticeExamList
             onSnapToItem={this._handleOnSnapToItem}
             onEndReached={this._handleOnEndReached}
+            onListInit  ={this._handleOnListInit  }
             //pass down props
             {...{moduleData, subjectData}}
           />
         </Animatable.View>
       </ViewWithBlurredHeader>
     );
-  }
-}
+  };
+};
 
 export const PracticeExamStack = createStackNavigator({
   PracticeExamListRoute: {
