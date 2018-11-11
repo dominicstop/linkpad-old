@@ -2,7 +2,7 @@ import React from 'react';
 import { StyleSheet, Text, View, Dimensions, ScrollView, ViewPropTypes, TouchableOpacity, Animated, Easing, Alert } from 'react-native';
 import PropTypes from 'prop-types';
 
-import { setStateAsync, shuffleArray , returnToZero, getLast, getFirst, getLetter} from '../functions/Utils';
+import { setStateAsync, shuffleArray , returnToZero, getLast, getFirst, getLetter, isValidTimestamp} from '../functions/Utils';
 import IncompletePracticeExamStore, { IncompletePracticeExamModel } from '../functions/IncompletePracticeExamStore';
 
 
@@ -10,6 +10,7 @@ import { Button, ExpandCollapseTextWithHeader, AnimatedCollapsable } from './But
 import { FlipView, IconText } from './Views';
 
 import * as Animatable from 'react-native-animatable';
+import      TimeAgo    from 'react-native-timeago';
 import      Carousel   from 'react-native-snap-carousel';
 import    { Header   } from 'react-navigation';
 import    { Divider  } from 'react-native-elements';
@@ -106,6 +107,8 @@ export class ExamChoice extends React.PureComponent {
     //check if user's answer is correct
     model.setUserAnswer(choiceText);
     const isCorrect = model.isCorrect();
+
+    console.log(model);
 
     onPress && onPress(model.get());
     if(!isCorrect) this.animateColor();
@@ -264,7 +267,7 @@ export class Question extends React.PureComponent {
         extraAnimation={true}
         text={question}
         maxChar={140}
-        collapsedNumberOfLines={4}
+        collapsedNumberOfLines={5}
         titleComponent={this._renderHeader()}
         style={sharedStyles.body}
       />
@@ -323,9 +326,9 @@ export class Answer extends React.PureComponent {
     "Yup! The answer is ",
     "Right! The answer is ",
     "Correct! the answer is ",
-    "Your answer is correct ",
+    "Your answer is correct: ",
     "Perfect! The answer is ",
-    "You answered correctly ",
+    "You answered correctly: ",
     "Great job! the answer is ",
     "You're right, the answer is ",
   ]);
@@ -356,6 +359,13 @@ export class Answer extends React.PureComponent {
       fontWeight: 'bold', 
       color: '#BF360C', 
       textDecorationLine: 'underline'
+    },
+    textTime: {
+      fontSize: 18,
+      fontWeight: '200',
+      marginBottom: 7,
+      textDecorationLine: 'underline',
+      textDecorationColor: '#9b9b9b',
     },
   });
 
@@ -416,6 +426,28 @@ export class Answer extends React.PureComponent {
     );
   };
 
+  _renderDate(){
+    const { styles   } = Answer;
+    const { question } = this.props;
+
+    //wrap question inside model
+    const model = new QuestionItem(question);
+    const { timestamp_answered } = model.get();
+    
+    //check if timestamp is valid
+    const isValid = isValidTimestamp(timestamp_answered);
+    //dont show if timestamp invalid
+    if(!isValid) return null;
+    //convert seconds to ms
+    const time = timestamp_answered * 1000;
+
+    return(
+      <Text style={styles.textTime}>
+        {'Answered '}<TimeAgo {...{time}}/>
+      </Text>
+    );
+  };
+
   _renderHeader(){
     return(
       <IconText
@@ -441,10 +473,11 @@ export class Answer extends React.PureComponent {
     return(
       <View collapsable={true}>
         {this._renderHeader()}
+        {this._renderDate  ()}
         {isCorrect? this._renderCorrect() : this._renderWrong()}
       </View>
     );
-  }
+  };
 }
 
 //shows a question, answer + explanation
@@ -517,10 +550,6 @@ export class PracticeQuestion extends React.Component {
     //check if user's ans is correct
     const isCorrect = model.isCorrect();
 
-
-    //call the callback prop
-    onAnswerSelected && onAnswerSelected(question);
-
     //update question, disable touch while animating
     await setStateAsync(this, {
       question,
@@ -545,6 +574,9 @@ export class PracticeQuestion extends React.Component {
     await this.questionFlipView.flipCard();
     //enable touch
     await setStateAsync(this, {disableTouch: false});
+
+    //call the callback prop
+    onAnswerSelected && onAnswerSelected(question);
   };
 
   _handleOnPressNextQuestion = async () => {
@@ -666,8 +698,8 @@ export class PracticeQuestion extends React.Component {
     return(
       showBackCard? this._renderBackExplaination() : this._renderFlipper()
     );
-  }
-}
+  };
+};
 
 export class PracticeExamList extends React.Component {
   static propTypes = {
@@ -781,9 +813,6 @@ export class PracticeExamList extends React.Component {
 
   async componentDidMount(){
     await this.initlializeList();
-
-    //get next question
-    //this.nextQuestion();
     this.setState({loading: false});
   };
 
@@ -816,9 +845,11 @@ export class PracticeExamList extends React.Component {
 
   //callback: when answer is selected
   _onAnswerSelected = (question) => {
+    //wrap question inside model
+    const model = new QuestionItem(question);
 
     console.log('_onAnswerSelected - question');
-    console.log(question);
+    //console.log(question);
 
   };
   
@@ -870,7 +901,7 @@ export class PracticeExamList extends React.Component {
       />
     );
   }
-}
+};
 
 const sharedStyles = StyleSheet.create({
   questionCard: {

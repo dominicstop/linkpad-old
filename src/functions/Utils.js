@@ -77,4 +77,8 @@ export function getFirst(array) {
 const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 export function getLetter(index = 0){
   return alphabet[index];
+};
+
+export function isValidTimestamp(timestamp){
+  return (new Date(timestamp)).getTime() > 0;
 }

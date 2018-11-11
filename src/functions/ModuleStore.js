@@ -2,6 +2,7 @@ import store from 'react-native-simple-store';
 import _ from 'lodash';
 import {IncompletePracticeExamModel, AnswerModel} from './IncompletePracticeExamStore';
 import { Question } from '../components/Exam';
+import { getTimestamp } from './Utils';
 
 const URL = 'https://linkpad-pharmacy-reviewer.firebaseapp.com/getallmodules';
 let _moduleData = null;
@@ -20,9 +21,11 @@ export class QuestionItem {
     indexID_subject : -1,
     indexID_question: -1,
     //store the answer
-    user_answer: ''
+    user_answer: '',
+    timestamp_answered: 0,
   }){
     this.question = {
+      timestamp_answered: 0,
       user_answer: '',
       ...question,
     };
@@ -43,7 +46,10 @@ export class QuestionItem {
   };
 
   setUserAnswer(user_answer = ''){
+    //set answer
     this.question.user_answer = user_answer;
+    //set timestamp
+    this.question.timestamp_answered = getTimestamp();
   };
 
   getAnswerModel(){
@@ -64,6 +70,19 @@ export class QuestionItem {
     let mapped = choices.map((choice) => choice.value);
 
     return mapped.concat(answer);
+  };
+
+  getAnswerModel(){
+    const { indexID_module, indexID_subject, indexID_question, answer, user_answer, timestamp_answered } = this.question;
+
+    return new AnswerModel({
+      //pas down indexid's
+      indexID_module, indexID_subject, indexID_question,
+      answer   : user_answer,
+      answerKey: answer,
+      isCorrect: this.isCorrect(),
+      timestamp_answered,
+    });
   };
 
   isAnswered(){
