@@ -57,6 +57,14 @@ export class QuestionItem {
 
     return model;
   };
+  
+  getChoices(){
+    const { choices, answer } = this.get();
+    //extract choice from object
+    let mapped = choices.map((choice) => choice.value);
+
+    return mapped.concat(answer);
+  };
 
   isAnswered(){
     const { user_answer } = this.get();
@@ -191,7 +199,8 @@ export class SubjectItem {
 
     //return questions that has user_answer set
     return questions.filter((question) => 
-      question.user_answer == ''
+      question.user_answer == ''  ||
+      !('user_answer' in question)
     );
   };
 };

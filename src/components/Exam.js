@@ -2,7 +2,7 @@ import React from 'react';
 import { StyleSheet, Text, View, Dimensions, ScrollView, ViewPropTypes, TouchableOpacity, Animated, Easing, Alert } from 'react-native';
 import PropTypes from 'prop-types';
 
-import { setStateAsync, shuffleArray , returnToZero, getLast, getFirst} from '../functions/Utils';
+import { setStateAsync, shuffleArray , returnToZero, getLast, getFirst, getLetter} from '../functions/Utils';
 import IncompletePracticeExamStore, { IncompletePracticeExamModel } from '../functions/IncompletePracticeExamStore';
 
 
@@ -78,31 +78,38 @@ export class ExamChoice extends React.PureComponent {
     choiceKey : PropTypes.string.isRequired,
     choiceText: PropTypes.string.isRequired,
     answer    : PropTypes.string.isRequired,
-    onPress   : PropTypes.func  .isRequired,
+    //callback
+    onPress: PropTypes.func.isRequired,
     //misc props
-    style: ViewPropTypes.style,
+    question: PropTypes.object, 
+    style   : ViewPropTypes.style,
   }
 
   constructor(props){
     super(props);
     this.animatedValue = new Animated.Value(0);
-  }
+    //wrap question in model
+    this.model = new QuestionItem(props.question);
+  };
 
   animateColor = () => {
     Animated.timing(this.animatedValue, {
       toValue : 1,
       duration: 500,
     }).start();
-  }
+  };
 
   _onPressChoice = () => {
-    const { onPress, choiceText, choiceKey, answer} = this.props;
-    //check if user's ans is correct
-    const isCorrect = choiceText == answer;
+    const { model } = this;
+    const { onPress, choiceText, choiceKey} = this.props;
 
-    onPress(choiceText, choiceKey);
+    //check if user's answer is correct
+    model.setUserAnswer(choiceText);
+    const isCorrect = model.isCorrect();
+
+    onPress && onPress(model.get());
     if(!isCorrect) this.animateColor();
-  }
+  };
   
   render(){
     const { choiceText, choiceKey, style } = this.props;
@@ -131,38 +138,51 @@ export class ExamChoice extends React.PureComponent {
         <Text style={{fontSize: 18, color: 'white', fontWeight: '500', flex: 1}}>{choiceText}</Text>
       </TouchableOpacity>
     );
-  }
+  };
 }
 
 //shows a list of choices
-export class ExamChoiceList extends React.PureComponent {
+export class ExamChoiceList extends React.Component {
   static propTypes = {
-    question: PropTypes.shape(questionShape),    
+    question     : PropTypes.object, 
     onPressChoice: PropTypes.func,
-  }
+  };
+
+  constructor(props){
+    super(props);
+  };
+
+  shouldComponentUpdate(nextProps, nextState){
+    //temp. fix for choicelist reshuffling on props change
+    return false;
+  };
 
   _renderChoices = () => {
     const { question, onPressChoice } = this.props;
-    //used for the key
-    const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    //
-    const choicesArray = question.choices.slice().map(value => value.value);
-    //combine choices and answer
-    choicesArray.push(question.answer);
+
+    //wrap question in model
+    const model = new QuestionItem(question);
+    const { answer } = model.get();
+
+    //get choices combined w/ answer
+    const choices = model.getChoices();
     //returns a copy of shuffled choices
-    const shuffledChoices = shuffleArray(choicesArray);
+    const shuffledChoices = shuffleArray(choices);
+
     //render choices
-    return shuffledChoices.map((choice, index) => 
-      <ExamChoice
-        choiceText={choice}
-        choiceKey ={alphabet[index]}
-        answer    ={question.answer}
-        key       ={choice + index }
-        style     ={{marginTop: 8}}
-        onPress   ={onPressChoice}
-      />
-    );
-  }
+    return shuffledChoices.map((choiceText, index) => {
+      const choiceKey = getLetter(index);
+      const key = `${index}-${choiceText}`;
+
+      return (
+        <ExamChoice
+          style={{marginTop: 8}}
+          onPress={onPressChoice}
+          //spread and pass down props
+          {...{choiceKey, choiceText, answer, key, question}}
+      />);
+    });
+  };
   
   render(){
     return (
@@ -178,7 +198,7 @@ export class ExamQuestion extends React.PureComponent {
   static propTypes = {
     question: PropTypes.shape(questionShape),
     onPressChoice: PropTypes.func,
-  }
+  };
 
   _renderTopQuestion(){
     const { question } = this.props;    
@@ -191,17 +211,17 @@ export class ExamQuestion extends React.PureComponent {
         </ScrollView>
       </View>
     );
-  }
+  };
 
   _renderBottomChoices(){
     const { question, onPressChoice } = this.props;    
     return(
       <ExamChoiceList
         question={question}
-        onPressChoice={onPressChoice}
+        {...{onPressChoice}}
       />
     );
-  }
+  };
   
   render(){
     return(
@@ -210,14 +230,14 @@ export class ExamQuestion extends React.PureComponent {
         {this._renderBottomChoices()}
       </View>
     );
-  }
-}
+  };
+};
 
 //shows a single question + title that can collapsed/expanded
 export class Question extends React.PureComponent {
   static propTypes = {
     question: PropTypes.shape(questionShape),    
-  }
+  };
 
   _renderHeader(){
     return(
@@ -479,29 +499,34 @@ export class PracticeQuestion extends React.Component {
 
   constructor(props){
     super(props);
-
-    //wrap question inside model
+    //wrap questions in model
     const model = new QuestionItem(props.question);
-    const { user_answer } = model.get();
     
     this.state = {
-      user_answer,
+      question: props.question,
       showBackCard: model.isAnswered(),
       disableTouch: false,
     };
   };
 
-  _handleOnPressChoices = async (choice, key) => {
-    const { question, questionNumber, onAnswerSelected } = this.props;
+  _handleOnPressChoices = async (question) => {
+    const { onAnswerSelected } = this.props;
+
+    //wrap question in model
+    const model = new QuestionItem(question);
     //check if user's ans is correct
-    const isCorrect = choice == question.answer;
+    const isCorrect = model.isCorrect();
+
+
     //call the callback prop
-    onAnswerSelected && onAnswerSelected(question, questionNumber, choice, isCorrect);
-    //update userAns state + disable touch while animating
+    onAnswerSelected && onAnswerSelected(question);
+
+    //update question, disable touch while animating
     await setStateAsync(this, {
-      userAnswer  : choice,
-      disableTouch: true  ,
+      question,
+      disableTouch: true,
     });
+
     //animate check animation if correct
     if(isCorrect){
       //fade in white overlay + check animation + pulse forward
@@ -510,15 +535,17 @@ export class PracticeQuestion extends React.Component {
         this.animatedContainer.pulse(750),
         this.animatedCheck.start(),
       ]);
+
     } else {
       //shake the root view
       await this.animatedContainer.shake(750);
-    }
+    };
+
     //flip and show explanation
     await this.questionFlipView.flipCard();
     //enable touch
     await setStateAsync(this, {disableTouch: false});
-  }
+  };
 
   _handleOnPressNextQuestion = async () => {
     const { onPressNextQuestion } = this.props;
@@ -551,16 +578,18 @@ export class PracticeQuestion extends React.Component {
   
   //renders the front question + choices
   _renderFrontQuestion = () => {
+    const { question } = this.state;
+
     return(
       <View style={{flex: 1}}>
         <ExamQuestion
           onPressChoice={this._handleOnPressChoices}
-          question={this.props.question}
+          {...{question}}
         />
         {this._renderFrontOverlay()}
       </View>
     );
-  }
+  };
 
   _renderButtons(){
     const { showBackCard } = this.state;
@@ -595,8 +624,7 @@ export class PracticeQuestion extends React.Component {
   };
 
   _renderBackExplaination = () => {
-    const { showBackCard, userAnswer } = this.state;
-    const { question } = this.props;
+    const { showBackCard, question } = this.state;
 
     const style = showBackCard? [sharedStyles.questionCard, sharedStyles.shadow, {flex: 1, overflow: 'visible'}] : {flex: 1};
     
@@ -692,6 +720,10 @@ export class PracticeExamList extends React.Component {
     };
 
     this.setState({questions, answers, list, currentIndex});
+    
+    if(list.length == 0){
+      this.nextQuestion();
+    };
   };
 
   async getQuestionsFromStore(){
@@ -737,6 +769,9 @@ export class PracticeExamList extends React.Component {
       //no question has been answered yet
       let unanswered = this.subjectModel.getUnansweredQuestions();
 
+      console.log('unanswered');
+      console.log(unanswered);
+
       //update variable
       questions = questions.concat(unanswered);
     };
@@ -754,38 +789,38 @@ export class PracticeExamList extends React.Component {
 
   //adds a new question at the end
   async nextQuestion(){
-    const { questions, answers, list, currentIndex } = this.state;
+    const { questions, answers, list } = this.state;
+
+    console.log('next question: ');
     
     let last = getLast(list);
     last && answers.push(last);
     
     let next = questions.shift();
     next && list.push(next);
+
+    let currentIndex = list.length - 1;
+    if(currentIndex < 0){
+      currentIndex = 0;
+    };
     
-    this.setState({questions, answers, list});
+    await setStateAsync(this, {questions, answers, list, currentIndex});    
+  };
 
-    //show new question
+  _onPressNextQuestion = async () => {
     const { _carousel } = this;
-    _carousel && this._carousel.snapToNext();
-  }
 
-  _onPressNextQuestion = () => {
-    this.nextQuestion();
-  }
+    await this.nextQuestion();
+    _carousel && this._carousel.snapToNext();
+  };
 
   //callback: when answer is selected
-  _onAnswerSelected = (question, questionIndex, answer, isCorrect) => {
-    if(this.DEBUG){
-      console.log('\n\n\n\n_onAnswerSelected: ');
-      console.log('questionIndex: ' + questionIndex);
-      console.log('answer: ' + answer);
-      console.log('isCorrect: ' + isCorrect);
-    }
-    this.incompletePE.addAnswer(questionIndex, answer, isCorrect);
-    let current_grade = this.incompletePE.getItems();
-    
-    IncompletePracticeExamStore.add(current_grade);
-  }
+  _onAnswerSelected = (question) => {
+
+    console.log('_onAnswerSelected - question');
+    console.log(question);
+
+  };
   
   _renderItem = ({item, index}) => {
     const {} = this.props;

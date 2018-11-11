@@ -73,3 +73,8 @@ export function getLast(array) {
 export function getFirst(array) {
   return array[0];
 }
+
+const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+export function getLetter(index = 0){
+  return alphabet[index];
+}
