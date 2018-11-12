@@ -4,12 +4,12 @@ import { View, Platform, Text, Clipboard } from 'react-native';
 import Constants, { STYLES } from '../Constants';
 import { CustomHeader          } from '../components/Header' ;
 
-import { SubjectModal    } from '../components/SwipableModal';
+import { SubjectModal     } from '../components/SwipableModal';
 import { ModuleListScreen } from './ModuleListScreen';
 import { ResourcesScreen  } from './ResourcesScreen';
 import { ExamsScreen      } from './ExamsScreen';
 import { TipsScreen       } from './TipsScreen';
-import { DrawerButton } from '../components/Buttons';
+import { DrawerButton     } from '../components/Buttons';
 
 import { createBottomTabNavigator, createStackNavigator, Header } from 'react-navigation';
 import { createMaterialBottomTabNavigator } from 'react-navigation-material-bottom-tabs';

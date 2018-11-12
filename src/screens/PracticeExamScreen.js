@@ -1,17 +1,19 @@
 import React from 'react';
-import { StyleSheet, Text, View, Dimensions, TouchableOpacity } from 'react-native';
+import { StyleSheet, Text, View, Platform, TouchableOpacity, Alert } from 'react-native';
 
-import   Constants, { STYLES   } from '../Constants'       ;
+import   Constants, { STYLES   } from '../Constants';
 import { ViewWithBlurredHeader } from '../components/Views';
-import { PracticeExamList      } from '../components/Exam' ;
+import { PracticeExamList      } from '../components/Exam';
+import { AndroidHeader, AndroidBackButton} from '../components/AndroidHeader';
 
-import IncompletePracticeExamStore, {IncompletePracticeExamModel} from '../functions/IncompletePracticeExamStore';
+
+import { IncompletePracticeExamModel } from '../functions/IncompletePracticeExamStore';
 
 
-import * as Animatable          from 'react-native-animatable';
+import { Icon } from 'react-native-elements';
+import * as Animatable from 'react-native-animatable';
 import { createStackNavigator } from 'react-navigation';
-import { Icon                 } from 'react-native-elements';
-import {ModuleItemModel, SubjectItem} from '../functions/ModuleStore';
+import { ModuleItemModel, SubjectItem } from '../functions/ModuleStore';
 
 export class PracticeExamHeader extends React.PureComponent {
   constructor(props){
@@ -32,6 +34,16 @@ export class PracticeExamHeader extends React.PureComponent {
   }
 }
 
+//android header text style
+const titleStyle = { 
+  flex: 1, 
+  textAlign: 'center', 
+  marginRight: 10,
+  position: 'absolute',
+  color: 'white',
+};
+
+//ios back button
 const CloseButton = (props) => {
   return (
     <TouchableOpacity
@@ -39,26 +51,41 @@ const CloseButton = (props) => {
       {...props}
     >
       <Icon
-        name={'ios-close-circle-outline'}
+        name={'ios-close-circle'}
         type={'ionicon'}
         color={'white'}
         size={26}
       />
-      <Text style={{marginLeft: 7, fontSize: 18, color: 'white'}}>Close</Text>
+      <Text style={{marginLeft: 7, fontSize: 18, color: 'white'}}>Cancel</Text>
     </TouchableOpacity>
-  )
-}
+  );
+};
+
+let _onPressBack;
+const headerLeft = Platform.select({
+  //very ugly/hacky solution
+  ios    : <CloseButton       onPress={() => _onPressBack()}/>,
+  android: <AndroidBackButton onPress={() => _onPressBack()}/>,
+});
 
 export class PracticeExamListScreen extends React.Component {
   static navigationOptions = ({ navigation }) => {
     const { state } = navigation;
+
     let title = '';
-    if(state.params) title = state.params.title;    
-    return {
+    if(state.params) title = state.params.title;
+
+    return ({
       title: title,
       headerTitleStyle: STYLES.glow,
-      headerLeft: <CloseButton onPress={() => navigation.navigate('HomeRoute')}/>
-    };
+      headerLeft,
+
+      //custom android header
+      ...Platform.select({
+        android: { header: props => 
+          <AndroidHeader {...{titleStyle, ...props}}/>
+      }}),
+    });
   };
 
   constructor(props){
@@ -72,6 +99,9 @@ export class PracticeExamListScreen extends React.Component {
       moduleData : moduleModel .get(),
       subjectData: subjectModel.get(),
     };
+
+    //assign to global var
+    _onPressBack = this._handleOnPressBack;
   };
 
   componentWillMount(){
@@ -113,6 +143,23 @@ export class PracticeExamListScreen extends React.Component {
 
     const total = subjectModel.getQuestionLength();
     this.updateTitle(`Question ${index}/${total}`);
+  };
+
+  _handleOnExit = () => {
+    const { navigation } = this.props;
+    navigation && navigation.navigate('HomeRoute');
+  };
+
+  _handleOnPressBack = () => {
+    Alert.alert(
+      'Do you want to go back?',
+      "Don't worry your progress will be saved.",
+      [
+        {text: 'Cancel', style  : 'cancel'          },
+        {text: 'OK'    , onPress: this._handleOnExit},
+      ],
+      { cancelable: false }
+    );
   };
 
   _handleOnSnapToItem = (index = 0) => {

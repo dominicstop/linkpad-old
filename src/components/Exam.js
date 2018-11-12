@@ -34,7 +34,7 @@ const questionShape = {
 export class CheckAnimation extends React.PureComponent {
   static propTypes = {
     style: ViewPropTypes.style
-  }
+  };
   
   constructor(props){
     super(props);
@@ -43,7 +43,7 @@ export class CheckAnimation extends React.PureComponent {
       source: require('../animations/checked_done_.json'),
       mountAnimation: false,
     };
-  }
+  };
 
   //start animation
   start = () => {
@@ -84,20 +84,31 @@ export class ExamChoice extends React.PureComponent {
     //misc props
     question: PropTypes.object, 
     style   : ViewPropTypes.style,
-  }
+  };
 
   constructor(props){
     super(props);
     this.animatedValue = new Animated.Value(0);
     //wrap question in model
     this.model = new QuestionItem(props.question);
+
+    this.state = {
+      backgroundColor: 'rgb(98, 0, 234)',
+    };
   };
 
   animateColor = () => {
     Animated.timing(this.animatedValue, {
       toValue : 1,
       duration: 500,
+      useNativeDriver: true,
     }).start();
+
+    if(Platform.OS == 'android'){
+      this.setState({
+        backgroundColor: 'rgb(237, 45, 113)'
+      });
+    };
   };
 
   _onPressChoice = () => {
@@ -115,6 +126,7 @@ export class ExamChoice extends React.PureComponent {
   
   render(){
     const { choiceText, choiceKey, style } = this.props;
+    const { backgroundColor } = this.state;
 
     //TODO: move to styles
     const colorOverlayStyle = {
@@ -123,12 +135,12 @@ export class ExamChoice extends React.PureComponent {
       height: '100%',
       width: '100%', 
       backgroundColor: 'rgb(237, 45, 113)',
-      opacity: this.animatedValue
+      opacity: this.animatedValue,
     };
 
     return(
       <TouchableOpacity
-        style={[{minHeight: 50, flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgb(98, 0, 234)', borderRadius: 8, overflow: 'hidden',}, style]}
+        style={[{minHeight: 50, flexDirection: 'row', alignItems: 'center', backgroundColor, borderRadius: 8, overflow: 'hidden',}, style]}
         onPress={this._onPressChoice}
         activeOpacity={0.7}
       >

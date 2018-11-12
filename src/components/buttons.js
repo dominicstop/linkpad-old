@@ -557,7 +557,7 @@ export class ExpandCollapseText extends React.PureComponent {
       console.log('collapsedHeight: ' + collapsedHeight);
       console.log('numOfLines: ' + numOfLines);
       console.log('viewHeight: ' + viewHeight);
-    }
+    };
 
     const Wrapper = (props) => Platform.select({
       ios: (

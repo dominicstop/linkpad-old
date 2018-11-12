@@ -2,26 +2,25 @@ import React, { Fragment } from 'react';
 import { View, ScrollView, RefreshControl, Text, TouchableOpacity, Platform, Image, StyleSheet } from 'react-native';
 import PropTypes from 'prop-types';
 
-import   NavigationService       from '../NavigationService';
-import { HEADER_PROPS, STYLES          } from '../Constants';
-import { ViewWithBlurredHeader, IconText, Card } from '../components/Views' ;
-import { CustomHeader          } from '../components/Header';
-import { DrawerButton, IconButton, PlatformTouchableIconButton } from '../components/Buttons';
+import   NavigationService      from '../NavigationService';
+import { HEADER_PROPS, STYLES } from '../Constants';
 
-import PreboardExamStore from '../functions/PreboardExamStore';
-import LottieCircle from '../components/LottieCircle';
 import { PreboardExamListScreen } from './BoardExamListScreen';
 import { BoardExamTestStack     } from './BoardExamTestScreen';
-import { PreboardExam, PreboardExamManager, PreboardExamItem, PreboardExamModuleItem } from '../functions/PreboardExamStore';
+
+import   LottieCircle    from '../components/LottieCircle';
 import { setStateAsync } from '../functions/Utils';
 import { AndroidHeader } from '../components/AndroidHeader';
-import { AnimateInView } from '../components/Views';
-import { ExamDetails } from '../components/PreboardExam';
+import { CustomHeader  } from '../components/Header';
+import { ExamDetails   } from '../components/PreboardExam';
 
-import * as Animatable from 'react-native-animatable';
+import { ViewWithBlurredHeader, IconText, Card, AnimateInView } from '../components/Views' ;
+import { DrawerButton, PlatformTouchableIconButton } from '../components/Buttons';
+import { PreboardExam, PreboardExamManager } from '../functions/PreboardExamStore';
+
 import { Header, createStackNavigator } from 'react-navigation';
-import { Icon, Divider } from 'react-native-elements';
-import PlatformTouchable from '../components/Touchable';
+import * as Animatable from 'react-native-animatable';
+import { Icon } from 'react-native-elements';
 
 
 //first card: explains what preboard exam is
@@ -243,6 +242,7 @@ export class BoardExamScreen extends React.Component {
     headerTitle,
     title: 'Board Exam',
     headerLeft : <DrawerButton/>,
+    
     //custom android header
     ...Platform.select({
       android: { header: props => 

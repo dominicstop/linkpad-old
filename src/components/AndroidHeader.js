@@ -11,10 +11,19 @@ import * as Animatable from 'react-native-animatable';
 import { LinearGradient } from 'expo';
 
 class BackButton extends React.PureComponent {
+  static propTypes = {
+    onPress: PropTypes.func
+  };
+
   _handleOnPress = () => {
-    const { navigation } = this.props;
-    this.props.navigation.goBack()
-  }
+    const { navigation, onPress } = this.props;
+    
+    if(onPress){
+      onPress();
+    } else {
+      navigation && navigation.goBack();
+    };
+  };
 
   render(){
     return(
@@ -46,6 +55,8 @@ export class AndroidHeader extends React.PureComponent {
     leftComponent  : PropTypes.element,
     rightComponent : PropTypes.element,
     centerComponent: PropTypes.element,
+    //custom styles
+    titleStyle: PropTypes.object,
   };
 
   static defaultProps = {
@@ -59,13 +70,13 @@ export class AndroidHeader extends React.PureComponent {
 
   _renderTitle(){
     const { title, headerTitleStyle } = this.props.scene.descriptor.options;
-    const { titleIcon } = this.props;
+    const { titleIcon, titleStyle } = this.props;
     //only add margin when icon is present
     const marginLeft = titleIcon? 12 : 0;
     return(
       <Fragment>
         {titleIcon}
-        <Text style={[headerTitleStyle, { marginLeft, fontWeight: '900', fontSize: 18, textAlignVertical: 'center' }]}>{title}</Text>
+        <Text style={[headerTitleStyle, { marginLeft, fontWeight: '900', fontSize: 18, textAlignVertical: 'center' }, titleStyle]}>{title}</Text>
       </Fragment>
     );
   }
@@ -81,9 +92,6 @@ export class AndroidHeader extends React.PureComponent {
         </View>
         <View style={{flex: 1, flexDirection: 'row', alignItems: 'center'}}>
           {centerComponent? centerComponent: this._renderTitle()}
-        </View>
-        <View>
-
         </View>
       </Fragment>
     );
