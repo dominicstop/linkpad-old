@@ -71,7 +71,7 @@ export class CheckAnimation extends React.PureComponent {
       />
     );
   }
-}
+};
 
 //shows a single exam choice
 export class ExamChoice extends React.PureComponent {
@@ -153,7 +153,7 @@ export class ExamChoice extends React.PureComponent {
       </TouchableOpacity>
     );
   };
-}
+};
 
 //shows a list of choices
 export class ExamChoiceList extends React.Component {
@@ -205,7 +205,7 @@ export class ExamChoiceList extends React.Component {
       </View>
     );
   }
-}
+};
 
 //shows a question and a list of choices
 export class ExamQuestion extends React.PureComponent {

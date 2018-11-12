@@ -248,7 +248,10 @@ export class AnimateInView extends React.PureComponent {
   }
 
   static defaultProps = {
-    animation: 'fadeInUp',
+    animation: Platform.select({
+      ios    : 'fadeInUp',
+      android: 'zoomIn',
+    }),
     easing: 'ease-in-out',
     duration: 1000,
     difference: 250,

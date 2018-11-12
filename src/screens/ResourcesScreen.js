@@ -94,21 +94,38 @@ export class ResourcesScreen extends React.Component {
   }
 
   _renderFooter = () => {
+    const delay = 2000;
+    const animation = Platform.select({
+      ios    : 'fadeInUp',
+      android: 'zoomIn'  ,
+    });
+
     return (
       <Animatable.View 
-        style={{marginBottom: 80}}
-        delay={1000}
-        animation={'fadeInUp'}
+        style={{paddingBottom: 80}}
+        duration={750}
+        useNativeDriver={true}
+        {...{animation, delay}}
       >
-        <Icon
-          name={'heart'}
-          type={'entypo'}
-          color={'rgb(170, 170, 170)'}
-          size={24}
-        />
+        <Animatable.View
+          animation={'pulse'}
+          duration={1000}
+          easing={'ease-in-out'}
+          delay={3000}
+          iterationCount={'infinite'}
+          useNativeDriver={true}
+          {...{delay}}
+        >
+          <Icon
+            name={'heart'}
+            type={'entypo'}
+            color={'#B39DDB'}
+            size={24}
+          />
+        </Animatable.View>
       </Animatable.View>
-    )
-  }
+    );
+  };
 
   render(){
     const { mount, showContent } = this.state;
