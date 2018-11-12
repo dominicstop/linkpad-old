@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, Text, View, Dimensions, ScrollView, ViewPropTypes, TouchableOpacity, Animated, Easing, Alert } from 'react-native';
+import { StyleSheet, Text, View, Dimensions, ScrollView, ViewPropTypes, TouchableOpacity, Animated, StatusBar, Platform } from 'react-native';
 import PropTypes from 'prop-types';
 
 import { setStateAsync, shuffleArray , returnToZero, getLast, getFirst, getLetter, isValidTimestamp} from '../functions/Utils';
@@ -876,18 +876,31 @@ export class PracticeExamList extends React.Component {
   };
 
   render(){
+    if(this.state.loading) return null;
     const {onEndReached, ...flatListProps } = this.props;
 
     //ui values for carousel
-    const headerHeight = Header.HEIGHT + 15;
+    const extraMargin  = 25;
     const screenHeight = Dimensions.get('window').height;
+    const headerHeight = Platform.select({
+      ios    : Header.HEIGHT + 15,
+      android: Header.HEIGHT + StatusBar.currentHeight,
+    });
 
-    const carouselHeight = {
-      sliderHeight: screenHeight, 
-      itemHeight  : screenHeight - headerHeight,
+    const carouseProps = {
+      ...Platform.select({
+        ios: {
+          sliderHeight: screenHeight,
+          itemHeight  : screenHeight - headerHeight,     
+          activeSlideAlignment: 'end'
+        },
+        android: {
+          sliderHeight: screenHeight - headerHeight,
+          itemHeight  : screenHeight - (headerHeight + extraMargin),     
+          activeSlideAlignment: 'center'
+        }
+      }),
     };
-
-    if(this.state.loading) return null;
 
     return(
       <Carousel
@@ -895,14 +908,13 @@ export class PracticeExamList extends React.Component {
         data={this.state.list}
         renderItem={this._renderItem}
         firstItem={this.state.currentIndex}
-        activeSlideAlignment={'end'}
         vertical={true}
         lockScrollWhileSnapping={false}
         //scrollview props
         showsHorizontalScrollIndicator={true}
         bounces={true}
         //other props
-        {...carouselHeight}
+        {...carouseProps}
         {...flatListProps}
       />
     );
@@ -913,10 +925,14 @@ const sharedStyles = StyleSheet.create({
   questionCard: {
     flex: 1,
     backgroundColor: 'white', 
-    marginBottom: 15, 
     marginHorizontal: 10,
     borderRadius: 15,
     overflow: 'hidden',
+    ...Platform.select({
+      ios: {
+        marginBottom: 15, 
+      },
+    }),
   },
   shadow: {
     shadowOffset:{  width: 3,  height: 5,  },

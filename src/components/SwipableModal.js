@@ -70,7 +70,7 @@ export class SwipableModal extends React.PureComponent {
       this._modalShadow.fadeOut(750);
       await this._rootView.bounceOutDown(750);
       this.setState({mountModal: false});
-    }
+    };
   };
 
   //called when modal is visible
@@ -122,10 +122,20 @@ export class SwipableModal extends React.PureComponent {
         <Animated.View
           pointerEvents={'box-none'}
           style={[styles.float, shadowStyle]}
-        />
+        >
+          <TouchableOpacity
+            style={[styles.float]}
+            activeOpacity={1}
+            onPress={this._handleOnPressShadow}
+          />
+        </Animated.View>
       </Animatable.View>
     );
-  }
+  };
+
+  _handleOnPressShadow = () => {
+    this.hideModal();
+  };
 
   render(){
     const { snapPoints, hitSlop } = this.props;
@@ -327,7 +337,7 @@ export class BoardExamModalContent extends React.PureComponent {
         </Text>
       </View>
     );
-  }
+  };
 
   _renderQuestion(){
     const { styles, sharedImageProps } = BoardExamModalContent;
@@ -354,7 +364,7 @@ export class BoardExamModalContent extends React.PureComponent {
         </Text>
       </View>
     );
-  }
+  };
 
   _renderExplantion(){
     const { styles, sharedImageProps } = BoardExamModalContent;
@@ -381,7 +391,7 @@ export class BoardExamModalContent extends React.PureComponent {
         </Text>
       </View>
     );
-  }
+  };
 
   _renderBody(){
     const { styles } = BoardExamModalContent;
@@ -394,7 +404,7 @@ export class BoardExamModalContent extends React.PureComponent {
         <View style={{marginBottom: 250}}/>
       </ScrollView>
     );
-  }
+  };
 
   render(){
     return Platform.select({
@@ -411,7 +421,7 @@ export class BoardExamModalContent extends React.PureComponent {
         </View>
       ),
     });
-  }
+  };
 }
 
 //used in homescreen: when a subject is pressed in module list
