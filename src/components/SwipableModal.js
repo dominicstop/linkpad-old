@@ -184,8 +184,8 @@ export class ModalTopIndicator extends React.PureComponent {
     container: {
       width: '100%', 
       alignItems: 'center', 
-      paddingTop: 10, 
-      paddingBottom: 10
+      paddingTop: 8, 
+      paddingBottom: 5
     },
     indicator: {
       width: 40, 
@@ -270,12 +270,10 @@ export class BoardExamModalContent extends React.PureComponent {
   static styles = StyleSheet.create({
     scrollview: {
       paddingTop: 5, 
-      borderTopColor: 'rgba(0, 0, 0, 0.2)', 
-      borderTopWidth: 1, 
       padding: 15
     },
     image: {
-      width: 90, 
+      width: 100, 
       height: 90, 
       marginTop: 15
     },
@@ -652,7 +650,7 @@ export class SubjectModal extends React.PureComponent {
 
     return(
       <IconText
-        containerStyle={{marginRight: 20}}
+        containerStyle={{marginLeft: 7, marginRight: 25, marginBottom: 10}}
         textStyle={styles.title}
         subtitleStyle={{fontWeight: '200', fontSize: 16}}
         text     ={subject.subjectname}
@@ -688,7 +686,7 @@ export class SubjectModal extends React.PureComponent {
     const subject = new SubjectItem(subjectData).get();
     //title comp for collapsable
     return(
-      <View style={{overflow: 'hidden', marginTop: 15}}>
+      <View style={{overflow: 'hidden', marginTop: 5}}>
         <AnimatedCollapsable
           extraAnimation={false}
           text={subject.description}
@@ -850,8 +848,8 @@ export class SubjectModal extends React.PureComponent {
     return(
       <Fragment>
         <ModalTopIndicator/>
+        {this._renderTitle()}
         <ScrollView style={{flex: 1, padding: 10, borderTopColor: 'rgba(0, 0, 0, 0.1)', borderTopWidth: 1}}>
-          {this._renderTitle()}
           {this._renderDescription()}
           <Separator/>
           {this._renderDetails()}

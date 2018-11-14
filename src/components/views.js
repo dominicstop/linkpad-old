@@ -77,7 +77,7 @@ export class IconText extends React.PureComponent {
     const childrenCount = React.Children.count(this.props.children);
 
     const Title = (props) => <Text 
-      style={[textStyle]}
+      style={[{flex: 1}, textStyle]}
       numberOfLines={1}
       ellipsizeMode={'tail'}
       {...props}
@@ -85,7 +85,7 @@ export class IconText extends React.PureComponent {
       {text}
     </Text>
 
-    const TitleSubtitle = (props) => <View>
+    const TitleSubtitle = (props) => <View style={{flex: 1}}>
       <Title/>
       <Text style={subtitleStyle}>
         {subtitle}
@@ -94,7 +94,7 @@ export class IconText extends React.PureComponent {
 
     const IconText = (
       <View
-        style={[{flexDirection: 'row', alignItems: 'center'}, containerStyle]}
+        style={[{flex: 1, flexDirection: 'row'}, containerStyle]}
         {...viewProps}
       >
         <Icon
