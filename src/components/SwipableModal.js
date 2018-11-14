@@ -1,5 +1,5 @@
 import React, { Component, Fragment } from 'react';
-import { StyleSheet, View, Dimensions, Image, Text, TouchableOpacity, ScrollView, Platform, Alert } from 'react-native';
+import { StyleSheet, View, Dimensions, Image, Text, TouchableOpacity, ScrollView, Platform, Alert, LayoutAnimation, UIManager } from 'react-native';
 import PropTypes from 'prop-types';
 
 import Animated from 'react-native-reanimated';
@@ -25,6 +25,9 @@ const Screen = {
 
 const MODAL_DISTANCE_FROM_TOP = 40;
 const MODAL_EXTRA_HEIGHT = 100;
+
+//enable layout animation on android
+UIManager.setLayoutAnimationEnabledExperimental && UIManager.setLayoutAnimationEnabledExperimental(true);
 
 export class SwipableModal extends React.PureComponent {
   static propTypes = {
@@ -585,6 +588,22 @@ export class SubjectModal extends React.PureComponent {
   _handleOnModalHide = () => {
     //call callbacks if defined
     this.modalClosedCallback && this.modalClosedCallback();
+
+    //clean up state
+    this.setState({
+      moduleData  : null ,
+      subjectData : null ,
+      mountContent: false,
+      mountPracticeExams: false,
+    });
+
+    //cleanup/reset models
+    this.moduleModel        = undefined;
+    this.subjectModel       = undefined;
+    this.practiceExamsModel = undefined;
+    this.practiceExamModel  = undefined;
+
+
   };
 
   _handleOnDelete = async () => {
@@ -594,6 +613,10 @@ export class SubjectModal extends React.PureComponent {
     practiceExamsModel.removeItem(practiceExamModel);
     //update store
     await IncompletePracticeExamStore.set(practiceExamsModel);
+
+    //update state
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    this.setState({mountPracticeExams: false});
   };
 
   _handleOnPressDelete = () => {
@@ -782,22 +805,24 @@ export class SubjectModal extends React.PureComponent {
         />
       </Fragment>
     );
-  }
+  };
 
   _renderButtons(){
     const { styles } = SubjectModal;
+    const { mountPracticeExams } = this.state;
+
     const borderRadius = 10;
     //shared props
     const buttonProps = {
       iconSize: 22,
       iconColor: 'white',
       textStyle: styles.buttonText,
-    }
+    };
     
     return(
       <View style={styles.buttonsContainer}>
         <IconButton
-          text={'Start'}
+          text={mountPracticeExams? 'Resume' : 'Start'}
           wrapperStyle={{flex: 1}}
           containerStyle={[styles.buttonContainer, {borderTopLeftRadius: borderRadius, borderBottomLeftRadius: borderRadius, backgroundColor: '#6200EA'}]}
           iconName={'pencil-square-o'}
@@ -817,7 +842,7 @@ export class SubjectModal extends React.PureComponent {
       </View>
       
     );
-  }
+  };
 
   _renderContent(){
     const { mountPracticeExams } = this.state;
@@ -839,7 +864,7 @@ export class SubjectModal extends React.PureComponent {
         {this._renderButtons()}
       </Fragment>
     );
-  }
+  };
 
   render(){
     const paddingBottom = MODAL_EXTRA_HEIGHT + MODAL_DISTANCE_FROM_TOP;
@@ -870,7 +895,7 @@ export class SubjectModal extends React.PureComponent {
         </Wrapper>
       </SwipableModal>
     );
-  }
+  };
 };
 
 const styles = StyleSheet.create({
