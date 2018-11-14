@@ -872,7 +872,6 @@ export class PracticeExamList extends React.Component {
   };
   
   _renderItem = ({item, index}) => {
-    const {} = this.props;
     const isLast = index == this.subjectModel.getQuestionLength() - 1;
     //console.log(item);
     return (
