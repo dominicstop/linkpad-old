@@ -33,10 +33,17 @@ export class ModuleListScreen extends React.Component {
 
   componentDidFocus = () => {
     //enable drawer when this screen is active
-    const { setDrawerSwipe } = this.props.screenProps;
+    const { setDrawerSwipe, getRefSubjectModal } = this.props.screenProps;
     setDrawerSwipe(true);
+
     //close the modal if it's open
-  }
+    let modal = getRefSubjectModal();
+    const isModalVisible = modal.isModalVisible();
+
+    if(isModalVisible){
+      modal.loadPracticeExams();
+    };
+  };
 
   componentDidMount = async () => {
     //delay rendering

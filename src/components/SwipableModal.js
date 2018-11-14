@@ -578,6 +578,11 @@ export class SubjectModal extends React.PureComponent {
     this._modal.showModal();
   };
 
+  isModalVisible = () => {
+    const { mountContent } = this.state;
+    return mountContent;
+  };
+
   _handleOnModalShow = () => {
     //call callbacks if defined
     this.modalOpenedCallback && this.modalOpenedCallback();
@@ -600,8 +605,6 @@ export class SubjectModal extends React.PureComponent {
     this.subjectModel       = undefined;
     this.practiceExamsModel = undefined;
     this.practiceExamModel  = undefined;
-
-
   };
 
   _handleOnDelete = async () => {
