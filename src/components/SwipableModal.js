@@ -510,7 +510,44 @@ export class SubjectModal extends React.PureComponent {
         color: '#424242'
       },
     }),
+    image: {
+      width: 75, 
+      height: 75, 
+      marginHorizontal: 15,
+      marginVertical: 15
+    },
+    gradeTextContainer: {
+      flex: 1, 
+      alignItems: 'center', 
+      justifyContent: 'center', 
+      paddingVertical: 10
+    },
+    gradeTitle: {
+      color: '#512DA8',
+      fontSize: 20, 
+      fontWeight: '800'
+    },
+    gradeSubtitle: {
+      fontSize: 16, 
+      ...Platform.select({
+        ios: {
+          fontWeight: '200'
+        },
+        android: {
+          fontWeight: '100',
+          color: '#424242'
+        },
+      })
+    },
   });
+
+  static sharedImageProps = {
+    animation      : 'pulse'      ,
+    iterationCount : "infinite"   ,
+    easing         : 'ease-in-out',
+    duration       : 5000         ,
+    useNativeDriver: true         ,
+  };
   
   constructor(props){
     super(props);
@@ -520,7 +557,11 @@ export class SubjectModal extends React.PureComponent {
       mountContent: false,
       //false while loading from store
       mountPracticeExams: false,
+      mountGrades       : false,
     };
+
+    //load images
+    this.imageGradeInactive = require('../../assets/icons/books-2.png');
 
     this.modalClosedCallback = null;
     this.modalOpenedCallback = null;
@@ -622,8 +663,8 @@ export class SubjectModal extends React.PureComponent {
 
   _handleOnPressDelete = () => {
     Alert.alert(
-      'Do you want to go back?',
-      "Don't worry your progress will be saved.",
+      'Do you want to reset?',
+      "All of your progress will be lost.",
       [
         {text: 'Cancel', style  : 'cancel'            },
         {text: 'OK'    , onPress: this._handleOnDelete},
@@ -787,8 +828,30 @@ export class SubjectModal extends React.PureComponent {
     );
   };
 
+  _renderGradesInactive(){
+    const { styles, sharedImageProps } = SubjectModal;
+    return(
+      <View style={{flex: 1, alignItems: 'flex-start', justifyContent: 'center', flexDirection: 'row'}}>
+        <Animatable.Image
+          source={this.imageGradeInactive}
+          style={styles.image}
+          {...sharedImageProps}
+        />
+        <View style={styles.gradeTextContainer}>
+          <Text style={styles.gradeTitle   }>No Grades Available</Text>
+          <Text style={styles.gradeSubtitle}>Your grades will be available here once you've completed a practice exam.</Text>
+        </View>
+      </View>
+    );
+  };
+
+  _renderGradesActive(){
+    
+  };
+
   _renderGrades(){
     const { styles } = SubjectModal;
+    const { mountGrades } = this.state;
     return(
       <Fragment>
         <IconText
@@ -804,6 +867,7 @@ export class SubjectModal extends React.PureComponent {
           subtitleStyle={{fontWeight: '200', fontSize: 16, }}
           subtitle ={'Previous grades'}
         />
+        {mountGrades? this._renderGradesActive() : this._renderGradesInactive()}
       </Fragment>
     );
   };
@@ -845,6 +909,39 @@ export class SubjectModal extends React.PureComponent {
     );
   };
 
+  _renderFooter = () => {
+    const delay = 1000;
+    const animation = Platform.select({
+      ios    : 'fadeInUp',
+      android: 'zoomIn'  ,
+    });
+
+    return (
+      <Animatable.View 
+        style={{paddingBottom: 80}}
+        duration={750}
+        useNativeDriver={true}
+        {...{animation, delay}}
+      >
+        <Animatable.View
+          animation={'pulse'}
+          duration={1000}
+          easing={'ease-in-out'}
+          iterationCount={'infinite'}
+          useNativeDriver={true}
+          {...{delay}}
+        >
+          <Icon
+            name={'heart'}
+            type={'entypo'}
+            color={'#B39DDB'}
+            size={24}
+          />
+        </Animatable.View>
+      </Animatable.View>
+    );
+  };
+
   _renderContent(){
     const { mountPracticeExams } = this.state;
     const Separator = (props) =>  <View style={{alignSelf: 'center', width: '80%', height: 1, backgroundColor: 'rgba(0, 0, 0, 0.2)', margin: 15}} {...props}/>
@@ -860,7 +957,7 @@ export class SubjectModal extends React.PureComponent {
           {mountPracticeExams && this._renderPrevious()}
           {mountPracticeExams && <Separator/>}
           {this._renderGrades()}
-          <View style={{marginBottom: 50}}/>
+          {this._renderFooter()}
         </ScrollView>
         {this._renderButtons()}
       </Fragment>
