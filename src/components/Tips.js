@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, Text, View, Dimensions, ScrollView, ViewPropTypes, TouchableOpacity, Animated, Easing, FlatList } from 'react-native';
+import { StyleSheet, Text, View, Platform, ScrollView, ViewPropTypes, TouchableOpacity, Animated, Easing, FlatList } from 'react-native';
 import PropTypes from 'prop-types';
 
 import { setStateAsync, timeout, shuffleArray } from '../functions/Utils';

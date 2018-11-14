@@ -715,10 +715,6 @@ export class PracticeQuestion extends React.Component {
         {showBackCard? this._renderBackExplaination() : this._renderFlipper()}
       </View>
     );
-
-    return(
-      showBackCard? this._renderBackExplaination() : this._renderFlipper()
-    );
   };
 };
 
@@ -951,6 +947,7 @@ export class PracticeExamList extends React.Component {
         data={this.state.list}
         renderItem={this._renderItem}
         firstItem={this.state.currentIndex}
+        //onSnapToItem={this._handleOnSnapToItem}
         //scrollview props
         showsHorizontalScrollIndicator={true}
         bounces={true}
@@ -976,6 +973,7 @@ const sharedStyles = StyleSheet.create({
       },
       android: {
         marginVertical: 15,
+        elevation: 7,
       }
     }),
   },

@@ -14,7 +14,7 @@ import { AndroidHeader } from '../components/AndroidHeader';
 import { CustomHeader  } from '../components/Header';
 import { ExamDetails   } from '../components/PreboardExam';
 
-import { ViewWithBlurredHeader, IconText, Card, AnimateInView } from '../components/Views' ;
+import { ViewWithBlurredHeader, IconText, Card, AnimateInView } from '../components/Views';
 import { DrawerButton, PlatformTouchableIconButton } from '../components/Buttons';
 import { PreboardExam, PreboardExamManager } from '../functions/PreboardExamStore';
 
@@ -354,7 +354,8 @@ export class BoardExamScreen extends React.Component {
 
   render(){
     const { styles } = BoardExamScreen;
-    const offset = Header.HEIGHT;    
+    const offset = Header.HEIGHT;
+    
     if( !this.state.mount ) return null;
     return(
       <ViewWithBlurredHeader hasTabBar={false}>

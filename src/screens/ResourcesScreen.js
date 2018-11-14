@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, RefreshControl, Alert, View, Text, TouchableOpacity, AsyncStorage, FlatList, ScrollView } from 'react-native';
+import { StyleSheet, RefreshControl, Alert, View, Text, Platform, AsyncStorage, FlatList, ScrollView } from 'react-native';
 import PropTypes from 'prop-types';
 
 import   NavigationService       from '../NavigationService'   ;

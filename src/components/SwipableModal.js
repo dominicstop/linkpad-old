@@ -1,5 +1,5 @@
 import React, { Component, Fragment } from 'react';
-import { StyleSheet, View, Dimensions, Image, Text, TouchableOpacity, ScrollView, Platform } from 'react-native';
+import { StyleSheet, View, Dimensions, Image, Text, TouchableOpacity, ScrollView, Platform, Alert } from 'react-native';
 import PropTypes from 'prop-types';
 
 import Animated from 'react-native-reanimated';
@@ -14,6 +14,9 @@ import { timeout, setStateAsync       } from '../functions/Utils';
 
 import * as Animatable from 'react-native-animatable';
 import NavigationService from '../NavigationService';
+import IncompletePracticeExamStore, { IncompletePracticeExamModel } from '../functions/IncompletePracticeExamStore';
+import TimeAgo from 'react-native-timeago';
+import { Icon } from 'react-native-elements';
 
 const Screen = {
   width : Dimensions.get('window').width ,
@@ -257,7 +260,7 @@ export class WelcomeScreenModalContent extends React.PureComponent {
       </BlurView>
     );
   }
-}
+};
 
 //used in BoardExamScreen: shown when more info is pressed
 export class BoardExamModalContent extends React.PureComponent {
@@ -422,22 +425,10 @@ export class BoardExamModalContent extends React.PureComponent {
       ),
     });
   };
-}
+};
 
 //used in homescreen: when a subject is pressed in module list
 export class SubjectModal extends React.PureComponent {
-  constructor(props){
-    super(props);
-    this.state = {
-      moduleData  : null,
-      subjectData : null,
-      mountContent: false,
-    };
-
-    this.modalClosedCallback = null;
-    this.modalOpenedCallback = null;
-  };
-
   static styles = StyleSheet.create({
     container: {
       flex: 1, 
@@ -486,6 +477,17 @@ export class SubjectModal extends React.PureComponent {
         }
       })
     },
+    textSubtitle: {
+      fontSize: 18,
+      fontWeight: '200',
+      color: '#212121',
+      textAlign: 'justify',
+      marginBottom: 5,
+    },
+    textBody: {
+      fontSize: 18, 
+      textAlign: 'justify'
+    },
     detailTitle: Platform.select({
       ios: {
         fontSize: 18,
@@ -508,36 +510,114 @@ export class SubjectModal extends React.PureComponent {
       },
     }),
   });
+  
+  constructor(props){
+    super(props);
+    this.state = {
+      moduleData  : null ,
+      subjectData : null ,
+      mountContent: false,
+      //false while loading from store
+      mountPracticeExams: false,
+    };
+
+    this.modalClosedCallback = null;
+    this.modalOpenedCallback = null;
+  };
+
+  initModels(moduleData, subjectData){
+    //wrap inside model
+    let moduleModel  = new ModuleItemModel(moduleData );
+    let subjectModel = new SubjectItem    (subjectData);
+
+    //get matching subject
+    const indexID_subject = subjectModel.get().indexid;
+    subjectModel = moduleModel.getSubjectByID(indexID_subject);
+
+    //set as property
+    this.moduleModel  = moduleModel ;
+    this.subjectModel = subjectModel;
+  };
+
+  async loadPracticeExams(){
+    const { subjectModel, moduleModel } = this;
+
+    //load from store
+    const model = await IncompletePracticeExamStore.getAsModel();
+    //set as property
+    this.practiceExamsModel = model;
+
+    if(model != undefined){
+      //extract id's
+      const { indexID_module, indexID_subject } = subjectModel.getIndexIDs();
+
+      const match = model.findMatchFromIDs({ indexID_module, indexID_subject });
+      const hasMatch = match != undefined;
+      
+      //init. model and set match as property
+      this.practiceExamModel = new IncompletePracticeExamModel(match);
+
+      this.setState({mountPracticeExams: hasMatch});
+    }
+  };
 
   openSubjectModal = (moduleData, subjectData) => {
-    this.setState({moduleData, subjectData, mountContent: true});
+    this.initModels( moduleData, subjectData);
+
+    this.setState({
+      moduleData, subjectData, 
+      mountContent: true
+    });
+
+    this.loadPracticeExams();
     this._modal.showModal();
-  }
+  };
 
   closeSubjectModal = () => {
     this._modal.showModal();
-  }
+  };
 
   _handleOnModalShow = () => {
     //call callbacks if defined
     this.modalOpenedCallback && this.modalOpenedCallback();
-  }
+  };
 
   _handleOnModalHide = () => {
     //call callbacks if defined
     this.modalClosedCallback && this.modalClosedCallback();
-  }
+  };
+
+  _handleOnDelete = async () => {
+    const { practiceExamsModel, practiceExamModel } = this;
+
+    //remove current iPE from array
+    practiceExamsModel.removeItem(practiceExamModel);
+    //update store
+    await IncompletePracticeExamStore.set(practiceExamsModel);
+  };
+
+  _handleOnPressDelete = () => {
+    Alert.alert(
+      'Do you want to go back?',
+      "Don't worry your progress will be saved.",
+      [
+        {text: 'Cancel', style  : 'cancel'            },
+        {text: 'OK'    , onPress: this._handleOnDelete},
+      ],
+      { cancelable: false }
+    );
+  };
 
   _handleOnPressStart = () => {
     const { moduleData, subjectData } = this.state;
     NavigationService.navigateApp('PracticeExamRoute', {
       moduleData, subjectData,
     });
-  }
+  };
 
   _handleOnPressClose = () => {
     this._modal.hideModal();
-  }
+  };
 
   _renderTitle(){
     const { styles } = SubjectModal;
@@ -560,7 +640,7 @@ export class SubjectModal extends React.PureComponent {
         iconSize ={26}
       />
     );
-  }
+  };
 
   _renderDescriptionTitle(){
     const { styles } = SubjectModal;
@@ -576,9 +656,10 @@ export class SubjectModal extends React.PureComponent {
         textStyle={styles.title}
       />
     );
-  }
+  };
 
   _renderDescription(){
+    const { styles } = SubjectModal;
     const { subjectData } = this.state;
     //wrap data into helper object for easier access
     const subject = new SubjectItem(subjectData).get();
@@ -591,11 +672,11 @@ export class SubjectModal extends React.PureComponent {
           maxChar={400}
           collapsedNumberOfLines={6}
           titleComponent={this._renderDescriptionTitle()}
-          style={{fontSize: 18, textAlign: 'justify'}}
+          style={styles.textBody}
         />
       </View>
     );
-  }
+  };
 
   _renderDetails(){
     const { styles } = SubjectModal;
@@ -627,7 +708,60 @@ export class SubjectModal extends React.PureComponent {
         </View>
       </Fragment>
     );
-  }
+  };
+
+  _renderPrevious(){
+    const { styles } = SubjectModal;
+    const { subjectModel, practiceExamModel } = this;
+
+    const { timestamp_started } = practiceExamModel.get();
+
+    //count answered question over total questions
+    const totalQuestions = subjectModel     .getQuestionLength();
+    const totalAnswers   = practiceExamModel.getAnswersCount  ();
+    const answered = `${totalAnswers}/${totalQuestions} items`;
+
+    return(
+      <Fragment>
+        <IconText
+          //icon
+          iconName={'clock'}
+          iconType={'feather'}
+          iconColor={'#512DA8'}
+          iconSize={26}
+          //title
+          text={'Previous Session'}
+          textStyle={styles.title}
+        />
+        <Text style={styles.textSubtitle}>
+          {'You have answered some of the questions in this subject in a previous session.'}
+        </Text>
+        <View style={{flexDirection: 'row', marginTop: 3}}>
+          <View style={{flex: 1}}>
+            <Text numberOfLines={1} style={styles.detailTitle   }>{'Answered: '}</Text>
+            <Text numberOfLines={1} style={styles.detailSubtitle}>{answered}</Text>
+          </View>
+          <View style={{flex: 1}}>
+            <Text numberOfLines={1} style={styles.detailTitle   }>{'Started: '}</Text>
+            <TimeAgo 
+              numberOfLines={1} 
+              style={styles.detailSubtitle} 
+              time={timestamp_started * 1000}  
+            />
+          </View>
+          <TouchableOpacity onPress={this._handleOnPressDelete}>
+            <Icon
+              containerStyle={{flex: 1, alignSelf: 'center', justifyContent: 'center'}}
+              name={'trash-2'}
+              type={'feather'}
+              color={'red'}
+              size={30}
+            />
+          </TouchableOpacity>
+        </View>
+      </Fragment>
+    );
+  };
 
   _renderGrades(){
     const { styles } = SubjectModal;
@@ -686,6 +820,7 @@ export class SubjectModal extends React.PureComponent {
   }
 
   _renderContent(){
+    const { mountPracticeExams } = this.state;
     const Separator = (props) =>  <View style={{alignSelf: 'center', width: '80%', height: 1, backgroundColor: 'rgba(0, 0, 0, 0.2)', margin: 15}} {...props}/>
     return(
       <Fragment>
@@ -696,6 +831,8 @@ export class SubjectModal extends React.PureComponent {
           <Separator/>
           {this._renderDetails()}
           <Separator/>
+          {mountPracticeExams && this._renderPrevious()}
+          {mountPracticeExams && <Separator/>}
           {this._renderGrades()}
           <View style={{marginBottom: 50}}/>
         </ScrollView>
@@ -734,7 +871,7 @@ export class SubjectModal extends React.PureComponent {
       </SwipableModal>
     );
   }
-}
+};
 
 const styles = StyleSheet.create({
   container: {

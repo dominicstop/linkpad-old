@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, RefreshControl, Alert, View, Text, TouchableOpacity, AsyncStorage, FlatList, Platform } from 'react-native';
+import { StyleSheet, RefreshControl, Alert, View, Text, AsyncStorage, FlatList, Platform } from 'react-native';
 import PropTypes from 'prop-types';
 
 import   NavigationService       from '../NavigationService' ;
@@ -43,8 +43,8 @@ export class TipsScreen extends React.Component {
     //mount or show contents on first show
     if(!this.state.showContent){
       this.setState({showContent: true});
-    }
-  }
+    };
+  };
 
   _onRefresh = async () => {
     const { tips } = this.state;

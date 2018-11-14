@@ -463,7 +463,7 @@ export class ModuleItem extends React.PureComponent {
         </Text>
       </View>
     );
-  }
+  };
 
   //renders a single subject item
   _renderItem = ({item, index}) => {
@@ -477,7 +477,7 @@ export class ModuleItem extends React.PureComponent {
         {...{modules, moduleData}}
       />
     );
-  }
+  };
 
   render() {
     const { moduleData } = this.props;
@@ -577,7 +577,7 @@ export class ModuleList extends React.PureComponent {
       />
     );
   }
-}
+};
 
 export class SubjectList extends React.Component {
   static propTypes = {
@@ -629,7 +629,7 @@ export class SubjectList extends React.Component {
       <AnimatedListItem
         delay={0}
         duration={500}
-        multiplier={200}
+        multiplier={100}
         {...{animation, index}}
       >
         <SubjectListItem
@@ -660,4 +660,4 @@ export class SubjectList extends React.Component {
       />
     );
   }
-}
+};

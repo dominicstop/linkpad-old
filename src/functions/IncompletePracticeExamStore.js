@@ -123,6 +123,11 @@ export class IncompletePracticeExamModel {
     return (`${indexID_module}-${indexID_subject}`);
   };
 
+  getAnswersCount(){
+    const { answers } = this.get();
+    return answers.length;
+  };
+
   setIndexIDs(indexIDs = {indexID_module: -1, indexID_subject: -1}){
     this.data.indexID_module  = indexIDs.indexID_module ;
     this.data.indexID_subject = indexIDs.indexID_subject;
@@ -214,9 +219,6 @@ export class IncompletePracticeExamModel {
 export class IncompletePracticeExamsModel {
   constructor(items = [new IncompletePracticeExamModel().data]){
     this.elements = items;
-
-    //check if empty
-    
   };
 
   get(){
@@ -241,27 +243,41 @@ export class IncompletePracticeExamsModel {
     if(match == undefined) return undefined;
     //wrap match inside model
     return new IncompletePracticeExamModel(match);
-  }
+  };
 
   replaceExistingItem(item = new IncompletePracticeExamModel()){
     //extract id's from  new 'item' param
     const { indexID_module, indexID_subject } = item.get();
 
     //array without the old 'item' element
-    let filtered = this.elements.filter((items) => 
+    let filtered = this.items.filter((items) => 
       items.indexID_module  != indexID_module &&
       items.indexID_subject != indexID_subject
     );
 
     //insert the new 'item' and update property
     filtered.push(item.get());
+    this.items = filtered;
+  };
+
+  /** removes the item from the array */
+  removeItem(item = new IncompletePracticeExamModel()){
+    //extract id's from  new 'item' param
+    const { indexID_module, indexID_subject } = item.get();
+
+    //array without the old 'item' element
+    let filtered = this.elements.filter((item) => 
+      item.indexID_module  != indexID_module &&
+      item.indexID_subject != indexID_subject
+    );
+
     this.elements = filtered;
   };
 };
 
 async function get(){
-  //read from store
   let items = [];
+  //read from store
   items = items.concat(await store.get(KEY));
   //remove null elements
   items = items.filter(item => item != null);
@@ -283,77 +299,9 @@ async function getAsModel(){
   return new IncompletePracticeExamsModel(items);
 };
 
-async function findMatch({indexID_module, indexID_subject}, forceRefresh = true){
-  //debug: print params to console
-  if(DEBUG){
-    console.log('\n**********START');
-    console.log('iPE: find match: ');
-    console.log('indexID_module : ' + indexID_module );
-    console.log('indexID_subject: ' + indexID_subject);
-    console.log('**************END');
-  }
-  //get incompletePracticeExam from store 
-  let current_iPE = await get(forceRefresh);
-  
-
-  //for keeping track of the matching iPE item
-  let match_index = null;
-  let match_iPE   = null;
-
-  //loop through the current iPE's to check if the one being added exists
-  match_iPE = current_iPE && current_iPE.find((item, index) => {
-    //debug: print each iPE item
-    if(DEBUG){
-      console.log('\n-------------------LOOP');
-      console.log('iPE item from store:     ');
-      console.log('array index    : ' + index);
-      console.log('indexID_module : ' + item.indexID_module );
-      console.log('indexID_subject: ' + item.indexID_subject);
-    }
-    //store the matched current iPE's index
-    match_index = index;
-    //check if the iPE's from the store matches the id's from params
-    return item.indexID_module == indexID_module && item.indexID_subject == indexID_subject;
-  });
-
-  //check if found matching iPE from store
-  const hasMatch = match_index != null && match_iPE != null;
-
-  //print the matched iPE from store and the new iPE
-  if(DEBUG){
-    console.log('\n=====================START');
-    console.log('Has Match?: ' + hasMatch     );
-    console.log('Matching iPE from store: '   );
-    console.log('index: ' + match_index       );
-    console.log( match_iPE                    );
-    console.log('=========================END');
-  }
-
-  //return the matching iPE's
-  return {match_index, match_iPE, hasMatch}
-}
-
-function set(incompletePracticeExams_array){
-  return new Promise(async (resolve, reject) => {
-    try {
-      //delete previous data
-      await store.delete(KEY);
-      //write new data to storage
-      for(let incompletePracticeExam of incompletePracticeExams_array){
-        await store.push(KEY, incompletePracticeExam);
-      }
-      //update global var
-      _incompletePracticeExams = incompletePracticeExams_array;
-    } catch(error){
-      //print error
-      if(DEBUG) console.log('set error: ' + error);
-      reject(error);
-    }
-    //resolve  data
-    resolve(_incompletePracticeExams);
-  }); 
-}
-
+async function set(model = new IncompletePracticeExamsModel()){
+  await store.save(KEY, model.get());
+};
 
 async function add(item = new IncompletePracticeExamModel()){
   //read from storage
@@ -390,5 +338,5 @@ async function reset(){
 };
 
 export default {
-  get, set, add, findMatch, getAsModel, reset
-}
+  set, get, add, getAsModel, reset
+};

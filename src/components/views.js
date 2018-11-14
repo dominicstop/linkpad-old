@@ -245,6 +245,7 @@ export class AnimateInView extends React.PureComponent {
     easing: PropTypes.string,
     duration: PropTypes.number,
     difference: PropTypes.number,
+    delay: PropTypes.number,
   }
 
   static defaultProps = {
