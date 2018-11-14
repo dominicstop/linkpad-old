@@ -538,7 +538,10 @@ export class PracticeQuestion extends React.Component {
   };
 
   static styles = StyleSheet.create({
-
+    rootContainer: {
+      height: '100%', 
+      width: '100%',
+    },
   });
 
   constructor(props){
@@ -704,7 +707,14 @@ export class PracticeQuestion extends React.Component {
   }
 
   render(){
+    const { styles } = PracticeQuestion;
     const { showBackCard } = this.state;
+
+    return(
+      <View style={styles.rootContainer}>
+        {showBackCard? this._renderBackExplaination() : this._renderFlipper()}
+      </View>
+    );
 
     return(
       showBackCard? this._renderBackExplaination() : this._renderFlipper()
@@ -750,6 +760,7 @@ export class PracticeExamList extends React.Component {
 
   async initlializeList(){
     let store = await IncompletePracticeExamStore.get();
+    console.log('store: ');
     console.log(store);
 
     //get prev. answered questions
@@ -883,6 +894,7 @@ export class PracticeExamList extends React.Component {
   _renderItem = ({item, index}) => {
     const isLast = index == this.subjectModel.getQuestionLength() - 1;
     //console.log(item);
+    
     return (
       <PracticeQuestion
         question={item}
@@ -893,14 +905,23 @@ export class PracticeExamList extends React.Component {
         {...{isLast}}
       />
     );
+    return(
+      <View style={{backgroundColor: 'red'}}>
+        <Text>Hello</Text>
+      </View>
+    );
   };
 
   render(){
     if(this.state.loading) return null;
     const {onEndReached, ...flatListProps } = this.props;
 
+    //get screen height/width
+    const dimensions   = Dimensions.get('window');
+    const screenHeight = dimensions.height;
+    const screenWidth  = dimensions.width ;
+    
     //ui values for carousel
-    const screenHeight = Dimensions.get('window').height;
     const headerHeight = Platform.select({
       ios    : Header.HEIGHT + 15,
       android: Header.HEIGHT + StatusBar.currentHeight,
@@ -911,10 +932,14 @@ export class PracticeExamList extends React.Component {
       ...Platform.select({
         ios: {
           sliderHeight: screenHeight,
-          activeSlideAlignment: 'end'
+          activeSlideAlignment: 'end',
+          vertical: true,
         },
         android: {
           sliderHeight: screenHeight - headerHeight,
+          sliderWidth : screenWidth,
+          itemWidth   : screenWidth,
+          vertical: false,
           activeSlideAlignment: 'center'
         }
       }),
@@ -926,11 +951,10 @@ export class PracticeExamList extends React.Component {
         data={this.state.list}
         renderItem={this._renderItem}
         firstItem={this.state.currentIndex}
-        vertical={true}
-        lockScrollWhileSnapping={false}
         //scrollview props
         showsHorizontalScrollIndicator={true}
         bounces={true}
+        lockScrollWhileSnapping={true}
         //other props
         {...carouseProps}
         {...flatListProps}
