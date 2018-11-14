@@ -112,7 +112,7 @@ export const DrawerStack = createDrawerNavigator({
   }, {
     //drawerWidth: width - 40,
     contentComponent: CustomDrawer,
-    initialRouteName: 'DrawerAboutRoute',
+    initialRouteName: 'DrawerHomeRoute',
     ...{drawerBackgroundColor},
   }
 );

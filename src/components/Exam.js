@@ -854,7 +854,12 @@ export class PracticeExamList extends React.Component {
   _onPressNextQuestion = async () => {
     const { _carousel } = this;
 
-    await this.nextQuestion();
+    if(Platform.OS == 'ios'){
+      //load next question
+      await this.nextQuestion();
+    };
+
+    //go to next question
     _carousel && this._carousel.snapToNext();
   };
 
@@ -866,9 +871,13 @@ export class PracticeExamList extends React.Component {
 
     //append answer to iPE
     this.practiceExamModel.insertAnswer(answerModel);
-
     //write to store
     IncompletePracticeExamStore.add(this.practiceExamModel);
+
+    if(Platform.OS == 'android'){
+      //android bug: load next question before snapping to next 
+      this.nextQuestion();
+    };
   };
   
   _renderItem = ({item, index}) => {
@@ -891,7 +900,6 @@ export class PracticeExamList extends React.Component {
     const {onEndReached, ...flatListProps } = this.props;
 
     //ui values for carousel
-    const extraMargin  = 25;
     const screenHeight = Dimensions.get('window').height;
     const headerHeight = Platform.select({
       ios    : Header.HEIGHT + 15,
@@ -899,15 +907,14 @@ export class PracticeExamList extends React.Component {
     });
 
     const carouseProps = {
+      itemHeight  : screenHeight - headerHeight,
       ...Platform.select({
         ios: {
           sliderHeight: screenHeight,
-          itemHeight  : screenHeight - headerHeight,     
           activeSlideAlignment: 'end'
         },
         android: {
           sliderHeight: screenHeight - headerHeight,
-          itemHeight  : screenHeight - (headerHeight + extraMargin),     
           activeSlideAlignment: 'center'
         }
       }),
@@ -943,6 +950,9 @@ const sharedStyles = StyleSheet.create({
       ios: {
         marginBottom: 15, 
       },
+      android: {
+        marginVertical: 15,
+      }
     }),
   },
   shadow: {
