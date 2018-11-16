@@ -248,18 +248,18 @@ export class ModuleItemModel {
     this.module = module;
   }
 
-  get = () => {
+  get(){
     //returns a copy as a ref    
     return this.module;
   };
 
-  getCopy = () => {
+  getCopy(){
     //returns a copy w/o a ref
     return _.cloneDeep(this.module);
   };
 
   //returns an array of SubjectItem
-  getSubjects = () => {
+  getSubjects(){
     //to avoid mutations by reference
     const { subjects, indexid } = this.getCopy();
     //wraps subjects inside a model object
@@ -279,14 +279,12 @@ export class ModuleItemModel {
     );
   };
 
-  getLenghtSubjects = () => {
+  getLenghtSubjects(){
     const { subjects } = this.module;
     return _.compact(subjects).length;
   };
 
-  getUnansweredQuestions
-
-  getTotalQuestions = () => {
+  getTotalQuestions(){
     const subjectModels = this.getSubjects();
     let total = 0;
     subjectModels.forEach((subject) => 

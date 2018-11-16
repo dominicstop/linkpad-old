@@ -6,7 +6,7 @@ import   Constants               from '../Constants'         ;
 import { ModuleList            } from '../components/Modules';
 import { CustomHeader          } from '../components/Header' ;
 import { DrawerButton          } from '../components/Buttons';
-import { ViewWithBlurredHeader } from '../components/Views'  ;
+import { ViewWithBlurredHeader, IconFooter } from '../components/Views'  ;
 import { timeout } from '../functions/Utils';
 import ModuleStore from '../functions/ModuleStore';
 
@@ -23,6 +23,7 @@ export class ModuleListScreen extends React.Component {
       modules: [], 
       refreshing: false,
       mount: false,
+      mountFooter: false,
     };
   }
 
@@ -81,7 +82,11 @@ export class ModuleListScreen extends React.Component {
     if(!modalOpenedCallback) getRefSubjectModal().modalOpenedCallback = () => setDrawerSwipe(false);
 
     getRefSubjectModal().openSubjectModal(moduleData, subjectData);
-  }
+  };
+
+  _handleOnEndReached = () => {
+    this.footer.show();
+  };
 
   _renderRefreshCotrol(){
     const { refreshing } = this.state;
@@ -93,24 +98,44 @@ export class ModuleListScreen extends React.Component {
         title={prefix + ' for changes...'}
       />
     );
-  }
+  };
+
+  _renderFooter = () => {
+    return(
+      <View style={{marginBottom: 75}}>
+        <IconFooter ref={r => this.footer = r}/>
+      </View>
+    );
+  };
 
   render(){
-    const { mount } = this.state;
+    const { modules } = this.state;
+    
     const offset = Header.HEIGHT;
+    const flatListProps = {
+      contentInset : {top: offset},
+      contentOffset: {x: 0, y: -offset},
+      contentContainerStyle: { paddingTop: 15 },
+      //onEndReached callback not fired when on android
+      onEndReachedThreshold: Platform.select({
+        ios    : 0  ,
+        android: 0.1,
+      }),
+    };
+
     return(
-      <ViewWithBlurredHeader hasTabBar={true} enableAndroid={false}>
+      <ViewWithBlurredHeader hasTabBar={true}>
         <NavigationEvents onDidFocus={this.componentDidFocus}/>
-        {mount && <ModuleList
-          contentInset={{top: offset}}
-          contentOffset={{x: 0, y: -offset}}
-          contentContainerStyle={{paddingTop: 15}}
-          modules={this.state.modules}
+        {modules && <ModuleList
+          
           onPressModule ={this._navigateToModule}
           onPressSubject={this._onPressSubject}
+          onEndReached={this._handleOnEndReached}
           refreshControl={this._renderRefreshCotrol()}
+          ListFooterComponent={this._renderFooter}
+          {...{modules, ...flatListProps}}
         />}
       </ViewWithBlurredHeader>
     );
   }
-}
+};

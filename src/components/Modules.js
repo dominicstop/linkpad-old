@@ -654,7 +654,6 @@ export class SubjectList extends React.Component {
         {...{data}}
         keyExtractor={(item) => item.indexid + ''}
         renderItem ={this._renderItem }
-        ListFooterComponent={<View style={{padding: 70}}/>}
         removeClippedSubviews={true}
         {...flatListProps}
       />

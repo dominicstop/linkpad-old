@@ -77,7 +77,7 @@ export class IconText extends React.PureComponent {
     const childrenCount = React.Children.count(this.props.children);
 
     const Title = (props) => <Text 
-      style={[{flex: 1}, textStyle]}
+      style={[textStyle]}
       numberOfLines={1}
       ellipsizeMode={'tail'}
       {...props}
@@ -85,7 +85,7 @@ export class IconText extends React.PureComponent {
       {text}
     </Text>
 
-    const TitleSubtitle = (props) => <View style={{flex: 1}}>
+    const TitleSubtitle = (props) => <View>
       <Title/>
       <Text style={subtitleStyle}>
         {subtitle}
@@ -94,7 +94,7 @@ export class IconText extends React.PureComponent {
 
     const IconText = (
       <View
-        style={[{flex: 1, flexDirection: 'row'}, containerStyle]}
+        style={[{flexDirection: 'row', alignItems: 'center'}, containerStyle]}
         {...viewProps}
       >
         <Icon
@@ -245,7 +245,6 @@ export class AnimateInView extends React.PureComponent {
     easing: PropTypes.string,
     duration: PropTypes.number,
     difference: PropTypes.number,
-    delay: PropTypes.number,
   }
 
   static defaultProps = {
@@ -260,20 +259,18 @@ export class AnimateInView extends React.PureComponent {
 
   render(){
     const { animation, duration, difference, ...otherProps } = this.props;
-    return this.props.children.map((child, index) => {
-      return(
-        <Animatable.View
-          key={'animateInView-' + index}
-          duration={duration + (index * difference)}
-          useNativeDriver={true}
-          {...{animation, ...otherProps}}
-        >
-          {child}
-        </Animatable.View>
-      );
-    });
+    return this.props.children.map((child, index) => 
+      <Animatable.View
+        key={'animateInView-' + index}
+        duration={duration + (index * difference)}
+        useNativeDriver={true}
+        {...{animation, ...otherProps}}
+      >
+        {child}
+      </Animatable.View>
+    );
   }
-}
+};
 
 export class FlipView extends React.PureComponent {
   static propTypes = {
@@ -371,7 +368,67 @@ export class FlipView extends React.PureComponent {
       </Animatable.View>
     );
   }
-}
+};
+
+export class IconFooter extends React.PureComponent {
+  static propTypes = {
+    delay    : PropTypes.number,
+    animation: PropTypes.string,
+  };
+
+  static defaultProps = {
+    delay    : 750,
+    animation: Platform.select({
+      ios    : 'fadeInUp',
+      android: 'zoomIn'  ,
+    }),
+  };
+
+  constructor(props){
+    super(props);
+
+    this.state = {
+      mount: false,
+    };
+  };
+
+  show(){
+    const { mount } = this.state;
+    !mount && this.setState({mount: true});
+  };
+
+  render(){
+    if(!this.state.mount) return null;
+    const { delay, animation } = this.props;
+    
+    return (
+      <Animatable.View 
+        style={{paddingBottom: 50}}
+        easing={'ease-in-out'}
+        duration={750}
+        useNativeDriver={true}
+        {...{animation, delay}}
+      >
+        <Animatable.View
+          animation={'pulse'}
+          duration={1000}
+          easing={'ease-in-out'}
+          delay={3000}
+          iterationCount={'infinite'}
+          useNativeDriver={true}
+          {...{delay}}
+        >
+          <Icon
+            name={'heart'}
+            type={'entypo'}
+            color={'#B39DDB'}
+            size={24}
+          />
+        </Animatable.View>
+      </Animatable.View>
+    );
+  };
+};
 
 const styles = StyleSheet.create({
   shadow: {

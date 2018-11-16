@@ -7,7 +7,7 @@ import { BlurView } from 'expo';
 
 import   Interactable                   from './Interactable';
 import { AnimatedCollapsable          } from './Buttons';
-import { IconText                     } from '../components/Views';
+import { IconText, AnimateInView      } from '../components/Views';
 import { IconButton                   } from '../components/Buttons';
 import { SubjectItem, ModuleItemModel } from '../functions/ModuleStore';
 import { timeout, setStateAsync       } from '../functions/Utils';
@@ -50,7 +50,7 @@ export class SwipableModal extends React.PureComponent {
     ],
     ...Platform.select({
       android: {
-        hitSlop: { bottom: -(Screen.height + MODAL_EXTRA_HEIGHT - 50) }
+        hitSlop: { bottom: -(Screen.height + MODAL_EXTRA_HEIGHT - 60) }
       }
     })
   }
@@ -438,6 +438,12 @@ export class SubjectModal extends React.PureComponent {
         android: 'white',
       }),
     },
+    scrollview: {
+      flex: 1, 
+      padding: 10, 
+      borderTopColor: 'rgba(0, 0, 0, 0.15)', 
+      borderTopWidth: 1
+    },
     //conatainer for buttons
     buttonsContainer: {
       flexDirection: 'row', 
@@ -561,7 +567,8 @@ export class SubjectModal extends React.PureComponent {
     };
 
     //load images
-    this.imageGradeInactive = require('../../assets/icons/books-2.png');
+    this.imageGradeInactive    = require('../../assets/icons/books-2.png');
+    this.imagePreviousInactive = require('../../assets/icons/phone-book.png');
 
     this.modalClosedCallback = null;
     this.modalOpenedCallback = null;
@@ -661,6 +668,16 @@ export class SubjectModal extends React.PureComponent {
     this.setState({mountPracticeExams: false});
   };
 
+  _handleOnPressTitle = () => {
+    const { subjectData } = this.state;
+    //wrap data into helper object for easier access
+    const subject = new SubjectItem    (subjectData).get();
+
+    Alert.alert(
+      'Subject Name', subject.subjectname,
+    );
+  };
+
   _handleOnPressDelete = () => {
     Alert.alert(
       'Do you want to reset?',
@@ -692,18 +709,28 @@ export class SubjectModal extends React.PureComponent {
     const subject = new SubjectItem    (subjectData).get();
     const module  = new ModuleItemModel(moduleData ).get();
 
+    const activeOpacity = Platform.select({
+      ios    : 0.6,
+      android: 0.8
+    });
+    
     return(
-      <IconText
-        containerStyle={{marginLeft: 7, marginRight: 25, marginBottom: 10}}
-        textStyle={styles.title}
-        subtitleStyle={{fontWeight: '200', fontSize: 16}}
-        text     ={subject.subjectname}
-        subtitle ={module .modulename }
-        iconName ={'notebook'}
-        iconType ={'simple-line-icon'}
-        iconColor={'#512DA8'}
-        iconSize ={26}
-      />
+      <TouchableOpacity 
+        onPress={this._handleOnPressTitle}
+        {...{activeOpacity}}
+      >
+        <IconText
+          containerStyle={{marginLeft: 7, marginRight: 25, marginBottom: 10}}
+          textStyle={styles.title}
+          subtitleStyle={{fontWeight: '200', fontSize: 16}}
+          text     ={subject.subjectname}
+          subtitle ={module .modulename }
+          iconName ={'notebook'}
+          iconType ={'simple-line-icon'}
+          iconColor={'#512DA8'}
+          iconSize ={26}
+        />
+      </TouchableOpacity>      
     );
   };
 
@@ -775,16 +802,71 @@ export class SubjectModal extends React.PureComponent {
     );
   };
 
-  _renderPrevious(){
+  _renderPreviousActive(){
     const { styles } = SubjectModal;
     const { subjectModel, practiceExamModel } = this;
 
     const { timestamp_started } = practiceExamModel.get();
+    const time = timestamp_started * 1000;
 
     //count answered question over total questions
     const totalQuestions = subjectModel     .getQuestionLength();
     const totalAnswers   = practiceExamModel.getAnswersCount  ();
     const answered = `${totalAnswers}/${totalQuestions} items`;
+
+    return(
+      <View style={{flexDirection: 'row', marginTop: 3}}>
+        <View style={{flex: 1}}>
+          <Text numberOfLines={1} style={styles.detailTitle   }>{'Answered: '}</Text>
+          <Text numberOfLines={1} style={styles.detailSubtitle}>{answered}</Text>
+        </View>
+        <View style={{flex: 1}}>
+          <Text numberOfLines={1} style={styles.detailTitle   }>{'Started: '}</Text>
+          <TimeAgo 
+            numberOfLines={1} 
+            style={styles.detailSubtitle} 
+            {...{time}}
+          />
+        </View>
+        <TouchableOpacity onPress={this._handleOnPressDelete}>
+          <Icon
+            containerStyle={{flex: 1, alignSelf: 'center', justifyContent: 'center'}}
+            name={'trash-2'}
+            type={'feather'}
+            color={'red'}
+            size={30}
+          />
+        </TouchableOpacity>
+      </View>
+    );
+  };
+
+  _renderPreviousInactive(){
+    const { styles, sharedImageProps } = SubjectModal;
+
+    return(
+      <View style={{flex: 1, alignItems: 'flex-start', justifyContent: 'center', flexDirection: 'row'}}>
+        <Animatable.Image
+          source={this.imagePreviousInactive}
+          style={styles.image}
+          {...sharedImageProps}
+        />
+        <View style={styles.gradeTextContainer}>
+          <Text style={styles.gradeTitle   }>No Previous Session</Text>
+          <Text style={styles.gradeSubtitle}>If you couldn't answer everthing, we'll save your progress so you can come back to it later.</Text>
+        </View>
+      </View>
+    );
+  };
+
+  _renderPrevious(){
+    const { styles } = SubjectModal;
+    const { mountPracticeExams } = this.state;
+
+    const descriptionActive   = 'You have answered some of the questions in this subject in a previous session.';
+    const descriptionInactive = 'If you were unable to finish, your answers and progress will be saved here.';
+    
+    const description = mountPracticeExams? descriptionActive : descriptionInactive;
 
     return(
       <Fragment>
@@ -799,31 +881,9 @@ export class SubjectModal extends React.PureComponent {
           textStyle={styles.title}
         />
         <Text style={styles.textSubtitle}>
-          {'You have answered some of the questions in this subject in a previous session.'}
+          {description}
         </Text>
-        <View style={{flexDirection: 'row', marginTop: 3}}>
-          <View style={{flex: 1}}>
-            <Text numberOfLines={1} style={styles.detailTitle   }>{'Answered: '}</Text>
-            <Text numberOfLines={1} style={styles.detailSubtitle}>{answered}</Text>
-          </View>
-          <View style={{flex: 1}}>
-            <Text numberOfLines={1} style={styles.detailTitle   }>{'Started: '}</Text>
-            <TimeAgo 
-              numberOfLines={1} 
-              style={styles.detailSubtitle} 
-              time={timestamp_started * 1000}  
-            />
-          </View>
-          <TouchableOpacity onPress={this._handleOnPressDelete}>
-            <Icon
-              containerStyle={{flex: 1, alignSelf: 'center', justifyContent: 'center'}}
-              name={'trash-2'}
-              type={'feather'}
-              color={'red'}
-              size={30}
-            />
-          </TouchableOpacity>
-        </View>
+        {mountPracticeExams? this._renderPreviousActive() : this._renderPreviousInactive()}
       </Fragment>
     );
   };
@@ -943,20 +1003,32 @@ export class SubjectModal extends React.PureComponent {
   };
 
   _renderContent(){
-    const { mountPracticeExams } = this.state;
+    const { styles } = SubjectModal;
     const Separator = (props) =>  <View style={{alignSelf: 'center', width: '80%', height: 1, backgroundColor: 'rgba(0, 0, 0, 0.2)', margin: 15}} {...props}/>
     return(
       <Fragment>
         <ModalTopIndicator/>
         {this._renderTitle()}
-        <ScrollView style={{flex: 1, padding: 10, borderTopColor: 'rgba(0, 0, 0, 0.1)', borderTopWidth: 1}}>
-          {this._renderDescription()}
-          <Separator/>
-          {this._renderDetails()}
-          <Separator/>
-          {mountPracticeExams && this._renderPrevious()}
-          {mountPracticeExams && <Separator/>}
-          {this._renderGrades()}
+        <ScrollView style={styles.scrollview}>
+          <AnimateInView
+            animation={'fadeInUp'}
+            duration={400}
+            delay={300}
+          >
+            <Fragment>
+              {this._renderDescription()}
+              <Separator/>
+            </Fragment>
+            <Fragment>
+              {this._renderDetails()}
+              <Separator/>
+            </Fragment>
+            <Fragment>
+              {this._renderPrevious()}
+              <Separator/>
+            </Fragment>
+            {this._renderGrades()}
+          </AnimateInView>
           {this._renderFooter()}
         </ScrollView>
         {this._renderButtons()}
@@ -965,9 +1037,10 @@ export class SubjectModal extends React.PureComponent {
   };
 
   render(){
-    const paddingBottom = MODAL_EXTRA_HEIGHT + MODAL_DISTANCE_FROM_TOP;
     const { styles } = SubjectModal;
     const { mountContent } = this.state;
+    
+    const paddingBottom = MODAL_EXTRA_HEIGHT + MODAL_DISTANCE_FROM_TOP;
 
     const Wrapper = (props) => Platform.select({
       ios: (
