@@ -10,8 +10,7 @@ import { TipList               } from '../components/Tips'   ;
 import { DrawerButton          } from '../components/Buttons';
 
 import { timeout, setStateAsync } from '../functions/Utils';
-
-import TipsStore from '../functions/TipsStore';
+import { TipsStore              } from '../functions/TipsStore';
 
 import { Header, createStackNavigator, NavigationEvents } from 'react-navigation';
 import { Icon } from 'react-native-elements';
@@ -31,8 +30,8 @@ export class TipsScreen extends React.Component {
 
   async componentWillMount(){
     //load data from storage
-    let tips = await TipsStore.getTips();
-    await setStateAsync(this, {tips: tips});
+    let tips = await TipsStore.get();
+    await setStateAsync(this, {tips});
   }
 
   shouldComponentUpdate(nextProps, nextState){

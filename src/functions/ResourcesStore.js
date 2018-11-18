@@ -2,87 +2,136 @@ import store from 'react-native-simple-store';
 import _ from 'lodash';
 
 const DEBUG = false;
-const URL   = 'https://linkpad-pharmacy-reviewer.firebaseapp.com/getallresources';
-const KEY   = 'resources';
+
+export class ResourceModel {
+  constructor(data = {
+    //from backend resp
+    description: '',
+    dateposted : '',
+    title      : '',
+    link       : '',
+    indexid    : -1,
+  }){
+    this.data = data;
+  };
+
+  get title(){
+    return this.data.title || '';
+  };
+
+  get link(){
+    return this.data.link || '';
+  };
+
+  get dateposted(){
+    return this.data.dateposted || '';
+  };
+
+  get description(){
+    return this.data.description || '';
+  };
+
+  get(){
+    return this.data;
+  };
+};
 
 let _resourcesData = null;
+export class ResourcesStore {
+  static get KEY(){
+    return 'resources';
+  };
 
-fetchFromServer = () => {
-  return new Promise(async (resolve, reject) => {
+  static get URL(){
+    return 'https://linkpad-pharmacy-reviewer.firebaseapp.com/getallresources';
+  };
+
+  static async fetch(){
     try {
-      let results = await fetch(URL);
+      //get resources from server
+      let results = await fetch(ResourcesStore.URL);
       let json    = await results.json();
-      resolve(json);
+      //resolve
+      return (json);
+
     } catch(error) {
-      reject(error);
-    }
-  });
-}
+      console.error('Failed to fetch resources...');
+      throw error;
+    };
+  };
 
-getResources = () => {
-  return new Promise(async (resolve, reject) => {
-    //has not been set, init with storage
-    if(_resourcesData == null){
-      //get modules from storage
-      if (DEBUG) console.log('\nReading resources from storage...');
-      _resourcesData = await store.get(KEY);
-    }
-    //if stil empty after init with value from stotage
-    if(_resourcesData == null){
-      try {
-        //get new data from server
-        if (DEBUG) console.log('Init null. Getting resources from server...');
-        let new_resources = await fetchFromServer();
-        //assign to global variable for later use
-        _resourcesData = new_resources;
-        //write resources to storage
-        if (DEBUG) console.log('Writting fetched resources to storage...');
-        for(let tip in _resourcesData){
-          await store.push(KEY, _resourcesData[tip]);
-        }
-      } catch(error) {
-        //some error occured
-        if (DEBUG) console.log('Resources Error: ' + error);
-        reject(error);
-      }
-    }
-    if (DEBUG) console.log(_resourcesData);
-    //resolve tips data
-    resolve(_resourcesData);
-  });
-}
+  /** read resources from store */
+  static async read(){
+    try {
+      //read from store
+      let data = await store.get(ResourcesStore.KEY);
+      _resourcesData = data;
 
-refreshResourcesData = () => {
-  return new Promise(async (resolve, reject) => {
-    if (DEBUG) console.log('\nRefreshing Resources...');
+      return (data);
+
+    } catch(error){
+      console.error('Failed to read resources from store.');
+      throw error;
+    };
+  };
+
+  /** read/fetch resources */
+  static async get(){
+    if(_resourcesData == null){
+      //not init, get from store
+      _resourcesData = await ResourcesStore.read();
+    };
+
+    if(_resourcesData == null){
+      //fetch resources from server
+      _resourcesData = await ResourcesStore.fetch();
+
+      //write resources to storage
+      for(let module in _resourcesData){
+        await store.push('resources', _resourcesData[module]);
+      };
+    };
+
+    //resolve
+    return (_resourcesData);
+  };
+
+  static async refresh(){
+    let isResourcesNew = false;
     try {
       //fetch resources from server
-      if (DEBUG) console.log('Fetching resources from server...');
-      let new_resources = await fetchFromServer();
+      let new_resources = await ResourcesStore.fetch();
+      //check for changes
+      isResourcesNew = _.isEqual(_resourcesData, new_resources);
+      
       //delete previous resources stored
-      if (DEBUG) console.log('Deleting previous stored tips...');
-      await store.delete(KEY);
+      ResourcesStore.delete();
+
+      //write resources to storage
+      for(let module in new_resources){
+        await store.push('resources', new_resources[module]);
+      };
+
       //update global var
       _resourcesData = new_resources;
-      //write to storage
-      if (DEBUG) console.log('Writing resources to storage');
-      for(let resource in _resourcesData){
-        await store.push(KEY, _resourcesData[resource]);
-      }
+
+      //resolve
+      return ({
+        resources: _resourcesData,
+        isResourcesNew,
+      });
+
     } catch(error) {
-      //some error occured
-      if (DEBUG) console.log('Refresh resources Failed: ' + error);
-      reject(error);
-    }
-    resolve(_resourcesData);
-  });
-}
+      console.error('Unable to refresh resources.');
+      throw error;
+    };
+  };
 
-clear = () => _resourcesData = null;
+  static clear(){
+    _resourcesData = null;
+  };
 
-export default {
-  fetchFromServer,
-  getResources,
-  refreshResourcesData,
-  clear,
-}
+  static async delete(){
+    await store.delete(ResourcesStore.KEY);
+  };
+};

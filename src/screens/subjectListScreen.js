@@ -8,9 +8,11 @@ import { AnimatedCollapsable } from '../components/Buttons';
 import { CustomHeader } from '../components/Header' ;
 
 import { Header, NavigationEvents  } from 'react-navigation';
-import { Divider, colors } from 'react-native-elements' ;
+import { Divider } from 'react-native-elements' ;
 import * as Animatable from 'react-native-animatable';
 import _ from 'lodash';
+
+
 import {ModuleItemModel} from '../functions/ModuleStore';
 import {plural} from '../functions/Utils';
 
@@ -104,7 +106,7 @@ export default class SubjectListScreen extends React.Component {
   componentDidFocus = () => {
     const { setDrawerSwipe } = this.props.screenProps;
     setDrawerSwipe(false);
-  }
+  };
 
   _handleTitleOnPress = () => {
     const { navigation } = this.props;
@@ -114,12 +116,12 @@ export default class SubjectListScreen extends React.Component {
     const { modulename } = model.module;
     //show full title
     Alert.alert('Module Title', modulename);
-  }
+  };
 
   _onPressSubject = (subjectData, moduleData) => {
     const { getRefSubjectModal } = this.props.screenProps;
     getRefSubjectModal().openSubjectModal(moduleData, subjectData);    
-  }
+  };
 
   _renderHeaderTitle(){
     const { styles } = SubjectListScreen;
@@ -143,7 +145,7 @@ export default class SubjectListScreen extends React.Component {
         />
       </TouchableOpacity>
     );
-  }
+  };
 
   _renderHeader = () => {
     const { styles } = SubjectListScreen;
@@ -194,7 +196,7 @@ export default class SubjectListScreen extends React.Component {
         </View>
       </Animatable.View>
     );
-  }
+  };
 
   render(){
     const { styles } = SubjectListScreen;
@@ -218,5 +220,5 @@ export default class SubjectListScreen extends React.Component {
         />
       </ViewWithBlurredHeader>
     );
-  }
-}
+  };
+};

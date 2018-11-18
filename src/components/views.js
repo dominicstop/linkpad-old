@@ -283,7 +283,7 @@ export class AnimateInView extends React.PureComponent {
         {child}
       </Animatable.View>
     );
-  }
+  };
 };
 
 export class FlipView extends React.PureComponent {
@@ -388,10 +388,14 @@ export class IconFooter extends React.PureComponent {
   static propTypes = {
     delay    : PropTypes.number,
     animation: PropTypes.string,
+    animateIn: PropTypes.bool  ,
+    hide     : PropTypes.bool  ,
   };
 
   static defaultProps = {
-    delay    : 750,
+    animateIn: true,
+    hide     : true,
+    delay    : 500,
     animation: Platform.select({
       ios    : 'fadeInUp',
       android: 'zoomIn'  ,
@@ -402,7 +406,7 @@ export class IconFooter extends React.PureComponent {
     super(props);
 
     this.state = {
-      mount: false,
+      mount: !props.hide,
     };
   };
 
@@ -411,36 +415,53 @@ export class IconFooter extends React.PureComponent {
     !mount && this.setState({mount: true});
   };
 
-  render(){
-    if(!this.state.mount) return null;
-    const { delay, animation } = this.props;
-    
-    return (
-      <Animatable.View 
-        style={{paddingBottom: 50}}
+  _renderHeart(){
+    const { delay } = this.props;
+
+    return(
+      <Animatable.View
+        animation={'pulse'}
+        duration={1000}
         easing={'ease-in-out'}
-        duration={750}
+        delay={3000}
+        iterationCount={'infinite'}
         useNativeDriver={true}
-        {...{animation, delay}}
+        {...{delay}}
       >
-        <Animatable.View
-          animation={'pulse'}
-          duration={1000}
-          easing={'ease-in-out'}
-          delay={3000}
-          iterationCount={'infinite'}
-          useNativeDriver={true}
-          {...{delay}}
-        >
-          <Icon
-            name={'heart'}
-            type={'entypo'}
-            color={'#B39DDB'}
-            size={24}
-          />
-        </Animatable.View>
+        <Icon
+          name={'heart'}
+          type={'entypo'}
+          color={'#B39DDB'}
+          size={24}
+        />
       </Animatable.View>
     );
+  };
+
+  render(){
+    if(!this.state.mount) return null;
+    const { delay, animation, animateIn } = this.props;
+    
+    if(animateIn){
+      return (
+        <Animatable.View 
+          style={{paddingBottom: 50}}
+          easing={'ease-in-out'}
+          duration={750}
+          useNativeDriver={true}
+          {...{animation, delay}}
+        >
+          {this._renderHeart()}
+        </Animatable.View>
+      );
+
+    } else {
+      return (
+        <View style={{paddingBottom: 50}}>
+          {this._renderHeart()}
+        </View>
+      );
+    };
   };
 };
 

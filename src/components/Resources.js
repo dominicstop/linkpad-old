@@ -6,7 +6,7 @@ import { setStateAsync, timeout, shuffleArray } from '../functions/Utils';
 import { STYLES } from '../Constants';
 
 import { Button, ExpandCollapseTextWithHeader } from './Buttons';
-import {Card} from './Views';
+import { Card } from './Views';
 
 import _ from 'lodash';
 
@@ -18,6 +18,7 @@ import    { Divider  } from 'react-native-elements';
 import { AnimatedListItem } from './Views';
 
 import { DangerZone } from 'expo';
+import {ResourceModel} from '../functions/ResourcesStore';
 const { Lottie } = DangerZone;
 
 const RESOURCES_SHAPE = {
@@ -31,80 +32,98 @@ const RESOURCES_SHAPE = {
 export class ResourceItem extends React.PureComponent { 
   static propTypes = {
     resource: PropTypes.shape(RESOURCES_SHAPE),
-  }
+    onPress : PropTypes.func,
+  };
+
+  static styles = StyleSheet.create({
+    textTitle: {
+      fontSize: 24, 
+      fontWeight: 'bold'
+    },
+    textSubtitle: {
+      fontSize: 16, 
+      fontWeight: '100', 
+      color: 'grey',
+    },
+    textBody: {
+      fontSize: 18, 
+      fontWeight: '300', 
+      textAlign: 'justify'
+    },
+    textLink: {
+      fontSize: 18, 
+      color: 'blue', 
+      textDecorationLine: 'underline', 
+      marginTop: 5
+    },
+  });
 
   constructor(props){
     super(props);
-  }
+  };
 
-  _onPress = (isCollapsed) => {
-    this.animatedRootViewRef.pulse(750);
-  }
+  _handleOnPress = () => {
+    const { onPress, resource } = this.props;
+    onPress && onPress(resource);
+  };
 
   _renderHeader(){
+    const { styles } = ResourceItem;
     const { resource } = this.props;
+
+    //wrap inside model
+    const model = new ResourceModel(resource);
+
     return(
       <View collapsable={true}>
-        <Text style={{fontSize: 24, fontWeight: 'bold'}}>{resource.title}</Text>
-        <Text style={{fontSize: 16, fontWeight: '100', color: 'grey'}}>Last updated on {resource.dateposted}</Text>
+        <Text style={styles.textTitle   }>{model.title}</Text>
+        <Text style={styles.textSubtitle}>Last updated on {model.dateposted}</Text>
         <Divider style={{margin: 10}}/>
       </View>
     );
-  }
+  };
 
   _renderFooter(){
+    const { styles } = ResourceItem;
     const { resource } = this.props;
+
     return(
       <View collapsable={true}>
-        <Text style={{fontSize: 18, color: 'blue', textDecorationLine: 'underline', marginTop: 5}}>{resource.link}</Text>
+        <Text style={styles.textLink}>{resource.link}</Text>
       </View>
     );
-  }
+  };
 
-  _renderCollapsable(){
+  _renderContent(){
+    const { styles } = ResourceItem;
     const { resource } = this.props;
-    return(
-      <Animatable.View 
-        ref={r => this.animatedRootViewRef = r}
-        useNativeDriver={true}
-      >
-        <View style={{marginHorizontal: 10, marginBottom: 10, padding: 13, backgroundColor: 'white', borderColor: 'rgb(197, 212, 216)', borderWidth: 3, borderRadius: 10, overflow: 'hidden'}}>
-          <ExpandCollapseTextWithHeader
-            collapsedNumberOfLines={5}
-            style={{fontSize: 18, fontWeight: '300', textAlign: 'justify'}}
-            text={resource.description}
-            titleComponent={this._renderHeader()}
-            onPress={this._onPress}
-          />
-          {this._renderFooter()}
-        </View>
-      </Animatable.View>
-    );
-  }
 
-  _renderNormal(){ 
-    return(
-      <View style={{marginHorizontal: 10, marginBottom: 10, padding: 13, backgroundColor: 'white', borderColor: 'rgb(197, 212, 216)', borderWidth: 3, borderRadius: 10, overflow: 'hidden'}}>      
-        {this._renderHeader()}
-        <Text style={{fontSize: 18, fontWeight: '300', textAlign: 'justify'}}>
-            {this.props.resource.description}
-        </Text>
-        {this._renderFooter()}
-      </View>
-    );
-  }
+    //wrap inside model
+    const model = new ResourceModel(resource);
 
-  render(){
-    const { resource } = this.props;
-    const isTextLong = resource.description.length > 200;
-    return(
-      isTextLong? this._renderCollapsable() : this._renderNormal()
+    return (
+      <Text style={styles.textBody} numberOfLines={4}>
+        {model.description}
+      </Text>
     );
-  }
-}
+  };
+
+  render(){ 
+    return(
+      <Card>      
+        <TouchableOpacity onPress={this._handleOnPress}>
+          {this._renderHeader ()}
+          {this._renderContent()}
+        </TouchableOpacity>
+        {this._renderFooter ()}
+      </Card>
+    );
+  };
+};
 
 export class ResourceList extends React.PureComponent {
   static propTypes = {
+    onPress  : PropTypes.func,
     resources: PropTypes.arrayOf(
       PropTypes.shape(RESOURCES_SHAPE)
     ),
@@ -115,6 +134,11 @@ export class ResourceList extends React.PureComponent {
     this.DEBUG = false;
   }
 
+  _handleOnPress = (resource) => {
+    const { onPress, resources } = this.props;
+    onPress && onPress(resource, resources);
+  };
+
   _renderItemResources = ({item, index}) => {
     return(
       <AnimatedListItem
@@ -123,10 +147,13 @@ export class ResourceList extends React.PureComponent {
         multiplier={100}
         last={6}
       >
-        <ResourceItem resource={item}/>
+        <ResourceItem 
+          resource={item}
+          onPress={this._handleOnPress}
+        />
       </AnimatedListItem>
     );
-  }
+  };
 
   render(){
     const { resources, ...flatListProps } = this.props;
@@ -139,5 +166,5 @@ export class ResourceList extends React.PureComponent {
         {...flatListProps}
       />
     );
-  }
-}
+  };
+};

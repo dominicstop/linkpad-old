@@ -6,8 +6,10 @@ import { IconButton        } from '../components/Buttons';
 import { IconText          } from '../components/Views';
 import { setStateAsync     } from '../functions/Utils';
 
-import ModuleStore from '../functions/ModuleStore';
-import TipsStore from '../functions/TipsStore';
+import { ModuleStore    } from '../functions/ModuleStore';
+import { TipsStore      } from '../functions/TipsStore';
+import { ResourcesStore } from '../functions/ResourcesStore';
+
 import UserStore from '../functions/UserStore';
 
 import { DrawerItems, NavigationActions } from 'react-navigation';
@@ -32,7 +34,9 @@ export class CustomDrawer extends React.PureComponent {
 
   _signOutAsync = async () => {
     //clear variables
-    ModuleStore.clear();
+    ModuleStore   .clear();
+    ResourcesStore.clear();
+
     UserStore.clear();
     TipsStore.clear();
     //delete everything

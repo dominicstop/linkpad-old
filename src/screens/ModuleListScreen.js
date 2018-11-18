@@ -8,7 +8,7 @@ import { CustomHeader          } from '../components/Header' ;
 import { DrawerButton          } from '../components/Buttons';
 import { ViewWithBlurredHeader, IconFooter, Card } from '../components/Views'  ;
 import { timeout } from '../functions/Utils';
-import ModuleStore from '../functions/ModuleStore';
+import { ModuleStore, ModuleItemModel } from '../functions/ModuleStore';
 
 import { Header, createStackNavigator, NavigationEvents } from 'react-navigation';
 import * as Animatable from 'react-native-animatable';
@@ -82,14 +82,12 @@ export class ModuleListScreen extends React.Component {
   constructor(props){
     super(props);
 
-    const lastUpdated = ModulesLastUpdated.get();
-
     this.state = {
       modules: [], 
       refreshing: false,
       mount: false,
       mountFooter: false,
-      lastUpdated
+      lastUpdated: null,
     };
 
     this.imageHeader = require('../../assets/icons/notes-pencil.png');
@@ -98,7 +96,7 @@ export class ModuleListScreen extends React.Component {
   shouldComponentUpdate(nextProps, nextState){
     const { modules, mount } = this.state;
     return modules != nextState.modules || mount != nextState.mount;
-  }
+  };
 
   componentDidFocus = () => {
     //enable drawer when this screen is active
@@ -118,14 +116,14 @@ export class ModuleListScreen extends React.Component {
     //delay rendering
     setTimeout(() => { this.setState({mount: true}) }, 500);
 
-  }
+  };
 
   _onRefresh = async () => {
     await setStateAsync(this, {refreshing: true });
 
     let result = await Promise.all([
-      ModuleStore       .refreshModuleData(),
-      ModulesLastUpdated.setTimestamp     (),
+      ModuleStore       .refresh     (),
+      ModulesLastUpdated.setTimestamp(),
       //avoid flicker
       timeout(1000),
     ]);
@@ -135,19 +133,22 @@ export class ModuleListScreen extends React.Component {
       modules    : result[0],
       lastUpdated: result[1],
     });
-  }
+  };
   
   componentWillMount = async () => {
     //get modules from storage
-    let modules = await ModuleStore.getModuleData();
-    this.setState({modules: modules});
-  }
+    let modules = await ModuleStore.get();
+    //get lastupdated from store
+    const lastUpdated = await ModulesLastUpdated.get();
+
+    this.setState({modules, lastUpdated});
+  };
 
   _navigateToModule = (modules, moduleData) => {
     this.props.navigation.navigate('SubjectListRoute', {
       modules, moduleData
     });
-  }
+  };
 
   _onPressSubject = (subjectData, moduleData) => {
     const { getRefSubjectModal, setDrawerSwipe } = this.props.screenProps;
@@ -181,6 +182,7 @@ export class ModuleListScreen extends React.Component {
     const { modules, lastUpdated } = this.state;
     
     const time = lastUpdated * 1000;
+    const moduleCount = modules.length || '--';
 
     const animation = Platform.select({
       ios    : 'fadeInUp',
@@ -193,6 +195,7 @@ export class ModuleListScreen extends React.Component {
         {'--:--'}
       </Text>
     );
+
 
     return(
       <Animatable.View
@@ -216,8 +219,8 @@ export class ModuleListScreen extends React.Component {
             <Text style={styles.headerSubtitle}>Choose a module and practice answering questions.</Text>
             <View style={{flexDirection: 'row', marginTop: 5}}>
               <View style={{flex: 1}}>
-                <Text numberOfLines={1} style={styles.detailTitle   }>{'Questions: '}</Text>
-                <Text numberOfLines={1} style={styles.detailSubtitle}>{' items'}</Text>
+                <Text numberOfLines={1} style={styles.detailTitle   }>{'Modules: '}</Text>
+                <Text numberOfLines={1} style={styles.detailSubtitle}>{`${moduleCount} items`}</Text>
               </View>
               <View style={{flex: 1}}>
                 <Text numberOfLines={1} style={styles.detailTitle   }>{'Updated: '}</Text>

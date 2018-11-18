@@ -29,13 +29,13 @@ const AppStack = createStackNavigator({
       screen: PracticeExamStack,
       navigationOptions: {
         gesturesEnabled: false,
+        headerMode: 'hidden',
         mode: 'modal',
       }
-    }
+    },
   },{
     headerMode: 'hidden',
     initialRouteName: 'HomeRoute',
-    gesturesEnabled: false,
     ...Constants.STACKNAV_PROPS
   }
 );

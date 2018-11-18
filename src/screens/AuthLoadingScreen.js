@@ -5,12 +5,13 @@ import * as Animatable from 'react-native-animatable';
 import { BarIndicator } from 'react-native-indicators';
 import store from 'react-native-simple-store';
 
-import ModuleStore       from '../functions/ModuleStore'      ;
-import TipsStore         from '../functions/TipsStore'        ;
+import { ModuleStore    }  from '../functions/ModuleStore'   ;
+import { TipsStore      }  from '../functions/TipsStore'     ;
+import { ResourcesStore }  from '../functions/ResourcesStore';
+
 import UserStore         from '../functions/UserStore'        ;
-import ResourcesStore    from '../functions/ResourcesStore'   ;
 import PreboardExamStore from '../functions/PreboardExamStore';
-import { ModulesLastUpdated } from '../functions/MiscStore';
+import { ModulesLastUpdated, ResourcesLastUpdated } from '../functions/MiscStore';
 
 
 Animatable.initializeRegistryWithDefinitions({
@@ -42,11 +43,12 @@ export default class AuthLoadingScreen extends React.Component {
     //load modules and tips if logged in
     if(isLoggedIn){
       await Promise.all([
-        ModuleStore       .getModuleData(),
-        TipsStore         .getTips      (),
-        ResourcesStore    .getResources (),
-        PreboardExamStore .get          (),
-        ModulesLastUpdated.read         (),
+        ModuleStore   .get(),
+        ResourcesStore.get(),
+        TipsStore     .get(),
+        PreboardExamStore   .get(),
+        ModulesLastUpdated  .get(),
+        ResourcesLastUpdated.get(),
       ])
     }
 

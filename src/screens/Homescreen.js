@@ -19,6 +19,7 @@ import { LinearGradient } from 'expo';
 import SubjectListScreen from './SubjectListScreen';
 import { IconText } from '../components/Views';
 import { AndroidHeader } from '../components/AndroidHeader';
+import ViewResourceScreen from './ViewResource';
 
 /**
  * each tab has a shared header because tabnav it is wrapped inside a stack
@@ -130,12 +131,12 @@ function getHeaderProps(routeName){
       type : 'feather',
     };
     case 'TabResourcesRoute': return {
-      title: 'Modules',
-      name : 'star-outlined',
-      type : 'entypo',
+      title: 'Resources',
+      name : 'info',
+      type : 'feather',
     };
     case 'TabTipsRoute': return {
-      title: 'Modules',
+      title: 'Tips',
       name : 'star-outlined',
       type : 'entypo',
     };
@@ -188,7 +189,10 @@ export const TabNavigationStack = createStackNavigator({
     },
     SubjectListRoute: {
       screen: SubjectListScreen,
-    }, 
+    },
+    ViewResourceRoute: {
+      screen: ViewResourceScreen,
+    },
   }, Platform.select({
     ios: {
       navigationOptions: Constants.HEADER_PROPS, 

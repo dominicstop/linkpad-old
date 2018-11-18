@@ -4,10 +4,6 @@ import {IncompletePracticeExamModel, AnswerModel} from './IncompletePracticeExam
 import { Question } from '../components/Exam';
 import { getTimestamp } from './Utils';
 
-const URL = 'https://linkpad-pharmacy-reviewer.firebaseapp.com/getallmodules';
-let _moduleData = null;
-
-
 //structure of single question item in module subject.questions array
 export class QuestionItem {
   constructor(question = {
@@ -258,13 +254,14 @@ export class ModuleItemModel {
     return _.cloneDeep(this.module);
   };
 
-  //returns an array of SubjectItem
+  /** returns an array of SubjectItem */
   getSubjects(){
-    //to avoid mutations by reference
     const { subjects, indexid } = this.getCopy();
+
     //wraps subjects inside a model object
     return subjects.map((item) => {
       let model = new SubjectItem(item);
+
       //append module indexid to model
       model.setModuleIndexID(indexid);
       return model;
@@ -273,6 +270,7 @@ export class ModuleItemModel {
 
   getSubjectByID(index_id){
     let subjectModels = this.getSubjects();
+
     //return matching subject
     return subjectModels.find((subject) => 
       subject.data.indexid == index_id
@@ -286,92 +284,107 @@ export class ModuleItemModel {
 
   getTotalQuestions(){
     const subjectModels = this.getSubjects();
+
     let total = 0;
     subjectModels.forEach((subject) => 
       total += subject.getQuestionLength()
     );
+
     return total;
   };
-}
+};
 
-export class ModulesManager {
+//save a copy of modules
+let _moduleData = null;
+export class ModuleStore {
+  static get KEY(){
+    return 'modules';
+  };
 
-  getModuAsModel = async () => {
-    const modules = await getModuleData();
-    //return new M
-  }
-}
+  static get URL(){
+    return 'https://linkpad-pharmacy-reviewer.firebaseapp.com/getallmodules';
+  };
 
-fetchModuleData = () => {
-  return new Promise(async (resolve, reject) => {
+  /** get from backend */
+  static async fetch(){
     try {
-      let results = await fetch(URL);
+      //get modules from server
+      let results = await fetch(ModuleStore.URL);
       let json    = await results.json();
-      resolve(json);
+      //resolve
+      return (json);
+
     } catch(error) {
       console.error('Failed to fetch modules...');
-      reject(error);
-    }
-  });
-}
+      throw error;
+    };
+  };
 
-getModuleData = () => {
-  return new Promise(async (resolve, reject) => {
-    //has not been set, init with storage
+  /** read modules from store */
+  static async read(){
+    try {
+      //read from store
+      let data = await store.get(ModuleStore.KEY);
+      _moduleData = data;
+
+      return (data);
+
+    } catch(error){
+      console.error('Failed to read modules from store.');
+      throw error;
+    };
+  };
+
+  /** read/fetch modules */
+  static async get(){
     if(_moduleData == null){
-      //get modules from storage
-      _moduleData = await store.get('modules');
-    }
-    //if stil empty after init with value from stotage
+      //not init, get from store
+      _moduleData = await ModuleStore.read();
+    };
+
     if(_moduleData == null){
-      try {
-        //fetch modules from server
-        _moduleData = await fetchModuleData();
-        //write modules to storage
-        for(let module in _moduleData){
-          await store.push('modules', _moduleData[module]);
-        }
-      } catch(error) {
-        //some error occured
-        reject(error);
-      }
-    }
+      //fetch modules from server
+      _moduleData = await ModuleStore.fetch();
 
-    //debug
-    //console.log('\n\n\n\n Resolve Module Data');
-    //console.log(_moduleData);
+      //write modules to storage
+      for(let module in _moduleData){
+        await store.push('modules', _moduleData[module]);
+      };
+    };
 
-    //resolve module data
-    resolve(_moduleData);
-  });
-}
+    //resolve
+    return (_moduleData);
+  };
 
-refreshModuleData = () => {
-  return new Promise(async (resolve, reject) => {
+  static async refresh(){
     try {
       //fetch modules from server
-      let new_modules = await fetchModuleData();
+      let new_modules = await ModuleStore.fetch();
+      
       //delete previous modules stored
-      await store.delete('modules');
+      ModuleStore.delete();
+
       //write modules to storage
       for(let module in new_modules){
         await store.push('modules', new_modules[module]);
-      }
+      };
+
       //update global var
       _moduleData = new_modules;
+      //resolve
+      return (_moduleData);
+
     } catch(error) {
-      //some error occured
-      reject(error);
+      console.error('Unable to refresh modules.');
+      throw error;
     }
-    resolve(_moduleData);
-  });
-}
+  };
 
-clear = () => _moduleData = null;
+  static clear(){
+    _moduleData = null;
+  };
 
-export default {
-  fetchModuleData,
-  getModuleData,
-  refreshModuleData,
-  clear,
-}
+  static async delete(){
+    await store.delete(ModuleStore.KEY);
+  };
+};

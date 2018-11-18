@@ -531,7 +531,7 @@ export class ModuleList extends React.PureComponent {
     //callbacks
     onPressSubject: PropTypes.func,
     onPressModule : PropTypes.func,
-  }
+  };
 
   _renderItem = ({item, index}) => {
     const { modules, onPressModule, onPressSubject } = this.props;

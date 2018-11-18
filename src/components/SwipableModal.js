@@ -1012,9 +1012,9 @@ export class SubjectModal extends React.PureComponent {
         <ScrollView style={styles.scrollview}>
           <AnimateInView
             animation={'fadeInUp'}
-            duration={425}
-            difference={125}
-            delay={200}
+            duration={350}
+            difference={100}
+            delay={150}
           >
             <Fragment>
               {this._renderDescription()}
