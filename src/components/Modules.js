@@ -533,12 +533,6 @@ export class ModuleList extends React.PureComponent {
     onPressModule : PropTypes.func,
   }
 
-  _renderFooter = () => {
-    return(
-      <View style={{padding: 100}}/>
-    );
-  }
-
   _renderItem = ({item, index}) => {
     const { modules, onPressModule, onPressSubject } = this.props;
     const animation = Platform.select({

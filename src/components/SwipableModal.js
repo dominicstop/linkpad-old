@@ -1012,8 +1012,9 @@ export class SubjectModal extends React.PureComponent {
         <ScrollView style={styles.scrollview}>
           <AnimateInView
             animation={'fadeInUp'}
-            duration={400}
-            delay={300}
+            duration={425}
+            difference={125}
+            delay={200}
           >
             <Fragment>
               {this._renderDescription()}
@@ -1039,7 +1040,7 @@ export class SubjectModal extends React.PureComponent {
   render(){
     const { styles } = SubjectModal;
     const { mountContent } = this.state;
-    
+
     const paddingBottom = MODAL_EXTRA_HEIGHT + MODAL_DISTANCE_FROM_TOP;
 
     const Wrapper = (props) => Platform.select({

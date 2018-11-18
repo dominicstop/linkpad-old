@@ -122,12 +122,26 @@ export class IconText extends React.PureComponent {
 }
 
 export class Card extends React.PureComponent {
+  static styles = StyleSheet.create({
+    card: {
+      overflow: 'visible', 
+      marginTop: 5, 
+      marginBottom: 12, 
+      marginHorizontal: 12, 
+      paddingHorizontal: 15, 
+      paddingVertical: 10, 
+      borderRadius: 10,
+      backgroundColor: 'white', 
+      elevation: 7,
+    }
+  });
+
   render(){
+    const { styles } = Card;
     const { style, ...viewProps } = this.props;
     return(
       <View
-        style={[{overflow: 'visible', marginHorizontal: 12, marginTop: 5, marginBottom: 12, paddingHorizontal: 15, paddingVertical: 10, backgroundColor: 'white', borderRadius: 10}, STYLES.mediumShadow, style]}
-        elevation={7}
+        style={[styles.card, STYLES.mediumShadow, style]}
         {...viewProps}
       >
         {this.props.children}

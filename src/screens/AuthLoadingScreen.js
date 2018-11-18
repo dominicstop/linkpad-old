@@ -10,6 +10,7 @@ import TipsStore         from '../functions/TipsStore'        ;
 import UserStore         from '../functions/UserStore'        ;
 import ResourcesStore    from '../functions/ResourcesStore'   ;
 import PreboardExamStore from '../functions/PreboardExamStore';
+import { ModulesLastUpdated } from '../functions/MiscStore';
 
 
 Animatable.initializeRegistryWithDefinitions({
@@ -41,10 +42,11 @@ export default class AuthLoadingScreen extends React.Component {
     //load modules and tips if logged in
     if(isLoggedIn){
       await Promise.all([
-        ModuleStore.getModuleData(),
-        TipsStore.getTips(),
-        ResourcesStore.getResources(),
-        PreboardExamStore.get(),
+        ModuleStore       .getModuleData(),
+        TipsStore         .getTips      (),
+        ResourcesStore    .getResources (),
+        PreboardExamStore .get          (),
+        ModulesLastUpdated.read         (),
       ])
     }
 
