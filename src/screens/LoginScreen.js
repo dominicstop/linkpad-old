@@ -7,8 +7,10 @@ import { IconButton       } from '../components/Buttons';
 import { IconText         } from '../components/Views';
 import {setStateAsync, timeout} from '../functions/Utils';
 
-import ModuleStore from '../functions/ModuleStore';
-import TipsStore from '../functions/TipsStore';
+import { TipsStore      } from '../functions/TipsStore';
+import { ModuleStore    } from '../functions/ModuleStore';
+import { ResourcesStore } from '../functions/ResourcesStore';
+
 import UserStore from '../functions/UserStore';
 
 import _ from 'lodash';
@@ -80,7 +82,7 @@ export class InputForm extends React.PureComponent {
       </Animatable.View>
     );
   }
-}
+};
 
 //smart cont: handles all the login logic
 export class LoginContainer extends React.Component {
@@ -139,8 +141,9 @@ export class LoginContainer extends React.Component {
 
       //wait for animation and fetch to finish
       await Promise.all([
-        ModuleStore.getModuleData(),
-        TipsStore.getTips(),
+        TipsStore     .get(),
+        ModuleStore   .get(),
+        ResourcesStore.get(),
         onLoginFetching(),
       ]);
 
@@ -164,7 +167,7 @@ export class LoginContainer extends React.Component {
       React.cloneElement(this.props.children, childProps)
     );
   }
-}
+};
 
 //dumb cont: presents the UI for iOS
 export class LoginUI_iOS extends React.Component {
@@ -554,7 +557,7 @@ export class LoginUI_iOS extends React.Component {
       </View>
     );
   }
-}
+};
 
 //dumb cont: presents the UI for Android
 export class LoginUI_android extends React.Component {
@@ -910,7 +913,7 @@ export class LoginUI_android extends React.Component {
       </View>
     );
   }
-}
+};
 
 export default class LoginScreen extends React.Component { 
   static navigationOptions = {
@@ -949,7 +952,7 @@ export default class LoginScreen extends React.Component {
       </View>
     );
   }
-}
+};
 
 const styles = StyleSheet.create({
   rootContainer: {

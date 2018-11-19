@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, Text, View, Dimensions, ScrollView, ViewPropTypes, TouchableOpacity, Animated, Easing, FlatList } from 'react-native';
+import { StyleSheet, Text, View, Dimensions, ScrollView, ViewPropTypes, TouchableOpacity, Animated, Easing, FlatList, Platform } from 'react-native';
 import PropTypes from 'prop-types';
 
 import { setStateAsync, timeout, shuffleArray } from '../functions/Utils';
@@ -115,7 +115,7 @@ export class ResourceItem extends React.PureComponent {
           {this._renderHeader ()}
           {this._renderContent()}
         </TouchableOpacity>
-        {this._renderFooter ()}
+        {this._renderFooter()}
       </Card>
     );
   };
@@ -127,12 +127,12 @@ export class ResourceList extends React.PureComponent {
     resources: PropTypes.arrayOf(
       PropTypes.shape(RESOURCES_SHAPE)
     ),
-  }
+  };
 
   constructor(props){
     super(props);
     this.DEBUG = false;
-  }
+  };
 
   _handleOnPress = (resource) => {
     const { onPress, resources } = this.props;
@@ -140,12 +140,17 @@ export class ResourceList extends React.PureComponent {
   };
 
   _renderItemResources = ({item, index}) => {
+    const animation = Platform.select({
+      ios    : 'fadeInUp',
+      android: 'zoomIn'  ,
+    });
+
     return(
       <AnimatedListItem
-        index={index}
         duration={500}
         multiplier={100}
         last={6}
+        {...{index, animation}}
       >
         <ResourceItem 
           resource={item}

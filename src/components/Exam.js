@@ -86,6 +86,23 @@ export class ExamChoice extends React.PureComponent {
     style   : ViewPropTypes.style,
   };
 
+  static styles = StyleSheet.create({
+    button: {
+      minHeight: 50,
+      flexDirection: 'row', 
+      alignItems: 'center',
+      borderRadius: 8,
+      ...Platform.select({
+        ios: {
+          overflow: 'hidden'
+        },
+        android: {
+          overflow: 'visible'
+        }
+      })
+    }
+  });
+
   constructor(props){
     super(props);
     this.animatedValue = new Animated.Value(0);
@@ -102,13 +119,17 @@ export class ExamChoice extends React.PureComponent {
       toValue : 1,
       duration: 500,
       useNativeDriver: true,
-    }).start();
+    }).start(this._onFinishAnimation);
 
     if(Platform.OS == 'android'){
       this.setState({
         backgroundColor: 'rgb(237, 45, 113)'
       });
     };
+  };
+
+  _onFinishAnimation = () => {
+
   };
 
   _onPressChoice = () => {
@@ -125,29 +146,28 @@ export class ExamChoice extends React.PureComponent {
   };
   
   render(){
-    const { choiceText, choiceKey, style } = this.props;
+    const { styles } = ExamChoice;
     const { backgroundColor } = this.state;
+    const { choiceText, choiceKey, style } = this.props;
 
     //TODO: move to styles
     const colorOverlayStyle = {
       paddingVertical: 10,
       position: 'absolute', 
-      height: '100%',
-      width: '100%', 
       backgroundColor: 'rgb(237, 45, 113)',
+      height: '100%',
+      width : '100%',
+      borderRadius: 8,
       opacity: this.animatedValue,
     };
 
     return(
       <TouchableOpacity
-        style={[{minHeight: 50, flexDirection: 'row', alignItems: 'center', backgroundColor, borderRadius: 8, overflow: 'hidden',}, style]}
+        style={[{backgroundColor}, styles.button, style]}
         onPress={this._onPressChoice}
         activeOpacity={0.7}
       >
-        <Animated.View
-          style={colorOverlayStyle}
-          useNativeDriver={true}
-        />
+        <Animated.View style={colorOverlayStyle}/>
         <Text style={{fontSize: 18, marginHorizontal: 15, color: 'white', fontWeight: '900', width: 15,}}>{choiceKey }</Text>
         <Text style={{fontSize: 18, color: 'white', fontWeight: '500', flex: 1}}>{choiceText}</Text>
       </TouchableOpacity>
@@ -542,6 +562,14 @@ export class PracticeQuestion extends React.Component {
       height: '100%', 
       width: '100%',
     },
+    flipVIew: {
+      flex: 1, 
+      ...Platform.select({
+        android: {
+          marginVertical: 15
+        }
+      }),
+    }
   });
 
   constructor(props){
@@ -686,7 +714,9 @@ export class PracticeQuestion extends React.Component {
   };
 
   _renderFlipper = () => {
+    const { styles } = PracticeQuestion;
     const { disableTouch } = this.state;
+
     return(
       <Animatable.View 
         style={{flex: 1}}
@@ -696,7 +726,7 @@ export class PracticeQuestion extends React.Component {
       >
         <FlipView 
           ref={r => this.questionFlipView = r}
-          containerStyle={[{flex: 1}, sharedStyles.shadow]}
+          containerStyle={[styles.flipVIew, sharedStyles.shadow]}
           frontComponent={this._renderFrontQuestion()}
           frontContainerStyle={sharedStyles.questionCard}
           backComponent={this._renderBackExplaination()}
@@ -704,7 +734,7 @@ export class PracticeQuestion extends React.Component {
         />
       </Animatable.View>
     );
-  }
+  };
 
   render(){
     const { styles } = PracticeQuestion;
@@ -966,13 +996,12 @@ const sharedStyles = StyleSheet.create({
     backgroundColor: 'white', 
     marginHorizontal: 10,
     borderRadius: 15,
-    overflow: 'hidden',
     ...Platform.select({
       ios: {
-        marginBottom: 15, 
+        marginBottom: 15,
       },
       android: {
-        marginVertical: 15,
+        //marginVertical: 15,
         elevation: 7,
       }
     }),

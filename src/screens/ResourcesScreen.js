@@ -237,7 +237,7 @@ export class ResourcesScreen extends React.Component {
 
   render(){
     const { resources, mount, showContent } = this.state;
-    const offset = Header.HEIGHT + 15;
+    const offset = Header.HEIGHT;
 
     return(
       <ViewWithBlurredHeader hasTabBar={true}>
@@ -246,6 +246,8 @@ export class ResourcesScreen extends React.Component {
           //adjust top distance
           contentInset ={{top: offset}}
           contentOffset={{x: 0, y: -offset}}
+          //extra top distance
+          contentContainerStyle={{ paddingTop: 12 }}
           //callbacks
           onPress     ={this._handleOnPress     }
           onEndReached={this._handleOnEndReached}
