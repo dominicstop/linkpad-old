@@ -68,3 +68,37 @@ export class ResourcesLastUpdated {
     return _resourcesLastUpdated;
   };
 };
+
+const _tipsLastUpdated = null;
+export class TipsLastUpdated {
+  static get KEY() {
+    return 'tipsLastUpdated';
+  };
+
+  static async setTimestamp(){
+    const key = TipsLastUpdated.KEY;
+
+    _tipsLastUpdated = getTimestamp();
+    await store.save(key, _tipsLastUpdated);
+
+    return _tipsLastUpdated;
+  };
+
+  static async read(){
+    const key = TipsLastUpdated.KEY;
+
+    let timestamp = await store.get(key);
+    _tipsLastUpdated = timestamp;
+
+    return timestamp;
+  };
+
+  static async get(shouldRefresh = false){
+    if(shouldRefresh || _tipsLastUpdated == null){
+      let timestamp = await TipsLastUpdated.read();
+      _tipsLastUpdated = timestamp;
+    };
+
+    return _tipsLastUpdated;
+  };
+};

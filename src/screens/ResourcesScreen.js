@@ -229,7 +229,7 @@ export class ResourcesScreen extends React.Component {
 
   _renderFooter = () => {
     return(
-      <View style={{marginBottom: 75}}>
+      <View style={{marginBottom: 75, marginTop: 10}}>
         <IconFooter ref={r => this.footer = r}/>
       </View>
     );
@@ -238,6 +238,11 @@ export class ResourcesScreen extends React.Component {
   render(){
     const { resources, mount, showContent } = this.state;
     const offset = Header.HEIGHT;
+
+    const onEndReachedThreshold = Platform.select({
+      ios    : 0  ,
+      android: 0.1,
+    });
 
     return(
       <ViewWithBlurredHeader hasTabBar={true}>
@@ -256,7 +261,7 @@ export class ResourcesScreen extends React.Component {
           ListHeaderComponent={this._renderHeader       ()}
           ListFooterComponent={this._renderFooter       ()}
           //pass down props
-          {...{resources}}
+          {...{resources, onEndReachedThreshold}}
         />}
       </ViewWithBlurredHeader>
     );

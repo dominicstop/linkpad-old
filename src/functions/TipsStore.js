@@ -62,25 +62,35 @@ export class TipsStore {
   };
 
   static async refresh(){
+    let isTipsNew = false;
+
     try {
       //fetch tips from server
-      let new_resources = await TipsStore.fetch();
+      let new_tips = await TipsStore.fetch();
+      //check for changes
+      isTipsNew = _.isEqual(_tipsData, new_tips);
       
       //delete previous tips stored
       TipsStore.delete();
 
       //write tips to storage
-      for(let module in new_resources){
-        await store.push('tips', new_resources[module]);
+      for(let tip in new_tips){
+        await store.push('tips', new_tips[tip]);
       };
 
       //update global var
-      _tipsData = new_resources;
+      _tipsData = new_tips;
+
       //resolve
-      return (_tipsData);
+      return ({
+        tips: _tipsData,
+        isTipsNew
+      });
 
     } catch(error) {
-      console.error('Unable to refresh tips.');
+      console.log('Unable to refresh tips.');
+      console.log(error);
+      
       throw error;
     }
   };
