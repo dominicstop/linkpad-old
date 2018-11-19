@@ -250,14 +250,14 @@ export class IncompletePracticeExamsModel {
     const { indexID_module, indexID_subject } = item.get();
 
     //array without the old 'item' element
-    let filtered = this.items.filter((items) => 
+    let filtered = this.elements.filter((items) => 
       items.indexID_module  != indexID_module &&
       items.indexID_subject != indexID_subject
     );
 
     //insert the new 'item' and update property
     filtered.push(item.get());
-    this.items = filtered;
+    this.elements = filtered;
   };
 
   /** removes the item from the array */
@@ -304,32 +304,40 @@ async function set(model = new IncompletePracticeExamsModel()){
 };
 
 async function add(item = new IncompletePracticeExamModel()){
-  //read from storage
-  let model = await getAsModel();
+  try {
+    //read from storage
+    let model = await getAsModel();
 
-  //extract ids from item param
-  const { indexID_module, indexID_subject } = item.get();
-  
-  let match = undefined;
-  
-  //only check for match when store is not empty
-  if(model != null){
-    //check if item already exists in store
-    match = model.findMatchFromIDs({
-      indexID_module, indexID_subject
-    });
-  };
+    //extract ids from item param
+    const { indexID_module, indexID_subject } = item.get();
+    
+    let match = undefined;
+    
+    //only check for match when store is not empty
+    if(model != null){
+      //check if item already exists in store
+      match = model.findMatchFromIDs({
+        indexID_module, indexID_subject
+      });
+    };
 
-  if(match == undefined){
-    //add item to store since it doesn't exist yet
-    await store.push(KEY, item.get());
+    if(match == undefined){
+      //add item to store since it doesn't exist yet
+      await store.push(KEY, item.get());
 
-  } else {
-    //replace since it already exists
-    model.replaceExistingItem(item);
+    } else {
+      //replace since it already exists
+      model.replaceExistingItem(item);
 
-    //overwrite with updated item
-    await store.save(KEY, model.get());
+      //overwrite with updated item
+      await store.save(KEY, model.get());
+    };
+
+  } catch(error) {
+    console.log('unable to add IncompletePracticeExam');
+    console.log(error);
+
+    throw error;
   };
 };
 
