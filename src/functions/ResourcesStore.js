@@ -98,6 +98,7 @@ export class ResourcesStore {
 
   static async refresh(){
     let isResourcesNew = false;
+    
     try {
       //fetch resources from server
       let new_resources = await ResourcesStore.fetch();

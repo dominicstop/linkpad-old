@@ -48,7 +48,8 @@ export class ModuleListScreen extends React.Component {
       fontSize: 16, 
       ...Platform.select({
         ios: {
-          fontWeight: '200'
+          fontWeight: '200',
+          color: '#202020',
         },
         android: {
           fontWeight: '100',
@@ -59,17 +60,20 @@ export class ModuleListScreen extends React.Component {
     detailTitle: Platform.select({
       ios: {
         fontSize: 17,
-        fontWeight: '500'
+        fontWeight: '500',
+        color: '#161616'
       },
       android: {
         fontSize: 17,
-        fontWeight: '900'
+        fontWeight: '900',
+        color: '#161616',
       }
     }),
     detailSubtitle: Platform.select({
       ios: {
         fontSize: 16,
-        fontWeight: '200'
+        fontWeight: '200',
+        color: '#161616',
       },
       android: {
         fontSize: 16,

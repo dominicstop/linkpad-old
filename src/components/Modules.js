@@ -214,15 +214,15 @@ export class SubjectListItem extends React.PureComponent {
   static styles = StyleSheet.create({
     title: {
       fontWeight: '500',
-      fontSize: 24,
-      color: 'black',
+      fontSize: 21,
+      color: '#161616',
     },
     description: {
       textAlign: 'justify',
       marginTop: 3, 
       fontWeight: '300',
       fontSize: 16,
-      color: 'rgba(0, 0, 0, 0.9)',
+      color: '#202020',
     },
     detail: Platform.select({
       ios: {
@@ -380,7 +380,7 @@ export class ModuleItem extends React.PureComponent {
       ...Platform.select({
         ios: {
           fontSize: 24,
-          fontWeight: '600',
+          fontWeight: '700',
         },
         android: {
           fontSize: 24,
@@ -392,6 +392,7 @@ export class ModuleItem extends React.PureComponent {
     subtitle: Platform.select({
       ios: {
         fontSize: 22,
+        color: '#202020'
       },
       android: {
         marginTop: -3,

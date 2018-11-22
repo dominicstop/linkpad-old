@@ -493,22 +493,27 @@ export class SubjectModal extends React.PureComponent {
     },
     textBody: {
       fontSize: 18, 
-      textAlign: 'justify'
+      textAlign: 'justify',
+      color: '#202020',
     },
-    detailTitle: Platform.select({
-      ios: {
-        fontSize: 18,
-        fontWeight: '500'
-      },
-      android: {
-        fontSize: 18,
-        fontWeight: '900'
-      }
-    }),
+    detailTitle: {
+      color: '#0c0c0c',
+      ...Platform.select({
+        ios: {
+          fontSize: 18,
+          fontWeight: '500'
+        },
+        android: {
+          fontSize: 18,
+          fontWeight: '900'
+        }
+      }),
+    },
     detailSubtitle: Platform.select({
       ios: {
         fontSize: 24,
-        fontWeight: '200'
+        fontWeight: '200',
+        color: '#161616',
       },
       android: {
         fontSize: 24,

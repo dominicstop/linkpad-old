@@ -561,15 +561,12 @@ export class PracticeQuestion extends React.Component {
     rootContainer: {
       height: '100%', 
       width: '100%',
-    },
-    flipVIew: {
-      flex: 1, 
       ...Platform.select({
         android: {
-          marginVertical: 15
+          //paddingVertical: 15
         }
       }),
-    }
+    },
   });
 
   constructor(props){
@@ -726,7 +723,7 @@ export class PracticeQuestion extends React.Component {
       >
         <FlipView 
           ref={r => this.questionFlipView = r}
-          containerStyle={[styles.flipVIew, sharedStyles.shadow]}
+          containerStyle={[{flex: 1}, sharedStyles.shadow]}
           frontComponent={this._renderFrontQuestion()}
           frontContainerStyle={sharedStyles.questionCard}
           backComponent={this._renderBackExplaination()}
@@ -762,6 +759,7 @@ export class PracticeExamList extends React.Component {
     
     this.state = {
       loading: true,
+      scrollEnabled: true,
       //array of questions to show in the UI
       list     : [],
       answers  : [],
@@ -885,11 +883,17 @@ export class PracticeExamList extends React.Component {
       currentIndex = 0;
     };
     
-    await setStateAsync(this, {questions, answers, list, currentIndex});    
+    await setStateAsync(this, {
+      questions, answers, list, currentIndex, 
+      scrollEnabled: false
+    });    
   };
 
   _onPressNextQuestion = async () => {
     const { _carousel } = this;
+
+    //temp fix: scroll glitch
+    await setStateAsync(this, {scrollEnabled: true});
 
     if(Platform.OS == 'ios'){
       //load next question
@@ -940,7 +944,9 @@ export class PracticeExamList extends React.Component {
 
   render(){
     if(this.state.loading) return null;
-    const {onEndReached, ...flatListProps } = this.props;
+
+    const { onEndReached, ...flatListProps } = this.props;
+    const { scrollEnabled } = this.state;
 
     //get screen height/width
     const dimensions   = Dimensions.get('window');
@@ -954,7 +960,8 @@ export class PracticeExamList extends React.Component {
     });
 
     const carouseProps = {
-      itemHeight  : screenHeight - headerHeight,
+      scrollEnabled,
+      itemHeight: screenHeight - headerHeight,
       ...Platform.select({
         ios: {
           sliderHeight: screenHeight,
@@ -1001,7 +1008,7 @@ const sharedStyles = StyleSheet.create({
         marginBottom: 15,
       },
       android: {
-        //marginVertical: 15,
+        marginVertical: 15,
         elevation: 7,
       }
     }),
