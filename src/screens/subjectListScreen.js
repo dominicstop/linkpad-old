@@ -150,15 +150,18 @@ export default class SubjectListScreen extends React.Component {
   _renderHeader = () => {
     const { styles } = SubjectListScreen;
     const { navigation } = this.props;
+
     //platform specific animations
     const animation = Platform.select({
       ios    : 'fadeInUp', 
       android: 'zoomIn'
     });
+
     //get data from prev. screen
     const moduleData = navigation.getParam('moduleData', null);
     //wrap data in model
     const model = new ModuleItemModel(moduleData);
+    
     //extract details
     const { description, lastupdated } = model.module;
     const countSubject  = model.getLenghtSubjects();

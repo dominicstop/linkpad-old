@@ -27,7 +27,8 @@ const MODAL_DISTANCE_FROM_TOP = 40;
 const MODAL_EXTRA_HEIGHT = 100;
 
 //enable layout animation on android
-UIManager.setLayoutAnimationEnabledExperimental && UIManager.setLayoutAnimationEnabledExperimental(true);
+UIManager.setLayoutAnimationEnabledExperimental && 
+UIManager.setLayoutAnimationEnabledExperimental(true);
 
 export class SwipableModal extends React.PureComponent {
   static propTypes = {
@@ -175,6 +176,53 @@ export class SwipableModal extends React.PureComponent {
         </Animatable.View>
       </View>
     );
+  };
+};
+
+export class ModalBackground extends React.PureComponent {
+  static styles = StyleSheet.create({
+    container: {
+      flex: 1, 
+      backgroundColor: Platform.select({
+        ios    : 'transparent',
+        android: 'white',
+      }),
+    },
+  });
+
+  _renderIOS(){
+    const { styles } = ModalBackground;
+    const { style, children, ...otherProps } = this.props;
+    return(
+      <BlurView 
+        style={[styles.container, style]} 
+        intensity={100} 
+        tint={'light'}
+        {...otherProps}
+      >
+        {children}
+      </BlurView>
+    );
+  };
+
+  _renderAndroid(){
+    const { styles } = ModalBackground;
+    const { style, children, ...otherProps } = this.props;
+    return(
+      <View 
+        style={[styles.container, style]} 
+        {...otherProps}
+      >
+        {children}
+      </View>
+    );
+  };
+
+  render(){
+    return Platform.select({
+      ios    : this._renderIOS    (),
+      android: this._renderAndroid(),
+    });
   };
 };
 
@@ -1046,20 +1094,7 @@ export class SubjectModal extends React.PureComponent {
     const { styles } = SubjectModal;
     const { mountContent } = this.state;
 
-    const paddingBottom = MODAL_EXTRA_HEIGHT + MODAL_DISTANCE_FROM_TOP;
-
-    const Wrapper = (props) => Platform.select({
-      ios: (
-        <BlurView style={props.style} intensity={100} tint={'light'}>
-          {props.children}
-        </BlurView>
-      ),
-      android: (
-        <View style={props.style}>
-          {props.children}
-        </View>
-      ),
-    });
+    const paddingBottom = (MODAL_EXTRA_HEIGHT + MODAL_DISTANCE_FROM_TOP);
 
     return(
       <SwipableModal 
@@ -1067,12 +1102,67 @@ export class SubjectModal extends React.PureComponent {
         onModalShow={this._handleOnModalShow}
         onModalHide={this._handleOnModalHide}
       >
-        <Wrapper style={[{flex: 1}, styles.container, {paddingBottom}]}>
+        <ModalBackground style={{paddingBottom}}>
           {mountContent && this._renderContent()}
-        </Wrapper>
+        </ModalBackground>
       </SwipableModal>
     );
   };
+};
+
+export class PracticeExamOptionsModal extends React.PureComponent {
+  static styles = StyleSheet.create({
+
+  });
+
+  constructor(props){
+    super(props);
+
+    this.state = {
+      mountContent: true,
+    };
+  };
+
+  openModal = () => {
+    this.setState({
+      mountContent: true
+    });
+
+    this._modal.showModal();
+  };
+
+  _renderContent(){
+    return(
+      null
+    );
+  };
+
+  render(){
+    const { styles } = PracticeExamOptionsModal;
+    const { mountContent } = this.state;
+
+    const paddingBottom = (MODAL_EXTRA_HEIGHT + MODAL_DISTANCE_FROM_TOP);
+
+    return(
+      <SwipableModal 
+        ref={r => this._modal = r}
+        onModalShow={this._handleOnModalShow}
+        onModalHide={this._handleOnModalHide}
+      >
+        <ModalBackground style={{paddingBottom}}>
+          {mountContent && this._renderContent()}
+        </ModalBackground>
+      </SwipableModal>
+    );
+  };
+};
+
+export class SearchTipsModal extends React.PureComponent {
+
+};
+
+export class SearchResourcesModal extends React.PureComponent {
+
 };
 
 const styles = StyleSheet.create({

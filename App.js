@@ -6,16 +6,17 @@ import { useScreens } from 'react-native-screens';
 import * as Animatable from 'react-native-animatable';
 
 import Constants from './src/Constants';
-import {shuffleArray} from './src/functions/Utils';
+import { shuffleArra } from './src/functions/Utils';
+import { AnimatedGradient } from './src/components/AnimatedGradient';
 
-import { DrawerStackContainer   } from './src/screens/Drawer';
-import { PracticeExamStack      } from './src/screens/PracticeExamScreen';
-import { AnimatedGradient       } from './src/components/AnimatedGradient';
-import   AuthLoadingScreen        from './src/screens/AuthLoadingScreen';
-import   LoginScreen              from './src/screens/LoginScreen';
-import   SignUpScreen             from './src/screens/SignUpScreen';
-import   WelcomeScreen            from './src/screens/WelomeScreen';
-import   NavigationService        from './src/NavigationService';
+import { DrawerStackContainer       } from './src/screens/Drawer';
+import { PracticeExamStackContainer } from './src/screens/PracticeExamScreen';
+
+import   AuthLoadingScreen  from './src/screens/AuthLoadingScreen';
+import   LoginScreen        from './src/screens/LoginScreen';
+import   SignUpScreen       from './src/screens/SignUpScreen';
+import   WelcomeScreen      from './src/screens/WelomeScreen';
+import   NavigationService  from './src/NavigationService';
 
 //use native navigation
 useScreens();
@@ -26,7 +27,7 @@ const AppStack = createStackNavigator({
       screen: DrawerStackContainer,
     },
     PracticeExamRoute: {
-      screen: PracticeExamStack,
+      screen: PracticeExamStackContainer,
       navigationOptions: {
         gesturesEnabled: false,
         headerMode: 'hidden',

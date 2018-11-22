@@ -293,14 +293,19 @@ export class Question extends React.PureComponent {
     const model = new QuestionItem(this.props.question);
     const { question } = model.get();
 
+    const extraAnimation = Platform.select({
+      ios    : true ,
+      android: false,
+    });
+
     return(
       <AnimatedCollapsable
-        extraAnimation={true}
         text={question}
         maxChar={140}
         collapsedNumberOfLines={5}
         titleComponent={this._renderHeader()}
         style={sharedStyles.body}
+        {...{extraAnimation}}
       />
     );
   };
@@ -330,18 +335,23 @@ export class Explanation extends React.PureComponent {
   render(){
     const { question } = this.props;
 
+    const extraAnimation = Platform.select({
+      ios    : true ,
+      android: false,
+    });
+     
     //wrap question inside model
     const model = new QuestionItem(question);
     const { explanation } = model.get();
 
     return(
       <AnimatedCollapsable
-        extraAnimation={true}
         text={explanation}
         maxChar={140}
         collapsedNumberOfLines={4}
         titleComponent={this._renderHeader()}
         style={sharedStyles.body}
+        {...{extraAnimation}}
       />
     );
   };

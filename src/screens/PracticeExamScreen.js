@@ -14,6 +14,8 @@ import { Icon } from 'react-native-elements';
 import * as Animatable from 'react-native-animatable';
 import { createStackNavigator } from 'react-navigation';
 import { ModuleItemModel, SubjectItem } from '../functions/ModuleStore';
+import { PracticeExamOptionsModal } from '../components/SwipableModal';
+import { IconButton } from 'react-native-paper';
 
 export class PracticeExamHeader extends React.PureComponent {
   constructor(props){
@@ -64,9 +66,19 @@ const CloseButton = (props) => {
 let _onPressBack;
 const headerLeft = Platform.select({
   //very ugly/hacky solution
-  ios    : <CloseButton       onPress={() => _onPressBack()}/>,
-  android: <AndroidBackButton onPress={() => _onPressBack()}/>,
+  ios    : <CloseButton       onPress={() => _onPressBack && _onPressBack()}/>,
+  android: <AndroidBackButton onPress={() => _onPressBack && _onPressBack()}/>,
 });
+
+let _onPressOptions;
+const headerRight = (
+  <IconButton
+    icon="format-list-bulleted"
+    color={'white'}
+    size={20}
+    onPress={() => _onPressOptions && _onPressOptions()}
+  />
+);
 
 export class PracticeExamListScreen extends React.Component {
   static navigationOptions = ({ navigation }) => {
@@ -79,6 +91,7 @@ export class PracticeExamListScreen extends React.Component {
       title: title,
       headerTitleStyle: STYLES.glow,
       headerLeft,
+      headerRight,
 
       //custom android header
       ...Platform.select({
@@ -101,7 +114,8 @@ export class PracticeExamListScreen extends React.Component {
     };
 
     //assign to global var
-    _onPressBack = this._handleOnPressBack;
+    _onPressBack    = this._handleOnPressBack   ;
+    _onPressOptions = this._handleOnPressOptions;
   };
 
   componentWillMount(){
@@ -162,6 +176,17 @@ export class PracticeExamListScreen extends React.Component {
     );
   };
 
+  _handleOnPressOptions = () => {
+    const { navigation } = this.props;
+
+    //get ref to modal
+    const { getPracticeExamOptionsModal } = this.props.screenProps;
+    let modal = getPracticeExamOptionsModal();
+
+
+    modal.openModal();
+  };
+
   _handleOnSnapToItem = (index = 0) => {
     this.updateTitleIndex(index + 1)
   };
@@ -214,3 +239,44 @@ export const PracticeExamStack = createStackNavigator({
     navigationOptions: Constants.HEADER_PROPS,
   }
 );
+
+export class PracticeExamStackContainer extends React.Component {
+  static router = PracticeExamStack.router;
+
+  constructor(props){
+    super(props);
+
+  };
+
+  static styles = StyleSheet.create({
+    rootContainer: {
+      flex: 1,
+    }
+  });
+
+  _renderOptionsModal = () => {
+    return(
+      <PracticeExamOptionsModal
+        ref={r => this._optionsModal = r}
+      />
+    );
+  };
+  
+  render(){
+    const { styles } = PracticeExamStackContainer;
+    const { navigation, screenProps } = this.props;
+
+    return(
+      <View style={styles.rootContainer}>
+        <PracticeExamStack
+          {...{navigation}}
+          screenProps={{
+            ...screenProps,
+            getPracticeExamOptionsModal: () => this._optionsModal,
+          }}
+        />
+        {this._renderOptionsModal()}
+      </View>
+    );
+  };
+};
