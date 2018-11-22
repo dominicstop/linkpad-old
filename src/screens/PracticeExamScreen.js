@@ -163,7 +163,11 @@ export class PracticeExamListScreen extends React.Component {
   };
 
   _handleOnSnapToItem = (index = 0) => {
-    this.updateTitleIndex(index+1)
+    this.updateTitleIndex(index + 1)
+  };
+
+  _handleOnNextItem = (index = 0) => {
+    this.updateTitleIndex(index + 2);
   };
 
   _handleOnEndReached = () => {
@@ -172,7 +176,7 @@ export class PracticeExamListScreen extends React.Component {
 
   _handleOnListInit = (practiceExamModel = new IncompletePracticeExamModel()) => {
     const { answers } = practiceExamModel.get();
-    this.updateTitleIndex(answers.length + 1);
+    this.updateTitleIndex(answers.length);
   };
   
   render() {
@@ -189,6 +193,7 @@ export class PracticeExamListScreen extends React.Component {
             onSnapToItem={this._handleOnSnapToItem}
             onEndReached={this._handleOnEndReached}
             onListInit  ={this._handleOnListInit  }
+            onNextItem  ={this._handleOnNextItem  }
             //pass down props
             {...{moduleData, subjectData}}
           />

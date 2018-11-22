@@ -2,7 +2,7 @@ import React from 'react';
 import { StyleSheet, Text, View, Dimensions, ScrollView, ViewPropTypes, TouchableOpacity, Animated, StatusBar, Platform } from 'react-native';
 import PropTypes from 'prop-types';
 
-import { setStateAsync, shuffleArray , returnToZero, getLast, getFirst, getLetter, isValidTimestamp} from '../functions/Utils';
+import { setStateAsync, shuffleArray , returnToZero, getLast, getFirst, getLetter, isValidTimestamp, timeout} from '../functions/Utils';
 import IncompletePracticeExamStore, { IncompletePracticeExamModel } from '../functions/IncompletePracticeExamStore';
 
 
@@ -548,9 +548,9 @@ export class QuestionExplanation extends React.PureComponent {
 
 export class PracticeQuestion extends React.Component {
   static propTypes = {
-    isLast        : PropTypes.bool  ,
-    question      : PropTypes.object,
-    questionNumber: PropTypes.number,
+    isLast   : PropTypes.bool ,
+    question: PropTypes.object,
+    index   : PropTypes.number,
     //callback functions
     onEndReached       : PropTypes.func, //called when there are no more questions to add
     onAnswerSelected   : PropTypes.func, //called when a choice is pressed
@@ -561,11 +561,6 @@ export class PracticeQuestion extends React.Component {
     rootContainer: {
       height: '100%', 
       width: '100%',
-      ...Platform.select({
-        android: {
-          //paddingVertical: 15
-        }
-      }),
     },
   });
 
@@ -582,7 +577,7 @@ export class PracticeQuestion extends React.Component {
   };
 
   _handleOnPressChoices = async (question) => {
-    const { onAnswerSelected } = this.props;
+    const { onAnswerSelected, index } = this.props;
 
     //wrap question in model
     const model = new QuestionItem(question);
@@ -615,23 +610,24 @@ export class PracticeQuestion extends React.Component {
     await setStateAsync(this, {disableTouch: false});
 
     //call the callback prop
-    onAnswerSelected && onAnswerSelected(question);
+    onAnswerSelected && onAnswerSelected(question, index);
   };
 
   _handleOnPressNextQuestion = async () => {
-    const { onPressNextQuestion } = this.props;
+    const { onPressNextQuestion, index } = this.props;
 
     //call callback
-    onPressNextQuestion && onPressNextQuestion();
+    onPressNextQuestion && onPressNextQuestion(index);
 
     //hide flipper after trans
     await this.nextButtonContainer.fadeOut(750);
     this.setState({showBackCard: true});
   };
 
-  _handleOnPressLast = () => {
+  _handleOnPressLast = async () => {
+    await this.nextButtonContainer.fadeOut(300);
     this.props.onEndReached();
-  }
+  };
   
   //renders a checkmark animation + trans white overlay
   _renderFrontOverlay = () => {
@@ -751,7 +747,8 @@ export class PracticeExamList extends React.Component {
     subjectData: PropTypes.object,
     //callbacks
     onEndReached: PropTypes.func,
-    onListInit  : PropTypes.func
+    onListInit  : PropTypes.func,
+    onNextItem  : PropTypes.func,
   };
 
   constructor(props){
@@ -790,10 +787,15 @@ export class PracticeExamList extends React.Component {
     //get prev. answered questions
     let {questions, answers} = await this.getQuestionsFromStore();
 
-    let list  = [];
+    //console.log('\n\n\n\nquestions: ');
+    //console.log(questions);
+    //console.log('\n\n\n\nanswers: ');
+    //console.log(answers);
+
+    let list = [];
     list = list.concat(answers);
     
-    let first = getFirst(questions);
+    let first = questions.shift();
     first && list.push(first);
 
     let currentIndex = list.length - 1;
@@ -868,13 +870,17 @@ export class PracticeExamList extends React.Component {
     this.setState({loading: false});
   };
 
+  getCarouselRef = () => {
+    return this._carousel;
+  };
+
   //adds a new question at the end
   async nextQuestion(){
     const { questions, answers, list } = this.state;
     
     let last = getLast(list);
     last && answers.push(last);
-    
+
     let next = questions.shift();
     next && list.push(next);
 
@@ -902,6 +908,18 @@ export class PracticeExamList extends React.Component {
 
     //go to next question
     _carousel && this._carousel.snapToNext();
+
+    //get current index from carousel
+    const currentIndex = this._carousel.currentIndex;
+
+    //fire callback
+    const { onNextItem } = this.props;
+    onNextItem && onNextItem(currentIndex);
+
+    //temp fix snapping bug
+    await setStateAsync(this, {scrollEnabled: false});
+    await timeout(50);
+    await setStateAsync(this, {scrollEnabled: true});
   };
 
   //callback: when answer is selected
@@ -909,6 +927,16 @@ export class PracticeExamList extends React.Component {
     //wrap question inside model
     const questionModel = new QuestionItem(question);
     const answerModel   = questionModel.getAnswerModel();
+
+    //get current index from carousel
+    const currentIndex = this._carousel.currentIndex;
+    //determine if it's the last item
+    const isLast = currentIndex == (this.subjectModel.getQuestionLength() - 1);
+
+    if(isLast){
+      //mark exam as finished
+      this.practiceExamModel.setTimestampEnd();
+    };
 
     //append answer to iPE
     this.practiceExamModel.insertAnswer(answerModel);
@@ -928,17 +956,11 @@ export class PracticeExamList extends React.Component {
     return (
       <PracticeQuestion
         question={item}
-        questionNumber={index}
         onPressNextQuestion={this._onPressNextQuestion}
         onEndReached={this.props.onEndReached}
         onAnswerSelected={this._onAnswerSelected}
-        {...{isLast}}
+        {...{isLast, index}}
       />
-    );
-    return(
-      <View style={{backgroundColor: 'red'}}>
-        <Text>Hello</Text>
-      </View>
     );
   };
 

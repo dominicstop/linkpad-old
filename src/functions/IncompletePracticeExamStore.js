@@ -326,11 +326,8 @@ async function add(item = new IncompletePracticeExamModel()){
       await store.push(KEY, item.get());
 
     } else {
-      //replace since it already exists
-      model.replaceExistingItem(item);
-
       //overwrite with updated item
-      await store.save(KEY, model.get());
+      await store.save(KEY, item.get());
     };
 
   } catch(error) {
