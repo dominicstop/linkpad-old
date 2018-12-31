@@ -6,8 +6,7 @@ import { useScreens } from 'react-native-screens';
 import * as Animatable from 'react-native-animatable';
 
 import Constants from './src/Constants';
-import { shuffleArra } from './src/functions/Utils';
-import { AnimatedGradient } from './src/components/AnimatedGradient';
+import { ROUTES } from './src/Constants';
 
 import { DrawerStackContainer       } from './src/screens/Drawer';
 import { PracticeExamStackContainer } from './src/screens/PracticeExamScreen';
@@ -21,16 +20,11 @@ useScreens();
 
 //main stack for app screens
 const AppStack = createStackNavigator({
-    HomeRoute: {
+    [ROUTES.HomeRoute]: {
       screen: DrawerStackContainer,
     },
-    PracticeExamRoute: {
+    [ROUTES.PracticeExamRoute]: {
       screen: PracticeExamStackContainer,
-      navigationOptions: {
-        gesturesEnabled: false,
-        headerMode: 'hidden',
-        mode: 'modal',
-      }
     },
   },{
     headerMode: 'hidden',
@@ -57,11 +51,11 @@ export class AppScreen extends React.Component {
 
 //shows loading then navigates to either app or signin
 export const RootNavigator = createSwitchNavigator({
-    AuthLoading: AuthLoadingScreen,
-    AppRoute   : AppScreen ,
-    AuthRoute  : AuthScreen,
+    [ROUTES.AuthLoading]: AuthLoadingScreen,
+    [ROUTES.AppRoute   ]: AppScreen ,
+    [ROUTES.AuthRoute  ]: AuthScreen,
   }, {
-    initialRouteName: 'AuthLoading',
+    initialRouteName: ROUTES.AuthLoading,
   }
 );
 
@@ -71,7 +65,7 @@ export default class App extends React.Component {
 
   componentDidMount(){
     StatusBar.setBarStyle('light-content');
-  }
+  };
 
   render() {
     return (
@@ -82,5 +76,5 @@ export default class App extends React.Component {
         }}
       />
     );
-  }
-}
+  };
+};

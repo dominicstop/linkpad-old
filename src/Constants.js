@@ -1,10 +1,17 @@
 import { StyleSheet, Platform } from 'react-native';
 
 export const ROUTES = {
+  //rootnav routes
+  AuthLoading: 'AuthLoading',
+  AppRoute   : 'AppRoute',
+  AuthRoute  : 'AuthRoute',
   //authstack routes
   WelcomeRoute: 'WelcomeRoute',
   LoginRoute  : 'LoginRoute'  ,
   SignUpRoute : 'SignUpRoute' ,
+  //appstack route
+  HomeRoute        : 'HomeRoute'        ,
+  PracticeExamRoute: 'PracticeExamRoute',
 };
 
 export const NAV_BGCOLOR = 'rgba(48, 0, 247, 0.6)';

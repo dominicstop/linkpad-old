@@ -9,6 +9,8 @@ import { ModuleStore    }  from '../functions/ModuleStore'   ;
 import { TipsStore      }  from '../functions/TipsStore'     ;
 import { ResourcesStore }  from '../functions/ResourcesStore';
 
+import { ROUTES } from '../Constants';
+
 import UserStore         from '../functions/UserStore'        ;
 import PreboardExamStore from '../functions/PreboardExamStore';
 import { ModulesLastUpdated, ResourcesLastUpdated } from '../functions/MiscStore';
@@ -59,10 +61,10 @@ export default class AuthLoadingScreen extends React.Component {
     ]);
 
     //navigate
-    //console.log('userData');
-    //console.log(userData);
-    this.props.navigation.navigate(isLoggedIn? 'AppRoute' : 'AuthRoute');
-  }
+    const { navigation } = this.props;
+    const route = isLoggedIn? ROUTES.AppRoute : ROUTES.AuthRoute;
+    navigation.navigate(route);
+  };
   
   render(){
     return(
