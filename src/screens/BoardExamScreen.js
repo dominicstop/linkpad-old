@@ -109,30 +109,61 @@ export class ActiveCard extends React.PureComponent {
     onPressStart: PropTypes.func,
   };
 
+  static styles = StyleSheet.create({
+    image: {
+      width: 75, 
+      height: 75, 
+      marginTop: 10,
+    },
+    title: {
+      fontSize: 32, 
+      fontWeight: '700', 
+      marginTop: 10, 
+      color: '#311B92',
+    },
+    body: {
+      flex: 1,
+      fontSize: 20,
+      marginTop: 5,
+      textAlign: 'justify'
+    },
+    iconTitle: {
+      fontSize: 24, 
+      fontWeight: '800', 
+      color: '#311B92'
+    },
+    iconTitleContainer: {
+      alignSelf: 'stretch', 
+      marginTop: 15
+    }
+  });
+
   constructor(props){
     super(props);
     this.image = require('../../assets/icons/tablet.png');
-  }
+  };
 
   _handleOnPress = () => {
     const { onPressStart } = this.props;
     onPressStart && onPressStart();
-  }
+  };
 
   _renderHeading(){
+    const { styles } = ActiveCard;
+
     return(
       <Fragment>
         <Animatable.Image
           source={require('../../assets/icons/tablet.png')}
-          style={{width: 75, height: 75, marginTop: 10}}
+          style={styles.image}
           animation={'pulse'}
           iterationCount={"infinite"}
           duration={5000}
           easing={'ease-in-out'}
           useNativeDriver={true}
         />
-        <Text style={{fontSize: 32, fontWeight: '700', marginTop: 10, color: '#311B92'}}>{'Take the Test'}</Text>
-        <Text style={{flex: 1, fontSize: 20, marginTop: 5, textAlign: 'justify'}}>
+        <Text style={styles.title}>{'Take the Test'}</Text>
+        <Text style={styles.body}>
           {"A Preboard exam is currently available! Whenever you're ready, you can take the ecam right here and right now."}
         </Text>
       </Fragment>
@@ -140,13 +171,15 @@ export class ActiveCard extends React.PureComponent {
   }
 
   _renderDescription(){
+    const { styles } = ActiveCard;
     const { preboardData } = this.props;
+
     const model = new PreboardExam(preboardData);
     const exams = model.getExams();
 
     let examData = exams[0].get();
     return(
-      <View style={{alignSelf: 'stretch', marginTop: 15}}>
+      <View style={styles.iconTitleContainer}>
         <IconText
           //icon
           iconName={'message-circle'}
@@ -155,9 +188,9 @@ export class ActiveCard extends React.PureComponent {
           iconSize={26}
           //title
           text={'Description'}
-          textStyle={{fontSize: 24, fontWeight: '800', color: '#311B92'}}
+          textStyle={styles.iconTitle}
         />
-        <Text style={{flex: 1, fontSize: 20, marginTop: 5, textAlign: 'justify'}}>
+        <Text style={styles.subtitle}>
           {examData.description}
         </Text>
       </View>
@@ -271,7 +304,7 @@ export class BoardExamScreen extends React.Component {
   async componentWillMount(){
     //get preboard exams
     let preboardModel = await this.preboard.getAsModel();
-    const isActive = true;//preboardModel.response.active;
+    const isActive = false;//preboardModel.response.active;
     this.setState({preboard: preboardModel.get(), isActive});
   }
 

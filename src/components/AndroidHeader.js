@@ -60,8 +60,9 @@ export class AndroidHeader extends React.PureComponent {
   };
 
   static defaultProps = {
-    leftComponent: <AndroidBackButton/>,
+    leftComponent  : <AndroidBackButton/>,
     centerComponent: null,
+    rightComponent : null, 
   };
 
   static styles = StyleSheet.create({
@@ -82,7 +83,7 @@ export class AndroidHeader extends React.PureComponent {
   }
 
   _renderContent(){
-    const { leftComponent, centerComponent } = this.props;
+    const { leftComponent, centerComponent, rightComponent } = this.props;
     const { headerLeft, headerTitle } = this.props.scene.descriptor.options;
 
     return(
@@ -92,6 +93,9 @@ export class AndroidHeader extends React.PureComponent {
         </View>
         <View style={{flex: 1, flexDirection: 'row', alignItems: 'center'}}>
           {centerComponent? centerComponent: this._renderTitle()}
+        </View>
+        <View style={{alignItems: 'center', justifyContent: 'center'}}>
+          {rightComponent}
         </View>
       </Fragment>
     );

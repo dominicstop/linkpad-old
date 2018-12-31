@@ -1,5 +1,11 @@
 import { StyleSheet, Platform } from 'react-native';
 
+export const ROUTES = {
+  //authstack routes
+  WelcomeRoute: 'WelcomeRoute',
+  LoginRoute  : 'LoginRoute'  ,
+  SignUpRoute : 'SignUpRoute' ,
+};
 
 export const NAV_BGCOLOR = 'rgba(48, 0, 247, 0.6)';
 export const BG_COLOR    = 'rgb(233, 232, 239)'   ;
@@ -22,7 +28,6 @@ export const HEADER_PROPS = Platform.select({
     },
   },
 });
-
 
 export const STACKNAV_PROPS = {
   transitionConfig: () => ({

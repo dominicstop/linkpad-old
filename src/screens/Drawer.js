@@ -73,8 +73,8 @@ export const DrawerStack = createDrawerNavigator({
         drawerIcon: ({ tintColor }) => (
           <DrawerIcon
             name='ios-cash'
-            containerStyle={tintColor == 'white'? STYLES.glow : null}
             type='ionicon'
+            containerStyle={tintColor == 'white'? STYLES.glow : null}
             size={28}
             color={tintColor}
           />

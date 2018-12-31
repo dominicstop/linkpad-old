@@ -610,6 +610,7 @@ export class SubjectModal extends React.PureComponent {
   
   constructor(props){
     super(props);
+    
     this.state = {
       moduleData  : null ,
       subjectData : null ,
@@ -1058,6 +1059,7 @@ export class SubjectModal extends React.PureComponent {
   _renderContent(){
     const { styles } = SubjectModal;
     const Separator = (props) =>  <View style={{alignSelf: 'center', width: '80%', height: 1, backgroundColor: 'rgba(0, 0, 0, 0.2)', margin: 15}} {...props}/>
+    
     return(
       <Fragment>
         <ModalTopIndicator/>
@@ -1131,9 +1133,35 @@ export class PracticeExamOptionsModal extends React.PureComponent {
     this._modal.showModal();
   };
 
+  _renderTitle(){
+    const { styles } = SubjectModal;
+    
+    return(
+      <Fragment>
+        <IconText
+          containerStyle={{marginLeft: 7, marginRight: 25, marginBottom: 10}}
+          textStyle={styles.title}
+          subtitleStyle={{fontWeight: '200', fontSize: 16}}
+          text     ={'Options'}
+          //subtitle ={''}
+          iconName ={'notebook'}
+          iconType ={'simple-line-icon'}
+          iconColor={'#512DA8'}
+          iconSize ={26}
+        />
+      </Fragment>      
+    );
+  };
+
   _renderContent(){
     return(
-      null
+      <View style={{flex: 1}}>
+        <ModalTopIndicator/>
+        {this._renderTitle()}
+        <ScrollView style={{flex: 1}}>
+
+        </ScrollView>
+      </View>
     );
   };
 

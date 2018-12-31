@@ -96,7 +96,10 @@ export class PracticeExamListScreen extends React.Component {
       //custom android header
       ...Platform.select({
         android: { header: props => 
-          <AndroidHeader {...{titleStyle, ...props}}/>
+          <AndroidHeader 
+            rightComponent={headerRight}
+            {...{titleStyle, ...props}}
+          />
       }}),
     });
   };
@@ -183,7 +186,6 @@ export class PracticeExamListScreen extends React.Component {
     const { getPracticeExamOptionsModal } = this.props.screenProps;
     let modal = getPracticeExamOptionsModal();
 
-
     modal.openModal();
   };
 
@@ -201,7 +203,9 @@ export class PracticeExamListScreen extends React.Component {
 
   _handleOnListInit = (practiceExamModel = new IncompletePracticeExamModel()) => {
     const { answers } = practiceExamModel.get();
-    this.updateTitleIndex(answers.length);
+    
+    const count = answers.length == 0? 1 : answers.length;
+    this.updateTitleIndex(count);
   };
   
   render() {

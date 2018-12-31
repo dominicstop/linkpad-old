@@ -55,7 +55,7 @@ export class Slide extends React.PureComponent {
 
     return( shouldRender? React.cloneElement(this.props.children, childProps) : null );
   }
-}
+};
 
 export class TitleSlide extends React.PureComponent {
   constructor(props){
@@ -317,7 +317,7 @@ export class ContinueSlide extends React.PureComponent {
       </View>
     );
   }
-}
+};
 
 //screen that renders the slides 
 export default class WelcomeScreen extends React.Component { 
