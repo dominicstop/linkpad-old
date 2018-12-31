@@ -47,7 +47,7 @@ export class AppScreen extends React.Component {
       />
     );
   }
-}
+};
 
 //shows loading then navigates to either app or signin
 export const RootNavigator = createSwitchNavigator({
