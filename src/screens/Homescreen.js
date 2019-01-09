@@ -40,7 +40,7 @@ const routeConfig = {
   TabExamsRoute: {
     screen: ExamsScreen,
     navigationOptions: {
-      tabBarLabel: 'Exams',
+      tabBarLabel: 'Quiz',
       tabBarIcon: ({ focused, tintColor }) => {
         const iconName = focused? 'ios-bookmarks' : 'ios-bookmarks-outline';
         return <Icon name={iconName} size={25} color={tintColor} type='ionicon' containerStyle={focused? STYLES.glow : null}/>;
@@ -126,7 +126,7 @@ function getHeaderProps(routeName){
       type : 'simple-line-icon',
     };
     case 'TabExamsRoute': return {
-      title: 'Exams',
+      title: 'Custom Quiz',
       name : 'bookmark',
       type : 'feather',
     };

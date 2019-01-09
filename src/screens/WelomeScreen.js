@@ -162,7 +162,10 @@ export class VisionSlide extends React.PureComponent {
     const paddingTop = (deviceHeight * 0.5) - (this.iconContainerSize / 2) - (fontSize + 15);
     return(
       <View style={styles.slide}>
-        <AnimateInView duration={750}>
+        <AnimateInView 
+          animation={'fadeInUp'}
+          duration={750}
+        >
           <LottieCircle 
             source={this.animationSource}
             ref={r => this.lottie = r}
@@ -197,7 +200,10 @@ export class GoalSlide extends React.PureComponent {
     const paddingTop = (deviceHeight * 0.5) - (this.iconContainerSize / 2) - (fontSize + 15);
     return(
       <View style={styles.slide}>
-        <AnimateInView duration={750}>
+        <AnimateInView 
+          animation={'fadeInUp'}          
+          duration={750}
+        >
           <LottieCircle 
             source={this.animationSource}
             ref={r => this.lottie = r}
@@ -232,7 +238,10 @@ export class ImproveSlide extends React.PureComponent {
     const paddingTop = (deviceHeight * 0.5) - (this.iconContainerSize / 2) - (fontSize + 15);
     return(
       <View style={styles.slide}>
-        <AnimateInView duration={750}>
+        <AnimateInView 
+          animation={'fadeInUp'}
+          duration={750}
+        >
           <LottieCircle 
             source={this.animationSource}
             ref={r => this.lottie = r}
@@ -303,7 +312,10 @@ export class ContinueSlide extends React.PureComponent {
     const paddingTop = (deviceHeight * 0.5) - (this.iconContainerSize / 2) - (fontSize + 15);
     return(
       <View style={styles.slide}>
-        <AnimateInView duration={750}>
+        <AnimateInView 
+          animation={'fadeInUp'}          
+          duration={750}
+        >
           <LottieCircle 
             source={this.animationSource}
             ref={r => this.lottie = r}
