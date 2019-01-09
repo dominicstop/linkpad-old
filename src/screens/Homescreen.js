@@ -1,8 +1,8 @@
 import React from 'react';
 import { View, Platform, Text, Clipboard } from 'react-native';
 
-import Constants, { STYLES } from '../Constants';
-import { CustomHeader          } from '../components/Header' ;
+import Constants, { STYLES, ROUTES } from '../Constants';
+import { CustomHeader } from '../components/Header' ;
 
 import { SubjectModal     } from '../components/SwipableModal';
 import { ModuleListScreen } from './ModuleListScreen';
@@ -26,7 +26,7 @@ import ViewResourceScreen from './ViewResource';
  * and is overriden manually when changing tabs
  */
 const routeConfig = {
-  TabModuleListRoute: {
+  [ROUTES.TabModuleListRoute]: {
     screen: ModuleListScreen,
     navigationOptions: {
       title: 'Modules',
@@ -37,7 +37,7 @@ const routeConfig = {
       }
     }
   },
-  TabExamsRoute: {
+  [ROUTES.TabExamsRoute]: {
     screen: ExamsScreen,
     navigationOptions: {
       tabBarLabel: 'Quiz',
@@ -47,7 +47,7 @@ const routeConfig = {
       }
     }
   },
-  TabResourcesRoute: {
+  [ROUTES.TabResourcesRoute]: {
     screen: ResourcesScreen,
     navigationOptions: {
       tabBarLabel: 'Resources',
@@ -57,7 +57,7 @@ const routeConfig = {
       }
     }
   },
-  TabTipsRoute: {
+  [ROUTES.TabTipsRoute]: {
     screen: TipsScreen,
     navigationOptions: {
       tabBarLabel: 'Tips',
@@ -70,7 +70,7 @@ const routeConfig = {
 }
 
 const TabNavigation_ios = createBottomTabNavigator(routeConfig, {
-    initialRouteName: 'TabModuleListRoute',
+    initialRouteName: ROUTES.TabModuleListRoute,
     lazy: false,
     tabBarOptions: {
       activeTintColor: 'rgba(255, 255, 255, 0.8)',
@@ -87,7 +87,7 @@ const TabNavigation_ios = createBottomTabNavigator(routeConfig, {
 );
 
 const TabNavigation_android = createMaterialBottomTabNavigator(routeConfig, {
-    initialRouteName: 'TabModuleListRoute',
+    initialRouteName: ROUTES.TabModuleListRoute,
     lazy: true,
     barStyle: {
       backgroundColor: 'rgba(0, 0, 0, 0)', 
@@ -120,28 +120,28 @@ class TabNavigationAndroidContainer extends React.Component {
 
 function getHeaderProps(routeName){
   switch(routeName){
-    case 'TabModuleListRoute': return {
+    case ROUTES.TabModuleListRoute: return {
       title: 'Modules',
       name : 'briefcase',
       type : 'simple-line-icon',
     };
-    case 'TabExamsRoute': return {
+    case ROUTES.TabExamsRoute: return {
       title: 'Custom Quiz',
       name : 'bookmark',
       type : 'feather',
     };
-    case 'TabResourcesRoute': return {
+    case ROUTES.TabResourcesRoute: return {
       title: 'Resources',
       name : 'info',
       type : 'feather',
     };
-    case 'TabTipsRoute': return {
+    case ROUTES.TabTipsRoute: return {
       title: 'Tips',
       name : 'star-outlined',
       type : 'entypo',
     };
-  }
-}
+  };
+};
 
 //android: configure shared header
 TabNavigationAndroidContainer.navigationOptions = ({ navigation, screenProps }) => {
