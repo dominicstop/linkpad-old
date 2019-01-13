@@ -3,10 +3,11 @@ import { View, ScrollView, ViewPropTypes, Text, TouchableOpacity, AsyncStorage, 
 import PropTypes from 'prop-types';
 
 import   NavigationService from '../NavigationService';
-import { ROUTES } from '../Constants';
+import { ROUTES, STYLES } from '../Constants';
 import { PURPLE } from '../functions/Colors';
 
 import { CreateCustomQuizList } from '../components/CustomQuiz';
+import { AndroidHeader } from '../components/AndroidHeader';
 
 import { HEADER_PROPS          } from '../Constants';
 import { ViewWithBlurredHeader, IconText, Card } from '../components/Views' ;
@@ -22,17 +23,35 @@ import * as Animatable from 'react-native-animatable';
 import { Header, createStackNavigator } from 'react-navigation';
 import { Icon, Divider } from 'react-native-elements';
 
-const headerTitle = (props) => <CustomHeader {...props}
-  iconName='menu'
-  iconType='simple-line-icon'
-  iconSize={22}
-/>
+//android header text style
+const titleStyle = { 
+  flex: 1, 
+  textAlign: 'center', 
+  marginRight: 10,
+  position: 'absolute',
+  color: 'white',
+};
 
 export class CreateQuizScreen extends React.Component {
-  static navigationOptions=({navigation, screenProps}) => ({
-    headerTitle,
-    title: 'Create Quiz',
-  });
+  static navigationOptions = ({ navigation }) => {
+    const { state } = navigation;
+
+    let title = 'Custom Quiz';
+    if(state.params) title = state.params.title;
+
+    return ({
+      title,
+      headerTitleStyle: STYLES.glow,
+
+      //custom android header
+      ...Platform.select({
+        android: { header: props => 
+          <AndroidHeader 
+            {...{titleStyle, ...props}}
+          />
+      }}),
+    });
+  };
 
   static styles = StyleSheet.create({
     flatlist: {
