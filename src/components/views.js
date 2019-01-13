@@ -46,7 +46,7 @@ Animatable.initializeRegistryWithDefinitions({
   partialFadeOut: {
     from  : { opacity: overlayOpacity },
     to    : { opacity: 0 },
-  }
+  },
 });
 
 //icon and text
@@ -225,20 +225,32 @@ export class AnimatedListItem extends React.PureComponent {
     delay     : PropTypes.number,
     multiplier: PropTypes.number,
     last      : PropTypes.number,
-  }
+  };
 
   static defaultProps = {
     index     : 0  ,
     delay     : 0  ,
     multiplier: 100,
     last      : 3  ,
-  }
+  };
 
-  render(){
+  constructor(props){
+    super(props);
+    this.state = {
+      animated: true,
+    };
+  };
+
+  _handleOnAnimationEnd = () => {
+    this.setState({animated: false});
+  };
+
+  _renderAnimateIn(){
     const { index, delay, multiplier, last, ...otherProps } = this.props;
     if(index > last) return this.props.children;
     return(
       <Animatable.View
+        onAnimationEnd={this._handleOnAnimationEnd}
         delay={(index + 1) * multiplier + delay}
         animation='fadeInUp'
         easing='ease-in-out'
@@ -249,7 +261,16 @@ export class AnimatedListItem extends React.PureComponent {
         {this.props.children}
       </Animatable.View>
     );
-  }
+  };
+
+  _renderNormal(){
+    return this.props.children;
+  };
+
+  render(){
+    const { animated } = this.state;
+    return animated? this._renderAnimateIn() : this._renderNormal();
+  };
 }
 
 //wraps childern and animates with delay stagger

@@ -15,7 +15,6 @@ import * as Animatable from 'react-native-animatable';
 
 import { Header, createStackNavigator } from 'react-navigation';
 import { Divider } from 'react-native-elements';
-import {styles} from './MoreScreen';
 
 export class ExamsScreen extends React.Component {
   static styles = StyleSheet.create({
