@@ -100,29 +100,57 @@ export class PlatformTouchableIconButton extends React.PureComponent {
     containerStyle: ViewPropTypes.style ,
     wrapperStyle  : ViewPropTypes.style ,
     textStyle     : Text.propTypes.style,
-  }
+  };
+
+  static styles = StyleSheet.create({
+    buttonWrapper: {
+      flex: 1, 
+      borderRadius: 10
+    },
+    buttonContainer: {
+      flex: 1, 
+      flexDirection: 'row',
+      padding: 15,
+      alignItems: 'center',
+      justifyContent: 'center'
+    }
+  });
+
+  _renderButtonContents(){
+    const { text, iconName, iconColor, iconType, iconSize, textStyle } = this.props;
+    const flex = this.props.children > 0? 1 : 0;
+
+    const iconProps = {
+      name : iconName ,
+      type : iconType ,
+      size : iconSize ,
+      color: iconColor,
+      ...this.props.iconProps,
+    };
+
+    return (
+      <Fragment>
+        <Icon {...iconProps}/>
+        <Text style={[{marginLeft: 8, flex}, textStyle]}>
+          {text}
+        </Text>
+        {this.props.children}
+      </Fragment>
+    );
+  };
 
   render(){
     const {text, iconName, iconColor, iconType, iconSize, containerStyle, wrapperStyle, textStyle, children, iconProps, onPress, ...otherProps} = this.props;
-    
+    const { styles } = PlatformTouchableIconButton;
+
     return(
-      <View style={[{flex: 1, borderRadius: 10}, wrapperStyle]} elevation={7}>
+      <View style={[styles.buttonWrapper, wrapperStyle]}>
         <PlatformTouchable 
           background={PlatformTouchable.Ripple('#fff', true)}
           {...{onPress}}
         >
-          <View style={[{flex: 1, flexDirection: 'row', padding: 15, alignItems: 'center', justifyContent: 'center'}, containerStyle]}>
-            <Icon
-              name ={iconName }
-              color={iconColor}
-              type ={iconType }
-              size ={iconSize }
-              {...iconProps}
-            />
-            <Text style={[{marginLeft: 8, flex: this.props.children > 0? 1 : 0}, textStyle]}>
-              {text}
-            </Text>
-            {this.props.children}  
+          <View style={[styles.buttonContainer, containerStyle]}>
+            {this._renderButtonContents()}
           </View>
         </PlatformTouchable>
       </View>

@@ -10,6 +10,7 @@ import { ResourcesScreen  } from './ResourcesScreen';
 import { ExamsScreen      } from './ExamsScreen';
 import { TipsScreen       } from './TipsScreen';
 import { DrawerButton     } from '../components/Buttons';
+import { CreateQuizScreen } from './CreateQuizScreen';
 
 import { createBottomTabNavigator, createStackNavigator, Header } from 'react-navigation';
 import { createMaterialBottomTabNavigator } from 'react-navigation-material-bottom-tabs';
@@ -184,15 +185,10 @@ const TabNavigation = Platform.select({ios: TabNavigation_ios, android: TabNavig
 
 //shared header for each stack
 export const TabNavigationStack = createStackNavigator({
-    HomeTabRoute: {
-      screen: TabNavigation,
-    },
-    SubjectListRoute: {
-      screen: SubjectListScreen,
-    },
-    ViewResourceRoute: {
-      screen: ViewResourceScreen,
-    },
+    [ROUTES.HomeTabRoute      ]: TabNavigation,
+    [ROUTES.SubjectListRoute  ]: SubjectListScreen,
+    [ROUTES.ViewResourceRoute ]: ViewResourceScreen,
+    [ROUTES.CreateQuizRoute   ]: CreateQuizScreen,
   }, Platform.select({
     ios: {
       navigationOptions: Constants.HEADER_PROPS, 

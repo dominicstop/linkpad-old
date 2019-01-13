@@ -17,7 +17,11 @@ export const ROUTES = {
   TabExamsRoute     : 'TabExamsRoute'     ,
   TabResourcesRoute : 'TabResourcesRoute' ,
   TabTipsRoute      : 'TabTipsRoute'      ,
-  
+  //tabstack routes
+  HomeTabRoute: 'HomeTabRoute',
+  SubjectListRoute: 'SubjectListRoute',
+  ViewResourceRoute: 'ViewResourceRoute',
+  CreateQuizRoute: 'CreateQuizRoute',
 };
 
 export const NAV_BGCOLOR = 'rgba(48, 0, 247, 0.6)';
