@@ -1,10 +1,10 @@
-import React from 'react';
-import { View, Platform, Text, Clipboard } from 'react-native';
+import React, { Fragment } from 'react';
+import { View, Platform, Text, StyleSheet, Clipboard } from 'react-native';
 
 import Constants, { STYLES, ROUTES } from '../Constants';
 import { CustomHeader } from '../components/Header' ;
 
-import { SubjectModal     } from '../components/SwipableModal';
+import { SubjectModal, CreateQuizModal     } from '../components/SwipableModal';
 import { ModuleListScreen } from './ModuleListScreen';
 import { ResourcesScreen  } from './ResourcesScreen';
 import { ExamsScreen      } from './ExamsScreen';
@@ -100,19 +100,37 @@ const TabNavigation_android = createMaterialBottomTabNavigator(routeConfig, {
 class TabNavigationAndroidContainer extends React.Component {
   static router = TabNavigation_android.router;
 
+  static styles = StyleSheet.create({
+    rootContainer: {
+      flex: 1, 
+      height: '100%', 
+      width: '100%',
+    },
+    gradientBG: {
+      position: 'absolute', 
+      height: 56, 
+      width: '100%', 
+      bottom: 0, 
+      left: 0, 
+      right: 0,
+    },
+  });
 
   render(){
+    const { styles } = TabNavigationAndroidContainer;
+    const { navigation, screenProps } = this.props;
+
     return (
-      <View style={{flex: 1, height: '100%', width: '100%'}}>
+      <View style={styles.rootContainer}>
         <LinearGradient
-          style={{position: 'absolute', height: 56, width: '100%', bottom: 0, left: 0, right: 0}}
+          style={styles.gradientBG}
           colors={['#8400ea', '#651FFF']}
           start={[0, 1]} 
           end={[1, 0]}
         />
         <TabNavigation_android
-          navigation={this.props.navigation}
-          screenProps={this.props.screenProps}
+          //pass down props
+          {...{navigation, screenProps}}
         />
       </View>
     );
@@ -181,7 +199,10 @@ TabNavigation_ios.navigationOptions = ({ navigation, screenProps }) => {
   };
 };
 
-const TabNavigation = Platform.select({ios: TabNavigation_ios, android: TabNavigationAndroidContainer});
+const TabNavigation = Platform.select({
+  ios    : TabNavigation_ios, 
+  android: TabNavigationAndroidContainer
+});
 
 //shared header for each stack
 export const TabNavigationStack = createStackNavigator({
@@ -216,30 +237,41 @@ export class Homescreen extends React.PureComponent {
 
   static navigationOptions = {
     drawerLockMode: 'locked-closed',
-  }
+  };
 
   static navigationOptions = ({navigation}) => {
     let drawerLockMode = 'unlocked';
     if(navigation.state.params) drawerLockMode = navigation.state.params.enableDrawerSwipe? 'unlocked' : 'locked-closed';
     return {
       drawerLockMode    
-    }
-  } 
+    };
+  };
+
+  static styles = StyleSheet.create({
+    rootContainer: {
+      flex: 1, 
+      height: '100%', 
+      width: '100%', 
+      backgroundColor: 'rgb(233, 232, 239)'
+    },
+  });
 
   constructor(props){
     super(props);
     this.state = { 
       mount: false 
-    }
-  }
+    };
+  };
 
   componentDidMount(){
+    //delay mount
     setTimeout(() => this.setState({mount: true}), 0);
-  }
+  };
 
   setDrawerSwipe = (mode) => {
-    this.props.navigation.setParams({enableDrawerSwipe: mode});
-  }
+    const { navigation } = this.props;
+    navigation && navigation.setParams({enableDrawerSwipe: mode});
+  };
 
   _renderContents(){
     return(
@@ -261,16 +293,27 @@ export class Homescreen extends React.PureComponent {
         />
       </Animatable.View>
     );
-  }
+  };
+
+  _renderModals(){
+    return(
+      <Fragment>
+        <SubjectModal    ref={r => this.subjectModal    = r}/>
+        <CreateQuizModal ref={r => this.createQuizModal = r}/>
+      </Fragment>
+    );
+  };
 
   render(){
-    const { mount } = this.state;
+    const { styles } = Homescreen;
+    const { mount  } = this.state;
+
     return (
-      <View style={{flex: 1, height: '100%', width: '100%', backgroundColor: 'rgb(233, 232, 239)'}}>
+      <View style={styles.rootContainer}>
         {mount && this._renderContents()}
-        <SubjectModal ref={r => this.subjectModal = r}/>
+        {mount && this._renderModals  ()}
       </View>
     );
   }
-}
+};
 

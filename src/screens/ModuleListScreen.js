@@ -190,7 +190,7 @@ export class ModuleListScreen extends React.Component {
 
     const animation = Platform.select({
       ios    : 'fadeInUp',
-      android: 'zoomIn'  ,
+      android: 'fadeInRight',
     });
 
     const Time = (props) => (lastUpdated?
@@ -203,7 +203,7 @@ export class ModuleListScreen extends React.Component {
 
     return(
       <Animatable.View
-        duration={500}
+        duration={400}
         easing={'ease-in-out'}
         useNativeDriver={true}
         {...{animation}}

@@ -28,8 +28,9 @@ export class QuizItem extends React.PureComponent {
       //animated styles
       opacity: 1,
       transform: [
-        { scaleX: 1 }, 
-        { scaleY: 1 },
+        { scaleX : 1      }, 
+        { scaleY : 1      },
+        { rotateX: '0deg' }
       ],
       //layout styles
       marginBottom: 12, 
@@ -118,8 +119,9 @@ export class QuizItem extends React.PureComponent {
       marginBottom: 0, 
       paddingVertical: 0,
       transform: [
-        { scaleX: 0.75 },
-        { scaleY: 0.50 },
+        { scaleX : 0.75    },
+        { scaleY : 0.50    },
+        { rotateX: '-45deg'},
       ]
     };
 
@@ -168,7 +170,7 @@ export class QuizItem extends React.PureComponent {
     return(
       <PlatformTouchableIconButton
         onPress={this._handleOnPressDeleteButton}
-        wrapperStyle={styles.buttonWrapper}
+        wrapperStyle={[styles.buttonWrapper, STYLES.lightShadow]}
         containerStyle={styles.buttonContainer}
         text={'Remove Item'}
         textStyle={styles.buttonText}

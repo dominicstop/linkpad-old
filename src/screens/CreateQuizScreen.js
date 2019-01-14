@@ -3,7 +3,7 @@ import { View, ScrollView, ViewPropTypes, Text, TouchableOpacity, AsyncStorage, 
 import PropTypes from 'prop-types';
 
 import   NavigationService from '../NavigationService';
-import { ROUTES, STYLES } from '../Constants';
+import { ROUTES, STYLES, HEADER_HEIGHT } from '../Constants';
 import { PURPLE } from '../functions/Colors';
 
 import { CreateCustomQuizList } from '../components/CustomQuiz';
@@ -73,14 +73,13 @@ export class CreateQuizScreen extends React.Component {
 
   render(){
     const { styles } = CreateQuizScreen;
-    const offset = Header.HEIGHT;
 
     return(
       <ViewWithBlurredHeader hasTabBar={false}>
         <CreateCustomQuizList
           style={styles.flatlist}
-          contentInset ={{top: offset}}
-          contentOffset={{x: 0, y: -offset}}
+          contentInset ={{top: HEADER_HEIGHT}}
+          contentOffset={{x: 0, y: -HEADER_HEIGHT}}
           ListHeaderComponent={this._renderHeader}
         />
       </ViewWithBlurredHeader>
@@ -187,7 +186,7 @@ export class CreateCustomQuizHeader extends React.PureComponent {
       <Fragment>
         <PlatformTouchableIconButton
           onPress={this._handleOnPressButton}
-          wrapperStyle={styles.buttonWrapper}
+          wrapperStyle={[styles.buttonWrapper, STYLES.lightShadow]}
           containerStyle={styles.buttonContainer}
           text={'Add Module'}
           textStyle={styles.buttonText}
@@ -198,7 +197,7 @@ export class CreateCustomQuizHeader extends React.PureComponent {
         />
         <PlatformTouchableIconButton
           onPress={this._handleOnPressButton}
-          wrapperStyle={styles.buttonWrapper}
+          wrapperStyle={[styles.buttonWrapper, STYLES.lightShadow]}
           containerStyle={styles.buttonContainer}
           text={'Add Subject'}
           textStyle={styles.buttonText}

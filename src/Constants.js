@@ -1,4 +1,7 @@
 import { StyleSheet, Platform } from 'react-native';
+import { Header } from 'react-navigation';
+
+import { getStatusBarHeight, isIphoneX } from 'react-native-iphone-x-helper';
 
 export const ROUTES = {
   //rootnav routes
@@ -23,6 +26,11 @@ export const ROUTES = {
   ViewResourceRoute: 'ViewResourceRoute',
   CreateQuizRoute: 'CreateQuizRoute',
 };
+
+
+export const HEADER_HEIGHT = Header.HEIGHT + (
+  isIphoneX()? getStatusBarHeight(false) : 0
+);
 
 export const NAV_BGCOLOR = 'rgba(48, 0, 247, 0.6)';
 export const BG_COLOR    = 'rgb(233, 232, 239)'   ;
@@ -55,6 +63,12 @@ export const STACKNAV_PROPS = {
 }
 
 export const STYLES = StyleSheet.create({
+  lightShadow: {
+    shadowOffset:{  width: 2,  height: 3,  },
+    shadowColor: 'black',
+    shadowRadius: 2,
+    shadowOpacity: 0.2,
+  },
   mediumShadow: {
     shadowOffset:{  width: 2,  height: 3,  },
     shadowColor: 'black',
@@ -74,4 +88,5 @@ export default {
   HEADER_PROPS,
   BG_COLOR,
   STACKNAV_PROPS,
+  HEADER_HEIGHT
 }

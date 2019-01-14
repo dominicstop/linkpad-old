@@ -2,7 +2,7 @@ import React from 'react';
 import { View, ScrollView, StyleSheet, Text, TouchableOpacity, AsyncStorage } from 'react-native';
 import PropTypes from 'prop-types';
 
-import { ROUTES } from '../Constants';
+import { ROUTES, HEADER_HEIGHT , STYLES} from '../Constants';
 import { PURPLE } from '../functions/Colors';
 
 import NavigationService from '../NavigationService';
@@ -30,15 +30,14 @@ export class ExamsScreen extends React.Component {
 
   render(){
     const { styles } = ExamsScreen;
-    const offset = Header.HEIGHT;
 
     return(
       <ViewWithBlurredHeader hasTabBar={true} enableAndroid={false}>
         <ScrollView 
           style={styles.scrollview}
           //adjust top distance
-          contentInset ={{top: offset}}
-          contentOffset={{x: 0, y: -offset}}
+          contentInset ={{top: HEADER_HEIGHT}}
+          contentOffset={{x: 0, y: -HEADER_HEIGHT}}
         >
           <ExamHeader onPress={this.handleOnPressCreateQuiz}/>
         </ScrollView>
@@ -138,7 +137,7 @@ export class ExamHeader extends React.PureComponent {
     return(
       <PlatformTouchableIconButton
         onPress={this._handleOnPressButton}
-        wrapperStyle={styles.buttonWrapper}
+        wrapperStyle={[styles.buttonWrapper, STYLES.lightShadow]}
         containerStyle={styles.buttonContainer}
         text={'Create Custom Quiz'}
         textStyle={styles.buttonText}

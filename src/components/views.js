@@ -4,6 +4,7 @@ import PropTypes from 'prop-types';
 
 import { STYLES } from '../Constants';
 
+import { getStatusBarHeight, getBottomSpace, isIphoneX } from 'react-native-iphone-x-helper';
 import { Icon     } from 'react-native-elements';
 import { Header   } from 'react-navigation';
 import Expo, { BlurView } from 'expo';
@@ -164,8 +165,14 @@ export class ViewWithBlurredHeader extends React.PureComponent {
 
   //ios blurred header overlay
   _renderHeaderBlur(){
+    const height = Header.HEIGHT + (
+      isIphoneX()? getStatusBarHeight(false) : 0
+    );
+
+    
+
     return(
-      <View style={{position: 'absolute', width: '100%', height: Header.HEIGHT,}}>
+      <View style={{position: 'absolute', width: '100%', height}}>
         <BlurView intensity={100} tint='default'>
           <LinearGradient
             style={{width: '100%', height: '100%', opacity: 0.7}}
@@ -180,8 +187,10 @@ export class ViewWithBlurredHeader extends React.PureComponent {
   //ios blurred tab bar overlay
   _renderTabBlur(){
     const TabBarHeight = 49;
+    const height = TabBarHeight + getBottomSpace();
+
     return(
-      <View style={{ position: 'absolute', width: '100%', height: TabBarHeight, bottom: 0 }}>
+      <View style={{ position: 'absolute', width: '100%', height, bottom: 0 }}>
         <BlurView intensity={100} tint='default'>
           <LinearGradient
             style={{width: '100%', height: '100%', opacity: 0.7}}

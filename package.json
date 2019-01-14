@@ -29,6 +29,7 @@
     "react-native-elements": "^0.19.1",
     "react-native-gesture-handler": "^1.0.8",
     "react-native-indicators": "^0.13.0",
+    "react-native-iphone-x-helper": "^1.2.0",
     "react-native-keyboard-aware-scroll-view": "^0.6.0",
     "react-native-modal": "^6.5.0",
     "react-native-modalbox": "^1.6.0",

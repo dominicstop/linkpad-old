@@ -538,13 +538,13 @@ export class ModuleList extends React.PureComponent {
     const { modules, onPressModule, onPressSubject } = this.props;
     const animation = Platform.select({
       ios    : 'fadeInUp', 
-      android: 'zoomIn'
+      android: 'fadeInRight'
     });
 
     return(
       <AnimatedListItem
         delay={250}
-        duration={500}
+        duration={400}
         multiplier={200}
         {...{animation, index}}
       >
@@ -617,13 +617,13 @@ export class SubjectList extends React.Component {
     const { moduleData } = this.props;
     const animation = Platform.select({
       ios    : 'fadeInUp', 
-      android: 'zoomIn'
+      android: 'fadeInLeft'
     });
 
     return(
       <AnimatedListItem
         delay={0}
-        duration={500}
+        duration={300}
         multiplier={100}
         {...{animation, index}}
       >

@@ -1112,7 +1112,7 @@ export class SubjectModal extends React.PureComponent {
   };
 };
 
-export class PracticeExamOptionsModal extends React.PureComponent {
+export class CreateQuizModal extends React.PureComponent {
   static styles = StyleSheet.create({
 
   });
@@ -1166,7 +1166,7 @@ export class PracticeExamOptionsModal extends React.PureComponent {
   };
 
   render(){
-    const { styles } = PracticeExamOptionsModal;
+    const { styles } = CreateQuizModal;
     const { mountContent } = this.state;
 
     const paddingBottom = (MODAL_EXTRA_HEIGHT + MODAL_DISTANCE_FROM_TOP);

@@ -154,7 +154,7 @@ export default class SubjectListScreen extends React.Component {
     //platform specific animations
     const animation = Platform.select({
       ios    : 'fadeInUp', 
-      android: 'zoomIn'
+      android: 'fadeInLeft'
     });
 
     //get data from prev. screen
@@ -170,7 +170,7 @@ export default class SubjectListScreen extends React.Component {
     return(
       <Animatable.View 
         style={styles.headerContainer}
-        duration={500}
+        duration={300}
         easing={'ease-in-out'}
         useNativeDriver={true}
         {...{animation}}
