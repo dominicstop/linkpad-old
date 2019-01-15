@@ -47,7 +47,7 @@ export class SwipableModal extends React.PureComponent {
       //hidden
       { y: Screen.height * 1 },
       //half screen
-      { y: Screen.height - (Screen.height * 0.6) },
+      //{ y: Screen.height - (Screen.height * 0.6) },
     ],
     ...Platform.select({
       android: {
@@ -1114,27 +1114,83 @@ export class SubjectModal extends React.PureComponent {
 
 export class CreateQuizModal extends React.PureComponent {
   static styles = StyleSheet.create({
-
+    title: {
+      color: '#160656',
+      ...Platform.select({
+        ios: {
+          fontSize: 24, 
+          fontWeight: '800'
+        },
+        android: {
+          fontSize: 26, 
+          fontWeight: '900'
+        }
+      })
+    },
+    textSubtitle: {
+      fontSize: 18,
+      fontWeight: '200',
+      color: '#212121',
+      textAlign: 'justify',
+      marginBottom: 5,
+    },
+    textBody: {
+      fontSize: 18, 
+      textAlign: 'justify',
+      color: '#202020',
+    },
   });
+
+  //enum for modal type
+  static TYPES = {
+    module : 'module ',
+    subject: 'subject',
+  };
 
   constructor(props){
     super(props);
 
     this.state = {
       mountContent: true,
+      type: null,
     };
   };
 
-  openModal = () => {
+  openModal = ({type}) => {
     this.setState({
-      mountContent: true
+      mountContent: true,
+      type
     });
 
     this._modal.showModal();
   };
 
   _renderTitle(){
-    const { styles } = SubjectModal;
+    const { styles, TYPES } = CreateQuizModal;
+    const { type } = this.state;
+
+    //icontext props
+    let text, subtitle;
+    
+    //set title/desc based on type
+    switch (type) {
+      case TYPES.module:
+        //title/desc when type is module
+        text     = 'Add Module';
+        subtitle = 'Select the modules that you want to add.';
+        break;
+
+      case TYPES.subject:
+        //title/desc when type is subject
+        text     = 'Add Subject';
+        subtitle = 'Select the subjects that you want to add';
+        break;
+    
+      default:
+        text     = '?';
+        subtitle = '?';
+        break;
+    };
     
     return(
       <Fragment>
@@ -1142,12 +1198,12 @@ export class CreateQuizModal extends React.PureComponent {
           containerStyle={{marginLeft: 7, marginRight: 25, marginBottom: 10}}
           textStyle={styles.title}
           subtitleStyle={{fontWeight: '200', fontSize: 16}}
-          text     ={'Options'}
-          //subtitle ={''}
           iconName ={'notebook'}
           iconType ={'simple-line-icon'}
           iconColor={'#512DA8'}
           iconSize ={26}
+          //pass down props
+          {...{text, subtitle}}
         />
       </Fragment>      
     );

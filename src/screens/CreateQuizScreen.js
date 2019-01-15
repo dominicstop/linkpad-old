@@ -9,11 +9,9 @@ import { PURPLE } from '../functions/Colors';
 import { CreateCustomQuizList } from '../components/CustomQuiz';
 import { AndroidHeader } from '../components/AndroidHeader';
 
-import { HEADER_PROPS          } from '../Constants';
 import { ViewWithBlurredHeader, IconText, Card } from '../components/Views' ;
-import { CustomHeader          } from '../components/Header';
-import { DrawerButton          } from '../components/Buttons';
 import { PlatformTouchableIconButton } from '../components/Buttons';
+import { CreateQuizModal } from '../components/SwipableModal';
 
 
 
@@ -36,6 +34,7 @@ export class CreateQuizScreen extends React.Component {
   static navigationOptions = ({ navigation }) => {
     const { state } = navigation;
 
+    //set header title
     let title = 'Custom Quiz';
     if(state.params) title = state.params.title;
 
@@ -63,10 +62,37 @@ export class CreateQuizScreen extends React.Component {
     super(props);
   };
 
-  _renderHeader(){
+  _handleOnPressAddModule = () => {
+    //get ref from screenprops
+    const { getRefCreateQuizModal } = this.props.screenProps;
+    //get ref of modal from homescreen wrapper
+    const quizModal = getRefCreateQuizModal();
+
+    //extract types enum
+    const { TYPES } = CreateQuizModal;
+    const type = TYPES.module;
+
+    quizModal && quizModal.openModal({type});
+  };
+
+  _handleOnPressAddSubject = () => {
+    //get ref from screenprops
+    const { getRefCreateQuizModal } = this.props.screenProps;
+    //get ref of modal from homescreen wrapper
+    const quizModal = getRefCreateQuizModal();
+
+    //extract types enum
+    const { TYPES } = CreateQuizModal;
+    const type = TYPES.subject;
+
+    quizModal && quizModal.openModal({type});
+  };
+
+  _renderHeader = () => {
     return(
       <CreateCustomQuizHeader
-
+        onPressAddModule ={this._handleOnPressAddModule }
+        onPressAddSubject={this._handleOnPressAddSubject}
       />
     );
   };
@@ -185,10 +211,10 @@ export class CreateCustomQuizHeader extends React.PureComponent {
     return(
       <Fragment>
         <PlatformTouchableIconButton
-          onPress={this._handleOnPressButton}
+          onPress={this._handleOnPressAddSubject}
           wrapperStyle={[styles.buttonWrapper, STYLES.lightShadow]}
           containerStyle={styles.buttonContainer}
-          text={'Add Module'}
+          text={'Add Subject'}
           textStyle={styles.buttonText}
           iconName={'bookmark'}
           iconType={'entypo'}
@@ -196,10 +222,10 @@ export class CreateCustomQuizHeader extends React.PureComponent {
           iconSize={24}
         />
         <PlatformTouchableIconButton
-          onPress={this._handleOnPressButton}
+          onPress={this._handleOnPressAddModule}
           wrapperStyle={[styles.buttonWrapper, STYLES.lightShadow]}
           containerStyle={styles.buttonContainer}
-          text={'Add Subject'}
+          text={'Add Module'}
           textStyle={styles.buttonText}
           iconName={'bookmarks'}
           iconType={'entypo'}

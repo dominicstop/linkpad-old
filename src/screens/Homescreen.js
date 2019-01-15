@@ -287,6 +287,7 @@ export class Homescreen extends React.PureComponent {
           screenProps={{
             ...this.props.screenProps,
             getRefSubjectModal   : () => this.subjectModal    ,
+            getRefCreateQuizModal: () => this.createQuizModal ,
             getAppStackNavigation: () => this.props.navigation,
             setDrawerSwipe: this.setDrawerSwipe,
           }}
