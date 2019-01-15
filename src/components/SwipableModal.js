@@ -1,5 +1,5 @@
 import React, { Component, Fragment } from 'react';
-import { StyleSheet, View, Dimensions, Image, Text, TouchableOpacity, ScrollView, Platform, Alert, LayoutAnimation, UIManager } from 'react-native';
+import { StyleSheet, View, Dimensions, Image, Text, TouchableOpacity, ScrollView, Platform, Alert, LayoutAnimation, UIManager, SectionList } from 'react-native';
 import PropTypes from 'prop-types';
 
 import Animated from 'react-native-reanimated';
@@ -1139,6 +1139,12 @@ export class CreateQuizModal extends React.PureComponent {
       textAlign: 'justify',
       color: '#202020',
     },
+    scrollview: {
+      flex: 1, 
+      padding: 10, 
+      borderTopColor: 'rgba(0, 0, 0, 0.15)', 
+      borderTopWidth: 1
+    },
   });
 
   //enum for modal type
@@ -1153,6 +1159,17 @@ export class CreateQuizModal extends React.PureComponent {
     this.state = {
       mountContent: true,
       type: null,
+      
+      modules: [
+        {
+          description: 'lorum desc', modulename: 'ipsum desc', lastupdated: '1/1/1998', indexid: 1, 
+          data: [
+            { indexid: 0, subjectname: 'lorum subject 1', description: 'ipsum desc 1', lastupdated: '1/1/2090', questions: [], indexID_module: 1 },
+            { indexid: 1, subjectname: 'lorum subject 2', description: 'ipsum desc 2', lastupdated: '1/1/2010', questions: [], indexID_module: 1 },
+            { indexid: 2, subjectname: 'lorum subject 3', description: 'ipsum desc 3', lastupdated: '1/1/2020', questions: [], indexID_module: 1 },
+          ]
+        }
+      ],
     };
   };
 
@@ -1163,6 +1180,11 @@ export class CreateQuizModal extends React.PureComponent {
     });
 
     this._modal.showModal();
+  };
+
+  _handleKeyExtractor(item, index){
+    const { modulename, indexid } = item;
+    return(`${modulename}-${indexid}`);
   };
 
   _renderTitle(){
@@ -1187,6 +1209,7 @@ export class CreateQuizModal extends React.PureComponent {
         break;
     
       default:
+        //invalid type
         text     = '?';
         subtitle = '?';
         break;
@@ -1209,14 +1232,46 @@ export class CreateQuizModal extends React.PureComponent {
     );
   };
 
+  _renderItem = ({item, index, section}) => {
+    return (
+      <Text>{'item'}</Text>
+    );
+  };
+
+  _renderSectionHeader = ({section}) => {
+    //wrap data inside model
+    const moduleModel = new ModuleItemModel({
+      //combine section data as subjects array
+      subjects: section.data, ...section,
+    });
+    
+    //deconstruct module properties
+    const { modulename, description, lastupdated } = moduleModel.get();
+    const subjectCount = moduleModel.getLenghtSubjects();
+
+    console.log(moduleModel.get());
+
+    return (
+      <View>
+        <Text style={{fontWeight: 'bold'}}>{modulename}</Text>
+      </View>
+    );
+  };
+
   _renderContent(){
+    const { styles } = CreateQuizModal; 
+
     return(
       <View style={{flex: 1}}>
         <ModalTopIndicator/>
         {this._renderTitle()}
-        <ScrollView style={{flex: 1}}>
-
-        </ScrollView>
+        <SectionList
+          style={styles.scrollview}
+          renderItem={this._renderItem}
+          renderSectionHeader={this._renderSectionHeader}
+          keyExtractor={this._handleKeyExtractor}
+          sections={this.state.modules}
+        />
       </View>
     );
   };
