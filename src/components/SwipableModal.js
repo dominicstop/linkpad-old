@@ -5,6 +5,8 @@ import PropTypes from 'prop-types';
 import Animated from 'react-native-reanimated';
 import { BlurView } from 'expo';
 
+import { PURPLE } from '../functions/Colors';
+
 import   Interactable                   from './Interactable';
 import { AnimatedCollapsable          } from './Buttons';
 import { IconText, AnimateInView      } from '../components/Views';
@@ -16,7 +18,7 @@ import * as Animatable from 'react-native-animatable';
 import NavigationService from '../NavigationService';
 import IncompletePracticeExamStore, { IncompletePracticeExamModel } from '../functions/IncompletePracticeExamStore';
 import TimeAgo from 'react-native-timeago';
-import { Icon } from 'react-native-elements';
+import { Icon, Divider } from 'react-native-elements';
 
 const Screen = {
   width : Dimensions.get('window').width ,
@@ -1112,6 +1114,71 @@ export class SubjectModal extends React.PureComponent {
   };
 };
 
+export class CreateQuizModalSectionHeader extends React.PureComponent {
+  static propTypes = {
+    sextion: PropTypes.object,
+  };
+
+  static styles = StyleSheet.create({
+    container: {
+      padding: 10,
+      backgroundColor: 'rgba(255, 255, 255, 0.25)',
+    },
+    headerTitle: {
+      fontWeight: 'bold',
+      fontSize: 20,
+      color: PURPLE[900],
+    },
+    headerSubtitle: {
+      fontSize: 18,
+      fontWeight: '300'
+    },
+  });
+
+  _renderIOS(props){
+    const { styles } = CreateQuizModalSectionHeader;
+    return (
+      <BlurView
+        style={{marginBottom: 2}}
+        tint={'default'}
+        intensity={100}
+        {...props}
+      >
+        <View style={styles.container}>
+          {props.children}
+        </View>
+      </BlurView>
+    );
+  };
+
+  render(){
+    const { styles } = CreateQuizModalSectionHeader;
+    const { section } = this.props;
+
+    //wrap data inside model
+    const moduleModel = new ModuleItemModel({
+      //combine section data as subjects array
+      subjects: section.data, ...section,
+    });
+    
+    //deconstruct module properties
+    const { modulename, description, lastupdated } = moduleModel.get();
+    const subjectCount = moduleModel.getLenghtSubjects();
+
+    const Container = Platform.select({
+      ios    : this._renderIOS,
+      android: (props) => <View     {...props}>{props.children}</View>    ,
+    });
+
+    return(
+      <Container>
+        <Text numberOfLines={1} style={styles.headerTitle}>{modulename}</Text>
+        <Text numberOfLines={1} style={styles.headerSubtitle}>{description}</Text>
+      </Container>
+    );
+  };
+};
+
 export class CreateQuizModal extends React.PureComponent {
   static styles = StyleSheet.create({
     title: {
@@ -1141,8 +1208,7 @@ export class CreateQuizModal extends React.PureComponent {
     },
     scrollview: {
       flex: 1, 
-      padding: 10, 
-      borderTopColor: 'rgba(0, 0, 0, 0.15)', 
+      borderTopColor: 'rgb(200, 200, 200)', 
       borderTopWidth: 1
     },
   });
@@ -1163,6 +1229,22 @@ export class CreateQuizModal extends React.PureComponent {
       modules: [
         {
           description: 'lorum desc', modulename: 'ipsum desc', lastupdated: '1/1/1998', indexid: 1, 
+          data: [
+            { indexid: 0, subjectname: 'lorum subject 1', description: 'ipsum desc 1', lastupdated: '1/1/2090', questions: [], indexID_module: 1 },
+            { indexid: 1, subjectname: 'lorum subject 2', description: 'ipsum desc 2', lastupdated: '1/1/2010', questions: [], indexID_module: 1 },
+            { indexid: 2, subjectname: 'lorum subject 3', description: 'ipsum desc 3', lastupdated: '1/1/2020', questions: [], indexID_module: 1 },
+          ]
+        },
+        {
+          description: 'lorum desc', modulename: 'ipsum red', lastupdated: '1/1/1998', indexid: 1, 
+          data: [
+            { indexid: 0, subjectname: 'lorum subject 1', description: 'ipsum desc 1', lastupdated: '1/1/2090', questions: [], indexID_module: 1 },
+            { indexid: 1, subjectname: 'lorum subject 2', description: 'ipsum desc 2', lastupdated: '1/1/2010', questions: [], indexID_module: 1 },
+            { indexid: 2, subjectname: 'lorum subject 3', description: 'ipsum desc 3', lastupdated: '1/1/2020', questions: [], indexID_module: 1 },
+          ]
+        },
+        {
+          description: 'lorum desc', modulename: 'ipsum asd', lastupdated: '1/1/1998', indexid: 1, 
           data: [
             { indexid: 0, subjectname: 'lorum subject 1', description: 'ipsum desc 1', lastupdated: '1/1/2090', questions: [], indexID_module: 1 },
             { indexid: 1, subjectname: 'lorum subject 2', description: 'ipsum desc 2', lastupdated: '1/1/2010', questions: [], indexID_module: 1 },
@@ -1233,28 +1315,32 @@ export class CreateQuizModal extends React.PureComponent {
   };
 
   _renderItem = ({item, index, section}) => {
+    const { styles } = CreateQuizModal;
+
     return (
-      <Text>{'item'}</Text>
+      <View style={{backgroundColor: 'rgba(255, 255,255, 0.25)', padding: 10}}>
+        <Text>{'Text'}</Text>
+      </View>
     );
   };
 
   _renderSectionHeader = ({section}) => {
-    //wrap data inside model
-    const moduleModel = new ModuleItemModel({
-      //combine section data as subjects array
-      subjects: section.data, ...section,
-    });
-    
-    //deconstruct module properties
-    const { modulename, description, lastupdated } = moduleModel.get();
-    const subjectCount = moduleModel.getLenghtSubjects();
+    return(
+      <CreateQuizModalSectionHeader {...{section}}/>
+    );
+  };
 
-    console.log(moduleModel.get());
-
+  _renderSectionFooter(){
     return (
-      <View>
-        <Text style={{fontWeight: 'bold'}}>{modulename}</Text>
+      <View style={{marginBottom: 15}}>
+    
       </View>
+    );
+  };
+
+  _renderItemSeperator(){
+    return(
+      <View style={{marginTop: 2}}/>
     );
   };
 
@@ -1269,6 +1355,8 @@ export class CreateQuizModal extends React.PureComponent {
           style={styles.scrollview}
           renderItem={this._renderItem}
           renderSectionHeader={this._renderSectionHeader}
+          renderSectionFooter={this._renderSectionFooter}
+          ItemSeparatorComponent={this._renderItemSeperator}
           keyExtractor={this._handleKeyExtractor}
           sections={this.state.modules}
         />
