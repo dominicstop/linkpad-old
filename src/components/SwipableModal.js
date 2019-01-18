@@ -1122,10 +1122,10 @@ export class CreateQuizModalSectionHeader extends React.PureComponent {
   static styles = StyleSheet.create({
     container: {
       padding: 10,
-      backgroundColor: 'rgba(255, 255, 255, 0.25)',
+      backgroundColor: 'rgba(255, 255, 255, 0.20)',
     },
     headerTitle: {
-      fontWeight: 'bold',
+      fontWeight: '600',
       fontSize: 20,
       color: PURPLE[900],
     },
@@ -1139,7 +1139,7 @@ export class CreateQuizModalSectionHeader extends React.PureComponent {
     const { styles } = CreateQuizModalSectionHeader;
     return (
       <BlurView
-        style={{marginBottom: 2}}
+        style={{marginBottom: 2, borderBottomColor: 'black'}}
         tint={'default'}
         intensity={100}
         {...props}
@@ -1173,8 +1173,106 @@ export class CreateQuizModalSectionHeader extends React.PureComponent {
     return(
       <Container>
         <Text numberOfLines={1} style={styles.headerTitle}>{modulename}</Text>
-        <Text numberOfLines={1} style={styles.headerSubtitle}>{description}</Text>
+        <Text numberOfLines={2} style={styles.headerSubtitle}>{description}</Text>
       </Container>
+    );
+  };
+};
+
+export class CreateQuizModalSectionItem extends React.PureComponent {
+  static propTypes = {
+    subjectData: PropTypes.object,
+    onPressItem: PropTypes.func,
+  };
+
+  static styles = StyleSheet.create({
+    buttonContainer: {
+      flexDirection: 'row',
+      backgroundColor: 'rgba(255, 255,255, 0.25)', 
+      padding: 10
+    },
+    subjectTitle: {
+      fontSize: 18, 
+      fontWeight: 'bold',
+      color: 'rgb(25, 25, 25)'
+    },
+  });
+
+  constructor(props){
+    super(props);
+    this.state = {
+      isSelected: false,
+    };
+  };
+
+  _handleOnPress = () => {
+    const { isSelected } = this.state;
+    this.setState({ isSelected: !isSelected });
+
+    const { onPressItem, subjectData } = this.props;
+    onPressItem && onPressItem(!isSelected, subjectData);
+  };
+
+  _renderCheckbox(){
+    const { isSelected } = this.state;
+
+    const props = Platform.select({
+      ios: {
+        type: 'ionicon',
+        size: 26,
+        ...isSelected? {
+          name: 'ios-checkmark-circle',
+          color: PURPLE[500],
+        } : {
+          name: 'ios-radio-button-off',
+          color: PURPLE[200],
+        },
+      },
+      android: {
+        name: '',
+        type: '',
+        size: '',
+        ...isSelected? {
+
+        } : {
+
+        },
+      },
+    });
+
+    return (
+      <Icon
+        containerStyle={{marginRight: 10}}
+        {...props}
+      />
+    );
+  };
+
+  _renderDetails(){
+    const { styles } = CreateQuizModalSectionItem;
+
+    const { subjectData } = this.props;
+    const { subjectname, description } = subjectData;
+
+    return (
+      <View>
+        <Text style={styles.subjectTitle}>{subjectname}</Text>
+        <Text style={{fontSize: 16, fontWeight: '100'}}>{description}</Text>
+      </View>
+    );
+  };
+
+  render(){
+    const { styles } = CreateQuizModalSectionItem;
+
+    return (
+      <TouchableOpacity 
+        style={styles.buttonContainer}
+        onPress={this._handleOnPress}
+      >
+        {this._renderCheckbox()}
+        {this._renderDetails ()}
+      </TouchableOpacity>
     );
   };
 };
@@ -1236,23 +1334,25 @@ export class CreateQuizModal extends React.PureComponent {
           ]
         },
         {
-          description: 'lorum desc', modulename: 'ipsum red', lastupdated: '1/1/1998', indexid: 1, 
+          description: 'lorum desc', modulename: 'ipsum red', lastupdated: '1/1/1998', indexid: 2, 
           data: [
-            { indexid: 0, subjectname: 'lorum subject 1', description: 'ipsum desc 1', lastupdated: '1/1/2090', questions: [], indexID_module: 1 },
-            { indexid: 1, subjectname: 'lorum subject 2', description: 'ipsum desc 2', lastupdated: '1/1/2010', questions: [], indexID_module: 1 },
-            { indexid: 2, subjectname: 'lorum subject 3', description: 'ipsum desc 3', lastupdated: '1/1/2020', questions: [], indexID_module: 1 },
+            { indexid: 0, subjectname: 'lorum subject 1', description: 'ipsum desc 1', lastupdated: '1/1/2090', questions: [], indexID_module: 2 },
+            { indexid: 1, subjectname: 'lorum subject 2', description: 'ipsum desc 2', lastupdated: '1/1/2010', questions: [], indexID_module: 2 },
+            { indexid: 2, subjectname: 'lorum subject 3', description: 'ipsum desc 3', lastupdated: '1/1/2020', questions: [], indexID_module: 2 },
           ]
         },
         {
-          description: 'lorum desc', modulename: 'ipsum asd', lastupdated: '1/1/1998', indexid: 1, 
+          description: 'lorum desc', modulename: 'ipsum asd', lastupdated: '1/1/1998', indexid: 3, 
           data: [
-            { indexid: 0, subjectname: 'lorum subject 1', description: 'ipsum desc 1', lastupdated: '1/1/2090', questions: [], indexID_module: 1 },
-            { indexid: 1, subjectname: 'lorum subject 2', description: 'ipsum desc 2', lastupdated: '1/1/2010', questions: [], indexID_module: 1 },
-            { indexid: 2, subjectname: 'lorum subject 3', description: 'ipsum desc 3', lastupdated: '1/1/2020', questions: [], indexID_module: 1 },
+            { indexid: 0, subjectname: 'lorum subject 1', description: 'ipsum desc 1', lastupdated: '1/1/2090', questions: [], indexID_module: 3 },
+            { indexid: 1, subjectname: 'lorum subject 2', description: 'ipsum desc 2', lastupdated: '1/1/2010', questions: [], indexID_module: 3 },
+            { indexid: 2, subjectname: 'lorum subject 3', description: 'ipsum desc 3', lastupdated: '1/1/2020', questions: [], indexID_module: 3 },
           ]
         }
       ],
     };
+
+    this.selected = [];
   };
 
   openModal = ({type}) => {
@@ -1267,6 +1367,21 @@ export class CreateQuizModal extends React.PureComponent {
   _handleKeyExtractor(item, index){
     const { modulename, indexid } = item;
     return(`${modulename}-${indexid}`);
+  };
+
+  _handleOnPressItem = (isSelected, subjectData) => {
+    const selected_id = `${subjectData.indexID_module}-${subjectData.indexid}`;
+
+    if(isSelected){
+      //add to selected list
+      this.selected.push(subjectData);
+    } else {
+      //remove from selected list
+      this.selected = this.selected.filter(value =>
+        //only add items that does not match selected id
+        selected_id != `${value.indexID_module}-${value.indexid}`
+      );
+    };
   };
 
   _renderTitle(){
@@ -1318,9 +1433,10 @@ export class CreateQuizModal extends React.PureComponent {
     const { styles } = CreateQuizModal;
 
     return (
-      <View style={{backgroundColor: 'rgba(255, 255,255, 0.25)', padding: 10}}>
-        <Text>{'Text'}</Text>
-      </View>
+      <CreateQuizModalSectionItem
+        subjectData={item}
+        onPressItem={this._handleOnPressItem}
+      />
     );
   };
 
@@ -1332,9 +1448,7 @@ export class CreateQuizModal extends React.PureComponent {
 
   _renderSectionFooter(){
     return (
-      <View style={{marginBottom: 15}}>
-    
-      </View>
+      <View style={{marginBottom: 25, borderBottomColor: 'rgba(0, 0, 0, 0.15)', borderBottomWidth: 1}}/>
     );
   };
 
