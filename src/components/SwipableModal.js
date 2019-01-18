@@ -2,7 +2,7 @@ import React, { Component, Fragment } from 'react';
 import { StyleSheet, View, Dimensions, Image, Text, TouchableOpacity, ScrollView, Platform, Alert, LayoutAnimation, UIManager, SectionList } from 'react-native';
 import PropTypes from 'prop-types';
 
-import Animated from 'react-native-reanimated';
+import Animated, { Easing } from 'react-native-reanimated';
 import { BlurView } from 'expo';
 
 import { PURPLE } from '../functions/Colors';
@@ -15,6 +15,7 @@ import { SubjectItem, ModuleItemModel } from '../functions/ModuleStore';
 import { timeout, setStateAsync       } from '../functions/Utils';
 
 import * as Animatable from 'react-native-animatable';
+
 import NavigationService from '../NavigationService';
 import IncompletePracticeExamStore, { IncompletePracticeExamModel } from '../functions/IncompletePracticeExamStore';
 import TimeAgo from 'react-native-timeago';
@@ -1371,7 +1372,9 @@ export class CreateQuizModal extends React.PureComponent {
 
   _handleOnPressItem = (isSelected, subjectData) => {
     const selected_id = `${subjectData.indexID_module}-${subjectData.indexid}`;
-
+    //store the previous value of selected before add/remove
+    const old_selected = [...this.selected];
+    
     if(isSelected){
       //add to selected list
       this.selected.push(subjectData);
@@ -1381,6 +1384,18 @@ export class CreateQuizModal extends React.PureComponent {
         //only add items that does not match selected id
         selected_id != `${value.indexID_module}-${value.indexid}`
       );
+    };
+
+    const old_length = old_selected.length;
+    const new_length = this.selected.length;
+
+    if(old_length == 0 && new_length > 0){
+      //show next button
+      this._nextButton.show();
+
+    } else if(old_length > 0 && new_length == 0){
+      //hide next button
+      this._nextButton.hide();
     };
   };
 
@@ -1458,6 +1473,14 @@ export class CreateQuizModal extends React.PureComponent {
     );
   };
 
+  _renderNextButton(){
+    return (
+      <CreateQuizModalNextButton
+        ref={r => this._nextButton = r}
+      />
+    );
+  };
+
   _renderContent(){
     const { styles } = CreateQuizModal; 
 
@@ -1474,6 +1497,7 @@ export class CreateQuizModal extends React.PureComponent {
           keyExtractor={this._handleKeyExtractor}
           sections={this.state.modules}
         />
+        {this._renderNextButton()}
       </View>
     );
   };
@@ -1494,6 +1518,48 @@ export class CreateQuizModal extends React.PureComponent {
           {mountContent && this._renderContent()}
         </ModalBackground>
       </SwipableModal>
+    );
+  };
+};
+
+export class CreateQuizModalNextButton extends React.PureComponent {
+  constructor(props){
+    super(props);
+
+    this._height = new Animated.Value(0);
+    this._showConfig = {
+      duration: 750,
+      toValue : 75,
+      easing  : Easing.inOut(Easing.ease),
+    };
+
+    this._hideConfig = {
+      duration: 750,
+      toValue : 0,
+      easing  : Easing.inOut(Easing.ease),
+    };
+
+    this._animatedShow = Animated.timing(this._height, this._showConfig);
+    this._animatedHide = Animated.timing(this._height, this._hideConfig);
+  };
+
+  show = () => {
+    this._animatedShow.start();
+    this._animatedShow = Animated.timing(this._height, this._showConfig);
+  };
+
+  hide = () => {
+    this._animatedHide.start();
+    this._animatedHide = Animated.timing(this._height, this._hideConfig);
+  };
+
+  render(){
+    return (
+      <Animated.View
+        style={{height: this._height}}
+      >
+        <Text style={{fontSize: 18, margin: 10}}>Hello World</Text>
+      </Animated.View>
     );
   };
 };
