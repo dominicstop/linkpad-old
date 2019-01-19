@@ -4,7 +4,9 @@ import { View, Platform, Text, StyleSheet, Clipboard } from 'react-native';
 import Constants, { STYLES, ROUTES } from '../Constants';
 import { CustomHeader } from '../components/Header' ;
 
-import { SubjectModal, CreateQuizModal     } from '../components/SwipableModal';
+import { SubjectModal    } from '../components/SwipableModal';
+import { CreateQuizModal } from '../components/modals/CreateQuizModal';
+
 import { ModuleListScreen } from './ModuleListScreen';
 import { ResourcesScreen  } from './ResourcesScreen';
 import { ExamsScreen      } from './ExamsScreen';

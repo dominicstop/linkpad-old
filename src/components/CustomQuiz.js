@@ -6,7 +6,7 @@ import { Card, AnimatedListItem } from '../components/Views';
 import { PlatformTouchableIconButton } from '../components/Buttons';
 
 import { ROUTES, STYLES } from '../Constants';
-import { PURPLE, RED} from '../functions/Colors';
+import { PURPLE, RED } from '../Colors';
 
 import * as Animatable from 'react-native-animatable';
 import { Divider } from 'react-native-elements';

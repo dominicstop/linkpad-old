@@ -3,7 +3,7 @@ import { View, ScrollView, StyleSheet, Text, TouchableOpacity, AsyncStorage } fr
 import PropTypes from 'prop-types';
 
 import { ROUTES, HEADER_HEIGHT , STYLES} from '../Constants';
-import { PURPLE } from '../functions/Colors';
+import { PURPLE } from '../Colors';
 
 import NavigationService from '../NavigationService';
 

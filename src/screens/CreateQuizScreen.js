@@ -4,16 +4,14 @@ import PropTypes from 'prop-types';
 
 import   NavigationService from '../NavigationService';
 import { ROUTES, STYLES, HEADER_HEIGHT } from '../Constants';
-import { PURPLE } from '../functions/Colors';
+import { PURPLE } from '../Colors';
 
 import { CreateCustomQuizList } from '../components/CustomQuiz';
 import { AndroidHeader } from '../components/AndroidHeader';
 
 import { ViewWithBlurredHeader, IconText, Card } from '../components/Views' ;
 import { PlatformTouchableIconButton } from '../components/Buttons';
-import { CreateQuizModal } from '../components/SwipableModal';
-
-
+import { CreateQuizModal } from '../components/modals/CreateQuizModal';
 
 import { setStateAsync } from '../functions/Utils';
 
