@@ -20,12 +20,8 @@ useScreens();
 
 //main stack for app screens
 const AppStack = createStackNavigator({
-    [ROUTES.HomeRoute]: {
-      screen: DrawerStackContainer,
-    },
-    [ROUTES.PracticeExamRoute]: {
-      screen: PracticeExamStackContainer,
-    },
+    [ROUTES.HomeRoute        ]: DrawerStackContainer,
+    [ROUTES.PracticeExamRoute]: PracticeExamStackContainer,
   },{
     headerMode: 'hidden',
     initialRouteName: 'HomeRoute',

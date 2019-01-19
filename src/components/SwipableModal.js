@@ -18,7 +18,7 @@ import NavigationService from '../NavigationService';
 import IncompletePracticeExamStore, { IncompletePracticeExamModel } from '../functions/IncompletePracticeExamStore';
 import TimeAgo from 'react-native-timeago';
 import { Icon, Divider } from 'react-native-elements';
-import { STYLES } from '../Constants';
+import { ROUTES } from '../Constants';
 
 const Screen = {
   width : Dimensions.get('window').width ,
@@ -748,7 +748,7 @@ export class SubjectModal extends React.PureComponent {
 
   _handleOnPressStart = () => {
     const { moduleData, subjectData } = this.state;
-    NavigationService.navigateApp('PracticeExamRoute', {
+    NavigationService.navigateApp(ROUTES.PracticeExamRoute, {
       moduleData, subjectData,
     });
   };
@@ -1113,8 +1113,6 @@ export class SubjectModal extends React.PureComponent {
     );
   };
 };
-
-
 
 export class SearchTipsModal extends React.PureComponent {
 

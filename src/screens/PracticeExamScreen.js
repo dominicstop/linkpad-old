@@ -268,18 +268,17 @@ export class PracticeExamStackContainer extends React.Component {
   
   render(){
     const { styles } = PracticeExamStackContainer;
-    const { navigation, screenProps } = this.props;
 
     return(
       <View style={styles.rootContainer}>
         <PracticeExamStack
-          {...{navigation}}
+          navigation={this.props.navigation}
           screenProps={{
-            ...screenProps,
+            ...this.props.screenProps,
             getPracticeExamOptionsModal: () => this._optionsModal,
           }}
         />
-        {this._renderOptionsModal()}
+        {/**this._renderOptionsModal()*/}
       </View>
     );
   };
