@@ -17,7 +17,7 @@ import { BlurView } from 'expo';
 import { Icon, Divider } from 'react-native-elements';
 
 //module title
-export class CreateQuizModalSectionHeader extends React.PureComponent {
+class CreateQuizModalSectionHeader extends React.PureComponent {
   static propTypes = {
     sextion: PropTypes.object,
   };
@@ -83,7 +83,7 @@ export class CreateQuizModalSectionHeader extends React.PureComponent {
 };
 
 //subject item
-export class CreateQuizModalSectionItem extends React.PureComponent {
+class CreateQuizModalSectionItem extends React.PureComponent {
   static propTypes = {
     subjectData: PropTypes.object,
     onPressItem: PropTypes.func,
@@ -93,7 +93,8 @@ export class CreateQuizModalSectionItem extends React.PureComponent {
     buttonContainer: {
       flexDirection: 'row',
       backgroundColor: 'rgba(255, 255,255, 0.25)', 
-      padding: 10
+      padding: 10,
+      paddingLeft: 17,
     },
     subjectTitle: {
       fontSize: 18, 
@@ -181,7 +182,7 @@ export class CreateQuizModalSectionItem extends React.PureComponent {
   };
 };
 
-export class CreateQuizModalNextButton extends React.PureComponent {
+class CreateQuizModalAddButton extends React.PureComponent {
   static propTypes = {
     onPress: PropTypes.func,
   };
@@ -204,12 +205,11 @@ export class CreateQuizModalNextButton extends React.PureComponent {
     buttonText: {
       flex: 1,
       fontSize: 16,
-      fontWeight: '400',
+      fontWeight: '500',
       color: 'white',
       textAlign: 'left',
       textAlignVertical: 'center',
       marginLeft: 10,
-      textDecorationLine: 'underline'
     },
   });
   
@@ -218,13 +218,13 @@ export class CreateQuizModalNextButton extends React.PureComponent {
 
     this._height = new Animated.Value(0);
     this._showConfig = {
-      duration: 500,
+      duration: 300,
       toValue : 80,
       easing  : Easing.inOut(Easing.ease),
     };
 
     this._hideConfig = {
-      duration: 500,
+      duration: 300,
       toValue : 0,
       easing  : Easing.inOut(Easing.ease),
     };
@@ -249,7 +249,7 @@ export class CreateQuizModalNextButton extends React.PureComponent {
   };
 
   _renderContents(){
-    const { styles } = CreateQuizModalNextButton;
+    const { styles } = CreateQuizModalAddButton;
     return(
       <Fragment>
         <Icon
@@ -258,7 +258,7 @@ export class CreateQuizModalNextButton extends React.PureComponent {
           color={'white'}
           size={24}
         />
-        <Text style={styles.buttonText}>{'Create Custom Quiz'}</Text>
+        <Text style={styles.buttonText}>{'Add Selected Items'}</Text>
         <Icon
           name={'chevron-right'}
           type={'feather'}
@@ -270,7 +270,7 @@ export class CreateQuizModalNextButton extends React.PureComponent {
   };
 
   render(){
-    const { styles } = CreateQuizModalNextButton;
+    const { styles } = CreateQuizModalAddButton;
     return (
       <Animated.View style={[{height: this._height}, styles.container]}>
         <TouchableOpacity
@@ -284,7 +284,7 @@ export class CreateQuizModalNextButton extends React.PureComponent {
   };
 };
 
-export class CreateQuizModalTitle extends React.PureComponent {
+class CreateQuizModalTitle extends React.PureComponent {
   static propTypes = {
     type: PropTypes.string,
   };
@@ -330,45 +330,20 @@ export class CreateQuizModalTitle extends React.PureComponent {
     };
   };
 
-  getTitleText(selectedCount){
-    const { TYPES } = CreateQuizModal;
-    const { type } = this.props;
-    
-    //icontext props
-    let text, subtitle;
-    
-    //set inital title/desc based on type
-    switch (type) {
-      case TYPES.module:
-        //title/desc when type is module
-        text     = 'Add Module';
-        subtitle = selectedCount == 0
-          ? 'Select the modules that you want to add.' 
-          : `${selectedCount} ${plural('module', selectedCount)} has been selected.`
-        break;
-
-      case TYPES.subject:
-        //title/desc when type is subject
-        text     = 'Add Subject';
-        subtitle = selectedCount == 0
-          ? 'Select the subjects that you want to add.' 
-          : `${selectedCount} ${plural('subject', selectedCount)} has been selected.`
-        break;
-    
-      default:
-        //invalid type
-        text     = '?';
-        subtitle = '?';
-        break;
-    };
+  getTitleText(selectedCount){    
+    const text     = 'Add Subject';
+    const subtitle = (selectedCount == 0
+      ? 'Select the subjects that you want to add.' 
+      : `${selectedCount} ${plural('subject', selectedCount)} has been selected.`
+    );
 
     return { text, subtitle };
   };
 
   setSubtitle = async (subtitle) => {
-    await this.subtitleText.fadeOut(300);
+    await this.subtitleText.fadeOut(200);
     await setStateAsync(this, {subtitle});
-    await this.subtitleText.fadeIn (300);
+    await this.subtitleText.fadeIn (200);
   };
 
   setSelectedCount = (selectedCount) => {
@@ -414,7 +389,11 @@ export class CreateQuizModalTitle extends React.PureComponent {
   };
 };
 
-export class CreateQuizModal extends React.PureComponent {
+class CreateQuizModalAddSubject extends React.PureComponent {
+  static propTypes = {
+    onPressAddItems: PropTypes.func,
+  };
+  
   static styles = StyleSheet.create({
     textSubtitle: {
       fontSize: 18,
@@ -435,19 +414,10 @@ export class CreateQuizModal extends React.PureComponent {
     },
   });
 
-  //enum for modal type
-  static TYPES = {
-    module : 'module ',
-    subject: 'subject',
-  };
-
   constructor(props){
     super(props);
 
-    this.state = {
-      mountContent: true,
-      type: null,
-      
+    this.state = {      
       modules: [
         {
           description: 'lorum desc', modulename: 'ipsum desc', lastupdated: '1/1/1998', indexid: 1, 
@@ -479,18 +449,17 @@ export class CreateQuizModal extends React.PureComponent {
     this.selected = [];
   };
 
-  openModal = ({type}) => {
-    this.setState({
-      mountContent: true,
-      type
-    });
-
-    this._modal.showModal();
-  };
-
   _handleKeyExtractor(item, index){
     const { modulename, indexid } = item;
     return(`${modulename}-${indexid}`);
+  };
+
+  _handleOnPressAdd = () => {
+    //create a copy of selected
+    const selected = [...this.selected];
+    
+    const { onPressAddItems } = this.props;
+    onPressAddItems && onPressAddItems(selected);
   };
 
   _handleOnPressItem = (isSelected, subjectData) => {
@@ -527,20 +496,14 @@ export class CreateQuizModal extends React.PureComponent {
   };
 
   _renderTitle(){
-    const { styles, TYPES } = CreateQuizModal;
-    const { type } = this.state;
-
     return(
       <CreateQuizModalTitle
         ref={r => this.modalTitle = r}
-        {...{type}}
       />
     );
   };
 
   _renderItem = ({item, index, section}) => {
-    const { styles } = CreateQuizModal;
-
     return (
       <CreateQuizModalSectionItem
         subjectData={item}
@@ -569,14 +532,15 @@ export class CreateQuizModal extends React.PureComponent {
 
   _renderNextButton(){
     return (
-      <CreateQuizModalNextButton
+      <CreateQuizModalAddButton
         ref={r => this._nextButton = r}
+        onPress={this._handleOnPressAdd}
       />
     );
   };
 
-  _renderContent(){
-    const { styles } = CreateQuizModal; 
+  render(){
+    const { styles } = CreateQuizModalAddSubject; 
 
     return(
       <View style={{flex: 1}}>
@@ -593,6 +557,41 @@ export class CreateQuizModal extends React.PureComponent {
         />
         {this._renderNextButton()}
       </View>
+    );
+  };
+};
+
+export class CreateQuizModal extends React.PureComponent {
+  constructor(props){
+    super(props);
+
+    this.state = {
+      mountContent: false,
+      type: null,
+    };
+  };
+
+  openModal = () => {
+    this.setState({mountContent: true});
+    this._modal.showModal();
+  };
+
+  _handleOnModalShow = () => {
+  };
+
+  _handleOnModalHide = () => {
+    this.setState({mountContent: false});
+  };
+
+  _handleOnPressAddSubjects = (selected) => {
+
+  };
+
+  _renderContent(){
+    return(
+      <CreateQuizModalAddSubject
+        onPressAddItems={this._handleOnPressAddSubjects}
+      />
     );
   };
 

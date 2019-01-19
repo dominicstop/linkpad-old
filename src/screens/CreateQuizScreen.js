@@ -60,35 +60,18 @@ export class CreateQuizScreen extends React.Component {
     super(props);
   };
 
-  _handleOnPressAddModule = () => {
-    //get ref from screenprops
-    const { getRefCreateQuizModal } = this.props.screenProps;
-    //get ref of modal from homescreen wrapper
-    const quizModal = getRefCreateQuizModal();
-
-    //extract types enum
-    const { TYPES } = CreateQuizModal;
-    const type = TYPES.module;
-
-    quizModal && quizModal.openModal({type});
-  };
-
   _handleOnPressAddSubject = () => {
     //get ref from screenprops
     const { getRefCreateQuizModal } = this.props.screenProps;
     //get ref of modal from homescreen wrapper
     const quizModal = getRefCreateQuizModal();
 
-    //extract types enum
-    const { TYPES } = CreateQuizModal;
-    const type = TYPES.subject;
-
-    quizModal && quizModal.openModal({type});
+    quizModal && quizModal.openModal();
   };
 
   _renderHeader = () => {
     return(
-      <CreateCustomQuizHeader
+      <AddSubjectsCard
         onPressAddModule ={this._handleOnPressAddModule }
         onPressAddSubject={this._handleOnPressAddSubject}
       />
@@ -111,8 +94,7 @@ export class CreateQuizScreen extends React.Component {
   }
 };
 
-// shown when no exams have been created yet
-export class CreateCustomQuizHeader extends React.PureComponent {
+class AddSubjectsCard extends React.PureComponent {
   static PropTypes = {
     onPressAddModule : PropTypes.func,
     onPressAddSubject: PropTypes.func,
@@ -182,7 +164,7 @@ export class CreateCustomQuizHeader extends React.PureComponent {
 
 
   _renderDescription(){
-    const { styles } = CreateCustomQuizHeader;
+    const { styles } = AddSubjectsCard;
 
     return(
       <View style={{flexDirection: 'row'}}>
@@ -197,45 +179,32 @@ export class CreateCustomQuizHeader extends React.PureComponent {
         />
         <View style={styles.headerTextContainer}>
           <Text style={styles.headerTitle   }>Add an Quiz Item</Text>
-          <Text style={styles.headerSubtitle}>100 questions in total will be selected from the modules and subjects you've selected.</Text>
+          <Text style={styles.headerSubtitle}>100 questions in total will be selected across all the subjects you've selected.</Text>
         </View>
       </View>
     );
   };
 
   _renderButtons(){
-    const { styles } = CreateCustomQuizHeader;
+    const { styles } = AddSubjectsCard;
 
     return(
-      <Fragment>
-        <PlatformTouchableIconButton
-          onPress={this._handleOnPressAddSubject}
-          wrapperStyle={[styles.buttonWrapper, STYLES.lightShadow]}
-          containerStyle={styles.buttonContainer}
-          text={'Add Subject'}
-          textStyle={styles.buttonText}
-          iconName={'bookmark'}
-          iconType={'entypo'}
-          iconColor={'white'}
-          iconSize={24}
-        />
-        <PlatformTouchableIconButton
-          onPress={this._handleOnPressAddModule}
-          wrapperStyle={[styles.buttonWrapper, STYLES.lightShadow]}
-          containerStyle={styles.buttonContainer}
-          text={'Add Module'}
-          textStyle={styles.buttonText}
-          iconName={'bookmarks'}
-          iconType={'entypo'}
-          iconColor={'white'}
-          iconSize={24}
-        />
-      </Fragment>
+      <PlatformTouchableIconButton
+        onPress={this._handleOnPressAddSubject}
+        wrapperStyle={[styles.buttonWrapper, STYLES.lightShadow]}
+        containerStyle={styles.buttonContainer}
+        text={'Add Subjects'}
+        textStyle={styles.buttonText}
+        iconName={'bookmark'}
+        iconType={'entypo'}
+        iconColor={'white'}
+        iconSize={24}
+      />
     );
   };
 
   render() {
-    const { styles } = CreateCustomQuizHeader;
+    const { styles } = AddSubjectsCard;
     
     const animation = Platform.select({
       ios    : 'fadeInUp',
