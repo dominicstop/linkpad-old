@@ -20,6 +20,7 @@ import NavigationService from '../NavigationService';
 import IncompletePracticeExamStore, { IncompletePracticeExamModel } from '../functions/IncompletePracticeExamStore';
 import TimeAgo from 'react-native-timeago';
 import { Icon, Divider } from 'react-native-elements';
+import { STYLES } from '../Constants';
 
 const Screen = {
   width : Dimensions.get('window').width ,
@@ -1523,18 +1524,49 @@ export class CreateQuizModal extends React.PureComponent {
 };
 
 export class CreateQuizModalNextButton extends React.PureComponent {
+  static propTypes = {
+    onPress: PropTypes.func,
+  };
+
+  static styles = StyleSheet.create({
+    container: {
+      borderTopColor: 'rgba(0, 0, 0, 0.2)',
+      borderTopWidth: 1,
+    },
+    button: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: PURPLE[700], 
+      margin: 12, 
+      borderRadius: 10,
+      paddingHorizontal: 15,
+    },
+    buttonText: {
+      flex: 1,
+      fontSize: 16,
+      fontWeight: '400',
+      color: 'white',
+      textAlign: 'left',
+      textAlignVertical: 'center',
+      marginLeft: 10,
+      textDecorationLine: 'underline'
+    },
+  });
+  
   constructor(props){
     super(props);
 
     this._height = new Animated.Value(0);
     this._showConfig = {
-      duration: 750,
-      toValue : 75,
+      duration: 500,
+      toValue : 80,
       easing  : Easing.inOut(Easing.ease),
     };
 
     this._hideConfig = {
-      duration: 750,
+      duration: 500,
       toValue : 0,
       easing  : Easing.inOut(Easing.ease),
     };
@@ -1553,12 +1585,42 @@ export class CreateQuizModalNextButton extends React.PureComponent {
     this._animatedHide = Animated.timing(this._height, this._hideConfig);
   };
 
+  _handleOnPress = () => {
+    const { onPress } = this.props;
+    onPress && onPress();
+  };
+
+  _renderContents(){
+    const { styles } = CreateQuizModalNextButton;
+    return(
+      <Fragment>
+        <Icon
+          name={'ios-add-circle-outline'}
+          type={'ionicon'}
+          color={'white'}
+          size={24}
+        />
+        <Text style={styles.buttonText}>{'Create Custom Quiz'}</Text>
+        <Icon
+          name={'chevron-right'}
+          type={'feather'}
+          color={'white'}
+          size={24}
+        />
+      </Fragment>
+    );
+  };
+
   render(){
+    const { styles } = CreateQuizModalNextButton;
     return (
-      <Animated.View
-        style={{height: this._height}}
-      >
-        <Text style={{fontSize: 18, margin: 10}}>Hello World</Text>
+      <Animated.View style={[{height: this._height}, styles.container]}>
+        <TouchableOpacity
+          style={[styles.button, STYLES.lightShadow]}
+          onPress={this._handleOnPress}
+        >
+          {this._renderContents()}
+        </TouchableOpacity>
       </Animated.View>
     );
   };
