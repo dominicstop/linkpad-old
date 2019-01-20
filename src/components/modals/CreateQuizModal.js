@@ -10,10 +10,11 @@ import { SubjectItem, ModuleItemModel, ModuleStore } from '../../functions/Modul
 
 import { MODAL_DISTANCE_FROM_TOP, MODAL_EXTRA_HEIGHT, SwipableModal, ModalBackground, ModalTopIndicator } from '../SwipableModal';
 import { IconText, AnimateInView } from '../../components/Views';
+import { CheckAnimation } from '../../components/Exam';
 
 import * as Animatable from 'react-native-animatable';
 import Animated, { Easing } from 'react-native-reanimated';
-import { BlurView } from 'expo';
+import { BlurView, LinearGradient } from 'expo';
 import { Icon, Divider } from 'react-native-elements';
 
 //module title
@@ -87,6 +88,11 @@ class CreateQuizModalSectionItem extends React.PureComponent {
   static propTypes = {
     subjectData: PropTypes.object,
     onPressItem: PropTypes.func,
+    isSelected : PropTypes.bool,
+  };
+
+  defaultProps = {
+    isSelected: true,
   };
 
   static styles = StyleSheet.create({
@@ -110,7 +116,7 @@ class CreateQuizModalSectionItem extends React.PureComponent {
   constructor(props){
     super(props);
     this.state = {
-      isSelected: false,
+      isSelected: props.isSelected,
     };
   };
 
@@ -258,7 +264,11 @@ class CreateQuizModalAddButton extends React.PureComponent {
   _renderContents(){
     const { styles } = CreateQuizModalAddButton;
     return(
-      <Fragment>
+      <LinearGradient
+        style={[styles.button, STYLES.mediumShadow]}
+        colors={[PURPLE[800], PURPLE[500]]}
+        start={[0, 1]} end={[1, 0]}
+      >
         <Icon
           name={'ios-add-circle-outline'}
           type={'ionicon'}
@@ -272,7 +282,7 @@ class CreateQuizModalAddButton extends React.PureComponent {
           color={'white'}
           size={24}
         />
-      </Fragment>
+      </LinearGradient>
     );
   };
 
@@ -280,10 +290,7 @@ class CreateQuizModalAddButton extends React.PureComponent {
     const { styles } = CreateQuizModalAddButton;
     return (
       <Animated.View style={[{height: this._height}, styles.container]}>
-        <TouchableOpacity
-          style={[styles.button, STYLES.lightShadow]}
-          onPress={this._handleOnPress}
-        >
+        <TouchableOpacity style={{flex: 1}} onPress={this._handleOnPress}>
           {this._renderContents()}
         </TouchableOpacity>
       </Animated.View>
@@ -538,6 +545,29 @@ class CreateQuizModalAddSubject extends React.PureComponent {
 };
 
 export class CreateQuizModal extends React.PureComponent {
+  static styles = StyleSheet.create({
+    overlayContainer: {
+      flex: 1,
+      position: 'absolute',
+      height: '100%',
+      width: '100%',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    overlay: {
+      position: 'absolute',
+      height: '100%',
+      width: '100%',
+      opacity: 0,
+      backgroundColor: 'white',
+    },
+    checkContainer: {
+      width: '100%', 
+      height: '100%', 
+      marginBottom: 125
+    }
+  });
+  
   constructor(props){
     super(props);
 
@@ -545,6 +575,9 @@ export class CreateQuizModal extends React.PureComponent {
       mountContent: false,
       modules: [],
     };
+
+    //called when add subject is pressed
+    this.onPressAddSubject = null;
   };
 
   openModal = async () => {
@@ -554,17 +587,6 @@ export class CreateQuizModal extends React.PureComponent {
   };
 
   async _getModules(){
-    //expected by sectionlist
-    const reference = [
-      {
-        description: 'lorum desc', modulename: 'ipsum desc', lastupdated: '1/1/1998', indexid: 1, 
-        data: [
-          { indexid: 0, subjectname: 'lorum subject 1', description: 'ipsum desc 1', lastupdated: '1/1/2090', questions: [], indexID_module: 1 },
-          { indexid: 1, subjectname: 'lorum subject 2', description: 'ipsum desc 2', lastupdated: '1/1/2010', questions: [], indexID_module: 1 },
-        ]
-      },
-    ];
-
     const modules = await ModuleStore.read();
     //remap modules to work with sectionlist
     return modules.map((module, index, array) => {
@@ -582,8 +604,39 @@ export class CreateQuizModal extends React.PureComponent {
     this.setState({mountContent: false});
   };
 
-  _handleOnPressAddSubjects = (selected) => {
+  _handleOnPressAddSubjects = async (selected) => {
+    //only if callback is defined
+    if(this.onPressAddSubject != null){
+      //wait to finish
+      await Promise.all([
+        //show overlay
+        this.overlay.transitionTo({opacity: 0.3}, 500),
+        //show check animation
+        this.animatedCheck.start(),
+      ]);
 
+      this.onPressAddSubject(selected);
+      this._modal.hideModal();
+    };
+  };
+
+  _renderOverlay(){
+    const { styles } = CreateQuizModal;
+    return (
+      <View 
+        style={styles.overlayContainer}
+        pointerEvents={'none'}
+      >
+        <Animatable.View 
+          ref={r => this.overlay = r}
+          style={styles.overlay}
+          useNativeDriver={true}
+        />
+        <View style={styles.checkContainer}>
+          <CheckAnimation ref={r => this.animatedCheck = r}/>
+        </View>
+      </View>
+    );
   };
 
   _renderContent(){
@@ -609,9 +662,12 @@ export class CreateQuizModal extends React.PureComponent {
         onModalShow={this._handleOnModalShow}
         onModalHide={this._handleOnModalHide}
       >
-        <ModalBackground style={{paddingBottom}}>
-          {mountContent && this._renderContent()}
-        </ModalBackground>
+        <Fragment>
+          <ModalBackground style={{paddingBottom}}>
+            {mountContent && this._renderContent()}
+          </ModalBackground>
+          {this._renderOverlay()}
+        </Fragment>
       </SwipableModal>
     );
   };

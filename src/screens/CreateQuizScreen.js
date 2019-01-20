@@ -28,72 +28,6 @@ const titleStyle = {
   color: 'white',
 };
 
-export class CreateQuizScreen extends React.Component {
-  static navigationOptions = ({ navigation }) => {
-    const { state } = navigation;
-
-    //set header title
-    let title = 'Custom Quiz';
-    if(state.params) title = state.params.title;
-
-    return ({
-      title,
-      headerTitleStyle: STYLES.glow,
-
-      //custom android header
-      ...Platform.select({
-        android: { header: props => 
-          <AndroidHeader 
-            {...{titleStyle, ...props}}
-          />
-      }}),
-    });
-  };
-
-  static styles = StyleSheet.create({
-    flatlist: {
-      paddingTop: 12,
-    },
-  });
-
-  constructor(props){
-    super(props);
-  };
-
-  _handleOnPressAddSubject = () => {
-    //get ref from screenprops
-    const { getRefCreateQuizModal } = this.props.screenProps;
-    //get ref of modal from homescreen wrapper
-    const quizModal = getRefCreateQuizModal();
-
-    quizModal && quizModal.openModal();
-  };
-
-  _renderHeader = () => {
-    return(
-      <AddSubjectsCard
-        onPressAddModule ={this._handleOnPressAddModule }
-        onPressAddSubject={this._handleOnPressAddSubject}
-      />
-    );
-  };
-
-  render(){
-    const { styles } = CreateQuizScreen;
-
-    return(
-      <ViewWithBlurredHeader hasTabBar={false}>
-        <CreateCustomQuizList
-          style={styles.flatlist}
-          contentInset ={{top: HEADER_HEIGHT}}
-          contentOffset={{x: 0, y: -HEADER_HEIGHT}}
-          ListHeaderComponent={this._renderHeader}
-        />
-      </ViewWithBlurredHeader>
-    );
-  }
-};
-
 class AddSubjectsCard extends React.PureComponent {
   static PropTypes = {
     onPressAddModule : PropTypes.func,
@@ -226,4 +160,79 @@ class AddSubjectsCard extends React.PureComponent {
       </Animatable.View>
     );
   };
+};
+
+export class CreateQuizScreen extends React.Component {
+  static navigationOptions = ({ navigation }) => {
+    const { state } = navigation;
+
+    //set header title
+    let title = 'Custom Quiz';
+    if(state.params) title = state.params.title;
+
+    return ({
+      title,
+      headerTitleStyle: STYLES.glow,
+
+      //custom android header
+      ...Platform.select({
+        android: { header: props => 
+          <AndroidHeader 
+            {...{titleStyle, ...props}}
+          />
+      }}),
+    });
+  };
+
+  static styles = StyleSheet.create({
+    flatlist: {
+      paddingTop: 12,
+    },
+  });
+
+  constructor(props){
+    super(props);
+  };
+
+  //callback from modal
+  _handleModalOnPressAddSubject = (selected) => {
+    console.log(selected.subjectname);
+  };
+
+  _handleOnPressAddSubject = () => {
+    //get ref from screenprops
+    const { getRefCreateQuizModal } = this.props.screenProps;
+    //get ref of modal from homescreen wrapper
+    const quizModal = getRefCreateQuizModal();
+
+    if(quizModal != null){
+      //assign callback to modal
+      quizModal.onPressAddSubject = this._handleModalOnPressAddSubject;
+      quizModal.openModal();
+    };
+  };
+
+  _renderHeader = () => {
+    return(
+      <AddSubjectsCard
+        onPressAddModule ={this._handleOnPressAddModule }
+        onPressAddSubject={this._handleOnPressAddSubject}
+      />
+    );
+  };
+
+  render(){
+    const { styles } = CreateQuizScreen;
+
+    return(
+      <ViewWithBlurredHeader hasTabBar={false}>
+        <CreateCustomQuizList
+          style={styles.flatlist}
+          contentInset ={{top: HEADER_HEIGHT}}
+          contentOffset={{x: 0, y: -HEADER_HEIGHT}}
+          ListHeaderComponent={this._renderHeader}
+        />
+      </ViewWithBlurredHeader>
+    );
+  }
 };

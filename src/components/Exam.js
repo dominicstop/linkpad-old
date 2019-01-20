@@ -51,7 +51,7 @@ export class CheckAnimation extends React.PureComponent {
       await setStateAsync(this, {mountAnimation: true});
       Animated.timing(this.animatedValue, { 
         toValue: 1,
-        duration: 750,
+        duration: 500,
         useNativeDriver: true 
       }).start(() => resolve());
     });
