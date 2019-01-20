@@ -615,8 +615,9 @@ export class CreateQuizModal extends React.PureComponent {
         this.animatedCheck.start(),
       ]);
 
+      //wait for modal to close
+      await this._modal.hideModal();
       this.onPressAddSubject(selected);
-      this._modal.hideModal();
     };
   };
 

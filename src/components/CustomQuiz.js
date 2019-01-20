@@ -143,6 +143,7 @@ export class QuizItem extends React.PureComponent {
 
     const subjectModel = new SubjectItem(subjectData);
     const { subjectname, description } = subjectModel.get();
+    const questionCount = subjectModel.getQuestionLength();
 
     return(
       <View style={styles.descriptionContainer}>
@@ -158,7 +159,7 @@ export class QuizItem extends React.PureComponent {
           numberOfLines={3}
           ellipsizeMode={'tail'}
         >
-          Questions used: 54/100
+          {`${questionCount} questions`}
         </Text>
         <Text 
           style={styles.textBody}
@@ -221,8 +222,8 @@ export class CreateCustomQuizList extends React.PureComponent {
   _handleOnPressDelete = () => {
   };
   
-  _keyExtractor(item){
-    return `quizItem:${item.id}`;
+  _keyExtractor(item, index){
+    return `${item.indexid}-${index}`;
   };
 
   _renderItem = ({item, index}) => {
@@ -240,6 +241,10 @@ export class CreateCustomQuizList extends React.PureComponent {
     );
   };
 
+  _renderFooter(){
+    return(<View style={{marginBottom: 75}}/>);
+  }
+
   render(){
     const {quizItems, ...otherProps} = this.props;
     return(
@@ -247,6 +252,7 @@ export class CreateCustomQuizList extends React.PureComponent {
         data={quizItems}
         renderItem={this._renderItem}
         keyExtractor={this._keyExtractor}
+        ListFooterComponent={this._renderFooter}
         {...otherProps}
       />
     );
