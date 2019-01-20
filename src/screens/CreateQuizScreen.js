@@ -192,23 +192,28 @@ export class CreateQuizScreen extends React.Component {
 
   constructor(props){
     super(props);
+
+    this.state = {
+      selected: []
+    };
+
+    //get ref from screenprops
+    const { getRefCreateQuizModal } = props.screenProps;
+    //get ref of modal from homescreen wrapper
+    this.quizModal = getRefCreateQuizModal();
   };
 
   //callback from modal
   _handleModalOnPressAddSubject = (selected) => {
-    console.log(selected.subjectname);
+    this.setState({selected});
   };
 
   _handleOnPressAddSubject = () => {
-    //get ref from screenprops
-    const { getRefCreateQuizModal } = this.props.screenProps;
-    //get ref of modal from homescreen wrapper
-    const quizModal = getRefCreateQuizModal();
-
-    if(quizModal != null){
+    if(this.quizModal != null){
       //assign callback to modal
-      quizModal.onPressAddSubject = this._handleModalOnPressAddSubject;
-      quizModal.openModal();
+      this.quizModal.onPressAddSubject = this._handleModalOnPressAddSubject;
+      //show modal
+      this.quizModal.openModal();
     };
   };
 
@@ -231,6 +236,7 @@ export class CreateQuizScreen extends React.Component {
           contentInset ={{top: HEADER_HEIGHT}}
           contentOffset={{x: 0, y: -HEADER_HEIGHT}}
           ListHeaderComponent={this._renderHeader}
+          quizItems={this.state.selected}
         />
       </ViewWithBlurredHeader>
     );

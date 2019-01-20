@@ -2,6 +2,8 @@ import React, { Fragment } from 'react';
 import { View, LayoutAnimation, ScrollView, ViewPropTypes, Text, TouchableOpacity, AsyncStorage, StyleSheet, FlatList } from 'react-native';
 import PropTypes from 'prop-types';
 
+import { SubjectItem } from '../functions/ModuleStore';
+
 import { Card, AnimatedListItem } from '../components/Views';
 import { PlatformTouchableIconButton } from '../components/Buttons';
 
@@ -20,7 +22,8 @@ Animatable.initializeRegistryWithDefinitions({
 
 export class QuizItem extends React.PureComponent {
   static PropTypes = {
-    onPressDelete : PropTypes.func,
+    subjectData  : PropTypes.object,  
+    onPressDelete: PropTypes.func,
   };
 
   static styles = StyleSheet.create({
@@ -136,6 +139,10 @@ export class QuizItem extends React.PureComponent {
 
   _renderDescription(){
     const { styles } = QuizItem;
+    const { subjectData } = this.props;
+
+    const subjectModel = new SubjectItem(subjectData);
+    const { subjectname, description } = subjectModel.get();
 
     return(
       <View style={styles.descriptionContainer}>
@@ -144,7 +151,7 @@ export class QuizItem extends React.PureComponent {
           numberOfLines={1}
           ellipsizeMode={'tail'}
         >
-          Module Title
+          {subjectname}
         </Text>
         <Text 
           style={styles.textSubtitle}
@@ -158,7 +165,7 @@ export class QuizItem extends React.PureComponent {
           numberOfLines={3}
           ellipsizeMode={'tail'}
         >
-          Lorem ipsum dolor sit amet, consectetur adipiscing elit. Cras mattis consectetur purus sit amet fermentum.
+          {description}
         </Text>
       </View>
     );
@@ -203,44 +210,12 @@ export class QuizItem extends React.PureComponent {
 };
 
 export class CreateCustomQuizList extends React.PureComponent {
+  static PropTypes = {
+    quizItems: PropTypes.array,
+  };
+
   constructor(props){
     super(props);
-
-    this.state = {
-      quizItems: [
-        {
-          type: 'module',
-          title: 'Lorum Title',
-          description: 'lorum description',
-          items: 300,
-          moduleID : '',
-          subjectID: '',
-        },
-        {
-          type: 'module',
-          title: 'Lorum Title',
-          description: 'lorum description',
-          items: 200,
-          moduleID : '',
-          subjectID: '',
-        },
-        {
-          type: 'module',
-          title: 'Lorum Title',
-          description: 'lorum description',
-          items: 200,
-          moduleID : '',
-          subjectID: '',
-        },{
-          type: 'module',
-          title: 'Lorum Title',
-          description: 'lorum description',
-          items: 200,
-          moduleID : '',
-          subjectID: '',
-        }
-      ],
-    };
   };
 
   _handleOnPressDelete = () => {
@@ -257,19 +232,22 @@ export class CreateCustomQuizList extends React.PureComponent {
         last={5}
         {...{index}}
       >
-        <QuizItem onPressDelete={this._handleOnPressDelete}/>
+        <QuizItem 
+          onPressDelete={this._handleOnPressDelete}
+          subjectData={item}  
+        />
       </AnimatedListItem>
     );
   };
 
   render(){
-    const {props, state} = this;
+    const {quizItems, ...otherProps} = this.props;
     return(
       <FlatList
-        data={state.quizItems}
+        data={quizItems}
         renderItem={this._renderItem}
         keyExtractor={this._keyExtractor}
-        {...props}
+        {...otherProps}
       />
     );
   };

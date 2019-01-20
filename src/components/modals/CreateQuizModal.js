@@ -610,7 +610,7 @@ export class CreateQuizModal extends React.PureComponent {
       //wait to finish
       await Promise.all([
         //show overlay
-        this.overlay.transitionTo({opacity: 0.3}, 500),
+        this.overlay.transitionTo({opacity: 0.4}, 500),
         //show check animation
         this.animatedCheck.start(),
       ]);
