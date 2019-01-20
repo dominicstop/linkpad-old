@@ -6,7 +6,7 @@ import { STYLES } from '../../Constants';
 import { PURPLE } from '../../Colors';
 
 import { plural , setStateAsync } from '../../functions/Utils';
-import { SubjectItem, ModuleItemModel } from '../../functions/ModuleStore';
+import { SubjectItem, ModuleItemModel, ModuleStore } from '../../functions/ModuleStore';
 
 import { MODAL_DISTANCE_FROM_TOP, MODAL_EXTRA_HEIGHT, SwipableModal, ModalBackground, ModalTopIndicator } from '../SwipableModal';
 import { IconText, AnimateInView } from '../../components/Views';
@@ -101,6 +101,10 @@ class CreateQuizModalSectionItem extends React.PureComponent {
       fontWeight: 'bold',
       color: 'rgb(25, 25, 25)'
     },
+    subtitle: {
+      fontSize: 16, 
+      fontWeight: '100'
+    }
   });
 
   constructor(props){
@@ -157,12 +161,15 @@ class CreateQuizModalSectionItem extends React.PureComponent {
     const { styles } = CreateQuizModalSectionItem;
 
     const { subjectData } = this.props;
-    const { subjectname, description } = subjectData;
+    //create subjectname if does not exist
+    const subject = Object.assign({'subjectname': ''}, subjectData);
+    //extract properties
+    const { subjectname, description } = subject;
 
     return (
-      <View>
-        <Text style={styles.subjectTitle}>{subjectname}</Text>
-        <Text style={{fontSize: 16, fontWeight: '100'}}>{description}</Text>
+      <View style={{flex: 1}}>
+        <Text style={styles.subjectTitle} numberOfLines={1}>{subjectname}</Text>
+        <Text style={styles.subtitle    } numberOfLines={1}>{description}</Text>
       </View>
     );
   };
@@ -285,10 +292,6 @@ class CreateQuizModalAddButton extends React.PureComponent {
 };
 
 class CreateQuizModalTitle extends React.PureComponent {
-  static propTypes = {
-    type: PropTypes.string,
-  };
-
   static styles = StyleSheet.create({
     containerStyle: {
       flexDirection: 'row',
@@ -392,6 +395,7 @@ class CreateQuizModalTitle extends React.PureComponent {
 class CreateQuizModalAddSubject extends React.PureComponent {
   static propTypes = {
     onPressAddItems: PropTypes.func,
+    modules: PropTypes.array,
   };
   
   static styles = StyleSheet.create({
@@ -416,42 +420,15 @@ class CreateQuizModalAddSubject extends React.PureComponent {
 
   constructor(props){
     super(props);
-
-    this.state = {      
-      modules: [
-        {
-          description: 'lorum desc', modulename: 'ipsum desc', lastupdated: '1/1/1998', indexid: 1, 
-          data: [
-            { indexid: 0, subjectname: 'lorum subject 1', description: 'ipsum desc 1', lastupdated: '1/1/2090', questions: [], indexID_module: 1 },
-            { indexid: 1, subjectname: 'lorum subject 2', description: 'ipsum desc 2', lastupdated: '1/1/2010', questions: [], indexID_module: 1 },
-            { indexid: 2, subjectname: 'lorum subject 3', description: 'ipsum desc 3', lastupdated: '1/1/2020', questions: [], indexID_module: 1 },
-          ]
-        },
-        {
-          description: 'lorum desc', modulename: 'ipsum red', lastupdated: '1/1/1998', indexid: 2, 
-          data: [
-            { indexid: 0, subjectname: 'lorum subject 1', description: 'ipsum desc 1', lastupdated: '1/1/2090', questions: [], indexID_module: 2 },
-            { indexid: 1, subjectname: 'lorum subject 2', description: 'ipsum desc 2', lastupdated: '1/1/2010', questions: [], indexID_module: 2 },
-            { indexid: 2, subjectname: 'lorum subject 3', description: 'ipsum desc 3', lastupdated: '1/1/2020', questions: [], indexID_module: 2 },
-          ]
-        },
-        {
-          description: 'lorum desc', modulename: 'ipsum asd', lastupdated: '1/1/1998', indexid: 3, 
-          data: [
-            { indexid: 0, subjectname: 'lorum subject 1', description: 'ipsum desc 1', lastupdated: '1/1/2090', questions: [], indexID_module: 3 },
-            { indexid: 1, subjectname: 'lorum subject 2', description: 'ipsum desc 2', lastupdated: '1/1/2010', questions: [], indexID_module: 3 },
-            { indexid: 2, subjectname: 'lorum subject 3', description: 'ipsum desc 3', lastupdated: '1/1/2020', questions: [], indexID_module: 3 },
-          ]
-        }
-      ],
-    };
-
     this.selected = [];
   };
 
   _handleKeyExtractor(item, index){
-    const { modulename, indexid } = item;
-    return(`${modulename}-${indexid}`);
+    //create subjectname if does not exist
+    const subject = Object.assign({'subjectname': ''}, item);
+    const { subjectname, indexid } = subject;
+
+    return(`${subjectname}-${indexid}`);
   };
 
   _handleOnPressAdd = () => {
@@ -541,7 +518,6 @@ class CreateQuizModalAddSubject extends React.PureComponent {
 
   render(){
     const { styles } = CreateQuizModalAddSubject; 
-
     return(
       <View style={{flex: 1}}>
         <ModalTopIndicator/>
@@ -553,7 +529,7 @@ class CreateQuizModalAddSubject extends React.PureComponent {
           renderSectionFooter={this._renderSectionFooter}
           ItemSeparatorComponent={this._renderItemSeperator}
           keyExtractor={this._handleKeyExtractor}
-          sections={this.state.modules}
+          sections={this.props.modules}
         />
         {this._renderNextButton()}
       </View>
@@ -567,13 +543,36 @@ export class CreateQuizModal extends React.PureComponent {
 
     this.state = {
       mountContent: false,
-      type: null,
+      modules: [],
     };
   };
 
-  openModal = () => {
-    this.setState({mountContent: true});
+  openModal = async () => {
+    const modules = await this._getModules();
+    this.setState({modules, mountContent: true});
     this._modal.showModal();
+  };
+
+  async _getModules(){
+    //expected by sectionlist
+    const reference = [
+      {
+        description: 'lorum desc', modulename: 'ipsum desc', lastupdated: '1/1/1998', indexid: 1, 
+        data: [
+          { indexid: 0, subjectname: 'lorum subject 1', description: 'ipsum desc 1', lastupdated: '1/1/2090', questions: [], indexID_module: 1 },
+          { indexid: 1, subjectname: 'lorum subject 2', description: 'ipsum desc 2', lastupdated: '1/1/2010', questions: [], indexID_module: 1 },
+        ]
+      },
+    ];
+
+    const modules = await ModuleStore.read();
+    //remap modules to work with sectionlist
+    return modules.map((module, index, array) => {
+      //extract subjects from module
+      const { subjects, ...other } = module;
+      //rename subjects to data
+      return { data: subjects, ...other };
+    });
   };
 
   _handleOnModalShow = () => {
@@ -588,18 +587,21 @@ export class CreateQuizModal extends React.PureComponent {
   };
 
   _renderContent(){
+    const { modules } = this.state;
     return(
       <CreateQuizModalAddSubject
         onPressAddItems={this._handleOnPressAddSubjects}
+        {...{modules}}
       />
     );
   };
 
   render(){
-    const { styles } = CreateQuizModal;
     const { mountContent } = this.state;
 
-    const paddingBottom = (MODAL_EXTRA_HEIGHT + MODAL_DISTANCE_FROM_TOP);
+    const paddingBottom = (
+      MODAL_EXTRA_HEIGHT + MODAL_DISTANCE_FROM_TOP
+    );
 
     return(
       <SwipableModal 
