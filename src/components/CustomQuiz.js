@@ -223,7 +223,7 @@ export class CreateCustomQuizList extends React.PureComponent {
   };
   
   _keyExtractor(item, index){
-    return `${item.indexid}-${index}`;
+    return `${item.indexid}-${item.subjectname}`;
   };
 
   _renderItem = ({item, index}) => {

@@ -212,8 +212,10 @@ export class CreateQuizScreen extends React.Component {
     if(this.quizModal != null){
       //assign callback to modal
       this.quizModal.onPressAddSubject = this._handleModalOnPressAddSubject;
+
+      const {selected } = this.state;
       //show modal
-      this.quizModal.openModal();
+      this.quizModal.openModal(selected);
     };
   };
 
@@ -240,5 +242,5 @@ export class CreateQuizScreen extends React.Component {
         />
       </ViewWithBlurredHeader>
     );
-  }
+  };
 };
