@@ -64,7 +64,6 @@ export class CheckAnimation extends React.PureComponent {
   };
 };
 
-
 //module title
 class CreateQuizModalSectionHeader extends React.PureComponent {
   static propTypes = {

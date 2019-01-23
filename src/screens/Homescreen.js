@@ -4,8 +4,9 @@ import { View, Platform, Text, StyleSheet, Clipboard } from 'react-native';
 import Constants, { STYLES, ROUTES } from '../Constants';
 import { CustomHeader } from '../components/Header' ;
 
-import { SubjectModal    } from '../components/SwipableModal';
-import { CreateQuizModal } from '../components/modals/CreateQuizModal';
+import { SubjectModal     } from '../components/SwipableModal';
+import { CreateQuizModal  } from '../components/modals/CreateQuizModal';
+import { QuizDetailsModal } from '../components/modals/QuizDetailsModal';
 
 import { ModuleListScreen } from './ModuleListScreen';
 import { ResourcesScreen  } from './ResourcesScreen';
@@ -288,9 +289,10 @@ export class Homescreen extends React.PureComponent {
           navigation={this.props.navigation}
           screenProps={{
             ...this.props.screenProps,
-            getRefSubjectModal   : () => this.subjectModal    ,
-            getRefCreateQuizModal: () => this.createQuizModal ,
-            getAppStackNavigation: () => this.props.navigation,
+            getRefSubjectModal    : () => this.subjectModal    ,
+            getRefCreateQuizModal : () => this.createQuizModal ,
+            getRefQuizDetailsModal: () => this.quizDetailsModal,
+            getAppStackNavigation : () => this.props.navigation,
             setDrawerSwipe: this.setDrawerSwipe,
           }}
         />
@@ -301,8 +303,9 @@ export class Homescreen extends React.PureComponent {
   _renderModals(){
     return(
       <Fragment>
-        <SubjectModal    ref={r => this.subjectModal    = r}/>
-        <CreateQuizModal ref={r => this.createQuizModal = r}/>
+        <SubjectModal     ref={r => this.subjectModal     = r}/>
+        <CreateQuizModal  ref={r => this.createQuizModal  = r}/>
+        <QuizDetailsModal ref={r => this.quizDetailsModal = r}/>
       </Fragment>
     );
   };

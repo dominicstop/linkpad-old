@@ -1,5 +1,5 @@
 import React, { Fragment } from 'react';
-import { View, ScrollView, ViewPropTypes, Text, TouchableOpacity, AsyncStorage, StyleSheet, FlatList } from 'react-native';
+import { View, ScrollView, ViewPropTypes, Text, TouchableOpacity, AsyncStorage, StyleSheet, FlatList, TextInput } from 'react-native';
 import PropTypes from 'prop-types';
 
 import   NavigationService from '../NavigationService';
@@ -28,9 +28,134 @@ const titleStyle = {
   color: 'white',
 };
 
+class TitleDescriptionCard extends React.PureComponent {
+  static PropTypes = {
+    onPressEditDetails: PropTypes.func,
+  };
+  
+  static styles = StyleSheet.create({
+    card: {
+      marginBottom: 10,
+    },
+    image: {
+      width: 75, 
+      height: 75,
+      marginRight: 12,
+      marginVertical: 12,
+    },
+    headerTextContainer: {
+      flex: 1, 
+      alignItems: 'center', 
+      justifyContent: 'center', 
+    },
+    headerTitle: {
+      color: '#512DA8',
+      fontSize: 20, 
+      fontWeight: '800'
+    },
+    headerSubtitle: {
+      fontSize: 16, 
+      ...Platform.select({
+        ios: {
+          fontWeight: '200'
+        },
+        android: {
+          fontWeight: '100',
+          color: '#424242'
+        },
+      })
+    },
+    buttonWrapper: {
+      backgroundColor: PURPLE.A700,
+      marginTop: 10,
+    },
+    buttonContainer: {
+      padding: 10,
+    },
+    buttonText: {
+      color: 'white',
+      fontSize: 17,
+      fontWeight: '600',
+    },
+  });
+
+  constructor(props){
+    super(props);
+    this.imageHeader = require('../../assets/icons/clipboard-circle.png');
+  };
+
+  _handleOnPressEditDetails = () => {
+    const { onPressEditDetails } = this.props;
+    onPressEditDetails && onPressEditDetails();
+  };
+
+  _renderDescription(){
+    const { styles } = TitleDescriptionCard;
+
+    return(
+      <View style={{flexDirection: 'row'}}>
+        <Animatable.Image
+          source={this.imageHeader}
+          style={styles.image}
+          animation={'pulse'}
+          easing={'ease-in-out'}
+          iterationCount={"infinite"}
+          duration={5000}
+          useNativeDriver={true}
+        />
+        <View style={styles.headerTextContainer}>
+          <Text style={styles.headerTitle   }>Custom Quiz</Text>
+          <Text style={styles.headerSubtitle}>Give your custom quiz a title and a description so you can easily find it later.</Text>
+        </View>
+      </View>
+    );
+  };
+
+  _renderButton(){
+    const { styles } = AddSubjectsCard;
+
+    return(
+      <PlatformTouchableIconButton
+        onPress={this._handleOnPressEditDetails}
+        wrapperStyle={[styles.buttonWrapper, STYLES.lightShadow]}
+        containerStyle={styles.buttonContainer}
+        text={'Edit Details'}
+        textStyle={styles.buttonText}
+        iconName={'edit'}
+        iconType={'entypo'}
+        iconColor={'white'}
+        iconSize={24}
+      />
+    );
+  };
+
+  render() {
+    const { styles } = TitleDescriptionCard;
+    
+    const animation = Platform.select({
+      ios    : 'fadeInUp',
+      android: 'zoomIn'  ,
+    });
+
+    return(
+      <Animatable.View
+        duration={500}
+        easing={'ease-in-out'}
+        useNativeDriver={true}
+        {...{animation}}
+      >
+        <Card style={styles.card}>
+          {this._renderDescription()}
+          <Divider/>
+          {this._renderButton()}
+        </Card>
+      </Animatable.View>
+    );
+  };
+};
+
 class AddSubjectsCard extends React.PureComponent {
   static PropTypes = {
-    onPressAddModule : PropTypes.func,
     onPressAddSubject: PropTypes.func,
   };
 
@@ -77,7 +202,7 @@ class AddSubjectsCard extends React.PureComponent {
       color: 'white',
       fontSize: 17,
       fontWeight: '600',
-    }
+    },
   });
 
   constructor(props){
@@ -86,16 +211,10 @@ class AddSubjectsCard extends React.PureComponent {
     this.imageHeader = require('../../assets/icons/file-circle.png');
   };
 
-  _handleOnPressAddModule = () => {
-    const { onPressAddModule } = this.props;
-    onPressAddModule && onPressAddModule();
-  };
-
   _handleOnPressAddSubject = () => {
     const { onPressAddSubject } = this.props;
     onPressAddSubject && onPressAddSubject();
   };
-
 
   _renderDescription(){
     const { styles } = AddSubjectsCard;
@@ -148,6 +267,7 @@ class AddSubjectsCard extends React.PureComponent {
     return(
       <Animatable.View
         duration={500}
+        delay={100}
         easing={'ease-in-out'}
         useNativeDriver={true}
         {...{animation}}
@@ -198,9 +318,19 @@ export class CreateQuizScreen extends React.Component {
     };
 
     //get ref from screenprops
-    const { getRefCreateQuizModal } = props.screenProps;
+    const { getRefCreateQuizModal, getRefQuizDetailsModal } = props.screenProps;
     //get ref of modal from homescreen wrapper
-    this.quizModal = getRefCreateQuizModal();
+    this.quizModal    = getRefCreateQuizModal();
+    this.detailsModal = getRefQuizDetailsModal();
+  };
+
+  _handleOnPressEditDetails = () => {
+    if(this.detailsModal != null){
+      //assign callback to modal
+
+      //show modal
+      this.detailsModal.openModal();
+    };
   };
 
   //callback from modal
@@ -221,10 +351,14 @@ export class CreateQuizScreen extends React.Component {
 
   _renderHeader = () => {
     return(
-      <AddSubjectsCard
-        onPressAddModule ={this._handleOnPressAddModule }
-        onPressAddSubject={this._handleOnPressAddSubject}
-      />
+      <Fragment>
+        <TitleDescriptionCard 
+          onPressEditDetails={this._handleOnPressEditDetails}          
+        />
+        <AddSubjectsCard 
+          onPressAddSubject={this._handleOnPressAddSubject}
+        />
+      </Fragment>
     );
   };
 
