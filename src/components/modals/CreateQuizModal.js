@@ -1,5 +1,5 @@
 import React, { Fragment } from 'react';
-import { StyleSheet, View, Dimensions, Image, Text, TouchableOpacity, ScrollView, Platform, Alert, LayoutAnimation, UIManager, SectionList } from 'react-native';
+import { StyleSheet, View, Text, TouchableOpacity, Platform, SectionList, Animated } from 'react-native';
 import PropTypes from 'prop-types';
 
 import { STYLES } from '../../Constants';
@@ -10,12 +10,60 @@ import { SubjectItem, ModuleItemModel, ModuleStore } from '../../functions/Modul
 
 import { MODAL_DISTANCE_FROM_TOP, MODAL_EXTRA_HEIGHT, SwipableModal, ModalBackground, ModalTopIndicator } from '../SwipableModal';
 import { IconText, AnimateInView } from '../../components/Views';
-import { CheckAnimation } from '../../components/Exam';
+
+import { BlurView, LinearGradient, DangerZone } from 'expo';
+import { Icon, Divider } from 'react-native-elements';
 
 import * as Animatable from 'react-native-animatable';
-import Animated, { Easing } from 'react-native-reanimated';
-import { BlurView, LinearGradient } from 'expo';
-import { Icon, Divider } from 'react-native-elements';
+import * as _Reanimated from 'react-native-reanimated';
+
+const { Lottie } = DangerZone;
+const { Easing } = _Reanimated;
+const Reanimated = _Reanimated.default;
+
+export class CheckAnimation extends React.PureComponent {
+  constructor(props){
+    super(props);
+
+    this.state = {
+      mountAnimation: false,
+    };
+
+    this._source = require('../../animations/checked_done_2.json');
+    this._value = new Animated.Value(0.5);
+    this._config = { 
+      toValue: 1,
+      duration: 500,
+      useNativeDriver: true 
+    };
+
+    this._animated = Animated.timing(this._value, this._config);
+  };
+
+  //start animation
+  start = () => {
+    return new Promise(async resolve => {
+      await setStateAsync(this, {mountAnimation: true});
+      this._animated.start(() => resolve());
+    });
+  };
+
+  render(){
+    //dont mount until animation starts
+    if(!this.state.mountAnimation) return null;
+
+    return(
+      <Lottie
+        ref={r => this.animation = r}
+        progress={this._value}
+        source={this._source}
+        loop={false}
+        autoplay={false}
+      />
+    );
+  };
+};
+
 
 //module title
 class CreateQuizModalSectionHeader extends React.PureComponent {
@@ -229,7 +277,7 @@ class CreateQuizModalAddButton extends React.PureComponent {
   constructor(props){
     super(props);
 
-    this._height = new Animated.Value(0);
+    this._height = new Reanimated.Value(0);
     this._showConfig = {
       duration: 300,
       toValue : 80,
@@ -242,18 +290,18 @@ class CreateQuizModalAddButton extends React.PureComponent {
       easing  : Easing.inOut(Easing.ease),
     };
 
-    this._animatedShow = Animated.timing(this._height, this._showConfig);
-    this._animatedHide = Animated.timing(this._height, this._hideConfig);
+    this._animatedShow = Reanimated.timing(this._height, this._showConfig);
+    this._animatedHide = Reanimated.timing(this._height, this._hideConfig);
   };
 
   show = () => {
     this._animatedShow.start();
-    this._animatedShow = Animated.timing(this._height, this._showConfig);
+    this._animatedShow = Reanimated.timing(this._height, this._showConfig);
   };
 
   hide = () => {
     this._animatedHide.start();
-    this._animatedHide = Animated.timing(this._height, this._hideConfig);
+    this._animatedHide = Reanimated.timing(this._height, this._hideConfig);
   };
 
   _handleOnPress = () => {
@@ -289,11 +337,11 @@ class CreateQuizModalAddButton extends React.PureComponent {
   render(){
     const { styles } = CreateQuizModalAddButton;
     return (
-      <Animated.View style={[{height: this._height}, styles.container]}>
+      <Reanimated.View style={[{height: this._height}, styles.container]}>
         <TouchableOpacity style={{flex: 1}} onPress={this._handleOnPress}>
           {this._renderContents()}
         </TouchableOpacity>
-      </Animated.View>
+      </Reanimated.View>
     );
   };
 };
@@ -586,8 +634,8 @@ export class CreateQuizModal extends React.PureComponent {
       backgroundColor: 'white',
     },
     checkContainer: {
-      width: '100%', 
-      height: '100%', 
+      width: '50%', 
+      height: '50%', 
       marginBottom: 125
     }
   });
