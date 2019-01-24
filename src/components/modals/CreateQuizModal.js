@@ -64,8 +64,8 @@ export class CheckAnimation extends React.PureComponent {
   };
 };
 
-//module title
-class CreateQuizModalSectionHeader extends React.PureComponent {
+//shows the module title
+class ModalSectionHeader extends React.PureComponent {
   static propTypes = {
     sextion: PropTypes.object,
   };
@@ -87,7 +87,7 @@ class CreateQuizModalSectionHeader extends React.PureComponent {
   });
 
   _renderIOS(props){
-    const { styles } = CreateQuizModalSectionHeader;
+    const { styles } = ModalSectionHeader;
     return (
       <BlurView
         style={{marginBottom: 2, borderBottomColor: 'black'}}
@@ -103,7 +103,7 @@ class CreateQuizModalSectionHeader extends React.PureComponent {
   };
 
   render(){
-    const { styles } = CreateQuizModalSectionHeader;
+    const { styles } = ModalSectionHeader;
     const { section } = this.props;
 
     //wrap data inside model
@@ -130,8 +130,8 @@ class CreateQuizModalSectionHeader extends React.PureComponent {
   };
 };
 
-//subject item
-class CreateQuizModalSectionItem extends React.PureComponent {
+//shows the subject item
+class ModalSectionItem extends React.PureComponent {
   static propTypes = {
     subjectData: PropTypes.object,
     onPressItem: PropTypes.func,
@@ -211,7 +211,7 @@ class CreateQuizModalSectionItem extends React.PureComponent {
   };
 
   _renderDetails(){
-    const { styles } = CreateQuizModalSectionItem;
+    const { styles } = ModalSectionItem;
 
     const { subjectData } = this.props;
     //create subjectname if does not exist
@@ -228,7 +228,7 @@ class CreateQuizModalSectionItem extends React.PureComponent {
   };
 
   render(){
-    const { styles } = CreateQuizModalSectionItem;
+    const { styles } = ModalSectionItem;
 
     return (
       <TouchableOpacity 
@@ -242,7 +242,7 @@ class CreateQuizModalSectionItem extends React.PureComponent {
   };
 };
 
-class CreateQuizModalAddButton extends React.PureComponent {
+class ModalAddButton extends React.PureComponent {
   static propTypes = {
     onPress: PropTypes.func,
   };
@@ -309,7 +309,7 @@ class CreateQuizModalAddButton extends React.PureComponent {
   };
 
   _renderContents(){
-    const { styles } = CreateQuizModalAddButton;
+    const { styles } = ModalAddButton;
     return(
       <LinearGradient
         style={[styles.button, STYLES.mediumShadow]}
@@ -334,7 +334,7 @@ class CreateQuizModalAddButton extends React.PureComponent {
   };
 
   render(){
-    const { styles } = CreateQuizModalAddButton;
+    const { styles } = ModalAddButton;
     return (
       <Reanimated.View style={[{height: this._height}, styles.container]}>
         <TouchableOpacity style={{flex: 1}} onPress={this._handleOnPress}>
@@ -345,7 +345,7 @@ class CreateQuizModalAddButton extends React.PureComponent {
   };
 };
 
-class CreateQuizModalTitle extends React.PureComponent {
+class ModalTitle extends React.PureComponent {
   static styles = StyleSheet.create({
     containerStyle: {
       flexDirection: 'row',
@@ -421,7 +421,7 @@ class CreateQuizModalTitle extends React.PureComponent {
   };
 
   render(){
-    const { styles } = CreateQuizModalTitle;
+    const { styles } = ModalTitle;
     const { text, subtitle } = this.state;
     
     return(
@@ -446,7 +446,7 @@ class CreateQuizModalTitle extends React.PureComponent {
   };
 };
 
-class CreateQuizModalAddSubject extends React.PureComponent {
+class ModalContents extends React.PureComponent {
   static propTypes = {
     onPressAddItems: PropTypes.func,
     modules: PropTypes.array,
@@ -540,7 +540,7 @@ class CreateQuizModalAddSubject extends React.PureComponent {
 
   _renderTitle(){
     return(
-      <CreateQuizModalTitle
+      <ModalTitle
         ref={r => this.modalTitle = r}
       />
     );
@@ -559,7 +559,7 @@ class CreateQuizModalAddSubject extends React.PureComponent {
     const isSelected = match.length > 0;
 
     return (
-      <CreateQuizModalSectionItem
+      <ModalSectionItem
         subjectData={item}
         onPressItem={this._handleOnPressItem}
         {...{isSelected}}
@@ -569,7 +569,7 @@ class CreateQuizModalAddSubject extends React.PureComponent {
 
   _renderSectionHeader = ({section}) => {
     return(
-      <CreateQuizModalSectionHeader {...{section}}/>
+      <ModalSectionHeader {...{section}}/>
     );
   };
 
@@ -587,7 +587,7 @@ class CreateQuizModalAddSubject extends React.PureComponent {
 
   _renderNextButton(){
     return (
-      <CreateQuizModalAddButton
+      <ModalAddButton
         ref={r => this._nextButton = r}
         onPress={this._handleOnPressAdd}
       />
@@ -595,7 +595,7 @@ class CreateQuizModalAddSubject extends React.PureComponent {
   };
 
   render(){
-    const { styles } = CreateQuizModalAddSubject; 
+    const { styles } = ModalContents; 
     return(
       <View style={{flex: 1}}>
         <ModalTopIndicator/>
@@ -635,7 +635,7 @@ export class CreateQuizModal extends React.PureComponent {
     checkContainer: {
       width: '50%', 
       height: '50%', 
-      marginBottom: 125
+      marginBottom: 325
     }
   });
   
@@ -724,7 +724,7 @@ export class CreateQuizModal extends React.PureComponent {
   _renderContent(){
     const { modules, selected } = this.state;
     return(
-      <CreateQuizModalAddSubject
+      <ModalContents
         onPressAddItems={this._handleOnPressAddSubjects}
         //pass down props
         {...{modules, selected}}

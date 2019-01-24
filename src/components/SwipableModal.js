@@ -26,7 +26,7 @@ const Screen = {
 };
 
 export const MODAL_DISTANCE_FROM_TOP = 40;
-export const MODAL_EXTRA_HEIGHT = 100;
+export const MODAL_EXTRA_HEIGHT = 300;
 
 //enable layout animation on android
 UIManager.setLayoutAnimationEnabledExperimental && 
