@@ -1,15 +1,16 @@
 import React, { Fragment } from 'react';
-import { StyleSheet, View, Text, TouchableOpacity, Platform, SectionList, Animated, TextInput } from 'react-native';
+import { StyleSheet, View, Text, TouchableOpacity, Platform, SectionList, Animated, TextInput, TouchableWithoutFeedback, Keyboard } from 'react-native';
 import PropTypes from 'prop-types';
 
 import { STYLES } from '../../Constants';
 import { PURPLE } from '../../Colors';
 
-import { plural , setStateAsync, timeout } from '../../functions/Utils';
+import { plural , setStateAsync, timeout, isEmpty } from '../../functions/Utils';
 import { SubjectItem, ModuleItemModel, ModuleStore } from '../../functions/ModuleStore';
 
 import { MODAL_DISTANCE_FROM_TOP, MODAL_EXTRA_HEIGHT, SwipableModal, ModalBackground, ModalTopIndicator } from '../SwipableModal';
 import { IconText, AnimateInView } from '../../components/Views';
+import { PlatformTouchableIconButton } from '../../components/Buttons';
 
 import { BlurView, LinearGradient, DangerZone } from 'expo';
 import { Icon, Divider } from 'react-native-elements';
@@ -24,13 +25,14 @@ class FormTitle extends React.PureComponent {
     },
     iconInputContainer: {
       flexDirection: 'row', 
-      margin: 12
+      margin: 12,
     },
     borderInactive: {
       position: 'absolute',
       height: '100%',
       width: '100%',
-      borderColor: PURPLE[200],
+      backgroundColor: 'rgba(255, 255, 255, 0.15)',
+      borderColor: PURPLE[300],
       borderWidth: 1,
       borderRadius: 10,
     },
@@ -38,6 +40,7 @@ class FormTitle extends React.PureComponent {
       position: 'absolute',
       height: '100%',
       width: '100%',
+      backgroundColor: 'rgba(255, 255, 255, 0.15)',
       borderColor: PURPLE[600],
       borderWidth: 2,
       borderRadius: 10,
@@ -54,6 +57,7 @@ class FormTitle extends React.PureComponent {
       marginHorizontal: 12,
       marginTop: 15,
       color: PURPLE[900],
+      opacity: 0.85,
     }
   });
 
@@ -72,18 +76,35 @@ class FormTitle extends React.PureComponent {
   _handleOnFocus = () => {
     this.activeBorder.transitionTo({opacity: 1}, 500);
     this.icon.transitionTo({opacity: 1}, 500);
+    this.label.transitionTo({opacity: 1, transform: [{scale: 1.1}, {translateX: 15}]},
+      500, 'ease-in-out'
+    );
   };
 
   _handleOnBlur = () => {
     this.activeBorder.transitionTo({opacity: 0}, 500);
     this.icon.transitionTo({opacity: 0.3}, 500);
+    this.label.transitionTo(
+      {opacity: 0.85, transform: [{scale: 1}, {translateX: 0}]},
+      500, 'ease-in-out'
+    );
+  };
+
+  _handleOnChangeText = (text) => {
+    this.setState({text});
   };
 
   _renderLabel(){
     const { styles } = FormTitle;
 
     return(
-      <Text style={styles.title}>Quiz Title</Text>
+      <Animatable.Text 
+        style={styles.title}
+        ref={r => this.label = r}
+        useNativeDriver={true}
+      >
+        {'Quiz Title'}
+      </Animatable.Text>
     );
   };
 
@@ -128,10 +149,178 @@ class FormTitle extends React.PureComponent {
       <TextInput
         style={styles.input}
         placeholder={'Custom Quiz Title'}
-        multiline={false}
         underlineColorAndroid={'transparent'}
         onFocus={this._handleOnFocus}
         onBlur={this._handleOnBlur}
+        onChangeText={this._handleOnChangeText}
+        multiline={false}
+        autoCorrect={false}
+        maxLength={100}
+        value={this.state.text}
+      />
+    );
+  };
+
+  render(){
+    const { styles } = FormTitle;
+    
+    return (
+      <Fragment>
+        {this._renderLabel()}
+        <View style={styles.iconInputWrapper}>
+          {this._renderBorder()}
+          <View style={styles.iconInputContainer}>
+            {this._renderIcon()}
+            {this._renderInput()}
+          </View>
+        </View>
+      </Fragment>
+    );
+  };
+};
+
+class FormDescription extends React.PureComponent {
+  static styles = StyleSheet.create({
+    iconInputWrapper: {
+      marginTop: 5,
+      marginHorizontal: 10,
+    },
+    iconInputContainer: {
+      flexDirection: 'row', 
+      margin: 12,
+    },
+    borderInactive: {
+      position: 'absolute',
+      height: '100%',
+      width: '100%',
+      backgroundColor: 'rgba(255, 255, 255, 0.15)',
+      borderColor: PURPLE[300],
+      borderWidth: 1,
+      borderRadius: 10,
+    },
+    borderActive: {
+      position: 'absolute',
+      height: '100%',
+      width: '100%',
+      backgroundColor: 'rgba(255, 255, 255, 0.15)',
+      borderColor: PURPLE[600],
+      borderWidth: 2,
+      borderRadius: 10,
+    },
+    input: {
+      flex: 1,
+      color: PURPLE[1100],
+      backgroundColor: 'transparent',
+      fontSize: 20,
+    },
+    title: {
+      fontSize: 22,
+      fontWeight: '500',
+      marginHorizontal: 12,
+      marginTop: 15,
+      color: PURPLE[900],
+      opacity: 0.85,
+    }
+  });
+
+  constructor(props){
+    super(props);
+    this.state = {
+      text: '',
+    };
+  };
+
+  getText = () => {
+    const { text } = this.state;
+    return text;
+  };
+
+  _handleOnFocus = () => {
+    this.activeBorder.transitionTo({opacity: 1}, 500);
+    this.icon.transitionTo({opacity: 1}, 500);
+    this.label.transitionTo(
+      {opacity: 1, transform: [{scale: 1.1}, {translateX: 15}]}, 
+      500, 'ease-in-out'
+    );
+  };
+
+  _handleOnBlur = () => {
+    this.activeBorder.transitionTo({opacity: 0}, 500);
+    this.icon.transitionTo({opacity: 0.3}, 500);
+    this.label.transitionTo(
+      {opacity: 0.85, transform: [{scale: 1}, {translateX: 0}]}, 
+      500, 'ease-in-out'
+    );
+  };
+
+  _handleOnChangeText = (text) => {
+    this.setState({text});
+  };
+
+  _renderLabel(){
+    const { styles } = FormTitle;
+
+    return(
+      <Animatable.Text 
+        style={styles.title}
+        ref={r => this.label = r}
+        useNativeDriver={true}
+      >
+        {'Quiz Description'}
+      </Animatable.Text>
+    );
+  };
+
+  _renderBorder(){
+    const { styles } = FormTitle;
+
+    return(
+      <Fragment>
+        <View style={styles.borderInactive}/>
+        <Animatable.View 
+          style={[styles.borderActive, {opacity: 0}]}
+          ref={r => this.activeBorder = r}
+          useNativeDriver={true}
+        />
+      </Fragment>
+    );
+  };
+
+  _renderIcon(){
+    const { styles } = FormTitle;
+
+    return(
+      <Animatable.View 
+        style={{marginRight: 10, opacity: 0.3}}
+        ref={r => this.icon = r}
+        useNativeDriver={true}
+      >
+        <Icon
+          name={'align-center'}
+          type={'feather'}
+          size={26}
+          color={PURPLE[700]}
+        />
+      </Animatable.View>
+    );
+  };
+
+  _renderInput(){
+    const { styles } = FormTitle;
+
+    return(
+      <TextInput
+        style={[styles.input, {maxHeight: 100}]}
+        placeholder={'Custom Quiz Description'}
+        underlineColorAndroid={'transparent'}
+        onFocus={this._handleOnFocus}
+        onBlur={this._handleOnBlur}
+        onChangeText={this._handleOnChangeText}
+        numberOfLines={3}
+        multiline={true}
+        autoCorrect={false}
+        maxLength={100}
+        value={this.state.text}
       />
     );
   };
@@ -155,6 +344,10 @@ class FormTitle extends React.PureComponent {
 };
 
 class ModalContents extends React.PureComponent {
+  static PropTypes = {
+    onPressSaveChanges: PropTypes.func,
+  };
+
   static styles = StyleSheet.create({
     title: {
       color: '#160656',
@@ -181,8 +374,55 @@ class ModalContents extends React.PureComponent {
     body: {
       borderTopColor: 'rgb(200, 200, 200)', 
       borderTopWidth: 1
-    }
+    },
+    buttonContainer: {
+      padding: 12,
+      borderTopColor: 'rgba(0, 0, 0, 0.25)',
+      borderBottomColor: 'rgba(0, 0, 0, 0.25)',
+      borderTopWidth: 1,
+      borderBottomWidth: 1,
+    },
+    button: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: PURPLE[700], 
+      borderRadius: 12,
+      padding: 15,
+    },
+    buttonText: {
+      flex: 1,
+      fontSize: 16,
+      fontWeight: '500',
+      color: 'white',
+      textAlign: 'left',
+      textAlignVertical: 'center',
+      marginLeft: 13,
+    },
   });
+
+  _handleOnPressWrapper(){
+    Keyboard.dismiss();
+  };
+
+  _handleOnPress = () => {
+    //get text from forms
+    const title = this.inputTitle.getText();
+    const description = this.inputDescription.getText();
+
+    //check if the text is empty
+    const isTitleEmpty       = isEmpty(title);
+    const isDescriptionEmpty = isEmpty(description);
+
+    if(isTitleEmpty || isDescriptionEmpty){
+      isTitleEmpty       && this.formTitleContainer      .shake(500);
+      isDescriptionEmpty && this.formDescriptionContainer.shake(500);
+
+    } else {
+      const { onPressSaveChanges } = this.props;
+      onPressSaveChanges && onPressSaveChanges({title, description});
+    };
+  };
 
   _renderTitle(){
     const { styles } = ModalContents;
@@ -207,25 +447,69 @@ class ModalContents extends React.PureComponent {
 
     return(
       <View style={styles.body}>
-        <FormTitle/>
+        <Animatable.View
+          ref={r => this.formTitleContainer = r}
+          useNativeDriver={true}
+        >
+          <FormTitle ref={r => this.inputTitle = r}/>
+        </Animatable.View>
+        <Animatable.View
+          ref={r => this.formDescriptionContainer = r}
+          useNativeDriver={true}
+        >
+          <FormDescription ref={r => this.inputDescription = r}/>
+        </Animatable.View>
       </View>
     );
   };
 
   _renderFinishButton(){
+    const { styles } = ModalContents;
+
     return(
-      null
+      <TouchableOpacity
+        style={styles.buttonContainer}
+        onPress={this._handleOnPress}
+      >
+        <LinearGradient
+          style={[styles.button, STYLES.mediumShadow]}
+          colors={[PURPLE[800], PURPLE[500]]}
+          start={[0, 1]} end={[1, 0]}
+        >
+          <Icon
+            name={'ios-checkmark-circle-outline'}
+            type={'ionicon'}
+            color={'white'}
+            size={24}
+          />
+          <Text style={styles.buttonText}>{'Save Changes'}</Text>
+          <Icon
+            name={'chevron-right'}
+            type={'feather'}
+            color={'white'}
+            size={30}
+          />
+        </LinearGradient>
+      </TouchableOpacity>
     );
   };
 
   render(){
     return(
-      <View style={{flex: 1}}>
-        <ModalTopIndicator/>
-        {this._renderTitle()}
-        {this._renderForms()}
-        {this._renderFinishButton()}
-      </View>
+      <TouchableWithoutFeedback 
+        style={{flex: 1}}
+        onPress={this._handleOnPressWrapper}
+        accessible={false}
+      >
+        <View style={{flex: 1}}>
+          <ModalTopIndicator/>
+          <View style={{flex: 1}}>
+            {this._renderTitle()}
+            {this._renderForms()}
+          </View>
+          {this._renderFinishButton()}
+        </View>
+      </TouchableWithoutFeedback>
     );
   };
 };
@@ -238,8 +522,8 @@ export class QuizDetailsModal extends React.PureComponent {
       mountContent: false,
     };
 
-    //called when add subject is pressed
-    this.onPressAddSubject = null;
+    //called when save changes is pressed
+    this.onPressSaveChanges = null;
   };
 
   openModal = async (selected) => {
@@ -254,9 +538,16 @@ export class QuizDetailsModal extends React.PureComponent {
     this.setState({mountContent: false});
   };
 
+  _handleOnPressSaveChanges = ({title, description}) => {
+    if(this.onPressSaveChanges != null){
+      this._modal.hideModal();
+      this.onPressSaveChanges && this.onPressSaveChanges({title, description});
+    };
+  };
+
   _renderContent(){
     return(
-      <ModalContents/>
+      <ModalContents onPressSaveChanges={this._handleOnPressSaveChanges}/>
     );
   };
 

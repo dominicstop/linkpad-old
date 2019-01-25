@@ -30,6 +30,8 @@ const titleStyle = {
 
 class TitleDescriptionCard extends React.PureComponent {
   static PropTypes = {
+    title: PropTypes.string,
+    description: PropTypes.string,
     onPressEditDetails: PropTypes.func,
   };
   
@@ -54,7 +56,9 @@ class TitleDescriptionCard extends React.PureComponent {
       fontWeight: '800'
     },
     headerSubtitle: {
-      fontSize: 16, 
+      fontSize: 16,
+      textAlign: 'justify',
+      marginBottom: 10,
       ...Platform.select({
         ios: {
           fontWeight: '200'
@@ -91,6 +95,13 @@ class TitleDescriptionCard extends React.PureComponent {
 
   _renderDescription(){
     const { styles } = TitleDescriptionCard;
+    const { title, description } = this.props;
+
+    const defaultTitle       = 'Custom Quiz';
+    const defaultDescription = 'Give your custom quiz a title and a description so you can easily find it later.';
+
+    const headerTitle       = (title       == '')? defaultTitle       : title; 
+    const headerDescription = (description == '')? defaultDescription : description; 
 
     return(
       <View style={{flexDirection: 'row'}}>
@@ -104,8 +115,8 @@ class TitleDescriptionCard extends React.PureComponent {
           useNativeDriver={true}
         />
         <View style={styles.headerTextContainer}>
-          <Text style={styles.headerTitle   }>Custom Quiz</Text>
-          <Text style={styles.headerSubtitle}>Give your custom quiz a title and a description so you can easily find it later.</Text>
+          <Text style={styles.headerTitle   }>{headerTitle}      </Text>
+          <Text style={styles.headerSubtitle}>{headerDescription}</Text>
         </View>
       </View>
     );
@@ -314,7 +325,9 @@ export class CreateQuizScreen extends React.Component {
     super(props);
 
     this.state = {
-      selected: []
+      title: '',
+      description: '',
+      selected: [],
     };
 
     //get ref from screenprops
@@ -327,15 +340,10 @@ export class CreateQuizScreen extends React.Component {
   _handleOnPressEditDetails = () => {
     if(this.detailsModal != null){
       //assign callback to modal
-
+      this.detailsModal.onPressSaveChanges = this._handleModalOnPressSaveChanges;
       //show modal
       this.detailsModal.openModal();
     };
-  };
-
-  //callback from modal
-  _handleModalOnPressAddSubject = (selected) => {
-    this.setState({selected});
   };
 
   _handleOnPressAddSubject = () => {
@@ -349,11 +357,24 @@ export class CreateQuizScreen extends React.Component {
     };
   };
 
+  //callback from createquiz modal
+  _handleModalOnPressAddSubject = (selected) => {
+    this.setState({selected});
+  };
+
+  //callback from quizdetails modal
+  _handleModalOnPressSaveChanges = ({title, description}) => {
+    this.setState({title, description});
+  };
+
   _renderHeader = () => {
+    const {title, description} = this.state;
+    
     return(
       <Fragment>
         <TitleDescriptionCard 
-          onPressEditDetails={this._handleOnPressEditDetails}          
+          onPressEditDetails={this._handleOnPressEditDetails}
+          {...{title, description}} 
         />
         <AddSubjectsCard 
           onPressAddSubject={this._handleOnPressAddSubject}

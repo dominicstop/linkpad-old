@@ -81,4 +81,8 @@ export function getLetter(index = 0){
 
 export function isValidTimestamp(timestamp){
   return (new Date(timestamp)).getTime() > 0;
-}
+};
+
+export function isEmpty(string){
+  return (/^\s+$/.test(string) || string == '');
+};
