@@ -79,7 +79,7 @@ export const STYLES = StyleSheet.create({
     shadowOffset:{ height: 0, width: 0 },
     shadowColor: 'white',
     shadowRadius: 5,
-    shadowOpacity: 0.4,
+    shadowOpacity: 0.2,
   },
 });
 

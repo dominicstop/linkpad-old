@@ -3,20 +3,17 @@ import { View, ScrollView, ViewPropTypes, Text, TouchableOpacity, AsyncStorage, 
 import PropTypes from 'prop-types';
 
 import   NavigationService from '../NavigationService';
+import { setStateAsync , plural} from '../functions/Utils';
 import { ROUTES, STYLES, HEADER_HEIGHT } from '../Constants';
 import { PURPLE } from '../Colors';
 
 import { CreateCustomQuizList } from '../components/CustomQuiz';
 import { AndroidHeader } from '../components/AndroidHeader';
-
 import { ViewWithBlurredHeader, IconText, Card } from '../components/Views' ;
 import { PlatformTouchableIconButton } from '../components/Buttons';
-import { CreateQuizModal } from '../components/modals/CreateQuizModal';
-
-import { setStateAsync , plural} from '../functions/Utils';
 
 import * as Animatable from 'react-native-animatable';
-import { Header, createStackNavigator } from 'react-navigation';
+import { Header, NavigationEvents  } from 'react-navigation';
 import { Icon, Divider } from 'react-native-elements';
 
 //android header text style
@@ -396,6 +393,11 @@ export class CreateQuizScreen extends React.Component {
     this.detailsModal = getRefQuizDetailsModal();
   };
 
+  componentDidFocus = () => {
+    const { setDrawerSwipe } = this.props.screenProps;
+    setDrawerSwipe(false);
+  };
+
   _handleOnPressEditDetails = () => {
     const {title, description} = this.state;
 
@@ -449,6 +451,7 @@ export class CreateQuizScreen extends React.Component {
 
     return(
       <ViewWithBlurredHeader hasTabBar={false}>
+        <NavigationEvents onDidFocus={this.componentDidFocus}/>
         <ScrollView
           style={styles.flatlist}
           contentInset ={{top: HEADER_HEIGHT}}

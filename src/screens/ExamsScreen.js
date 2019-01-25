@@ -13,41 +13,11 @@ import { PlatformTouchableIconButton } from '../components/Buttons';
 import _ from 'lodash';
 import * as Animatable from 'react-native-animatable';
 
-import { Header, createStackNavigator } from 'react-navigation';
+import { Header, NavigationEvents } from 'react-navigation';
 import { Divider } from 'react-native-elements';
 
-export class ExamsScreen extends React.Component {
-  static styles = StyleSheet.create({
-    scrollview: {
-      paddingTop: 12,
-    },
-  });
-
-  handleOnPressCreateQuiz = () => {
-    const { navigation } = this.props;
-    navigation && navigation.navigate(ROUTES.CreateQuizRoute);
-  };
-
-  render(){
-    const { styles } = ExamsScreen;
-
-    return(
-      <ViewWithBlurredHeader hasTabBar={true} enableAndroid={false}>
-        <ScrollView 
-          style={styles.scrollview}
-          //adjust top distance
-          contentInset ={{top: HEADER_HEIGHT}}
-          contentOffset={{x: 0, y: -HEADER_HEIGHT}}
-        >
-          <ExamHeader onPress={this.handleOnPressCreateQuiz}/>
-        </ScrollView>
-      </ViewWithBlurredHeader>
-    );
-  };
-};
-
 // shown when no exams have been created yet
-export class ExamHeader extends React.PureComponent {
+class ExamHeader extends React.PureComponent {
   static PropTypes = {
     onPress: PropTypes.func,
   };
@@ -170,6 +140,43 @@ export class ExamHeader extends React.PureComponent {
           {this._renderButton()}
         </Card>
       </Animatable.View>
+    );
+  };
+};
+
+export class ExamsScreen extends React.Component {
+  static styles = StyleSheet.create({
+    scrollview: {
+      paddingTop: 12,
+    },
+  });
+
+  componentDidFocus = () => {
+    //enable drawer when this screen is active
+    const { setDrawerSwipe, getRefSubjectModal } = this.props.screenProps;
+    setDrawerSwipe(true);
+  };
+
+  handleOnPressCreateQuiz = () => {
+    const { navigation } = this.props;
+    navigation && navigation.navigate(ROUTES.CreateQuizRoute);
+  };
+
+  render(){
+    const { styles } = ExamsScreen;
+
+    return(
+      <ViewWithBlurredHeader hasTabBar={true} enableAndroid={false}>
+        <NavigationEvents onDidFocus={this.componentDidFocus}/>
+        <ScrollView 
+          style={styles.scrollview}
+          //adjust top distance
+          contentInset ={{top: HEADER_HEIGHT}}
+          contentOffset={{x: 0, y: -HEADER_HEIGHT}}
+        >
+          <ExamHeader onPress={this.handleOnPressCreateQuiz}/>
+        </ScrollView>
+      </ViewWithBlurredHeader>
     );
   };
 };
