@@ -234,6 +234,7 @@ class ModalSectionItem extends React.PureComponent {
       <TouchableOpacity 
         style={styles.buttonContainer}
         onPress={this._handleOnPress}
+        activeOpacity={0.7}
       >
         {this._renderCheckbox()}
         {this._renderDetails ()}
