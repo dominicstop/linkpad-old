@@ -13,7 +13,7 @@ import { ViewWithBlurredHeader, IconText, Card } from '../components/Views' ;
 import { PlatformTouchableIconButton } from '../components/Buttons';
 import { CreateQuizModal } from '../components/modals/CreateQuizModal';
 
-import { setStateAsync } from '../functions/Utils';
+import { setStateAsync , plural} from '../functions/Utils';
 
 import * as Animatable from 'react-native-animatable';
 import { Header, createStackNavigator } from 'react-navigation';
@@ -373,6 +373,11 @@ export class CreateQuizScreen extends React.Component {
     flatlist: {
       paddingTop: 12,
     },
+    indicatorText: {
+      fontSize: 18,
+      fontWeight: 'bold',
+      marginLeft: 10,
+    },
   });
 
   constructor(props){
@@ -444,13 +449,14 @@ export class CreateQuizScreen extends React.Component {
 
     return(
       <ViewWithBlurredHeader hasTabBar={false}>
-        <CreateCustomQuizList
+        <ScrollView
           style={styles.flatlist}
           contentInset ={{top: HEADER_HEIGHT}}
           contentOffset={{x: 0, y: -HEADER_HEIGHT}}
-          ListHeaderComponent={this._renderHeader}
-          quizItems={this.state.selected}
-        />
+        >
+          {this._renderHeader()}
+          <CreateCustomQuizList quizItems={this.state.selected}/>
+        </ScrollView>
       </ViewWithBlurredHeader>
     );
   };

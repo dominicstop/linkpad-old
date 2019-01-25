@@ -2,6 +2,7 @@ import React, { Fragment } from 'react';
 import { View, LayoutAnimation, ScrollView, ViewPropTypes, Text, TouchableOpacity, AsyncStorage, StyleSheet, FlatList } from 'react-native';
 import PropTypes from 'prop-types';
 
+import { plural } from '../functions/Utils';
 import { SubjectItem } from '../functions/ModuleStore';
 
 import { Card, AnimatedListItem } from '../components/Views';
@@ -215,6 +216,16 @@ export class CreateCustomQuizList extends React.PureComponent {
     quizItems: PropTypes.array,
   };
 
+  static styles = StyleSheet.create({
+    indicatorText: {
+      fontSize: 26,
+      fontWeight: '400',
+      marginTop: 15,
+      marginBottom: 5,
+      marginLeft: 12,
+    },
+  });
+
   constructor(props){
     super(props);
   };
@@ -241,9 +252,28 @@ export class CreateCustomQuizList extends React.PureComponent {
     );
   };
 
+  _renderHeader = () => {
+    const { styles } = CreateCustomQuizList;
+
+    const { quizItems } = this.props;
+    if(quizItems.length == 0) return null;
+
+    return(
+      <Animatable.Text
+        style={styles.indicatorText}
+        animation={'fadeInUp'}
+        duration={500}
+        easing={'ease-in-out'}
+        useNativeDriver={true}
+      >
+        {`${quizItems.length} ${plural('Subject', quizItems.length)}`}
+      </Animatable.Text>
+    );
+  };
+
   _renderFooter(){
     return(<View style={{marginBottom: 75}}/>);
-  }
+  };
 
   render(){
     const {quizItems, ...otherProps} = this.props;
@@ -252,6 +282,7 @@ export class CreateCustomQuizList extends React.PureComponent {
         data={quizItems}
         renderItem={this._renderItem}
         keyExtractor={this._keyExtractor}
+        ListHeaderComponent={this._renderHeader}
         ListFooterComponent={this._renderFooter}
         {...otherProps}
       />
