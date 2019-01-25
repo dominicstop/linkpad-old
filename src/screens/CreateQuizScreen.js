@@ -1,5 +1,5 @@
 import React, { Fragment } from 'react';
-import { View, ScrollView, ViewPropTypes, Text, TouchableOpacity, AsyncStorage, StyleSheet, FlatList, TextInput } from 'react-native';
+import { View, ScrollView, ViewPropTypes, Text, TouchableOpacity, AsyncStorage, StyleSheet, FlatList, TextInput, Platform } from 'react-native';
 import PropTypes from 'prop-types';
 
 import   NavigationService from '../NavigationService';
@@ -28,23 +28,8 @@ const titleStyle = {
   color: 'white',
 };
 
-class TitleDescriptionCard extends React.PureComponent {
-  static PropTypes = {
-    title: PropTypes.string,
-    description: PropTypes.string,
-    onPressEditDetails: PropTypes.func,
-  };
-  
+class TitleDescription extends React.PureComponent {
   static styles = StyleSheet.create({
-    card: {
-      marginBottom: 10,
-    },
-    image: {
-      width: 75, 
-      height: 75,
-      marginRight: 12,
-      marginVertical: 12,
-    },
     headerTextContainer: {
       flex: 1, 
     },
@@ -70,6 +55,70 @@ class TitleDescriptionCard extends React.PureComponent {
         },
       })
     },
+  });
+
+  constructor(props){
+    super(props);
+
+    //set initial text
+    this.state = {
+      title: props.title,
+      description: props.description,
+    };
+  };
+
+  changeText = async ({title, description}) => {
+    await this.textContainer.fadeOut(250);
+    this.setState({title, description});
+
+    if(Platform.OS == 'ios'){
+      await this.textContainer.fadeInUp(250);
+
+    } else {
+      await this.textContainer.fadeIn(250);
+    };
+  };
+
+  render(){
+    const { styles } = TitleDescription;
+    const { title, description } = this.state;
+
+    const defaultTitle       = 'Custom Quiz';
+    const defaultDescription = 'Give your custom quiz a title and a description so you can easily find it later.';
+
+    const headerTitle       = (title       == '')? defaultTitle       : title; 
+    const headerDescription = (description == '')? defaultDescription : `Quiz Descripton – ${description}`; 
+
+    return(
+      <Animatable.View 
+        style={styles.headerTextContainer}
+        ref={r => this.textContainer = r}
+        useNativeDriver={true}
+      >
+        <Text style={styles.headerTitle   }>{headerTitle}      </Text>
+        <Text style={styles.headerSubtitle}>{headerDescription}</Text>
+      </Animatable.View>
+    );
+  };
+};
+
+class TitleDescriptionCard extends React.PureComponent {
+  static PropTypes = {
+    title: PropTypes.string,
+    description: PropTypes.string,
+    onPressEditDetails: PropTypes.func,
+  };
+  
+  static styles = StyleSheet.create({
+    card: {
+      marginBottom: 10,
+    },
+    image: {
+      width: 75, 
+      height: 75,
+      marginRight: 12,
+      marginVertical: 12,
+    },
     buttonWrapper: {
       backgroundColor: PURPLE.A700,
       marginTop: 10,
@@ -89,6 +138,16 @@ class TitleDescriptionCard extends React.PureComponent {
     this.imageHeader = require('../../assets/icons/clipboard-circle.png');
   };
 
+  async componentDidUpdate(prevProps){
+    const {title, description} = this.props;
+
+    const didTitleChange       = title       != prevProps.title;
+    const didDescriptionChange = description != prevProps.description;
+
+    const didChange = didTitleChange || didDescriptionChange;
+    didChange && this.titleDescription.changeText({title, description});
+  };
+
   _handleOnPressEditDetails = () => {
     const { onPressEditDetails } = this.props;
     onPressEditDetails && onPressEditDetails();
@@ -97,12 +156,6 @@ class TitleDescriptionCard extends React.PureComponent {
   _renderDescription(){
     const { styles } = TitleDescriptionCard;
     const { title, description } = this.props;
-
-    const defaultTitle       = 'Custom Quiz';
-    const defaultDescription = 'Give your custom quiz a title and a description so you can easily find it later.';
-
-    const headerTitle       = (title       == '')? defaultTitle       : title; 
-    const headerDescription = (description == '')? defaultDescription : `Quiz Descripton – ${description}`; 
 
     return(
       <View style={{flexDirection: 'row'}}>
@@ -115,10 +168,10 @@ class TitleDescriptionCard extends React.PureComponent {
           duration={5000}
           useNativeDriver={true}
         />
-        <View style={styles.headerTextContainer}>
-          <Text style={styles.headerTitle   }>{headerTitle}      </Text>
-          <Text style={styles.headerSubtitle}>{headerDescription}</Text>
-        </View>
+        <TitleDescription
+          ref={r => this.titleDescription = r}
+          {...{title, description}}
+        />
       </View>
     );
   };
