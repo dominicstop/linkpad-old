@@ -421,8 +421,18 @@ export class CreateQuizScreen extends React.Component {
   };
 
   //callback from createquiz modal
-  _handleModalOnPressAddSubject = (selected) => {
-    this.setState({selected});
+  _handleModalOnPressAddSubject = async (selected) => {
+    const prevCount = this.state.selected.length;
+    const nextCount = selected.length;
+
+    if(prevCount > nextCount){
+      await this.listContainer.fadeOut(300);
+      this.setState({selected});
+      await this.listContainer.fadeInUp(300);
+
+    } else {
+      this.setState({selected});
+    };
   };
 
   //callback from quizdetails modal
@@ -458,7 +468,12 @@ export class CreateQuizScreen extends React.Component {
           contentOffset={{x: 0, y: -HEADER_HEIGHT}}
         >
           {this._renderHeader()}
-          <CreateCustomQuizList quizItems={this.state.selected}/>
+          <Animatable.View
+            ref={r => this.listContainer = r}
+            useNativeDriver={true}
+          >
+            <CreateCustomQuizList quizItems={this.state.selected}/>
+          </Animatable.View>
         </ScrollView>
       </ViewWithBlurredHeader>
     );
