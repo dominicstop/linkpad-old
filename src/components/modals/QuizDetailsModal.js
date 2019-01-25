@@ -19,7 +19,7 @@ import {  } from 'react-native-paper';
 
 const { Lottie } = DangerZone;
 
-export class CheckAnimation extends React.PureComponent {
+class CheckAnimation extends React.PureComponent {
   constructor(props){
     super(props);
 

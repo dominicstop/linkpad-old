@@ -33,6 +33,12 @@ UIManager.setLayoutAnimationEnabledExperimental &&
 UIManager.setLayoutAnimationEnabledExperimental(true);
 
 export class SwipableModal extends React.PureComponent {
+  static snapPoints = {
+    fullscreen: { y: MODAL_DISTANCE_FROM_TOP },
+    halfscreen: { y: Screen.height - (Screen.height * 0.6) },
+    hidden    : { y: Screen.height }
+  };
+  
   static propTypes = {
     onModalShow: PropTypes.func,
     onModalHide: PropTypes.func,
@@ -40,7 +46,7 @@ export class SwipableModal extends React.PureComponent {
       //y: distance from top
       y: PropTypes.number,
     })),
-  }
+  };
 
   static defaultProps = {
     snapPoints: [
@@ -48,15 +54,13 @@ export class SwipableModal extends React.PureComponent {
       { y: MODAL_DISTANCE_FROM_TOP },
       //hidden
       { y: Screen.height * 1 },
-      //half screen
-      //{ y: Screen.height - (Screen.height * 0.6) },
     ],
     ...Platform.select({
       android: {
         hitSlop: { bottom: -(Screen.height + MODAL_EXTRA_HEIGHT - 60) }
       }
     })
-  }
+  };
 
   constructor(props) {
     super(props);

@@ -7,6 +7,7 @@ import { CustomHeader } from '../components/Header' ;
 import { SubjectModal     } from '../components/SwipableModal';
 import { CreateQuizModal  } from '../components/modals/CreateQuizModal';
 import { QuizDetailsModal } from '../components/modals/QuizDetailsModal';
+import { QuizFinishModal  } from '../components/modals/QuizFinishModal';
 
 import { ModuleListScreen } from './ModuleListScreen';
 import { ResourcesScreen  } from './ResourcesScreen';
@@ -292,6 +293,7 @@ export class Homescreen extends React.PureComponent {
             getRefSubjectModal    : () => this.subjectModal    ,
             getRefCreateQuizModal : () => this.createQuizModal ,
             getRefQuizDetailsModal: () => this.quizDetailsModal,
+            getRefQuizFinishModal : () => this.quizFinishModal ,
             getAppStackNavigation : () => this.props.navigation,
             setDrawerSwipe: this.setDrawerSwipe,
           }}
@@ -306,6 +308,7 @@ export class Homescreen extends React.PureComponent {
         <SubjectModal     ref={r => this.subjectModal     = r}/>
         <CreateQuizModal  ref={r => this.createQuizModal  = r}/>
         <QuizDetailsModal ref={r => this.quizDetailsModal = r}/>
+        <QuizFinishModal  ref={r => this.quizFinishModal  = r}/>
       </Fragment>
     );
   };

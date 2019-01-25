@@ -395,10 +395,11 @@ export class CreateQuizScreen extends React.Component {
     };
 
     //get ref from screenprops
-    const { getRefCreateQuizModal, getRefQuizDetailsModal } = props.screenProps;
+    const { getRefCreateQuizModal, getRefQuizDetailsModal, getRefQuizFinishModal } = props.screenProps;
     //get ref of modal from homescreen wrapper
-    this.quizModal    = getRefCreateQuizModal();
+    this.quizModal    = getRefCreateQuizModal ();
     this.detailsModal = getRefQuizDetailsModal();
+    this.finishModal  = getRefQuizFinishModal ();
 
     _onPressNext = this._handleOnPressNext;
   };
@@ -409,16 +410,19 @@ export class CreateQuizScreen extends React.Component {
   };
 
   _handleOnPressNext = () => {
-    const { selected, title, description } = this.state;
+    const {selected, title, description} = this.state;
 
-    const isEmpty = (isEmpty(title) || isEmpty(description));
+    this.finishModal.openModal({selected, title, description});
+    return;
+
+    const isValid = (isEmpty(title) || isEmpty(description));
 
     if(selected <= 0){
       Alert.alert(
         'Not Enough Items',
         "Please add at least one subject to continue.",
       );
-    } else if(isEmpty) {
+    } else if(isValid){
       Alert.alert(
         'No Title/Description',
         "Press 'Edit Deatils' to add a title and description.",
