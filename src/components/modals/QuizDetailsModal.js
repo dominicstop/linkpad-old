@@ -17,6 +17,51 @@ import { Icon, Divider } from 'react-native-elements';
 import * as Animatable from 'react-native-animatable';
 import {  } from 'react-native-paper';
 
+const { Lottie } = DangerZone;
+
+export class CheckAnimation extends React.PureComponent {
+  constructor(props){
+    super(props);
+
+    this.state = {
+      mountAnimation: false,
+    };
+
+    this._source = require('../../animations/checked_done_2.json');
+    this._value = new Animated.Value(0.5);
+    this._config = { 
+      toValue: 1,
+      duration: 500,
+      useNativeDriver: true 
+    };
+
+    this._animated = Animated.timing(this._value, this._config);
+  };
+
+  //start animation
+  start = () => {
+    return new Promise(async resolve => {
+      await setStateAsync(this, {mountAnimation: true});
+      this._animated.start(() => resolve());
+    });
+  };
+
+  render(){
+    //dont mount until animation starts
+    if(!this.state.mountAnimation) return null;
+
+    return(
+      <Lottie
+        ref={r => this.animation = r}
+        progress={this._value}
+        source={this._source}
+        loop={false}
+        autoplay={false}
+      />
+    );
+  };
+};
+
 class FormTitle extends React.PureComponent {
   static styles = StyleSheet.create({
     iconInputWrapper: {
@@ -64,7 +109,7 @@ class FormTitle extends React.PureComponent {
   constructor(props){
     super(props);
     this.state = {
-      text: '',
+      text: props.title,
     };
   };
 
@@ -226,7 +271,7 @@ class FormDescription extends React.PureComponent {
   constructor(props){
     super(props);
     this.state = {
-      text: '',
+      text: props.description,
     };
   };
 
@@ -345,6 +390,8 @@ class FormDescription extends React.PureComponent {
 
 class ModalContents extends React.PureComponent {
   static PropTypes = {
+    title: PropTypes.string,
+    description: PropTypes.string,
     onPressSaveChanges: PropTypes.func,
   };
 
@@ -444,6 +491,7 @@ class ModalContents extends React.PureComponent {
 
   _renderForms(){
     const { styles } = ModalContents;
+    const {title, description} = this.props;
 
     return(
       <View style={styles.body}>
@@ -451,13 +499,19 @@ class ModalContents extends React.PureComponent {
           ref={r => this.formTitleContainer = r}
           useNativeDriver={true}
         >
-          <FormTitle ref={r => this.inputTitle = r}/>
+          <FormTitle 
+            ref={r => this.inputTitle = r}
+            {...{title}}
+          />
         </Animatable.View>
         <Animatable.View
           ref={r => this.formDescriptionContainer = r}
           useNativeDriver={true}
         >
-          <FormDescription ref={r => this.inputDescription = r}/>
+          <FormDescription 
+            ref={r => this.inputDescription = r}
+            {...{description}}
+          />
         </Animatable.View>
       </View>
     );
@@ -515,19 +569,45 @@ class ModalContents extends React.PureComponent {
 };
 
 export class QuizDetailsModal extends React.PureComponent {
+  static styles = StyleSheet.create({
+    overlayContainer: {
+      flex: 1,
+      position: 'absolute',
+      height: '100%',
+      width: '100%',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    overlay: {
+      position: 'absolute',
+      height: '100%',
+      width: '100%',
+      opacity: 0,
+      backgroundColor: 'white',
+    },
+    checkContainer: {
+      width: '50%', 
+      height: '50%', 
+      marginBottom: 325
+    }
+  });
+
   constructor(props){
     super(props);
 
     this.state = {
       mountContent: false,
+      title: '',
+      description: '',
     };
 
     //called when save changes is pressed
     this.onPressSaveChanges = null;
   };
 
-  openModal = async (selected) => {
-    this.setState({mountContent: true});
+  openModal = async ({title, description}) => {
+    this.setState({mountContent: true, title, description});
+
     this._modal.showModal();
   };
 
@@ -538,16 +618,47 @@ export class QuizDetailsModal extends React.PureComponent {
     this.setState({mountContent: false});
   };
 
-  _handleOnPressSaveChanges = ({title, description}) => {
+  _handleOnPressSaveChanges = async ({title, description}) => {
     if(this.onPressSaveChanges != null){
-      this._modal.hideModal();
-      this.onPressSaveChanges && this.onPressSaveChanges({title, description});
+      //wait to finish
+      await Promise.all([
+        //show overlay
+        this.overlay.transitionTo({opacity: 0.4}, 500),
+        //show check animation
+        this.animatedCheck.start(),
+      ]);
+
+      await this._modal.hideModal();
+      this.onPressSaveChanges({title, description});
     };
   };
 
+  _renderOverlay(){
+    const { styles } = QuizDetailsModal;
+    return (
+      <View 
+        style={styles.overlayContainer}
+        pointerEvents={'none'}
+      >
+        <Animatable.View 
+          ref={r => this.overlay = r}
+          style={styles.overlay}
+          useNativeDriver={true}
+        />
+        <View style={styles.checkContainer}>
+          <CheckAnimation ref={r => this.animatedCheck = r}/>
+        </View>
+      </View>
+    );
+  };
+
   _renderContent(){
+    const {title, description} = this.state;
     return(
-      <ModalContents onPressSaveChanges={this._handleOnPressSaveChanges}/>
+      <ModalContents 
+        onPressSaveChanges={this._handleOnPressSaveChanges}
+        {...{title, description}}
+      />
     );
   };
 
@@ -563,9 +674,12 @@ export class QuizDetailsModal extends React.PureComponent {
         onModalShow={this._handleOnModalShow}
         onModalHide={this._handleOnModalHide}
       >
-        <ModalBackground style={{paddingBottom}}>
-          {mountContent && this._renderContent()}
-        </ModalBackground>
+        <Fragment>
+          <ModalBackground style={{paddingBottom}}>
+            {mountContent && this._renderContent()}
+          </ModalBackground>
+          {this._renderOverlay()}
+        </Fragment>
       </SwipableModal>
     );
   };

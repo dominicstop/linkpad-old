@@ -47,17 +47,18 @@ class TitleDescriptionCard extends React.PureComponent {
     },
     headerTextContainer: {
       flex: 1, 
-      alignItems: 'center', 
-      justifyContent: 'center', 
     },
     headerTitle: {
       color: '#512DA8',
       fontSize: 20, 
-      fontWeight: '800'
+      fontWeight: '800',
+      textAlign: 'center',
     },
     headerSubtitle: {
+      flex: 1,
       fontSize: 16,
       textAlign: 'justify',
+      textAlignVertical: 'top',
       marginBottom: 10,
       ...Platform.select({
         ios: {
@@ -101,7 +102,7 @@ class TitleDescriptionCard extends React.PureComponent {
     const defaultDescription = 'Give your custom quiz a title and a description so you can easily find it later.';
 
     const headerTitle       = (title       == '')? defaultTitle       : title; 
-    const headerDescription = (description == '')? defaultDescription : description; 
+    const headerDescription = (description == '')? defaultDescription : `Quiz Descripton – ${description}`; 
 
     return(
       <View style={{flexDirection: 'row'}}>
@@ -338,11 +339,13 @@ export class CreateQuizScreen extends React.Component {
   };
 
   _handleOnPressEditDetails = () => {
+    const {title, description} = this.state;
+
     if(this.detailsModal != null){
       //assign callback to modal
       this.detailsModal.onPressSaveChanges = this._handleModalOnPressSaveChanges;
       //show modal
-      this.detailsModal.openModal();
+      this.detailsModal.openModal({title, description});
     };
   };
 
