@@ -77,7 +77,7 @@ export class SwipableModal extends React.PureComponent {
     const { mountModal } = this.state;
     if(mountModal){
       this._modalShadow.fadeOut(750);
-      await this._rootView.bounceOutDown(750);
+      await this._rootView.bounceOutDown(500);
       this.setState({mountModal: false});
     };
   };
@@ -156,13 +156,12 @@ export class SwipableModal extends React.PureComponent {
           ref={r => this._rootView = r}
           style={{position: 'absolute', width: '100%', height: '100%'}}
           animation={'bounceInUp'}
-          duration={750}
-          easing={'ease-in-out'}
+          duration={800}
           pointerEvents={'box-none'}
         >
           <Interactable.View
             verticalOnly={true}
-            boundaries={{ top: -300 }}
+            boundaries={{ top: -100 }}
             initialPosition={snapPoints[0]}
             animatedValueY={this._deltaY}
             ref={r => this._interactable = r}

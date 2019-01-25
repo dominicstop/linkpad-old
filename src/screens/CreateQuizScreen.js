@@ -1,5 +1,5 @@
 import React, { Fragment } from 'react';
-import { View, ScrollView, ViewPropTypes, Text, TouchableOpacity, AsyncStorage, StyleSheet, FlatList, TextInput, Platform } from 'react-native';
+import { View, ScrollView, ViewPropTypes, Text, TouchableOpacity, AsyncStorage, StyleSheet, FlatList, TextInput, Platform, Alert } from 'react-native';
 import PropTypes from 'prop-types';
 
 import   NavigationService from '../NavigationService';
@@ -24,6 +24,13 @@ const titleStyle = {
   position: 'absolute',
   color: 'white',
 };
+
+let _onPressNext;
+const headerRight = (
+  <TouchableOpacity onPress={() => _onPressNext && _onPressNext()}>
+    <Text style={{fontSize: 18, color: 'white', margin: 10}}>Next</Text>
+  </TouchableOpacity>
+);
 
 class TitleDescription extends React.PureComponent {
   static styles = StyleSheet.create({
@@ -353,7 +360,8 @@ export class CreateQuizScreen extends React.Component {
     if(state.params) title = state.params.title;
 
     return ({
-      title,
+      title, 
+      headerRight,
       headerTitleStyle: STYLES.glow,
 
       //custom android header
@@ -391,11 +399,27 @@ export class CreateQuizScreen extends React.Component {
     //get ref of modal from homescreen wrapper
     this.quizModal    = getRefCreateQuizModal();
     this.detailsModal = getRefQuizDetailsModal();
+
+    _onPressNext = this._handleOnPressNext;
   };
 
   componentDidFocus = () => {
     const { setDrawerSwipe } = this.props.screenProps;
     setDrawerSwipe(false);
+  };
+
+  _handleOnPressNext = () => {
+    const { selected } = this.state;
+
+    if(selected <= 0){
+      Alert.alert(
+        'Not Enough Items',
+        "Please add at least one subject to continue.",
+      );
+
+    } else {
+
+    };
   };
 
   _handleOnPressEditDetails = () => {

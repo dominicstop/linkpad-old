@@ -1,5 +1,5 @@
 import React, { Fragment } from 'react';
-import { StyleSheet, View, Text, TouchableOpacity, Platform, SectionList, Animated, TextInput, TouchableWithoutFeedback, Keyboard } from 'react-native';
+import { StyleSheet, View, Text, TouchableOpacity, Platform, SectionList, Animated, TextInput, TouchableWithoutFeedback, Keyboard, Alert } from 'react-native';
 import PropTypes from 'prop-types';
 
 import { STYLES } from '../../Constants';
@@ -452,7 +452,7 @@ class ModalContents extends React.PureComponent {
     Keyboard.dismiss();
   };
 
-  _handleOnPress = () => {
+  _handleOnPress = async () => {
     //get text from forms
     const title = this.inputTitle.getText();
     const description = this.inputDescription.getText();
@@ -462,8 +462,15 @@ class ModalContents extends React.PureComponent {
     const isDescriptionEmpty = isEmpty(description);
 
     if(isTitleEmpty || isDescriptionEmpty){
-      isTitleEmpty       && this.formTitleContainer      .shake(500);
-      isDescriptionEmpty && this.formDescriptionContainer.shake(500);
+      await Promise.all([
+        //animate input when empty
+        isTitleEmpty       && this.formTitleContainer      .shake(500),
+        isDescriptionEmpty && this.formDescriptionContainer.shake(500),
+      ]);
+      Alert.alert(
+        'Invalid Title/Description',
+        "Make sure that all fields have been filled.",
+      );
 
     } else {
       const { onPressSaveChanges } = this.props;
