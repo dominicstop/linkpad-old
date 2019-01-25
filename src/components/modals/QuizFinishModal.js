@@ -93,10 +93,8 @@ class QuizCard extends React.PureComponent {
 
   _renderTitleDesc(){
     const { styles } = QuizCard;
-
-    const title = 'Nullam quis risus eget ';
-    const description = 'Nullam quis risus eget Integer posuere erat a ante venenatis dapibus posuere velit aliquet. Aenean lacinia bibendum ';
-    
+    const {title, description} = this.props;
+ 
     return(
       <View style={{flex: 1}}>
         <Text style={styles.textLabel} numberOfLines={1}>
@@ -166,6 +164,7 @@ class ModalContents extends React.PureComponent {
     description: PropTypes.string,
     selected: PropTypes.array,
     onPressCreateQuiz: PropTypes.func,
+    onPressCancel: PropTypes.func,
   };
 
   static styles = StyleSheet.create({
@@ -237,6 +236,16 @@ class ModalContents extends React.PureComponent {
     super(props);
   };
 
+  _handleOnPressCreateQuiz = () => {
+    const { onPressCreateQuiz } = this.props;
+    onPressCreateQuiz && onPressCreateQuiz();
+  };
+
+  _handleOnPressCancel = () => {
+    const { onPressCancel } = this.props;
+    onPressCancel && onPressCancel();
+  };
+
   _renderTitle(){
     const { styles } = ModalContents;
 
@@ -285,6 +294,7 @@ class ModalContents extends React.PureComponent {
             text={'Create'}
             wrapperStyle={{flex: 1}}
             containerStyle={[styles.buttonContainer, {borderTopLeftRadius: borderRadius, borderBottomLeftRadius: borderRadius, backgroundColor: '#6200EA'}]}
+            onPress={this._handleOnPressCreateQuiz}
             iconName={'pencil-square-o'}
             iconType={'font-awesome'}
             {...buttonProps}
@@ -293,6 +303,7 @@ class ModalContents extends React.PureComponent {
             text={'Cancel'}
             wrapperStyle={{flex: 1}}
             containerStyle={[styles.buttonContainer, {borderTopRightRadius: borderRadius, borderBottomRightRadius: borderRadius, backgroundColor: '#C62828'}]}
+            onPress={this._handleOnPressCancel}            
             iconName={'close'}
             iconType={'simple-line-icon'}
             {...buttonProps}
@@ -369,32 +380,10 @@ export class QuizFinishModal extends React.PureComponent {
   };
 
   _handleOnPressCreateQuiz = async () => {
-    //wait to finish
-    await Promise.all([
-      //show overlay
-      this.overlay.transitionTo({opacity: 0.4}, 500),
-      //show check animation
-      this.animatedCheck.start(),
-    ]);
   };
 
-  _renderOverlay(){
-    const { styles } = QuizFinishModal;
-    return (
-      <View 
-        style={styles.overlayContainer}
-        pointerEvents={'none'}
-      >
-        <Animatable.View 
-          ref={r => this.overlay = r}
-          style={styles.overlay}
-          useNativeDriver={true}
-        />
-        <View style={styles.checkContainer}>
-          <CheckAnimation ref={r => this.animatedCheck = r}/>
-        </View>
-      </View>
-    );
+  _handleOnPressCancel = () => {
+    this._modal.hideModal();
   };
 
   _renderContent(){
@@ -402,7 +391,8 @@ export class QuizFinishModal extends React.PureComponent {
     return(
       <ModalContents 
         onPressCreateQuiz={this._handleOnPressCreateQuiz}
-        {...{title, description}}
+        onPressCancel={this._handleOnPressCancel}
+        {...{title, description, selected}}
       />
     );
   };
@@ -430,7 +420,6 @@ export class QuizFinishModal extends React.PureComponent {
           <ModalBackground style={{paddingBottom}}>
             {mountContent && this._renderContent()}
           </ModalBackground>
-          {this._renderOverlay()}
         </Fragment>
       </SwipableModal>
     );

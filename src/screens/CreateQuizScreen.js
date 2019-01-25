@@ -99,7 +99,12 @@ class TitleDescription extends React.PureComponent {
         ref={r => this.textContainer = r}
         useNativeDriver={true}
       >
-        <Text style={styles.headerTitle   }>{headerTitle}      </Text>
+        <Text 
+          style={styles.headerTitle} 
+          numberOfLines={1} 
+        >
+          {headerTitle}
+        </Text>
         <Text style={styles.headerSubtitle}>{headerDescription}</Text>
       </Animatable.View>
     );
@@ -412,9 +417,6 @@ export class CreateQuizScreen extends React.Component {
   _handleOnPressNext = () => {
     const {selected, title, description} = this.state;
 
-    this.finishModal.openModal({selected, title, description});
-    return;
-
     const isValid = (isEmpty(title) || isEmpty(description));
 
     if(selected <= 0){
@@ -428,7 +430,7 @@ export class CreateQuizScreen extends React.Component {
         "Press 'Edit Deatils' to add a title and description.",
       );
     } else {
-
+      this.finishModal.openModal({selected, title, description});
     };
   };
 
