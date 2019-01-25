@@ -63,8 +63,39 @@ class CheckAnimation extends React.PureComponent {
 };
 
 class ModalContents extends React.PureComponent {
+  static PropTypes = {
+    title: PropTypes.string,
+    description: PropTypes.string,
+    selected: PropTypes.array,
+    onPressCreateQuiz: PropTypes.func,
+  };
+
+  static styles = StyleSheet.create({
+
+  });
+
+  _renderButtons(){
+    return(
+      null
+    );
+  };
+
+  _renderBody(){
+    return(
+      null
+    );
+  };
+
   render(){
-    return null;
+    return(
+      <View style={{flex: 1}}>
+        <ModalTopIndicator/>
+        <View style={{flex: 1}}>
+          {this._renderBody()}
+        </View>
+        {this._renderButtons()}
+      </View>
+    );
   };
 };
 
@@ -160,15 +191,22 @@ export class QuizFinishModal extends React.PureComponent {
 
   render(){
     const { mountContent } = this.state;
+
     const paddingBottom = (
       MODAL_EXTRA_HEIGHT + MODAL_DISTANCE_FROM_TOP
     );
 
+    const snapPoints = [
+      SwipableModal.snapPoints.halfscreen,
+      SwipableModal.snapPoints.hidden,
+    ];
+    
     return(
       <SwipableModal 
         ref={r => this._modal = r}
         onModalShow={this._handleOnModalShow}
         onModalHide={this._handleOnModalHide}
+        {...{snapPoints}}
       >
         <Fragment>
           <ModalBackground style={{paddingBottom}}>
