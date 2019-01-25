@@ -3,7 +3,7 @@ import { View, ScrollView, ViewPropTypes, Text, TouchableOpacity, AsyncStorage, 
 import PropTypes from 'prop-types';
 
 import   NavigationService from '../NavigationService';
-import { setStateAsync , plural} from '../functions/Utils';
+import { setStateAsync , plural, isEmpty} from '../functions/Utils';
 import { ROUTES, STYLES, HEADER_HEIGHT } from '../Constants';
 import { PURPLE } from '../Colors';
 
@@ -409,14 +409,20 @@ export class CreateQuizScreen extends React.Component {
   };
 
   _handleOnPressNext = () => {
-    const { selected } = this.state;
+    const { selected, title, description } = this.state;
+
+    const isEmpty = (isEmpty(title) || isEmpty(description));
 
     if(selected <= 0){
       Alert.alert(
         'Not Enough Items',
         "Please add at least one subject to continue.",
       );
-
+    } else if(isEmpty) {
+      Alert.alert(
+        'No Title/Description',
+        "Press 'Edit Deatils' to add a title and description.",
+      );
     } else {
 
     };

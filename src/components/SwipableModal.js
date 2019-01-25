@@ -161,7 +161,7 @@ export class SwipableModal extends React.PureComponent {
         >
           <Interactable.View
             verticalOnly={true}
-            boundaries={{ top: -100 }}
+            boundaries={{ top: -300 }}
             initialPosition={snapPoints[0]}
             animatedValueY={this._deltaY}
             ref={r => this._interactable = r}
