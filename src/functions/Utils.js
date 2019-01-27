@@ -1,4 +1,5 @@
 import chroma from 'chroma-js';
+import _ from 'lodash';
 
 //wrapper func for setstate that returns a promise
 export function setStateAsync(that, newState) {
@@ -16,7 +17,7 @@ export function timeout(ms) {
 
 //returns a shuffled an array
 export function shuffleArray(array = []) {
-  var newArray = array.slice();
+  var newArray = _.cloneDeep(array);
   for (let i = newArray.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [newArray[i], newArray[j]] = [newArray[j], newArray[i]];

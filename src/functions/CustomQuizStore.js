@@ -1,15 +1,55 @@
 import { Clipboard } from 'react-native'
+import { shuffleArray, getTimestamp } from './Utils';
+import { QuestionItem } from './ModuleStore';
 import store from 'react-native-simple-store';
 import _ from 'lodash';
 
 let _quizes = [];
 
+export class CustomQuiz {
+  constructor(quiz = {title: '', description: '', indexID_quiz: -1, timestampCreated: 0, questions: '',}){
+    this._quiz = {
+      title: '',
+      description: '',
+      indexID_quiz: -1,
+      timestampCreated: 0,
+      questions: [new QuestionItem().get()],
+      ...quiz,
+    };
+  };
+
+  get quiz(){
+    return this._quiz;
+  };
+
+  get title(){
+    return this.quiz.title;
+  };
+
+  get description(){
+    return this.quiz.description;
+  };
+
+  get quizIndexID(){
+    return this.quiz.quizIndexID;
+  };
+
+  get questions(){
+    return this.quiz.questions;
+  };
+
+  get createdTimestamp(){
+    return this.timestampCreated;
+  };
+
+  setTimestampCreated(){
+    this.quiz.timestampCreated = getTimestamp();
+  };
+};
+
 export class CreateCustomQuiz {
-  static createQuiz({title, description, selected}){
+  static createQuiz({title = '', description = '', selected = []}){
     const selectedCopy = _.cloneDeep(selected);
-    
-    //console.log('before selected array: \n\n\n');
-    //console.log(selectedCopy);
 
     //append indexid's to questions for identification
     selectedCopy.forEach((subject) => {
@@ -27,6 +67,8 @@ export class CreateCustomQuiz {
     while(questions.length <= 100){
       for (let i = 0; i < selectedCopy.length; i++) {
         const subject = selectedCopy[i];
+        //shuffle questions
+        subject.questions = shuffleArray(subject.questions);
   
         if(subject.questions.length > 0){
           const question = subject.questions.pop();
@@ -37,15 +79,17 @@ export class CreateCustomQuiz {
 
       const isEmpty = selectedCopy.every((subject) => {
         return subject.questions.length == 0;
-      });  
-      console.log('isEmpty: ' + isEmpty);
+      });
       if(isEmpty) break;
     };
 
-    console.log('questions: ');
-    console.log(questions.length);
-    //console.log('original array: \n\n\n');
-    //console.log(selectedCopy);
+    const customQuiz = new CustomQuiz({
+      title, description, questions,
+      indexID_quiz: 0,
+    });
+
+    customQuiz.setTimestampCreated();
+    return customQuiz;
   };
 };
 

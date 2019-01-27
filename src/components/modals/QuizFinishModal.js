@@ -381,8 +381,9 @@ export class QuizFinishModal extends React.PureComponent {
 
   _handleOnPressCreateQuiz = () => {
     const { title, description, selected } = this.state;
-    alert();
-    CreateCustomQuiz.createQuiz({title, description, selected});
+    const customQuiz = CreateCustomQuiz.createQuiz({title, description, selected});
+    console.log('\n\n\n Custom Quiz:');
+    console.log(customQuiz.quiz);
   };
 
   _handleOnPressCancel = () => {
