@@ -6,7 +6,7 @@ import { STYLES } from '../../Constants';
 import { PURPLE } from '../../Colors';
 
 import { plural , setStateAsync, timeout, isEmpty } from '../../functions/Utils';
-import { SubjectItem, ModuleItemModel, ModuleStore } from '../../functions/ModuleStore';
+import { CreateCustomQuiz, CustomQuizStore } from '../../functions/CustomQuizStore';
 
 import { MODAL_DISTANCE_FROM_TOP, MODAL_EXTRA_HEIGHT, SwipableModal, ModalBackground, ModalTopIndicator } from '../SwipableModal';
 import { IconText, AnimateInView, Card } from '../../components/Views';
@@ -93,7 +93,7 @@ class QuizCard extends React.PureComponent {
 
   _renderTitleDesc(){
     const { styles } = QuizCard;
-    const {title, description} = this.props;
+    const { title, description } = this.props;
  
     return(
       <View style={{flex: 1}}>
@@ -379,7 +379,10 @@ export class QuizFinishModal extends React.PureComponent {
     this.setState({mountContent: false});
   };
 
-  _handleOnPressCreateQuiz = async () => {
+  _handleOnPressCreateQuiz = () => {
+    const { title, description, selected } = this.state;
+    alert();
+    CreateCustomQuiz.createQuiz({title, description, selected});
   };
 
   _handleOnPressCancel = () => {
