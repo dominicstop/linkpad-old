@@ -12,7 +12,8 @@ import { ROUTES, STYLES } from '../Constants';
 import { PURPLE, RED } from '../Colors';
 
 import * as Animatable from 'react-native-animatable';
-import { Divider } from 'react-native-elements';
+import { Divider, Icon } from 'react-native-elements';
+import TimeAgo from 'react-native-timeago';
 
 Animatable.initializeRegistryWithDefinitions({
   listItemExit: {
@@ -21,7 +22,7 @@ Animatable.initializeRegistryWithDefinitions({
   }
 });
 
-export class QuizItem extends React.PureComponent {
+class QuizItem extends React.PureComponent {
   static PropTypes = {
     subjectData  : PropTypes.object,  
     onPressDelete: PropTypes.func,
@@ -280,6 +281,143 @@ export class CreateCustomQuizList extends React.PureComponent {
     return(
       <FlatList
         data={quizItems}
+        renderItem={this._renderItem}
+        keyExtractor={this._keyExtractor}
+        ListHeaderComponent={this._renderHeader}
+        ListFooterComponent={this._renderFooter}
+        {...otherProps}
+      />
+    );
+  };
+};
+
+export class CustomQuizItem extends React.PureComponent {
+  static PropTypes = {
+    quiz: PropTypes.object,
+    onPressQuiz: PropTypes.func,
+  }; 
+
+  static styles = StyleSheet.create({
+    container: {
+      padding: 10,
+      marginTop: 5,
+    },
+    title: {
+      fontSize: 20,
+      fontWeight: '600',
+    },
+    description: {
+      fontSize: 18,
+    },
+    time: {
+      fontSize: 16,
+      fontWeight: '100',
+    },
+  });
+
+  _handleOnPressQuiz = () => {
+    const { onPressQuiz, quiz } = this.props;
+    onPressQuiz && onPressQuiz(quiz);
+  };
+
+  render(){
+    const { styles } = CustomQuizItem;
+    const {quiz: {title, description, timestampCreated, questions}} = this.props;
+
+    const time = timestampCreated * 1000;
+    const questionCount = questions.length;
+
+    return(
+      <Card style={styles.container}>
+        <Text style={styles.title}>{title}</Text>
+        <Text style={styles.time} >
+          {`${questionCount} Subjects — `}
+          <TimeAgo {...{time}}/>
+        </Text>
+        <Divider style={{margin: 5}}/>
+        <Text style={styles.description}>{description}</Text>
+      </Card>
+    );
+  };
+};
+
+export class CustomQuizList extends React.PureComponent {
+  static PropTypes = {
+    quizes: PropTypes.array,
+  };
+
+  static styles = StyleSheet.create({
+    headerContainer: {
+      flexDirection: 'row',
+      marginLeft: 12,
+      marginTop: 20,
+    },
+    indicatorText: {
+      fontSize: 26,
+      fontWeight: '500',
+      marginLeft: 8,
+    },
+  });
+
+  _handleOnPressQuiz = (quiz) => {
+
+  };
+
+  _keyExtractor(item, index){
+    return `${item.indexID_quiz}-${item.title}`;
+  };
+
+  _renderItem = ({item, index}) => {
+    return(
+      <AnimatedListItem
+        duration={500}
+        last={5}
+        {...{index}}
+      >
+        <CustomQuizItem 
+          onPressQuiz={this._handleOnPressQuiz}
+          quiz={item}  
+        />
+      </AnimatedListItem>
+    );
+  };
+
+  _renderHeader = () => {
+    const { styles } = CustomQuizList;
+
+    const { quizes } = this.props;
+    if(quizes.length == 0) return null;
+
+    return(
+      <Animatable.View
+        style={styles.headerContainer}
+        animation={'fadeInUp'}
+        duration={500}
+        easing={'ease-in-out'}
+        useNativeDriver={true}
+      >
+        <Icon
+          name={'clipboard-pencil'}
+          type={'foundation'}
+          size={28}
+          color={'rgb(125, 125, 125)'}
+        />
+        <Text style={styles.indicatorText}>
+          {`${quizes.length} ${plural('Quiz', quizes.length, 'es')}`}
+        </Text>
+      </Animatable.View>
+    );
+  };
+
+  _renderFooter(){
+    return(<View style={{marginBottom: 75}}/>);
+  };
+
+  render(){
+    const {quizes, ...otherProps} = this.props;
+    return(
+      <FlatList
+        data={quizes}
         renderItem={this._renderItem}
         keyExtractor={this._keyExtractor}
         ListHeaderComponent={this._renderHeader}

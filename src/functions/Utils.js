@@ -56,8 +56,8 @@ export function colorShift(color, max){
   return result;
 }
 
-export function plural(string = "", count = 0){
-  return string + (count > 1? 's' : '');
+export function plural(string = "", count = 0, suffix = 's'){
+  return string + (count > 1? suffix : '');
 }
 
 export function getTimestamp(){

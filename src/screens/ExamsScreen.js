@@ -4,11 +4,13 @@ import PropTypes from 'prop-types';
 
 import { ROUTES, HEADER_HEIGHT , STYLES} from '../Constants';
 import { PURPLE } from '../Colors';
+import { CustomQuizStore, CustomQuiz } from '../functions/CustomQuizStore';
 
 import NavigationService from '../NavigationService';
 
 import { ViewWithBlurredHeader, IconFooter, Card } from '../components/Views';
 import { PlatformTouchableIconButton } from '../components/Buttons';
+import { CustomQuizList } from '../components/CustomQuiz';
 
 import _ from 'lodash';
 import * as Animatable from 'react-native-animatable';
@@ -151,10 +153,27 @@ export class ExamsScreen extends React.Component {
     },
   });
 
+  constructor(props){
+    super(props);
+    this.state = {
+      quizes: [],
+    };  
+  };
+
+  componentDidMount(){
+    this.getQuizes();    
+  };
+
   componentDidFocus = () => {
     //enable drawer when this screen is active
     const { setDrawerSwipe, getRefSubjectModal } = this.props.screenProps;
     setDrawerSwipe(true);
+    this.getQuizes();
+  };
+
+  async getQuizes(){
+    const quizes = await CustomQuizStore.read();
+    this.setState({quizes});
   };
 
   handleOnPressCreateQuiz = () => {
@@ -164,6 +183,7 @@ export class ExamsScreen extends React.Component {
 
   render(){
     const { styles } = ExamsScreen;
+    const { quizes } = this.state;
 
     return(
       <ViewWithBlurredHeader hasTabBar={true} enableAndroid={false}>
@@ -175,6 +195,9 @@ export class ExamsScreen extends React.Component {
           contentOffset={{x: 0, y: -HEADER_HEIGHT}}
         >
           <ExamHeader onPress={this.handleOnPressCreateQuiz}/>
+          <CustomQuizList
+            {...{quizes}}
+          />
         </ScrollView>
       </ViewWithBlurredHeader>
     );

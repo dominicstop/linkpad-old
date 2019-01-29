@@ -47,6 +47,10 @@ export class CustomQuiz {
   };
 };
 
+export class CustomQuizes {
+
+};
+
 export class CreateCustomQuiz {
   static createQuiz({title = '', description = '', selected = []}){
     const selectedCopy = _.cloneDeep(selected);
@@ -102,10 +106,10 @@ export class CustomQuizStore {
   static async read(){
     try {
       //read from store
-      let quizes = await store.get(ResourcesStore.KEY);
+      let quizes = await store.get(CustomQuizStore.KEY);
       _quizes = quizes;
 
-      return (data);
+      return (quizes);
 
     } catch(error){
       console.error('Failed to read quizes from store.');
@@ -115,6 +119,10 @@ export class CustomQuizStore {
 
   static get(){
     return _quizes;
+  };
+
+  static async set(quizes = []){
+    await store.save(CustomQuizStore.KEY, quizes); 
   };
 
   static clear(){
