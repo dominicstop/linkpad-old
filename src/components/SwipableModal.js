@@ -101,8 +101,6 @@ export class SwipableModal extends React.PureComponent {
     },
     panel: {
       flex: 1,
-      borderTopLeftRadius: 20,
-      borderTopRightRadius: 20,
       shadowColor: '#000000',
       overflow: 'hidden',
     },
@@ -233,6 +231,22 @@ export class SwipableModal extends React.PureComponent {
     const { styles } = SwipableModal;
     const { snapPoints, hitSlop } = this.props;
 
+    const modalHeight = Screen.height - MODAL_DISTANCE_FROM_TOP;
+    const finalRadius = 22;
+
+    const panelStyle = {
+      borderTopLeftRadius: this._deltaY.interpolate({
+        inputRange: [0, modalHeight],
+        outputRange: [finalRadius, 0],
+        extrapolateRight: 'clamp',
+      }),
+      borderTopRightRadius: this._deltaY.interpolate({
+        inputRange: [0, modalHeight],
+        outputRange: [finalRadius, 0],
+        extrapolateRight: 'clamp',
+      }),
+    };
+
     return(
       <Interactable.View
         verticalOnly={true}
@@ -244,9 +258,9 @@ export class SwipableModal extends React.PureComponent {
         {...{snapPoints, hitSlop}}
       >
         <View style={styles.panelContainer}>
-          <View style={styles.panel}>
+          <Animated.View style={[styles.panel, panelStyle]}>
             {this.props.children}
-          </View>
+          </Animated.View>
         </View>
       </Interactable.View>
     );
