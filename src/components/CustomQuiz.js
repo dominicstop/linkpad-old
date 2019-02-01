@@ -360,6 +360,10 @@ export class CustomQuizList extends React.PureComponent {
     quizes: PropTypes.array,
   };
 
+  static defaultProps = {
+    quizes: [],
+  };
+
   static styles = StyleSheet.create({
     headerContainer: {
       flexDirection: 'row',
@@ -399,8 +403,9 @@ export class CustomQuizList extends React.PureComponent {
 
   _renderHeader = () => {
     const { styles } = CustomQuizList;
-
+    
     const { quizes } = this.props;
+    if(!quizes) return null;
     if(quizes.length == 0) return null;
 
     const prefix = (global.usePlaceholder
