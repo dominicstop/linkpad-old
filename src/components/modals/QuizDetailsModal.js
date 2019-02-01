@@ -569,30 +569,36 @@ class ModalContents extends React.PureComponent {
     );
 
     return(
-      <TouchableOpacity
+      <Animatable.View
         style={styles.buttonContainer}
-        onPress={this._handleOnPress}
+        animation={'fadeInUp'}
+        duration={300}
+        delay={300}
+        easing={'easeIn'}
+        useNativeDriver={true}
       >
-        <LinearGradient
-          style={[styles.button, STYLES.mediumShadow]}
-          colors={[PURPLE[800], PURPLE[500]]}
-          start={[0, 1]} end={[1, 0]}
-        >
-          <Icon
-            name={'ios-checkmark-circle-outline'}
-            type={'ionicon'}
-            color={'white'}
-            size={24}
-          />
-          <Text style={styles.buttonText}>{buttonText}</Text>
-          <Icon
-            name={'chevron-right'}
-            type={'feather'}
-            color={'white'}
-            size={30}
-          />
-        </LinearGradient>
-      </TouchableOpacity>
+        <TouchableOpacity onPress={this._handleOnPress}>
+          <LinearGradient
+            style={[styles.button, STYLES.mediumShadow]}
+            colors={[PURPLE[800], PURPLE[500]]}
+            start={[0, 1]} end={[1, 0]}
+          >
+            <Icon
+              name={'ios-checkmark-circle-outline'}
+              type={'ionicon'}
+              color={'white'}
+              size={24}
+            />
+            <Text style={styles.buttonText}>{buttonText}</Text>
+            <Icon
+              name={'chevron-right'}
+              type={'feather'}
+              color={'white'}
+              size={30}
+            />
+          </LinearGradient>
+        </TouchableOpacity>
+      </Animatable.View>
     );
   };
 

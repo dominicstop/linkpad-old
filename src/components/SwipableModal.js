@@ -143,6 +143,8 @@ export class SwipableModal extends React.PureComponent {
     this.state = {
       mountModal: false,
     };
+
+
   }
 
   showModal = () => {
@@ -284,7 +286,14 @@ export class ModalTopIndicator extends React.PureComponent {
       width: 40, 
       height: 8, 
       borderRadius: 4, 
-      backgroundColor: '#00000040',
+      ...Platform.select({
+        ios: {
+          backgroundColor: 'rgba(0, 0, 0, 0.25)',
+        },
+        android: {
+          backgroundColor: '#00000040',
+        }
+      })
     }
   });
 
