@@ -142,13 +142,18 @@ class FormTitle extends React.PureComponent {
   _renderLabel(){
     const { styles } = FormTitle;
 
+    const title = (global.usePlaceholder
+      ? 'Condimentum Quam'
+      : 'Quiz Title'
+    );
+
     return(
       <Animatable.Text 
         style={styles.title}
         ref={r => this.label = r}
         useNativeDriver={true}
       >
-        {'Quiz Title'}
+        {title}
       </Animatable.Text>
     );
   };
@@ -190,10 +195,14 @@ class FormTitle extends React.PureComponent {
   _renderInput(){
     const { styles } = FormTitle;
 
+    const placeholder = (global.usePlaceholder
+      ? 'Ipsum Condimentum Quam'
+      : 'Custom Quiz Title'
+    );
+
     return(
       <TextInput
         style={styles.input}
-        placeholder={'Custom Quiz Title'}
         underlineColorAndroid={'transparent'}
         onFocus={this._handleOnFocus}
         onBlur={this._handleOnBlur}
@@ -202,6 +211,7 @@ class FormTitle extends React.PureComponent {
         autoCorrect={false}
         maxLength={100}
         value={this.state.text}
+        {...{placeholder}}
       />
     );
   };
@@ -305,13 +315,18 @@ class FormDescription extends React.PureComponent {
   _renderLabel(){
     const { styles } = FormTitle;
 
+    const description = (global.usePlaceholder
+      ? 'Ornaredi Ipsum'
+      : 'Quiz Description'
+    );
+
     return(
       <Animatable.Text 
         style={styles.title}
         ref={r => this.label = r}
         useNativeDriver={true}
       >
-        {'Quiz Description'}
+        {description}
       </Animatable.Text>
     );
   };
@@ -353,10 +368,14 @@ class FormDescription extends React.PureComponent {
   _renderInput(){
     const { styles } = FormTitle;
 
+    const placeholder = (global.usePlaceholder
+      ? 'Justo Ornaredi Ipsum'
+      : 'Custom Quiz Description'
+    );
+
     return(
       <TextInput
         style={[styles.input, {maxHeight: 100}]}
-        placeholder={'Custom Quiz Description'}
         underlineColorAndroid={'transparent'}
         onFocus={this._handleOnFocus}
         onBlur={this._handleOnBlur}
@@ -366,6 +385,7 @@ class FormDescription extends React.PureComponent {
         autoCorrect={false}
         maxLength={100}
         value={this.state.text}
+        {...{placeholder}}
       />
     );
   };
@@ -481,17 +501,26 @@ class ModalContents extends React.PureComponent {
   _renderTitle(){
     const { styles } = ModalContents;
 
+    const text = (global.usePlaceholder
+      ? 'Tristique Dolor Aenean'
+      : 'Custom Quiz Details'
+    );
+
+    const subtitle = (global.usePlaceholder
+      ? 'Tortor Inceptos Cursus Etiam Vestibulum.'
+      : 'Give your quiz a title and description.'
+    );
+
     return(
       <IconText
         containerStyle={styles.titleContainer}
         textStyle={styles.title}
         subtitleStyle={styles.subtitle}
-        text={'Custom Quiz Details'}
-        subtitle ={'Give your quiz a title and description.'}
         iconName={'notebook'}
         iconType={'simple-line-icon'}
         iconColor={'#512DA8'}
         iconSize={26}
+        {...{text, subtitle}}
       />
     );
   };
@@ -527,6 +556,11 @@ class ModalContents extends React.PureComponent {
   _renderFinishButton(){
     const { styles } = ModalContents;
 
+    const buttonText = (global.usePlaceholder
+      ? 'Condimentum Amet'
+      : 'Save Changes'
+    );
+
     return(
       <TouchableOpacity
         style={styles.buttonContainer}
@@ -543,7 +577,7 @@ class ModalContents extends React.PureComponent {
             color={'white'}
             size={24}
           />
-          <Text style={styles.buttonText}>{'Save Changes'}</Text>
+          <Text style={styles.buttonText}>{buttonText}</Text>
           <Icon
             name={'chevron-right'}
             type={'feather'}

@@ -87,8 +87,15 @@ class TitleDescription extends React.PureComponent {
     const { styles } = TitleDescription;
     const { title, description } = this.state;
 
-    const defaultTitle       = 'Custom Quiz';
-    const defaultDescription = 'Give your custom quiz a title and a description so you can easily find it later.';
+    const defaultTitle = (global.usePlaceholder
+      ? 'Ridiculus Eges'
+      : 'Custom Quiz'
+    );
+
+    const defaultDescription = (global.usePlaceholder
+      ? 'Nulla vitae elit libero, a pharetra augue. Maecenas faucibus mollis interdum.'
+      : 'Give your custom quiz a title and a description so you can easily find it later.'
+    );
 
     const headerTitle       = (title       == '')? defaultTitle       : title; 
     const headerDescription = (description == '')? defaultDescription : `Quiz Descripton – ${description}`; 
@@ -188,17 +195,22 @@ class TitleDescriptionCard extends React.PureComponent {
   _renderButton(){
     const { styles } = AddSubjectsCard;
 
+    const text = (global.usePlaceholder
+      ? 'Pharetra Tellu'
+      : 'Edit Details'
+    );
+
     return(
       <PlatformTouchableIconButton
         onPress={this._handleOnPressEditDetails}
         wrapperStyle={[styles.buttonWrapper, STYLES.lightShadow]}
         containerStyle={styles.buttonContainer}
-        text={'Edit Details'}
         textStyle={styles.buttonText}
         iconName={'edit'}
         iconType={'entypo'}
         iconColor={'white'}
         iconSize={24}
+        {...{text}}
       />
     );
   };
@@ -293,6 +305,16 @@ class AddSubjectsCard extends React.PureComponent {
   _renderDescription(){
     const { styles } = AddSubjectsCard;
 
+    const title = (global.usePlaceholder
+      ? 'Purus Ligula Sem'
+      : 'Add an Quiz Item'
+    );
+
+    const description = (global.usePlaceholder
+      ? 'Sed posuere consectetur est at lobortis. Maecenas faucibus mollis interdum.'
+      : "100 questions in total will be selected across all the subjects you've selected."
+    );
+
     return(
       <View style={{flexDirection: 'row'}}>
         <Animatable.Image
@@ -305,8 +327,8 @@ class AddSubjectsCard extends React.PureComponent {
           useNativeDriver={true}
         />
         <View style={styles.headerTextContainer}>
-          <Text style={styles.headerTitle   }>Add an Quiz Item</Text>
-          <Text style={styles.headerSubtitle}>100 questions in total will be selected across all the subjects you've selected.</Text>
+          <Text style={styles.headerTitle   }>{title}</Text>
+          <Text style={styles.headerSubtitle}>{description}</Text>
         </View>
       </View>
     );
@@ -315,17 +337,22 @@ class AddSubjectsCard extends React.PureComponent {
   _renderButtons(){
     const { styles } = AddSubjectsCard;
 
+    const text = (global.usePlaceholder
+      ? 'Vehicula Commodo'
+      : 'Add Subjects'
+    );
+
     return(
       <PlatformTouchableIconButton
         onPress={this._handleOnPressAddSubject}
         wrapperStyle={[styles.buttonWrapper, STYLES.lightShadow]}
         containerStyle={styles.buttonContainer}
-        text={'Add Subjects'}
         textStyle={styles.buttonText}
         iconName={'bookmark'}
         iconType={'entypo'}
         iconColor={'white'}
         iconSize={24}
+        {...{text}}
       />
     );
   };
@@ -361,7 +388,11 @@ export class CreateQuizScreen extends React.Component {
     const { state } = navigation;
 
     //set header title
-    let title = 'Custom Quiz';
+    let title = (global.usePlaceholder
+      ? 'Nibh Mattis'
+      : 'Custom Quiz'
+    );
+    
     if(state.params) title = state.params.title;
 
     return ({
@@ -401,11 +432,12 @@ export class CreateQuizScreen extends React.Component {
 
     //get ref from screenprops
     const { getRefCreateQuizModal, getRefQuizDetailsModal, getRefQuizFinishModal } = props.screenProps;
+    
     //get ref of modal from homescreen wrapper
     this.quizModal    = getRefCreateQuizModal ();
     this.detailsModal = getRefQuizDetailsModal();
     this.finishModal  = getRefQuizFinishModal ();
-
+    
     _onPressNext = this._handleOnPressNext;
   };
 

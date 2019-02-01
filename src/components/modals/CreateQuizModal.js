@@ -311,6 +311,12 @@ class ModalAddButton extends React.PureComponent {
 
   _renderContents(){
     const { styles } = ModalAddButton;
+
+    const buttonText = (global.usePlaceholder
+      ? 'Lorem Vulputate Magna'
+      : 'Add Selected Items'
+    );
+
     return(
       <LinearGradient
         style={[styles.button, STYLES.mediumShadow]}
@@ -323,7 +329,7 @@ class ModalAddButton extends React.PureComponent {
           color={'white'}
           size={24}
         />
-        <Text style={styles.buttonText}>{'Add Selected Items'}</Text>
+        <Text style={styles.buttonText}>{buttonText}</Text>
         <Icon
           name={'chevron-right'}
           type={'feather'}
@@ -388,11 +394,21 @@ class ModalTitle extends React.PureComponent {
     };
   };
 
-  getTitleText(selectedCount){    
-    const text     = 'Add Subject';
+  getTitleText(selectedCount){
+    const text = (global.usePlaceholder
+      ? 'Ridiculus Eges'
+      : 'Add Subject'
+    );
+
+    const subtitleDefault = (global.usePlaceholder
+      ? 'Consectetur Bibendum Cursus Etiam Lorum.'
+      : 'Select the subjects that you want to add.'
+    );
+
+    const prefix = global.usePlaceholder? 'Quam' : 'subject';
     const subtitle = (selectedCount == 0
-      ? 'Select the subjects that you want to add.' 
-      : `${selectedCount} ${plural('subject', selectedCount)} has been selected.`
+      ? subtitleDefault
+      : `${selectedCount} ${plural(prefix, selectedCount)} has been selected.`
     );
 
     return { text, subtitle };
@@ -484,7 +500,7 @@ class ModalContents extends React.PureComponent {
     
     if(selectedCount > 0){
       //delay show
-      await timeout(750);    
+      await timeout(500);    
       //show next button
       this._nextButton.show();
     };
@@ -689,6 +705,9 @@ export class CreateQuizModal extends React.PureComponent {
   _handleOnPressAddSubjects = async (selected) => {
     //only if callback is defined
     if(this.onPressAddSubject != null){
+      //hide button
+      this.modalContents._nextButton.hide();
+
       //wait to finish
       await Promise.all([
         //show overlay
@@ -696,7 +715,7 @@ export class CreateQuizModal extends React.PureComponent {
         //show check animation
         this.animatedCheck.start(),
       ]);
-
+      
       //wait for modal to close
       await this._modal.hideModal();
       this.onPressAddSubject(selected);
@@ -726,6 +745,7 @@ export class CreateQuizModal extends React.PureComponent {
     const { modules, selected } = this.state;
     return(
       <ModalContents
+        ref={r => this.modalContents = r}
         onPressAddItems={this._handleOnPressAddSubjects}
         //pass down props
         {...{modules, selected}}

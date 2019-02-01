@@ -5,6 +5,7 @@ import { createSwitchNavigator, createStackNavigator } from 'react-navigation';
 import { useScreens } from 'react-native-screens';
 import * as Animatable from 'react-native-animatable';
 
+import './src/Global';
 import Constants from './src/Constants';
 import { ROUTES } from './src/Constants';
 

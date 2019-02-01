@@ -84,6 +84,16 @@ class ExamHeader extends React.PureComponent {
   _renderDescription(){
     const { styles } = ExamHeader;
 
+    const title = (global.usePlaceholder
+      ? 'Lorum Ipsum'
+      : 'Custom Quiz'
+    );
+
+    const description = (global.usePlaceholder
+      ? 'Duis mollis, est non commodo luctus, nisi erat porttitor ligula, eget lacinia odio sem.'
+      : 'Combine different modules and subjects together to create a unique set of questions.'
+    ); 
+
     return(
       <View style={{flexDirection: 'row'}}>
         <Animatable.Image
@@ -96,8 +106,8 @@ class ExamHeader extends React.PureComponent {
           useNativeDriver={true}
         />
         <View style={styles.headerTextContainer}>
-          <Text style={styles.headerTitle   }>Custom Quiz</Text>
-          <Text style={styles.headerSubtitle}>Combine different modules and subjects together to create a unique set of questions.</Text>
+          <Text style={styles.headerTitle   }>{title}</Text>
+          <Text style={styles.headerSubtitle}>{description}</Text>
         </View>
       </View>
     );
@@ -106,17 +116,23 @@ class ExamHeader extends React.PureComponent {
   _renderButton(){
     const { styles } = ExamHeader;
 
+    //button text
+    const text = (global.usePlaceholder
+      ? 'Euismod Cursus Nullam'
+      : 'Create Custom Quiz'
+    );
+
     return(
       <PlatformTouchableIconButton
         onPress={this._handleOnPressButton}
         wrapperStyle={[styles.buttonWrapper, STYLES.lightShadow]}
         containerStyle={styles.buttonContainer}
-        text={'Create Custom Quiz'}
         textStyle={styles.buttonText}
         iconName={'plus-circle'}
         iconColor={'white'}
         iconType={'feather'}
         iconSize={24}
+        {...{text}}
       />
     );
   };
@@ -195,9 +211,7 @@ export class ExamsScreen extends React.Component {
           contentOffset={{x: 0, y: -HEADER_HEIGHT}}
         >
           <ExamHeader onPress={this.handleOnPressCreateQuiz}/>
-          <CustomQuizList
-            {...{quizes}}
-          />
+          <CustomQuizList {...{quizes}}/>
         </ScrollView>
       </ViewWithBlurredHeader>
     );

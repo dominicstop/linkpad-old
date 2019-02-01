@@ -116,16 +116,26 @@ class QuizCard extends React.PureComponent {
   _renderDetails(){
     const { styles } = QuizCard;
 
+    const labelSubjects = (global.usePlaceholder
+      ? 'Ultricies Nibh: '
+      : 'Total Subjects: '
+    );
+
+    const labelQuestions = (global.usePlaceholder
+      ? 'Quam Vehicula Amet: '
+      : 'Question per Subject: '
+    );
+
     return(
       <Fragment>
         <Text style={styles.textLabel} numberOfLines={1}>
-          {'Total Subjects: '}
+          {labelSubjects}
           <Text style={styles.textLabelValue}>
             {'16 Subjects'}
           </Text>
         </Text>
         <Text style={styles.textLabel} numberOfLines={4}>
-          {'Question per Subject: '}
+          {labelQuestions}
           <Text style={styles.textLabelValue}>
             {'12 Questions'}
           </Text>
@@ -249,6 +259,16 @@ class ModalContents extends React.PureComponent {
   _renderTitle(){
     const { styles } = ModalContents;
 
+    const title = (global.usePlaceholder
+      ? 'Mollis Egestas Matt'
+      : "Custom Quiz Summary"
+    );
+
+    const description = (global.usePlaceholder
+      ? 'Cras justo odio, dapibus ac facilisis in, egestas eget quam. Praesent commodo.'
+      : "If you're done, press 'Create Quiz' to finalize and create your custom quiz."
+    );
+
     return(
       <View style={styles.containerStyle}>
         <View style={styles.titleContainer}>
@@ -258,9 +278,9 @@ class ModalContents extends React.PureComponent {
             color={'#512DA8'}
             size={26}
           />
-          <Text style={styles.title}>{"Custom Quiz Summary"}</Text>
+          <Text style={styles.title}>{title}</Text>
         </View>
-        <Text style={styles.subtitle}>{"If you're done, press 'Create Quiz' to finalize and create your custom quiz."}</Text>
+        <Text style={styles.subtitle}>{description}</Text>
       </View>      
     );
   };

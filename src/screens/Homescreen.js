@@ -35,7 +35,7 @@ const routeConfig = {
   [ROUTES.TabModuleListRoute]: {
     screen: ModuleListScreen,
     navigationOptions: {
-      title: 'Modules',
+      title: global.usePlaceholder? 'Lorum Ipsum' : 'Modules',
       tabBarLabel: 'Modules',
       tabBarIcon: ({ focused, tintColor }) => {
         const iconName = focused? 'ios-albums' : 'ios-albums-outline';
@@ -46,7 +46,7 @@ const routeConfig = {
   [ROUTES.TabExamsRoute]: {
     screen: ExamsScreen,
     navigationOptions: {
-      tabBarLabel: 'Quiz',
+      tabBarLabel: global.usePlaceholder? 'Sit Amit' : 'Quiz',
       tabBarIcon: ({ focused, tintColor }) => {
         const iconName = focused? 'ios-bookmarks' : 'ios-bookmarks-outline';
         return <Icon name={iconName} size={25} color={tintColor} type='ionicon' containerStyle={focused? STYLES.glow : null}/>;
@@ -56,7 +56,7 @@ const routeConfig = {
   [ROUTES.TabResourcesRoute]: {
     screen: ResourcesScreen,
     navigationOptions: {
-      tabBarLabel: 'Resources',
+      tabBarLabel: global.usePlaceholder? 'Dolor' : 'Resources',
       tabBarIcon: ({ focused, tintColor }) => {
         const iconName = focused? 'ios-information-circle' : 'ios-information-circle-outline';
         return <Icon name={iconName} size={25} color={tintColor} type='ionicon' containerStyle={focused? STYLES.glow : null}/>;
@@ -66,7 +66,7 @@ const routeConfig = {
   [ROUTES.TabTipsRoute]: {
     screen: TipsScreen,
     navigationOptions: {
-      tabBarLabel: 'Tips',
+      tabBarLabel: global.usePlaceholder? 'Justo' : 'Tips',
       tabBarIcon: ({ focused, tintColor }) => {
         const iconName = focused? 'ios-star' : 'ios-star-outline';
         return <Icon name={iconName} size={25} color={tintColor} type='ionicon' containerStyle={focused? STYLES.glow : null}/>;
@@ -145,22 +145,22 @@ class TabNavigationAndroidContainer extends React.Component {
 function getHeaderProps(routeName){
   switch(routeName){
     case ROUTES.TabModuleListRoute: return {
-      title: 'Modules',
+      title: global.usePlaceholder? 'Lorum Ipsum' : 'Modules',
       name : 'briefcase',
       type : 'simple-line-icon',
     };
     case ROUTES.TabExamsRoute: return {
-      title: 'Custom Quiz',
+      title: global.usePlaceholder? 'Sit Amit' : 'Custom Quiz',
       name : 'bookmark',
       type : 'feather',
     };
     case ROUTES.TabResourcesRoute: return {
-      title: 'Resources',
+      title: global.usePlaceholder? 'Dolor Aspicing' : 'Resources',
       name : 'info',
       type : 'feather',
     };
     case ROUTES.TabTipsRoute: return {
-      title: 'Tips',
+      title: global.usePlaceholder? 'Justo Sit' : 'Tips',
       name : 'star-outlined',
       type : 'entypo',
     };

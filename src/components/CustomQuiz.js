@@ -323,6 +323,7 @@ class CustomQuizItem extends React.PureComponent {
 
   render(){
     const { styles } = CustomQuizItem;
+
     const {quiz: {
       title            = "Uknown Title", 
       description      = "Uknown Description", 
@@ -333,12 +334,17 @@ class CustomQuizItem extends React.PureComponent {
     const time = timestampCreated * 1000;
     const questionCount = questions.length;
 
+    const prefix = (global.usePlaceholder
+      ? 'Ultricies'
+      : 'Subject'
+    );
+
     return(
       <Card style={styles.container}>
         <TouchableOpacity onPress={this._handleOnPressQuiz}>
           <Text style={styles.title}>{title}</Text>
           <Text style={styles.time} >
-            {`${questionCount} Subjects — `}
+            {`${questionCount} ${plural(prefix, questionCount)} — `}
             <TimeAgo {...{time}}/>
           </Text>
           <Divider style={{margin: 5}}/>
@@ -397,6 +403,10 @@ export class CustomQuizList extends React.PureComponent {
     const { quizes } = this.props;
     if(quizes.length == 0) return null;
 
+    const prefix = (global.usePlaceholder
+      ? 'Ullamcorper' : 'Quiz'
+    );
+
     return(
       <Animatable.View
         style={styles.headerContainer}
@@ -412,7 +422,7 @@ export class CustomQuizList extends React.PureComponent {
           color={'rgb(125, 125, 125)'}
         />
         <Text style={styles.indicatorText}>
-          {`${quizes.length} ${plural('Quiz', quizes.length, 'es')}`}
+          {`${quizes.length} ${plural(prefix, quizes.length, 'es')}`}
         </Text>
       </Animatable.View>
     );
