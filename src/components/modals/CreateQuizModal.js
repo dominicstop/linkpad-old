@@ -1,5 +1,5 @@
 import React, { Fragment } from 'react';
-import { StyleSheet, View, Text, TouchableOpacity, Platform, SectionList, Animated } from 'react-native';
+import { StyleSheet, View, Text, TouchableOpacity, Platform, SectionList, Animated, Dimensions } from 'react-native';
 import PropTypes from 'prop-types';
 
 import { STYLES } from '../../Constants';
@@ -20,6 +20,11 @@ import * as _Reanimated from 'react-native-reanimated';
 const { Lottie } = DangerZone;
 const { Easing } = _Reanimated;
 const Reanimated = _Reanimated.default;
+
+const Screen = {
+  width : Dimensions.get('window').width ,
+  height: Dimensions.get('window').height,
+};
 
 export class CheckAnimation extends React.PureComponent {
   constructor(props){
@@ -615,7 +620,6 @@ class ModalContents extends React.PureComponent {
     const { styles } = ModalContents; 
     return(
       <View style={{flex: 1}}>
-        <ModalTopIndicator/>
         {this._renderTitle()}
         <SectionList
           style={styles.scrollview}
@@ -665,14 +669,19 @@ export class CreateQuizModal extends React.PureComponent {
       selected: [],
     };
 
+    this._deltaY = null;
     //called when add subject is pressed
     this.onPressAddSubject = null;
   };
 
+  componentDidMount(){
+    this._deltaY = this._modal._deltaY
+  };
+
   openModal = async (selected) => {
     const modules = await this._getModules();
-    this.setState({modules, selected, mountContent: true});
     this._modal.showModal();
+    this.setState({modules, selected, mountContent: true});
   };
 
   async _getModules(){
@@ -743,13 +752,25 @@ export class CreateQuizModal extends React.PureComponent {
 
   _renderContent(){
     const { modules, selected } = this.state;
+
+    const style = {
+      flex: 1,
+      opacity: this._deltaY.interpolate({
+        inputRange: [0, Screen.height - MODAL_DISTANCE_FROM_TOP],
+        outputRange: [1, 0.25],
+        extrapolateRight: 'clamp',
+      }),
+    };
+
     return(
-      <ModalContents
-        ref={r => this.modalContents = r}
-        onPressAddItems={this._handleOnPressAddSubjects}
-        //pass down props
-        {...{modules, selected}}
-      />
+      <Reanimated.View {...{style}}>
+        <ModalContents
+          ref={r => this.modalContents = r}
+          onPressAddItems={this._handleOnPressAddSubjects}
+          //pass down props
+          {...{modules, selected}}
+        />
+      </Reanimated.View>
     );
   };
 
@@ -768,6 +789,7 @@ export class CreateQuizModal extends React.PureComponent {
       >
         <Fragment>
           <ModalBackground style={{paddingBottom}}>
+            <ModalTopIndicator/>
             {mountContent && this._renderContent()}
           </ModalBackground>
           {this._renderOverlay()}

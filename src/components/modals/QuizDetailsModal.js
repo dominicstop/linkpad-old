@@ -1,23 +1,30 @@
 import React, { Fragment } from 'react';
-import { StyleSheet, View, Text, TouchableOpacity, Platform, SectionList, Animated, TextInput, TouchableWithoutFeedback, Keyboard, Alert } from 'react-native';
+import { StyleSheet, View, Text, TouchableOpacity, Platform, Animated, TextInput, TouchableWithoutFeedback, Keyboard, Alert, Dimensions } from 'react-native';
 import PropTypes from 'prop-types';
 
 import { STYLES } from '../../Constants';
 import { PURPLE } from '../../Colors';
 
-import { plural , setStateAsync, timeout, isEmpty } from '../../functions/Utils';
-import { SubjectItem, ModuleItemModel, ModuleStore } from '../../functions/ModuleStore';
+import { setStateAsync, isEmpty } from '../../functions/Utils';
 
 import { MODAL_DISTANCE_FROM_TOP, MODAL_EXTRA_HEIGHT, SwipableModal, ModalBackground, ModalTopIndicator } from '../SwipableModal';
 import { IconText, AnimateInView } from '../../components/Views';
 import { PlatformTouchableIconButton } from '../../components/Buttons';
 
-import { BlurView, LinearGradient, DangerZone } from 'expo';
-import { Icon, Divider } from 'react-native-elements';
+import { LinearGradient, DangerZone } from 'expo';
+import { Icon } from 'react-native-elements';
+
+import * as _Reanimated from 'react-native-reanimated';
 import * as Animatable from 'react-native-animatable';
-import {  } from 'react-native-paper';
 
 const { Lottie } = DangerZone;
+const { Easing } = _Reanimated;
+const Reanimated = _Reanimated.default;
+
+const Screen = {
+  width : Dimensions.get('window').width ,
+  height: Dimensions.get('window').height,
+};
 
 class CheckAnimation extends React.PureComponent {
   constructor(props){
@@ -597,7 +604,6 @@ class ModalContents extends React.PureComponent {
         accessible={false}
       >
         <View style={{flex: 1}}>
-          <ModalTopIndicator/>
           <View style={{flex: 1}}>
             {this._renderTitle()}
             {this._renderForms()}
@@ -642,13 +648,17 @@ export class QuizDetailsModal extends React.PureComponent {
       description: '',
     };
 
+    this._deltaY = null;
     //called when save changes is pressed
     this.onPressSaveChanges = null;
   };
 
+  componentDidMount(){
+    this._deltaY = this._modal._deltaY
+  };
+
   openModal = async ({title, description}) => {
     this.setState({mountContent: true, title, description});
-
     this._modal.showModal();
   };
 
@@ -695,11 +705,23 @@ export class QuizDetailsModal extends React.PureComponent {
 
   _renderContent(){
     const {title, description} = this.state;
+
+    const style = {
+      flex: 1,
+      opacity: this._deltaY.interpolate({
+        inputRange: [0, Screen.height - MODAL_DISTANCE_FROM_TOP],
+        outputRange: [1, 0.25],
+        extrapolateRight: 'clamp',
+      }),
+    };
+
     return(
-      <ModalContents 
-        onPressSaveChanges={this._handleOnPressSaveChanges}
-        {...{title, description}}
-      />
+      <Reanimated.View {...{style}}>
+        <ModalContents 
+          onPressSaveChanges={this._handleOnPressSaveChanges}
+          {...{title, description}}
+        />
+      </Reanimated.View>
     );
   };
 
@@ -717,6 +739,7 @@ export class QuizDetailsModal extends React.PureComponent {
       >
         <Fragment>
           <ModalBackground style={{paddingBottom}}>
+            <ModalTopIndicator/>
             {mountContent && this._renderContent()}
           </ModalBackground>
           {this._renderOverlay()}

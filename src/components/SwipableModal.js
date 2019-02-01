@@ -32,7 +32,82 @@ export const MODAL_EXTRA_HEIGHT = 300;
 UIManager.setLayoutAnimationEnabledExperimental && 
 UIManager.setLayoutAnimationEnabledExperimental(true);
 
+export class ModalBackground extends React.PureComponent {
+  static styles = StyleSheet.create({
+    container: {
+      flex: 1, 
+      backgroundColor: Platform.select({
+        ios    : 'transparent',
+        android: 'white',
+      }),
+    },
+  });
+
+  _renderIOS(){
+    const { styles } = ModalBackground;
+    const { style, children, ...otherProps } = this.props;
+    return(
+      <BlurView 
+        style={[styles.container, style]} 
+        intensity={100} 
+        tint={'light'}
+        {...otherProps}
+      >
+        {children}
+      </BlurView>
+    );
+  };
+
+  _renderAndroid(){
+    const { styles } = ModalBackground;
+    const { style, children, ...otherProps } = this.props;
+    return(
+      <View 
+        style={[styles.container, style]} 
+        {...otherProps}
+      >
+        {children}
+      </View>
+    );
+  };
+
+  render(){
+    return Platform.select({
+      ios    : this._renderIOS    (),
+      android: this._renderAndroid(),
+    });
+  };
+};
+
 export class SwipableModal extends React.PureComponent {
+  static styles = StyleSheet.create({
+    float: {
+      position: 'absolute',
+      top: 0,
+      bottom: 0,
+      left: 0,
+      right: 0,
+    },
+    wrapper: {
+      position: 'absolute', 
+      width: '100%', 
+      height: '100%'
+    },
+    panelContainer: {
+      height: Screen.height + MODAL_EXTRA_HEIGHT,
+      shadowOffset: { width: -5, height: 0 },
+      shadowRadius: 5,
+      shadowOpacity: 0.4,
+    },
+    panel: {
+      flex: 1,
+      borderTopLeftRadius: 20,
+      borderTopRightRadius: 20,
+      shadowColor: '#000000',
+      overflow: 'hidden',
+    },
+  });
+  
   static snapPoints = {
     fullscreen: { y: MODAL_DISTANCE_FROM_TOP },
     halfscreen: { y: Screen.height - (Screen.height * 0.6) },
@@ -90,13 +165,13 @@ export class SwipableModal extends React.PureComponent {
   onModalShow = () => {
     const { onModalShow } = this.props;
     onModalShow && onModalShow();
-  }
+  };
   
   //called when modal is hidden
   onModalHide = () => {
     const { onModalHide } = this.props;
     onModalHide && onModalHide();
-  }
+  };
 
   _handleOnSnap = ({nativeEvent}) => {
     const { index, x , y } = nativeEvent;
@@ -111,9 +186,15 @@ export class SwipableModal extends React.PureComponent {
     //call callback in props
     const { onSnap } = this.props;
     onSnap && onSnap(nativeEvent, {isHidden});
-  }
+  };
+
+  _handleOnPressShadow = () => {
+    this.hideModal();
+  };
 
   _renderShadow = () => {
+    const { styles } = SwipableModal;
+
     //shadow behind panel
     const shadowStyle = {
       backgroundColor: 'black',
@@ -146,88 +227,47 @@ export class SwipableModal extends React.PureComponent {
     );
   };
 
-  _handleOnPressShadow = () => {
-    this.hideModal();
+  _renderInteractable(){
+    const { styles } = SwipableModal;
+    const { snapPoints, hitSlop } = this.props;
+
+    return(
+      <Interactable.View
+        verticalOnly={true}
+        boundaries={{ top: -300 }}
+        initialPosition={snapPoints[0]}
+        animatedValueY={this._deltaY}
+        ref={r => this._interactable = r}
+        onSnap={this._handleOnSnap}
+        {...{snapPoints, hitSlop}}
+      >
+        <View style={styles.panelContainer}>
+          <View style={styles.panel}>
+            {this.props.children}
+          </View>
+        </View>
+      </Interactable.View>
+    );
   };
 
   render(){
-    const { snapPoints, hitSlop } = this.props;
+    const { styles } = SwipableModal;
     if(!this.state.mountModal) return null;
+
     return (
       <View style={styles.float}>
         {this._renderShadow()}
         <Animatable.View
           ref={r => this._rootView = r}
-          style={{position: 'absolute', width: '100%', height: '100%'}}
+          style={styles.wrapper}
           animation={'bounceInUp'}
           duration={800}
           pointerEvents={'box-none'}
         >
-          <Interactable.View
-            verticalOnly={true}
-            boundaries={{ top: -300 }}
-            initialPosition={snapPoints[0]}
-            animatedValueY={this._deltaY}
-            ref={r => this._interactable = r}
-            onSnap={this._handleOnSnap}
-            {...{snapPoints, hitSlop}}
-          >
-            <View style={styles.panelContainer}>
-              <View style={styles.panel}>
-                {this.props.children}
-              </View>
-            </View>
-          </Interactable.View>
+          {this._renderInteractable()}
         </Animatable.View>
       </View>
     );
-  };
-};
-
-export class ModalBackground extends React.PureComponent {
-  static styles = StyleSheet.create({
-    container: {
-      flex: 1, 
-      backgroundColor: Platform.select({
-        ios    : 'transparent',
-        android: 'white',
-      }),
-    },
-  });
-
-  _renderIOS(){
-    const { styles } = ModalBackground;
-    const { style, children, ...otherProps } = this.props;
-    return(
-      <BlurView 
-        style={[styles.container, style]} 
-        intensity={100} 
-        tint={'light'}
-        {...otherProps}
-      >
-        {children}
-      </BlurView>
-    );
-  };
-
-  _renderAndroid(){
-    const { styles } = ModalBackground;
-    const { style, children, ...otherProps } = this.props;
-    return(
-      <View 
-        style={[styles.container, style]} 
-        {...otherProps}
-      >
-        {children}
-      </View>
-    );
-  };
-
-  render(){
-    return Platform.select({
-      ios    : this._renderIOS    (),
-      android: this._renderAndroid(),
-    });
   };
 };
 
@@ -1135,26 +1175,6 @@ const styles = StyleSheet.create({
       android: 'white',
       ios: '#efefef'
     }),
-  },
-  float: {
-    position: 'absolute',
-    top: 0,
-    bottom: 0,
-    left: 0,
-    right: 0,
-  },
-  panelContainer: {
-    height: Screen.height + MODAL_EXTRA_HEIGHT,
-    shadowOffset: { width: -5, height: 0 },
-    shadowRadius: 5,
-    shadowOpacity: 0.4,
-  },
-  panel: {
-    flex: 1,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    shadowColor: '#000000',
-    overflow: 'hidden',
   },
   textTitle: {
     fontSize: 30, fontWeight: '700', alignSelf: 'center', marginBottom: 2, color: 'rgba(0, 0, 0, 0.75)'
