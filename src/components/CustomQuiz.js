@@ -4,6 +4,7 @@ import PropTypes from 'prop-types';
 
 import { plural } from '../functions/Utils';
 import { SubjectItem } from '../functions/ModuleStore';
+import NavigationService from '../NavigationService';
 
 import { Card, AnimatedListItem } from '../components/Views';
 import { PlatformTouchableIconButton } from '../components/Buttons';
@@ -291,7 +292,7 @@ export class CreateCustomQuizList extends React.PureComponent {
   };
 };
 
-export class CustomQuizItem extends React.PureComponent {
+class CustomQuizItem extends React.PureComponent {
   static PropTypes = {
     quiz: PropTypes.object,
     onPressQuiz: PropTypes.func,
@@ -322,20 +323,27 @@ export class CustomQuizItem extends React.PureComponent {
 
   render(){
     const { styles } = CustomQuizItem;
-    const {quiz: {title, description, timestampCreated, questions}} = this.props;
+    const {quiz: {
+      title            = "Uknown Title", 
+      description      = "Uknown Description", 
+      timestampCreated = 0, 
+      questions        = [],
+    }} = this.props;
 
     const time = timestampCreated * 1000;
     const questionCount = questions.length;
 
     return(
       <Card style={styles.container}>
-        <Text style={styles.title}>{title}</Text>
-        <Text style={styles.time} >
-          {`${questionCount} Subjects — `}
-          <TimeAgo {...{time}}/>
-        </Text>
-        <Divider style={{margin: 5}}/>
-        <Text style={styles.description}>{description}</Text>
+        <TouchableOpacity onPress={this._handleOnPressQuiz}>
+          <Text style={styles.title}>{title}</Text>
+          <Text style={styles.time} >
+            {`${questionCount} Subjects — `}
+            <TimeAgo {...{time}}/>
+          </Text>
+          <Divider style={{margin: 5}}/>
+          <Text style={styles.description}>{description}</Text>
+        </TouchableOpacity>
       </Card>
     );
   };
@@ -360,7 +368,8 @@ export class CustomQuizList extends React.PureComponent {
   });
 
   _handleOnPressQuiz = (quiz) => {
-
+    //navigate to custom quiz exam screen
+    NavigationService.navigateApp(ROUTES.CustomQuizExamScreen, {quiz});
   };
 
   _keyExtractor(item, index){

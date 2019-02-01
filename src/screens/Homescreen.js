@@ -16,12 +16,13 @@ import { TipsScreen       } from './TipsScreen';
 import { DrawerButton     } from '../components/Buttons';
 import { CreateQuizScreen } from './CreateQuizScreen';
 
+import SubjectListScreen from './SubjectListScreen';
+
 import { createBottomTabNavigator, createStackNavigator, Header } from 'react-navigation';
 import { createMaterialBottomTabNavigator } from 'react-navigation-material-bottom-tabs';
 import * as Animatable from 'react-native-animatable';
 import { Icon } from 'react-native-elements';
 import { LinearGradient } from 'expo';
-import SubjectListScreen from './SubjectListScreen';
 import { IconText } from '../components/Views';
 import { AndroidHeader } from '../components/AndroidHeader';
 import ViewResourceScreen from './ViewResource';

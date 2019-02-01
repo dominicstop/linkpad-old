@@ -88,7 +88,7 @@ export class PracticeExamListScreen extends React.Component {
     if(state.params) title = state.params.title;
 
     return ({
-      title: title,
+      headerTitle: title,
       headerTitleStyle: STYLES.glow,
       headerLeft,
       headerRight,

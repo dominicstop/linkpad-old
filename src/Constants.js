@@ -13,8 +13,9 @@ export const ROUTES = {
   LoginRoute  : 'LoginRoute'  ,
   SignUpRoute : 'SignUpRoute' ,
   //appstack routes
-  HomeRoute        : 'HomeRoute'        ,
-  PracticeExamRoute: 'PracticeExamRoute',
+  HomeRoute           : 'HomeRoute'           ,
+  PracticeExamRoute   : 'PracticeExamRoute'   ,
+  CustomQuizExamScreen: 'CustomQuizExamScreen',
   //tabscreen routes
   TabModuleListRoute: 'TabModuleListRoute',
   TabExamsRoute     : 'TabExamsRoute'     ,
