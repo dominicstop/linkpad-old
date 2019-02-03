@@ -405,6 +405,7 @@ export class CustomQuizList extends React.PureComponent {
     const { styles } = CustomQuizList;
     
     const { quizes } = this.props;
+    
     if(!quizes) return null;
     if(quizes.length == 0) return null;
 

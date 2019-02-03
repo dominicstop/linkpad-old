@@ -27,6 +27,17 @@ class ExamHeader extends React.PureComponent {
   static styles = StyleSheet.create({
     card: {
       marginBottom: 10,
+      paddingHorizontal: 12,
+      paddingTop: 10,
+      paddingBottom: 16,
+      backgroundColor: 'white',
+      shadowColor: 'black',
+      shadowRadius: 4,
+      shadowOpacity: 0.3,
+      shadowOffset:{
+        width: 2,  
+        height: 3,  
+      },
     },
     image: {
       width: 75, 
@@ -147,16 +158,15 @@ class ExamHeader extends React.PureComponent {
 
     return(
       <Animatable.View
+        style={styles.card}
         duration={500}
         easing={'ease-in-out'}
         useNativeDriver={true}
         {...{animation}}
       >
-        <Card style={styles.card}>
-          {this._renderDescription()}
-          <Divider/>
-          {this._renderButton()}
-        </Card>
+        {this._renderDescription()}
+        <Divider/>
+        {this._renderButton()}
       </Animatable.View>
     );
   };
@@ -165,7 +175,7 @@ class ExamHeader extends React.PureComponent {
 export class ExamsScreen extends React.Component {
   static styles = StyleSheet.create({
     scrollview: {
-      paddingTop: 12,
+      
     },
   });
 

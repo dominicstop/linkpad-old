@@ -1,32 +1,41 @@
 import React from 'react';
-import { StyleSheet, Text, View, Platform, NavigatorIOS, TouchableOpacity, LayoutAnimation, UIManager, RefreshControl, Clipboard } from 'react-native';
+import { StyleSheet, Text, View, Platform, RefreshControl } from 'react-native';
+import PropTypes from 'prop-types';
 
-import   SubjectListScreen       from './SubjectListScreen'  ;
-import   Constants               from '../Constants'         ;
-import { ModuleList            } from '../components/Modules';
-import { CustomHeader          } from '../components/Header' ;
-import { DrawerButton          } from '../components/Buttons';
-import { ViewWithBlurredHeader, IconFooter, Card } from '../components/Views'  ;
-import { timeout } from '../functions/Utils';
-import { ModuleStore, ModuleItemModel } from '../functions/ModuleStore';
-
-import { Header, createStackNavigator, NavigationEvents } from 'react-navigation';
-import * as Animatable from 'react-native-animatable';
-import Chroma from 'chroma-js';
-import TimeAgo from 'react-native-timeago';
-
-
-import {setStateAsync} from '../functions/Utils';
 import { ModulesLastUpdated } from '../functions/MiscStore';
+import { timeout, setStateAsync} from '../functions/Utils';
+import { ModuleStore } from '../functions/ModuleStore';
 
-//show a list of modules
-export class ModuleListScreen extends React.Component {
+import { ViewWithBlurredHeader, IconFooter, Card } from '../components/Views'  ;
+import { ModuleList } from '../components/Modules';
+
+import * as Animatable from 'react-native-animatable';
+import TimeAgo from 'react-native-timeago';
+import { Header, NavigationEvents } from 'react-navigation';
+import { Divider } from 'react-native-elements';
+
+
+class ModulesHeader extends React.PureComponent {
+  static PropTypes = {
+    modules: PropTypes.array,
+    lastUpdated: PropTypes.number,
+  };
+
   static styles = StyleSheet.create({
     card: {
       flexDirection: 'row',
-      shadowRadius: 5,
-      shadowOpacity: 0.3,
+      paddingTop: 15,
       marginBottom: 20,
+      paddingHorizontal: 12,
+      paddingBottom: 16,
+      backgroundColor: 'white',
+      shadowColor: 'black',
+      shadowRadius: 4,
+      shadowOpacity: 0.4,
+      shadowOffset:{
+        width: 2,  
+        height: 3,  
+      },
     },
     image: {
       width: 75, 
@@ -36,16 +45,18 @@ export class ModuleListScreen extends React.Component {
     },
     headerTextContainer: {
       flex: 1, 
-      alignItems: 'center', 
       justifyContent: 'center', 
     },
     headerTitle: {
+      textAlign: 'center',
       color: '#512DA8',
       fontSize: 20, 
       fontWeight: '800'
     },
     headerSubtitle: {
-      fontSize: 16, 
+      fontSize: 16,
+      marginTop: 2,
+      textAlign: 'left',
       ...Platform.select({
         ios: {
           fontWeight: '200',
@@ -57,6 +68,10 @@ export class ModuleListScreen extends React.Component {
         },
       })
     },
+    divider: {
+      marginHorizontal: 10,
+      marginVertical: 8,
+    },  
     detailTitle: Platform.select({
       ios: {
         fontSize: 17,
@@ -82,6 +97,85 @@ export class ModuleListScreen extends React.Component {
       },
     }),
   });
+
+  constructor(props){
+    super(props);
+    this.imageHeader = require('../../assets/icons/notes-pencil.png');    
+  };
+
+  _renderDetails(){
+    const { styles } = ModulesHeader;
+    const { modules = [], lastUpdated = 0 } = this.props;
+    
+    const time = lastUpdated * 1000;
+    const moduleCount = modules.length || '--';
+
+    const Time = (props) => (lastUpdated?
+      <TimeAgo {...props} {...{time}}/> :
+      <Text    {...props}>
+        {'--:--'}
+      </Text>
+    );
+
+    return(
+      <View style={{flexDirection: 'row'}}>
+        <View style={{flex: 1}}>
+          <Text numberOfLines={1} style={styles.detailTitle   }>{'Modules: '}</Text>
+          <Text numberOfLines={1} style={styles.detailSubtitle}>{`${moduleCount} items`}</Text>
+        </View>
+        <View style={{flex: 1}}>
+          <Text numberOfLines={1} style={styles.detailTitle   }>{'Updated: '}</Text>
+          <Time numberOfLines={1} style={styles.detailSubtitle}/>              
+        </View>
+      </View>
+    );
+  };
+
+  render(){
+    const { styles } = ModulesHeader;
+    
+    const animation = Platform.select({
+      ios    : 'fadeInUp',
+      android: 'fadeInRight',
+    });
+
+    return(
+      <Animatable.View
+        style={styles.card}
+        duration={400}
+        easing={'ease-in-out'}
+        useNativeDriver={true}
+        {...{animation}}
+      >
+        <Animatable.Image
+          source={this.imageHeader}
+          style={styles.image}
+          animation={'pulse'}
+          easing={'ease-in-out'}
+          iterationCount={"infinite"}
+          duration={5000}
+          useNativeDriver={true}
+        />
+        <View style={styles.headerTextContainer}>
+          <Text style={styles.headerTitle}>
+            {'Available Modules'}
+          </Text>
+          <Text style={styles.headerSubtitle}>
+            {'Each module contains several subjects with related topics. Choose a subject and start learning.'}
+          </Text>
+          <Divider style={styles.divider}/>
+          {this._renderDetails()}
+        </View>
+      </Animatable.View>
+    );
+  };
+};
+
+//show a list of modules
+export class ModuleListScreen extends React.Component {
+  static styles = StyleSheet.create({
+
+  });
   
   constructor(props){
     super(props);
@@ -93,8 +187,6 @@ export class ModuleListScreen extends React.Component {
       mountFooter: false,
       lastUpdated: null,
     };
-
-    this.imageHeader = require('../../assets/icons/notes-pencil.png');
   };
 
   shouldComponentUpdate(nextProps, nextState){
@@ -119,7 +211,6 @@ export class ModuleListScreen extends React.Component {
   componentDidMount = async () => {
     //delay rendering
     setTimeout(() => { this.setState({mount: true}) }, 500);
-
   };
 
   _onRefresh = async () => {
@@ -182,58 +273,9 @@ export class ModuleListScreen extends React.Component {
   };
 
   _renderHeader = () => {
-    const { styles } = ModuleListScreen;
     const { modules, lastUpdated } = this.state;
-    
-    const time = lastUpdated * 1000;
-    const moduleCount = modules.length || '--';
-
-    const animation = Platform.select({
-      ios    : 'fadeInUp',
-      android: 'fadeInRight',
-    });
-
-    const Time = (props) => (lastUpdated?
-      <TimeAgo {...props} {...{time}}/> :
-      <Text    {...props}>
-        {'--:--'}
-      </Text>
-    );
-
-
     return(
-      <Animatable.View
-        duration={400}
-        easing={'ease-in-out'}
-        useNativeDriver={true}
-        {...{animation}}
-      >
-        <Card style={styles.card}>
-          <Animatable.Image
-            source={this.imageHeader}
-            style={styles.image}
-            animation={'pulse'}
-            easing={'ease-in-out'}
-            iterationCount={"infinite"}
-            duration={5000}
-            useNativeDriver={true}
-          />
-          <View style={styles.headerTextContainer}>
-            <Text style={styles.headerTitle   }>Available Modules</Text>
-            <Text style={styles.headerSubtitle}>Choose a module and practice answering questions.</Text>
-            <View style={{flexDirection: 'row', marginTop: 5}}>
-              <View style={{flex: 1}}>
-                <Text numberOfLines={1} style={styles.detailTitle   }>{'Modules: '}</Text>
-                <Text numberOfLines={1} style={styles.detailSubtitle}>{`${moduleCount} items`}</Text>
-              </View>
-              <View style={{flex: 1}}>
-                <Text numberOfLines={1} style={styles.detailTitle   }>{'Updated: '}</Text>
-                <Time numberOfLines={1} style={styles.detailSubtitle}/>              
-              </View>
-            </View>
-          </View>
-        </Card>
-      </Animatable.View>
+      <ModulesHeader {...{modules, lastUpdated}}/>
     );
   };
 
@@ -252,7 +294,6 @@ export class ModuleListScreen extends React.Component {
     const flatListProps = {
       contentInset : {top: offset},
       contentOffset: {x: 0, y: -offset},
-      contentContainerStyle: { paddingTop: 12 },
       //onEndReached callback not fired when on android
       onEndReachedThreshold: Platform.select({
         ios    : 0  ,

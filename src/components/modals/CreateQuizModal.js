@@ -680,8 +680,8 @@ export class CreateQuizModal extends React.PureComponent {
 
   openModal = async (selected) => {
     const modules = await this._getModules();
-    this._modal.showModal();
     this.setState({modules, selected, mountContent: true});
+    this._modal.showModal();
   };
 
   async _getModules(){
