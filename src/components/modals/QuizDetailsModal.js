@@ -274,6 +274,11 @@ class FormDescription extends React.PureComponent {
       color: PURPLE[1100],
       backgroundColor: 'transparent',
       fontSize: 20,
+      ...Platform.select({
+        ios: {
+          maxHeight: 100,
+        }
+      })
     },
     title: {
       fontSize: 22,
@@ -380,19 +385,27 @@ class FormDescription extends React.PureComponent {
       : 'Custom Quiz Description'
     );
 
+    const platformSpecificProps = Platform.select({
+      ios: {
+        numberOfLines: 3,
+        multiline: true
+      },
+      android: {
+        multiline: false,
+      }
+    });
+
     return(
       <TextInput
-        style={[styles.input, {maxHeight: 100}]}
+        style={[styles.input]}
         underlineColorAndroid={'transparent'}
         onFocus={this._handleOnFocus}
         onBlur={this._handleOnBlur}
         onChangeText={this._handleOnChangeText}
-        numberOfLines={3}
-        multiline={true}
         autoCorrect={false}
         maxLength={100}
         value={this.state.text}
-        {...{placeholder}}
+        {...{placeholder, ...platformSpecificProps}}
       />
     );
   };

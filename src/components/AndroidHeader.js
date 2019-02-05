@@ -105,7 +105,7 @@ export class AndroidHeader extends React.PureComponent {
     const paddingTop = StatusBar.currentHeight;
     const height     = paddingTop + Header.HEIGHT;
     return(
-      <View style={{height, elevation: 30, backgroundColor: 'blue'}}>
+      <View style={{height, elevation: 20, backgroundColor: 'blue'}}>
         <LinearGradient
           style={{flex: 1, flexDirection: 'row', paddingTop}}
           colors={['#8400ea', '#651FFF']}
