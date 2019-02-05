@@ -239,7 +239,8 @@ export class SubjectListItem extends React.PureComponent {
     wrapper: Platform.select({
       ios: {
         paddingTop: 10, 
-        paddingBottom: 35, 
+        paddingBottom: 35,
+        paddingHorizontal: 12,
         shadowColor: '#686868', 
         shadowOpacity: 0.5, 
         shadowRadius: 5,

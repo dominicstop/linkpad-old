@@ -31,6 +31,7 @@ class ExamHeader extends React.PureComponent {
       paddingTop: 10,
       paddingBottom: 16,
       backgroundColor: 'white',
+      elevation: 10,
       shadowColor: 'black',
       shadowRadius: 4,
       shadowOpacity: 0.3,
@@ -86,7 +87,7 @@ class ExamHeader extends React.PureComponent {
 
     this.imageHeader = require('../../assets/icons/book-mouse.png');
   };
-
+  
   _handleOnPressButton = () => {
     const { onPress } = this.props;
     onPress && onPress();

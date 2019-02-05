@@ -263,7 +263,7 @@ export class CreateCustomQuizList extends React.PureComponent {
     return(
       <Animatable.Text
         style={styles.indicatorText}
-        animation={'fadeInUp'}
+        animation={'fadeInRight'}
         duration={500}
         easing={'ease-in-out'}
         useNativeDriver={true}
@@ -416,7 +416,7 @@ export class CustomQuizList extends React.PureComponent {
     return(
       <Animatable.View
         style={styles.headerContainer}
-        animation={'fadeInUp'}
+        animation={'fadeInRight'}
         duration={500}
         easing={'ease-in-out'}
         useNativeDriver={true}

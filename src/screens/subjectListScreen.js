@@ -1,5 +1,6 @@
 import React from 'react';
 import { Text, View, Platform, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import PropTypes from 'prop-types';
 
 import { SubjectList, ModuleTitle, ModuleDescription , ModuleItem} from '../components/Modules';
 import { ViewWithBlurredHeader, IconText } from '../components/Views';
@@ -18,27 +19,31 @@ import {plural} from '../functions/Utils';
 
 const SubjectListHeader = (props) => <CustomHeader {...props}/>
 
-export default class SubjectListScreen extends React.Component {
-  static navigationOptions = {
-    title: 'View Module',
-    headerTitle: SubjectListHeader,
-    //custom android header
-    ...Platform.select({
-      android: { header: props => <AndroidHeader {...props}/> }
-    }),
+class SubjectHeader extends React.PureComponent {
+  static PropTypes = {
+    moduleData: PropTypes.object,
   };
 
   static styles = StyleSheet.create({
-    subjectList: Platform.select({
-      ios: {
-        paddingTop: 10,
-        paddingHorizontal: 10,
+    card: {
+      paddingTop: 15,
+      marginBottom: 15,
+      paddingHorizontal: 12,
+      paddingBottom: 16,
+      backgroundColor: 'white',
+      shadowColor: 'black',
+      elevation: 10,
+      shadowRadius: 4,
+      shadowOpacity: 0.4,
+      shadowOffset:{
+        width: 2,  
+        height: 3,  
       },
-      android: {
-        paddingTop: 10,
-        paddingHorizontal: 5,
-      }
-    }),
+    },
+    divider: {
+      marginHorizontal: 12,
+      marginVertical: 10,
+    },
     headerContainer: Platform.select({
       ios: {
         overflow: 'hidden', 
@@ -70,13 +75,12 @@ export default class SubjectListScreen extends React.Component {
       })
     },
     description: {
-      fontSize: 20, 
+      fontSize: 18, 
       fontWeight: '300',
       textAlign: 'justify'
     },
     detailContainer: {
       flexDirection: 'row', 
-      marginTop: 5
     },
     detailTitle: Platform.select({
       ios: {
@@ -103,6 +107,107 @@ export default class SubjectListScreen extends React.Component {
     }),
   });
 
+  _renderHeaderTitle(){
+    const { styles } = SubjectHeader;
+    const { moduleData } = this.props;
+
+    const model = new ModuleItemModel(moduleData);
+    const { modulename } = model.module;
+    
+    return(
+      <TouchableOpacity onPress={this._handleTitleOnPress}>
+        <IconText
+          //icon
+          iconName={'info'}
+          iconType={'feather'}
+          iconColor={'#512DA8'}
+          iconSize={24}
+          //title
+          text={modulename}
+          textStyle={styles.title}
+        />
+      </TouchableOpacity>
+    );
+  };
+
+  _renderDetails(){
+    const { styles } = SubjectHeader;
+
+    const { moduleData } = this.props;
+    const model = new ModuleItemModel(moduleData);
+    
+    //extract details
+    const { lastupdated } = model.module;
+    const countSubject  = model.getLenghtSubjects();
+    const countQuestion = model.getTotalQuestions();
+    
+    return(
+      <View style={styles.detailContainer}>
+        <View style={{flex: 1}}>
+          <Text numberOfLines={1} style={styles.detailTitle   }>{plural('Subject', countSubject)}</Text>
+          <Text numberOfLines={1} style={styles.detailSubtitle}>{`${countSubject} ${plural('item', countSubject)}`}</Text>
+        </View>
+        <View style={{flex: 1}}>
+          <Text numberOfLines={1} style={styles.detailTitle   }>{plural('Question', countQuestion)}</Text>
+          <Text numberOfLines={1} style={styles.detailSubtitle}>{`${countQuestion} ${plural('item', countSubject)}`}</Text>
+        </View>
+        <View style={{flex: 1}}>
+          <Text numberOfLines={1} style={styles.detailTitle   }>{'Updated: '}</Text>
+          <Text numberOfLines={1} style={styles.detailSubtitle}>{lastupdated}</Text>
+        </View>
+      </View>
+    );
+  };
+
+  render(){
+    const { styles } = SubjectHeader;
+    const { moduleData: {description} } = this.props;
+
+    //platform specific animations
+    const animation = Platform.select({
+      ios    : 'fadeInUp', 
+      android: 'fadeInLeft'
+    });
+
+    return(
+      <Animatable.View 
+        style={styles.card}
+        duration={300}
+        easing={'ease-in-out'}
+        useNativeDriver={true}
+        {...{animation}}
+      >
+        <AnimatedCollapsable
+          titleComponent={this._renderHeaderTitle()}
+          text={description}
+          style={styles.description}
+          collapsedNumberOfLines={6}
+          maxChar={400}
+          extraAnimation={false}
+        />
+        <Divider style={styles.divider}/>
+        {this._renderDetails()}
+      </Animatable.View>
+    );
+  };
+};
+
+export default class SubjectListScreen extends React.Component {
+  static navigationOptions = {
+    title: 'View Module',
+    headerTitle: SubjectListHeader,
+    //custom android header
+    ...Platform.select({
+      android: { header: props => <AndroidHeader {...props}/> }
+    }),
+  };
+
+  static styles = StyleSheet.create({
+    subjectList: {
+      paddingBottom: 50,
+    },
+  });
+
   componentDidFocus = () => {
     const { setDrawerSwipe } = this.props.screenProps;
     setDrawerSwipe(false);
@@ -123,88 +228,22 @@ export default class SubjectListScreen extends React.Component {
     getRefSubjectModal().openSubjectModal(moduleData, subjectData);    
   };
 
-  _renderHeaderTitle(){
-    const { styles } = SubjectListScreen;
-    const { navigation } = this.props;
-    //extract details
-    const moduleData = navigation.getParam('moduleData', null);
-    const model = new ModuleItemModel(moduleData);
-    const { modulename } = model.module;
-    
-    return(
-      <TouchableOpacity onPress={this._handleTitleOnPress}>
-        <IconText
-          //icon
-          iconName={'info'}
-          iconType={'feather'}
-          iconColor={'#512DA8'}
-          iconSize={24}
-          //title
-          text={modulename}
-          textStyle={styles.title}
-        />
-      </TouchableOpacity>
-    );
-  };
-
   _renderHeader = () => {
-    const { styles } = SubjectListScreen;
     const { navigation } = this.props;
-
-    //platform specific animations
-    const animation = Platform.select({
-      ios    : 'fadeInUp', 
-      android: 'fadeInLeft'
-    });
-
     //get data from prev. screen
     const moduleData = navigation.getParam('moduleData', null);
-    //wrap data in model
-    const model = new ModuleItemModel(moduleData);
-    
-    //extract details
-    const { description, lastupdated } = model.module;
-    const countSubject  = model.getLenghtSubjects();
-    const countQuestion = model.getTotalQuestions();
 
     return(
-      <Animatable.View 
-        style={styles.headerContainer}
-        duration={300}
-        easing={'ease-in-out'}
-        useNativeDriver={true}
-        {...{animation}}
-      >
-        <AnimatedCollapsable
-          titleComponent={this._renderHeaderTitle()}
-          text={description}
-          style={styles.description}
-          collapsedNumberOfLines={6}
-          maxChar={400}
-          extraAnimation={false}
-        />
-        <View style={styles.detailContainer}>
-          <View style={{flex: 1}}>
-            <Text numberOfLines={1} style={styles.detailTitle   }>{plural('Subject', countSubject)}</Text>
-            <Text numberOfLines={1} style={styles.detailSubtitle}>{`${countSubject} ${plural('item', countSubject)}`}</Text>
-          </View>
-          <View style={{flex: 1}}>
-            <Text numberOfLines={1} style={styles.detailTitle   }>{plural('Question', countQuestion)}</Text>
-            <Text numberOfLines={1} style={styles.detailSubtitle}>{`${countQuestion} ${plural('item', countSubject)}`}</Text>
-          </View>
-          <View style={{flex: 1}}>
-            <Text numberOfLines={1} style={styles.detailTitle   }>{'Updated: '}</Text>
-            <Text numberOfLines={1} style={styles.detailSubtitle}>{lastupdated}</Text>
-          </View>
-        </View>
-      </Animatable.View>
+      <SubjectHeader {...{moduleData}}/>
     );
   };
 
   render(){
     const { styles } = SubjectListScreen;
     const { navigation } = this.props;
+
     const offset = Header.HEIGHT;
+
     //get data from previous screen: module list
     const modules    = navigation.getParam('modules'   , null);
     const moduleData = navigation.getParam('moduleData', null);

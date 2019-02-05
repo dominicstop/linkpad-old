@@ -30,6 +30,7 @@ class ModulesHeader extends React.PureComponent {
       paddingBottom: 16,
       backgroundColor: 'white',
       shadowColor: 'black',
+      elevation: 10,
       shadowRadius: 4,
       shadowOpacity: 0.4,
       shadowOffset:{
@@ -315,5 +316,5 @@ export class ModuleListScreen extends React.Component {
         />}
       </ViewWithBlurredHeader>
     );
-  }
+  };
 };

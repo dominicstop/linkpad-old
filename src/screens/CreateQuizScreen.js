@@ -220,7 +220,7 @@ class TitleDescriptionCard extends React.PureComponent {
     
     const animation = Platform.select({
       ios    : 'fadeInUp',
-      android: 'zoomIn'  ,
+      android: 'fadeInRight',
     });
 
     return(
@@ -362,7 +362,7 @@ class AddSubjectsCard extends React.PureComponent {
     
     const animation = Platform.select({
       ios    : 'fadeInUp',
-      android: 'zoomIn'  ,
+      android: 'fadeInRight',
     });
 
     return(

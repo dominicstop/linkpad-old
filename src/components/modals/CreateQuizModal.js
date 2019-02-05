@@ -77,8 +77,18 @@ class ModalSectionHeader extends React.PureComponent {
 
   static styles = StyleSheet.create({
     container: {
+      marginTop: -1,
       padding: 10,
-      backgroundColor: 'rgba(255, 255, 255, 0.20)',
+      ...Platform.select({
+        ios: {
+          backgroundColor: 'rgba(255, 255, 255, 0.20)',
+        },
+        android: {
+          backgroundColor: 'white',
+          borderBottomColor: 'rgb(200,200,200)',
+          borderBottomWidth: 1,
+        }
+      }),
     },
     headerTitle: {
       fontWeight: '600',
@@ -91,23 +101,7 @@ class ModalSectionHeader extends React.PureComponent {
     },
   });
 
-  _renderIOS(props){
-    const { styles } = ModalSectionHeader;
-    return (
-      <BlurView
-        style={{marginBottom: 2, borderBottomColor: 'black'}}
-        tint={'default'}
-        intensity={100}
-        {...props}
-      >
-        <View style={styles.container}>
-          {props.children}
-        </View>
-      </BlurView>
-    );
-  };
-
-  render(){
+  _renderContent(){
     const { styles } = ModalSectionHeader;
     const { section } = this.props;
 
@@ -121,17 +115,44 @@ class ModalSectionHeader extends React.PureComponent {
     const { modulename, description, lastupdated } = moduleModel.get();
     const subjectCount = moduleModel.getLenghtSubjects();
 
-    const Container = Platform.select({
-      ios    : this._renderIOS,
-      android: (props) => <View     {...props}>{props.children}</View>    ,
-    });
-
     return(
-      <Container>
+      <Fragment>
         <Text numberOfLines={1} style={styles.headerTitle}>{modulename}</Text>
         <Text numberOfLines={2} style={styles.headerSubtitle}>{description}</Text>
-      </Container>
+      </Fragment>
     );
+  };
+
+  _renderIOS(){
+    const { styles } = ModalSectionHeader;
+    return(
+      <BlurView
+        style={{marginBottom: 2, borderBottomColor: 'black'}}
+        tint={'default'}
+        intensity={100}
+      >
+        <View style={styles.container}>
+          {this._renderContent()}
+        </View>
+      </BlurView>
+    );
+  };
+
+  _renderAndroid(){
+    const { styles } = ModalSectionHeader;
+
+    return(
+      <View style={styles.container}>
+        {this._renderContent()}
+      </View>
+    );
+  };
+
+  render(){
+    return Platform.select({
+      ios    : this._renderIOS(),
+      android: this._renderAndroid(),
+    });
   };
 };
 
@@ -196,13 +217,14 @@ class ModalSectionItem extends React.PureComponent {
         },
       },
       android: {
-        name: '',
-        type: '',
-        size: '',
+        type: 'ionicon',
+        size: 26,
         ...isSelected? {
-
+          name: 'ios-checkmark-circle',
+          color: PURPLE[500],
         } : {
-
+          name: 'ios-radio-button-off',
+          color: PURPLE[200],
         },
       },
     });
@@ -224,10 +246,13 @@ class ModalSectionItem extends React.PureComponent {
     //extract properties
     const { subjectname, description } = subject;
 
+    const title    = subjectname? subjectname : 'No Subject Name';
+    const subtitle = description? description : 'No Description';
+
     return (
       <View style={{flex: 1}}>
-        <Text style={styles.subjectTitle} numberOfLines={1}>{subjectname}</Text>
-        <Text style={styles.subtitle    } numberOfLines={1}>{description}</Text>
+        <Text style={styles.subjectTitle} numberOfLines={1}>{title}</Text>
+        <Text style={styles.subtitle    } numberOfLines={1}>{subtitle}</Text>
       </View>
     );
   };
@@ -382,8 +407,15 @@ class ModalTitle extends React.PureComponent {
       })
     },
     subtitle: {
-      fontWeight: '200', 
-      fontSize: 16
+      fontSize: 16,
+      ...Platform.select({
+        ios: {
+          fontWeight: '200'
+        },
+        android: {
+          fontWeight: '100'
+        }
+      })
     }
   });
 
@@ -629,6 +661,7 @@ class ModalContents extends React.PureComponent {
           ItemSeparatorComponent={this._renderItemSeperator}
           keyExtractor={this._handleKeyExtractor}
           sections={this.props.modules}
+          stickySectionHeadersEnabled={true}
         />
         {this._renderNextButton()}
       </View>

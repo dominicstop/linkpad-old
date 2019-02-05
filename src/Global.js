@@ -1,1 +1,1 @@
-global.usePlaceholder = true;
+global.usePlaceholder = false;
