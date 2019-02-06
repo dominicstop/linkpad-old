@@ -227,13 +227,14 @@ export class ViewWithBlurredHeader extends React.PureComponent {
   }
 }
 
-//Container: used for animating items inside a flatlist
+//wrapper: used for animating items inside a flatlist
 export class AnimatedListItem extends React.PureComponent {
   static propTypes = {
     index     : PropTypes.number,
     delay     : PropTypes.number,
     multiplier: PropTypes.number,
     last      : PropTypes.number,
+    animated  : PropTypes.bool  ,
   };
 
   static defaultProps = {
@@ -241,12 +242,13 @@ export class AnimatedListItem extends React.PureComponent {
     delay     : 0  ,
     multiplier: 100,
     last      : 3  ,
+    animated  : false,
   };
 
   constructor(props){
     super(props);
     this.state = {
-      animated: true,
+      animated: props.animated,
     };
   };
 
@@ -278,9 +280,12 @@ export class AnimatedListItem extends React.PureComponent {
 
   render(){
     const { animated } = this.state;
-    return animated? this._renderAnimateIn() : this._renderNormal();
+    return (animated
+      ? this._renderAnimateIn() 
+      : this._renderNormal   ()
+    );
   };
-}
+};
 
 //wraps childern and animates with delay stagger
 export class AnimateInView extends React.PureComponent {

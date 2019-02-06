@@ -2,19 +2,19 @@ import React, { Fragment } from 'react';
 import { StyleSheet, View, Text, TouchableOpacity, Platform, SectionList, Animated, Dimensions } from 'react-native';
 import PropTypes from 'prop-types';
 
-import { STYLES } from '../../Constants';
-import { PURPLE } from '../../Colors';
+import { STYLES } from '../Constants';
+import { PURPLE } from '../Colors';
 
-import { plural , setStateAsync, timeout } from '../../functions/Utils';
-import { SubjectItem, ModuleItemModel, ModuleStore } from '../../functions/ModuleStore';
+import { plural , setStateAsync, timeout } from '../functions/Utils';
+import { SubjectItem, ModuleItemModel, ModuleStore } from '../functions/ModuleStore';
 
-import { MODAL_DISTANCE_FROM_TOP, MODAL_EXTRA_HEIGHT, SwipableModal, ModalBackground, ModalTopIndicator } from '../SwipableModal';
-import { IconText, AnimateInView } from '../../components/Views';
+import { MODAL_DISTANCE_FROM_TOP, MODAL_EXTRA_HEIGHT, SwipableModal, ModalBackground, ModalTopIndicator } from '../components/SwipableModal';
+import { IconText, AnimateInView } from '../components/Views';
 
 import { BlurView, LinearGradient, DangerZone } from 'expo';
 import { Icon, Divider } from 'react-native-elements';
 
-import * as Animatable from 'react-native-animatable';
+import * as Animatable  from 'react-native-animatable';
 import * as _Reanimated from 'react-native-reanimated';
 
 const { Lottie } = DangerZone;
@@ -26,7 +26,7 @@ const Screen = {
   height: Dimensions.get('window').height,
 };
 
-export class CheckAnimation extends React.PureComponent {
+class CheckAnimation extends React.PureComponent {
   constructor(props){
     super(props);
 
@@ -34,7 +34,7 @@ export class CheckAnimation extends React.PureComponent {
       mountAnimation: false,
     };
 
-    this._source = require('../../animations/checked_done_2.json');
+    this._source = require('../animations/checked_done_2.json');
     this._value = new Animated.Value(0.5);
     this._config = { 
       toValue: 1,

@@ -5,9 +5,9 @@ import Constants, { STYLES, ROUTES } from '../Constants';
 import { CustomHeader } from '../components/Header' ;
 
 import { SubjectModal     } from '../components/SwipableModal';
-import { CreateQuizModal  } from '../components/modals/CreateQuizModal';
-import { QuizDetailsModal } from '../components/modals/QuizDetailsModal';
-import { QuizFinishModal  } from '../components/modals/QuizFinishModal';
+import { CreateQuizModal  } from '../modals/CreateQuizModal';
+import { QuizDetailsModal } from '../modals/QuizDetailsModal';
+import { QuizFinishModal  } from '../modals/QuizFinishModal';
 
 import { ModuleListScreen } from './ModuleListScreen';
 import { ResourcesScreen  } from './ResourcesScreen';

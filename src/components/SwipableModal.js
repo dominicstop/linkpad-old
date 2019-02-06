@@ -173,12 +173,13 @@ export class SwipableModal extends React.PureComponent {
     onModalHide && onModalHide();
   };
 
-  _handleOnSnap = ({nativeEvent}) => {
+  _handleOnSnap = async ({nativeEvent}) => {
     const { index, x , y } = nativeEvent;
     
     const isHidden = y >= Screen.height;
     if(isHidden){
       //unmount modal when hidden
+      await timeout(750);
       this.setState({mountModal: false});
       this.onModalHide();
     }

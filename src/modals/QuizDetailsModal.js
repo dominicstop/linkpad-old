@@ -2,14 +2,14 @@ import React, { Fragment } from 'react';
 import { StyleSheet, View, Text, TouchableOpacity, Platform, Animated, TextInput, TouchableWithoutFeedback, Keyboard, Alert, Dimensions } from 'react-native';
 import PropTypes from 'prop-types';
 
-import { STYLES } from '../../Constants';
-import { PURPLE } from '../../Colors';
+import { STYLES } from '../Constants';
+import { PURPLE } from '../Colors';
 
-import { setStateAsync, isEmpty } from '../../functions/Utils';
+import { setStateAsync, isEmpty } from '../functions/Utils';
 
-import { MODAL_DISTANCE_FROM_TOP, MODAL_EXTRA_HEIGHT, SwipableModal, ModalBackground, ModalTopIndicator } from '../SwipableModal';
-import { IconText, AnimateInView } from '../../components/Views';
-import { PlatformTouchableIconButton } from '../../components/Buttons';
+import { MODAL_DISTANCE_FROM_TOP, MODAL_EXTRA_HEIGHT, SwipableModal, ModalBackground, ModalTopIndicator } from '../components/SwipableModal';
+import { IconText, AnimateInView } from '../components/Views';
+import { PlatformTouchableIconButton } from '../components/Buttons';
 
 import { LinearGradient, DangerZone } from 'expo';
 import { Icon } from 'react-native-elements';
@@ -34,7 +34,7 @@ class CheckAnimation extends React.PureComponent {
       mountAnimation: false,
     };
 
-    this._source = require('../../animations/checked_done_2.json');
+    this._source = require('../animations/checked_done_2.json');
     this._value = new Animated.Value(0.5);
     this._config = { 
       toValue: 1,

@@ -2,15 +2,15 @@ import React, { Fragment } from 'react';
 import { StyleSheet, View, Text, TouchableOpacity, Platform, SectionList, Animated, TextInput, TouchableWithoutFeedback, Keyboard, Alert } from 'react-native';
 import PropTypes from 'prop-types';
 
-import { STYLES } from '../../Constants';
-import { PURPLE } from '../../Colors';
+import { STYLES } from '../Constants';
+import { PURPLE } from '../Colors';
 
-import { plural , setStateAsync, timeout, isEmpty } from '../../functions/Utils';
-import { CreateCustomQuiz, CustomQuizStore } from '../../functions/CustomQuizStore';
+import { plural , setStateAsync, timeout, isEmpty } from '../functions/Utils';
+import { CreateCustomQuiz, CustomQuizStore } from '../functions/CustomQuizStore';
 
-import { MODAL_DISTANCE_FROM_TOP, MODAL_EXTRA_HEIGHT, SwipableModal, ModalBackground, ModalTopIndicator } from '../SwipableModal';
-import { IconText, AnimateInView, Card } from '../../components/Views';
-import { IconButton } from '../../components/Buttons';
+import { MODAL_DISTANCE_FROM_TOP, MODAL_EXTRA_HEIGHT, SwipableModal, ModalBackground, ModalTopIndicator } from '../components/SwipableModal';
+import { IconText, AnimateInView, Card } from '../components/Views';
+import { IconButton } from '../components/Buttons';
 
 import { BlurView, LinearGradient, DangerZone } from 'expo';
 import { Icon, Divider } from 'react-native-elements';
@@ -27,7 +27,7 @@ class CheckAnimation extends React.PureComponent {
       mountAnimation: false,
     };
 
-    this._source = require('../../animations/checked_done_2.json');
+    this._source = require('../animations/checked_done_2.json');
     this._value = new Animated.Value(0.5);
     this._config = { 
       toValue: 1,
@@ -88,7 +88,7 @@ class QuizCard extends React.PureComponent {
 
   constructor(props){
     super(props);
-    this.imageCard = require('../../../assets/icons/notes-pencil.png');
+    this.imageCard = require('../../assets/icons/notes-pencil.png');
   };
 
   _renderTitleDesc(){
