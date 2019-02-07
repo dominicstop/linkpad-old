@@ -38,7 +38,7 @@ export class ModalBackground extends React.PureComponent {
   };
 
   static defaultProps = {
-    showBG: false,
+    showBG: Platform.OS == 'android',
   };
 
   static styles = StyleSheet.create({

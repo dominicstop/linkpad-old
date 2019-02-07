@@ -718,11 +718,15 @@ export class QuizDetailsModal extends React.PureComponent {
   };
 
   _handleOnPressSaveChanges = async ({title, description}) => {
+    const overlayOpacity = Platform.select({
+      ios: 0.4, android: 0.7,
+    });
+
     if(this.onPressSaveChanges != null){
       //wait to finish
       await Promise.all([
         //show overlay
-        this.overlay.transitionTo({opacity: 0.4}, 500),
+        this.overlay.transitionTo({opacity: overlayOpacity}, 500),
         //show check animation
         this.animatedCheck.start(),
       ]);

@@ -418,7 +418,8 @@ class ModalTitle extends React.PureComponent {
       })
     },
     subtitleContainer: {
-      height: 24,
+      height: 26,
+      maxHeight: 26,
     },
     subtitleSelectedContainer: {
       flexDirection: 'row',
@@ -438,7 +439,7 @@ class ModalTitle extends React.PureComponent {
     subtitleCountContainer: {
       backgroundColor: PURPLE.A700,
       borderRadius: 10,
-      paddingHorizontal: 7,
+      paddingHorizontal: 10,
       paddingVertical: 2,
       marginRight: 2,
     }
@@ -503,7 +504,7 @@ class ModalTitle extends React.PureComponent {
     const { subtitlePrefix, subtitleSuffix } = this.state;
 
     return(
-      <View style={[styles.subtitleContainer, styles.subtitleSelectedContainer]}>
+      <View style={styles.subtitleSelectedContainer}>
         <View style={styles.subtitleCountContainer}>
           <Text style={[styles.subtitle, styles.subtitleSelectedCount]}>
             {subtitlePrefix}
@@ -521,7 +522,7 @@ class ModalTitle extends React.PureComponent {
     const { subtitle } = this.state;
 
     return(
-      <Text style={[styles.subtitleContainer, styles.subtitle]}>
+      <Text style={styles.subtitle}>
         {subtitle}
       </Text>
     );
@@ -544,7 +545,7 @@ class ModalTitle extends React.PureComponent {
           <Text style={styles.title}>{text}</Text>
           <Animatable.View 
             ref={r => this.subtitleText = r}
-            style={styles.subtitle}
+            style={styles.subtitleContainer}
             animation={'fadeInUp'}
             easing={'ease-in-out'}
             duration={500}
@@ -815,10 +816,14 @@ export class CreateQuizModal extends React.PureComponent {
       //hide button
       this.modalContents._nextButton.hide();
 
+      const overlayOpacity = Platform.select({
+        ios: 0.4, android: 0.7,
+      });
+
       //wait to finish
       await Promise.all([
         //show overlay
-        this.overlay.transitionTo({opacity: 0.4}, 500),
+        this.overlay.transitionTo({opacity: overlayOpacity}, 500),
         //show check animation
         this.animatedCheck.start(),
       ]);
