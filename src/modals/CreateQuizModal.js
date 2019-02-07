@@ -428,10 +428,10 @@ class ModalTitle extends React.PureComponent {
       color: 'white',
       ...Platform.select({
         ios: {
-          fontWeight: '500'
+          fontWeight: '300'
         },
         android: {
-          fontWeight: '700'
+          fontWeight: '500'
         }
       })
     },
@@ -543,6 +543,7 @@ class ModalTitle extends React.PureComponent {
           <Animatable.View 
             ref={r => this.subtitleText = r}
             style={styles.subtitle}
+            useNativeDriver={true}
           >
             {isSelected
               ? this._renderSubtitleSelected() 
