@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, ScrollView, StyleSheet, Text, TouchableOpacity, AsyncStorage } from 'react-native';
+import { View, ScrollView, StyleSheet, Text, Platform } from 'react-native';
 import PropTypes from 'prop-types';
 
 import { ROUTES, HEADER_HEIGHT , STYLES} from '../Constants';

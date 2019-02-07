@@ -31,9 +31,14 @@ export class AnimatedGradient extends React.PureComponent {
     this.isReverse  = false;
     //unwrap props
     const {colorsTop, colorsBottom, numOfInterps} = props;
+    
     //interpolate colors
     this.colorsTop    = Chroma.scale(colorsTop   ).colors(numOfInterps);
     this.colorsBottom = Chroma.scale(colorsBottom).colors(numOfInterps);
+
+    this.state = {
+      colors: [colorsTop[0], colorsBottom[0]],
+    };
   }
 
   nextColors(){
@@ -53,10 +58,8 @@ export class AnimatedGradient extends React.PureComponent {
     if(this.gradientInterval) return;
     this.gradientInterval = setInterval( () => {
       //update gradient colors
-      this.linearGradientRef.gradientRef.setNativeProps({
-        //convert colors before assigning
-        colors: this.nextColors().map(processColor)
-      });
+      const colors = this.nextColors();
+      this.setState({colors});
     }, speed);
   }
 
@@ -76,12 +79,11 @@ export class AnimatedGradient extends React.PureComponent {
   }
 
   render(){
-    const { colorsTop, colorsBottom } = this;
+    const { colors } = this.state;
     return(
       <LinearGradient
-        {...this.props}
-        colors={[colorsTop[0], colorsBottom[1]]}
         ref={ref => this.linearGradientRef = ref}
+        {...{colors, ...this.props}}
       >
         {this.props.children}
       </LinearGradient>

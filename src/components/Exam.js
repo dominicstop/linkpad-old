@@ -5,7 +5,6 @@ import PropTypes from 'prop-types';
 import { setStateAsync, shuffleArray , returnToZero, getLast, getFirst, getLetter, isValidTimestamp, timeout} from '../functions/Utils';
 import IncompletePracticeExamStore, { IncompletePracticeExamModel } from '../functions/IncompletePracticeExamStore';
 
-
 import { Button, ExpandCollapseTextWithHeader, AnimatedCollapsable } from './Buttons';
 import { FlipView, IconText } from './Views';
 
@@ -17,7 +16,6 @@ import    { Divider  } from 'react-native-elements';
 
 import { DangerZone } from 'expo';
 import _ from 'lodash';
-import {STYLES} from '../Constants';
 import { SubjectItem, ModuleItemModel, QuestionItem } from '../functions/ModuleStore';
 const { Lottie } = DangerZone;
 

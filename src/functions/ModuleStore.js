@@ -1,7 +1,6 @@
 import store from 'react-native-simple-store';
 import _ from 'lodash';
-import {IncompletePracticeExamModel, AnswerModel} from './IncompletePracticeExamStore';
-import { Question } from '../components/Exam';
+import { IncompletePracticeExamModel, AnswerModel } from './IncompletePracticeExamStore';
 import { getTimestamp } from './Utils';
 
 //structure of single question item in module subject.questions array

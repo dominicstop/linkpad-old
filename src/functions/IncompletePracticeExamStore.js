@@ -1,7 +1,7 @@
 import store from 'react-native-simple-store';
 import _ from 'lodash';
 import * as Utils from './Utils'
-import {ModuleItemModel, QuestionItem, SubjectItem} from './ModuleStore';
+import { SubjectItem } from './ModuleStore';
 
 const KEY   = 'incomplete_practiceExams';
 const DEBUG = false;

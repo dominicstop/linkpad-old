@@ -35,8 +35,8 @@ export class TipsStore {
       return (data);
 
     } catch(error){
-      console.error('Failed to read tips from store.');
-      throw error;
+      console.log(error);
+      console.log('Failed to read tips from store.');
     };
   };
 
