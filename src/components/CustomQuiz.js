@@ -1,5 +1,5 @@
 import React, { Fragment } from 'react';
-import { View, LayoutAnimation, ScrollView, ViewPropTypes, Text, TouchableOpacity, AsyncStorage, StyleSheet, FlatList } from 'react-native';
+import { View, Text, TouchableOpacity, Platform, StyleSheet, FlatList } from 'react-native';
 import PropTypes from 'prop-types';
 
 import { plural } from '../functions/Utils';
@@ -260,13 +260,18 @@ export class CreateCustomQuizList extends React.PureComponent {
     const { quizItems } = this.props;
     if(quizItems.length == 0) return null;
 
+    const animation = Platform.select({
+      ios: 'fadeInUp', 
+      android: 'fadeInRight'
+    });
+
     return(
       <Animatable.Text
         style={styles.indicatorText}
-        animation={'fadeInRight'}
         duration={500}
         easing={'ease-in-out'}
         useNativeDriver={true}
+        {...{animation}}
       >
         {`${quizItems.length} ${plural('Subject', quizItems.length)}`}
       </Animatable.Text>
@@ -413,13 +418,18 @@ export class CustomQuizList extends React.PureComponent {
       ? 'Ullamcorper' : 'Quiz'
     );
 
+    const animation = Platform.select({
+      ios: 'fadeInUp', 
+      android: 'fadeInRight'
+    });
+
     return(
       <Animatable.View
         style={styles.headerContainer}
-        animation={'fadeInRight'}
         duration={500}
         easing={'ease-in-out'}
         useNativeDriver={true}
+        {...{animation}}
       >
         <Icon
           name={'clipboard-pencil'}

@@ -447,10 +447,12 @@ class ModalTitle extends React.PureComponent {
   constructor(props){
     super(props);
 
+    const { selectedCount } = props;
+
     this.state = {
-      //get title/desc when no. of selected is 0
-      ...this.getTitleText(0),
-      selectedCount: 0,
+      //get title/desc when no. of selected
+      ...this.getTitleText(selectedCount),
+      selectedCount,
     };
   };
 
@@ -543,6 +545,10 @@ class ModalTitle extends React.PureComponent {
           <Animatable.View 
             ref={r => this.subtitleText = r}
             style={styles.subtitle}
+            animation={'fadeInUp'}
+            easing={'ease-in-out'}
+            duration={500}
+            delay={200}
             useNativeDriver={true}
           >
             {isSelected
@@ -649,9 +655,12 @@ class ModalContents extends React.PureComponent {
   };
 
   _renderTitle(){
+    const selectedCount = this.selected.length;
+
     return(
       <ModalTitle
         ref={r => this.modalTitle = r}
+        {...{selectedCount}}
       />
     );
   };
