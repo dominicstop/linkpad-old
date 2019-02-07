@@ -33,6 +33,14 @@ UIManager.setLayoutAnimationEnabledExperimental &&
 UIManager.setLayoutAnimationEnabledExperimental(true);
 
 export class ModalBackground extends React.PureComponent {
+  static propTypes = {
+    showBG: PropTypes.bool,
+  };
+
+  static defaultProps = {
+    showBG: false,
+  };
+
   static styles = StyleSheet.create({
     container: {
       flex: 1, 
@@ -46,14 +54,18 @@ export class ModalBackground extends React.PureComponent {
       width: '100%',
       height: '100%',
       resizeMode: 'cover',
+      ...Platform.select({
+        ios: {
+          opacity: 0.05,
+        },
+      })
     }
   });
 
-  constructor(props){
-    super(props);
-
-    this.background = require('../../assets/patternBG.jpg');
-  };
+  static background = require(Platform.select({
+    ios    : '../../assets/patternBG.png',
+    android: '../../assets/patternBG.jpg',
+  }));
 
   _renderIOS(){
     const { styles } = ModalBackground;
@@ -65,6 +77,7 @@ export class ModalBackground extends React.PureComponent {
         tint={'light'}
         {...otherProps}
       >
+        {this._renderBG()}
         {children}
       </BlurView>
     );
@@ -72,10 +85,12 @@ export class ModalBackground extends React.PureComponent {
 
   _renderBG(){
     const { styles } = ModalBackground;
+    const { showBG } = this.props;
+    if(!showBG) return null;
 
     return(
       <Image
-        source={this.background}
+        source={ModalBackground.background}
         style={styles.backgroundImage}
       />
     );
@@ -220,12 +235,16 @@ export class SwipableModal extends React.PureComponent {
   _renderShadow = () => {
     const { styles } = SwipableModal;
 
+    const shadowOpacity = Platform.select({
+      ios: 0.5, android: 0.75,
+    });
+
     //shadow behind panel
     const shadowStyle = {
       backgroundColor: 'black',
       opacity: this._deltaY.interpolate({
         inputRange: [0, Screen.height - 100],
-        outputRange: [0.5, 0],
+        outputRange: [shadowOpacity, 0],
         extrapolateRight: 'clamp',
       }),
     };

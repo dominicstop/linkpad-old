@@ -388,7 +388,7 @@ class ModalTitle extends React.PureComponent {
       flexDirection: 'row',
       marginLeft: 7, 
       marginRight: 25, 
-      marginBottom: 10
+      marginBottom: 7,
     },
     textContainer: {
       marginHorizontal: 10,
@@ -416,17 +416,40 @@ class ModalTitle extends React.PureComponent {
           fontWeight: '100'
         }
       })
+    },
+    subtitleContainer: {
+      height: 24,
+    },
+    subtitleSelectedContainer: {
+      flexDirection: 'row',
+      alignItems: 'center'
+    },
+    subtitleSelectedCount: {
+      color: 'white',
+      ...Platform.select({
+        ios: {
+          fontWeight: '500'
+        },
+        android: {
+          fontWeight: '700'
+        }
+      })
+    },
+    subtitleCountContainer: {
+      backgroundColor: PURPLE.A700,
+      borderRadius: 10,
+      paddingHorizontal: 7,
+      paddingVertical: 2,
+      marginRight: 2,
     }
   });
 
   constructor(props){
     super(props);
 
-    //get title when no. of selected is 0
-    const { text, subtitle } = this.getTitleText(0);
-
     this.state = {
-      text, subtitle,
+      //get title/desc when no. of selected is 0
+      ...this.getTitleText(0),
       selectedCount: 0,
     };
   };
@@ -442,41 +465,70 @@ class ModalTitle extends React.PureComponent {
       : 'Select the subjects that you want to add.'
     );
 
-    const prefix = global.usePlaceholder? 'Quam' : 'subject';
+    const prefix = global.usePlaceholder? 'Quam' : 'Subject';
+    const subtitlePrefix = `${selectedCount} ${plural(prefix, selectedCount)}`;
+    const subtitleSuffix = ' has been selected.';
+
     const subtitle = (selectedCount == 0
       ? subtitleDefault
-      : `${selectedCount} ${plural(prefix, selectedCount)} has been selected.`
+      : subtitlePrefix + subtitleSuffix
     );
 
-    return { text, subtitle };
+    return { text, subtitle, subtitlePrefix, subtitleSuffix };
   };
 
-  setSubtitle = async (subtitle) => {
-    await this.subtitleText.fadeOut(200);
-    await setStateAsync(this, {subtitle});
-    await this.subtitleText.fadeIn (200);
-  };
-
-  setSelectedCount = (selectedCount) => {
+  setSelectedCount = async (selectedCount) => {
     //store prev. value
     const old_selectedCount = this.state.selectedCount;
   
-    this.setState({selectedCount});
-    const { subtitle } = this.getTitleText(selectedCount);
+    const titleText = this.getTitleText(selectedCount);
 
     if((old_selectedCount == 0 && selectedCount == 1) || (old_selectedCount == 1 && selectedCount == 0)){
       //animate in/out changed subtitle
-      this.setSubtitle(subtitle);
+      await this.subtitleText.fadeOut(300);
+      await setStateAsync(this, {...titleText, selectedCount});
+      await this.subtitleText.fadeIn (300);
 
     } else {
-      //no animation
-      this.setState({subtitle});
+      //no fade animation
+      this.subtitleText.pulse(300);
+      this.setState({...titleText, selectedCount});
     };
+  };
+
+  _renderSubtitleSelected(){
+    const { styles } = ModalTitle;
+    const { subtitlePrefix, subtitleSuffix } = this.state;
+
+    return(
+      <View style={[styles.subtitleContainer, styles.subtitleSelectedContainer]}>
+        <View style={styles.subtitleCountContainer}>
+          <Text style={[styles.subtitle, styles.subtitleSelectedCount]}>
+            {subtitlePrefix}
+          </Text>
+        </View>
+        <Text style={styles.subtitle}>
+          {subtitleSuffix}
+        </Text>
+      </View>
+    );
+  };
+
+  _renderSubtitleUnselected(){
+    const { styles } = ModalTitle;
+    const { subtitle } = this.state;
+
+    return(
+      <Text style={[styles.subtitleContainer, styles.subtitle]}>
+        {subtitle}
+      </Text>
+    );
   };
 
   render(){
     const { styles } = ModalTitle;
-    const { text, subtitle } = this.state;
+    const { text, subtitle, selectedCount } = this.state;
+    const isSelected = selectedCount > 0;
     
     return(
       <View style={styles.containerStyle}>
@@ -488,12 +540,15 @@ class ModalTitle extends React.PureComponent {
         />
         <View style={styles.textContainer}>
           <Text style={styles.title}>{text}</Text>
-          <Animatable.Text 
+          <Animatable.View 
             ref={r => this.subtitleText = r}
             style={styles.subtitle}
           >
-            {subtitle}
-          </Animatable.Text>
+            {isSelected
+              ? this._renderSubtitleSelected() 
+              : this._renderSubtitleUnselected()
+            }
+          </Animatable.View>
         </View>
       </View>      
     );
@@ -821,7 +876,10 @@ export class CreateQuizModal extends React.PureComponent {
         onModalHide={this._handleOnModalHide}
       >
         <Fragment>
-          <ModalBackground style={{paddingBottom}}>
+          <ModalBackground 
+            style={{paddingBottom}} 
+            showBG={true}
+          >
             <ModalTopIndicator/>
             {mountContent && this._renderContent()}
           </ModalBackground>
