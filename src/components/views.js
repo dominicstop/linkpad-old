@@ -242,18 +242,21 @@ export class AnimatedListItem extends React.PureComponent {
     delay     : 0  ,
     multiplier: 100,
     last      : 3  ,
-    animated  : false,
+    animated  : true,
   };
 
   constructor(props){
     super(props);
     this.state = {
-      animated: props.animated,
+      animated: true,
     };
   };
 
   _handleOnAnimationEnd = () => {
-    this.setState({animated: false});
+    const { animated } = this.props;
+    if(!animated){
+      this.setState({animated: false});
+    };
   };
 
   _renderAnimateIn(){

@@ -8,6 +8,7 @@ import { SubjectItem } from '../functions/ModuleStore';
 import { ViewWithBlurredHeader, Card, AnimatedListItem } from '../components/Views';
 import { PlatformTouchableIconButton } from '../components/Buttons';
 import { AndroidHeader, AndroidBackButton} from '../components/AndroidHeader';
+import { CustomQuizList } from '../components/CustomQuizExam';
 
 
 import Constants from '../Constants'
@@ -41,18 +42,28 @@ class HeaderTitle extends React.PureComponent {
   constructor(props){
     super(props);
     this.state = {
-      
+      index: 1,
+      total: 1,
     };
+  };
+
+  setIndex = (index) => {
+    this.setState({index});
+  };
+  
+  setTotal = (total) => {
+    this.setState({total});
   };
 
   _renderText(){
     const { styles } = HeaderTitle;
+    const { index, total } = this.state;
 
     return(
       <Text style={styles.title}>
         {'Question: '}
         <Text style={styles.titleCount}>
-          {`2/10`}
+          {`${index}/${total}`}
         </Text>
       </Text>
     );
@@ -102,9 +113,28 @@ class CustomQuizExamScreen extends React.Component {
     });
   };
 
+  constructor(props){
+    super(props);
+  };
+
+  _handleOnSnapToItem = (index) => {
+    References.HeaderTitle.setIndex(index + 1);
+  };
+
   render(){
+    const { navigation } = this.props;
+    //get data from previous screen: ExamScreen
+    const quiz = navigation.getParam('quiz' , null);
+    
     return (
       <ViewWithBlurredHeader hasTabBar={false}>
+        <CustomQuizList
+          onSnapToItem={this._handleOnSnapToItem}
+          onEndReached={this._handleOnEndReached}
+          onListInit  ={this._handleOnListInit  }
+          onNextItem  ={this._handleOnNextItem  } 
+          {...{quiz}}
+        />
       </ViewWithBlurredHeader>
     );
   };
