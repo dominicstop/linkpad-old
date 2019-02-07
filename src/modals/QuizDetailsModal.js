@@ -83,19 +83,33 @@ class FormTitle extends React.PureComponent {
       position: 'absolute',
       height: '100%',
       width: '100%',
-      backgroundColor: 'rgba(255, 255, 255, 0.2)',
       borderColor: PURPLE[300],
       borderWidth: 1,
       borderRadius: 10,
+      ...Platform.select({
+        ios: {
+          backgroundColor: 'rgba(255, 255, 255, 0.2)',
+        },
+        android: {
+          backgroundColor: 'rgba(255, 255, 255, 0.75)',          
+        },
+      })
     },
     borderActive: {
       position: 'absolute',
       height: '100%',
       width: '100%',
-      backgroundColor: 'rgba(255, 255, 255, 0.5)',
       borderColor: PURPLE[600],
       borderWidth: 2,
       borderRadius: 10,
+      ...Platform.select({
+        ios: {
+          backgroundColor: 'rgba(255, 255, 255, 0.5)',
+        },
+        android: {
+          backgroundColor: 'rgb(255, 255, 255)',          
+        },
+      })
     },
     input: {
       flex: 1,
@@ -259,15 +273,30 @@ class FormDescription extends React.PureComponent {
       borderColor: PURPLE[300],
       borderWidth: 1,
       borderRadius: 10,
+      ...Platform.select({
+        ios: {
+          backgroundColor: 'rgba(255, 255, 255, 0.2)',
+        },
+        android: {
+          backgroundColor: 'rgba(255, 255, 255, 0.75)',          
+        },
+      })
     },
     borderActive: {
       position: 'absolute',
       height: '100%',
       width: '100%',
-      backgroundColor: 'rgba(255, 255, 255, 0.5)',
       borderColor: PURPLE[600],
       borderWidth: 2,
       borderRadius: 10,
+      ...Platform.select({
+        ios: {
+          backgroundColor: 'rgba(255, 255, 255, 0.5)',
+        },
+        android: {
+          backgroundColor: 'rgb(255, 255, 255)',          
+        },
+      })
     },
     input: {
       flex: 1,

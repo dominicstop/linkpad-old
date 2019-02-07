@@ -41,7 +41,19 @@ export class ModalBackground extends React.PureComponent {
         android: 'white',
       }),
     },
+    backgroundImage: {
+      position: 'absolute',
+      width: '100%',
+      height: '100%',
+      resizeMode: 'cover',
+    }
   });
+
+  constructor(props){
+    super(props);
+
+    this.background = require('../../assets/patternBG.jpg');
+  };
 
   _renderIOS(){
     const { styles } = ModalBackground;
@@ -58,6 +70,17 @@ export class ModalBackground extends React.PureComponent {
     );
   };
 
+  _renderBG(){
+    const { styles } = ModalBackground;
+
+    return(
+      <Image
+        source={this.background}
+        style={styles.backgroundImage}
+      />
+    );
+  };
+
   _renderAndroid(){
     const { styles } = ModalBackground;
     const { style, children, ...otherProps } = this.props;
@@ -66,6 +89,7 @@ export class ModalBackground extends React.PureComponent {
         style={[styles.container, style]} 
         {...otherProps}
       >
+        {this._renderBG()}
         {children}
       </View>
     );
@@ -280,6 +304,7 @@ export class SwipableModal extends React.PureComponent {
           animation={'bounceInUp'}
           duration={800}
           pointerEvents={'box-none'}
+          useNativeDriver={true}
         >
           {this._renderInteractable()}
         </Animatable.View>

@@ -1,14 +1,31 @@
 import React, { Fragment } from 'react';
-import { View, LayoutAnimation, ScrollView, ViewPropTypes, Text, TouchableOpacity, AsyncStorage, StyleSheet, FlatList, Dimensions } from 'react-native';
+import { View, LayoutAnimation, ScrollView, ViewPropTypes, Text, TouchableOpacity, AsyncStorage, StyleSheet, FlatList, Dimensions, Clipboard } from 'react-native';
 import PropTypes from 'prop-types';
 
 import { Header } from 'react-navigation';
 import Carousel from 'react-native-snap-carousel';
 
 class Question extends React.PureComponent {
+  static propTypes = {
+    question: PropTypes.object,
+  };
+
+  static defaultProps = {
+    question: 'Aenean eu leo quam. Pellentesque ornare sem lacinia quam venenatis vestibulum.',
+  };
+  
+  static styles = StyleSheet.create({
+    question: {
+      fontSize: 18,
+    }
+  });
+
   render(){
+    const { styles } = Question;
+    const { question } = this.props;
+
     return(
-      null
+      <Text style={styles.question}>{question}</Text>
     );
   };
 };
@@ -19,6 +36,7 @@ class QuestionItem extends React.PureComponent {
       flex: 1,
       backgroundColor: 'white',
       margin: 12,
+      padding: 10,
       borderRadius: 20,
       shadowColor: 'black',
       shadowRadius: 5,
@@ -34,14 +52,12 @@ class QuestionItem extends React.PureComponent {
     super(props);
   };
 
-
-  
   render(){
     const { styles } = QuestionItem;
 
     return(
       <View style={styles.container}>
-
+        <Question/>
       </View>
     );
   };  
@@ -60,6 +76,8 @@ export class CustomQuizList extends React.Component {
 
   constructor(props){
     super(props);
+    Clipboard.setString(JSON.stringify(props.quiz));
+
     this.state = {
       quiz: [{}, {}, {}],
     };
