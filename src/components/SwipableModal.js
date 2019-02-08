@@ -62,10 +62,10 @@ export class ModalBackground extends React.PureComponent {
     }
   });
 
-  static background = Platform.select({
-    ios    : require('../../assets/patternBG.png'),
-    android: require('../../assets/patternBG.jpg'),
-  });
+  static background = require(Platform.select({
+    ios    : '../../assets/patternBG.png',
+    android: '../../assets/patternBG.jpg',
+  }));
 
   _renderIOS(){
     const { styles } = ModalBackground;

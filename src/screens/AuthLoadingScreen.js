@@ -29,48 +29,41 @@ export default class AuthLoadingScreen extends React.Component {
   }
 
   componentDidMount = async () => {
-    try {
-      let delay = ms => new Promise(r => setTimeout(r, ms));
+    let delay = ms => new Promise(r => setTimeout(r, ms));
 
-      //animate in and authenticate
-      const results = await Promise.all([
-        UserStore.getUserData(),
-        this.animatedRoot.fadeIn(250),
-        this.animatedLoading.zoomIn(1250),
-      ]);
+    //animate in and authenticate
+    const results = await Promise.all([
+      UserStore.getUserData(),
+      this.animatedRoot.fadeIn(250),
+      this.animatedLoading.zoomIn(1250),
+    ]);
 
-      //get UserData from promise
-      const userData   = results[0];
-      const isLoggedIn = userData != null;
+    //get UserData from promise
+    const userData   = results[0];
+    const isLoggedIn = userData != null;
 
-      //load modules and tips if logged in
-      if(isLoggedIn){
-        await Promise.all([
-          ModuleStore   .get(),
-          ResourcesStore.get(),
-          TipsStore     .get(),
-          PreboardExamStore   .get(),
-          ModulesLastUpdated  .get(),
-          ResourcesLastUpdated.get(),
-        ])
-      };
-
-      //animate out
+    //load modules and tips if logged in
+    if(isLoggedIn){
       await Promise.all([
-        this.animatedLoading.zoomInTransition(750),
-        this.animatedRoot.fadeOut(500),
-      ]);
+        ModuleStore   .get(),
+        ResourcesStore.get(),
+        TipsStore     .get(),
+        PreboardExamStore   .get(),
+        ModulesLastUpdated  .get(),
+        ResourcesLastUpdated.get(),
+      ])
+    }
 
-      //navigate
-      const { navigation } = this.props;
-      const route = isLoggedIn? ROUTES.AppRoute : ROUTES.AuthRoute;
-      navigation.navigate(route);
+    //animate out
+    await Promise.all([
+      this.animatedLoading.zoomInTransition(750),
+      this.animatedRoot.fadeOut(500),
+    ]);
 
-    } catch(error){
-      await AsyncStorage.clear();
-      const { navigation } = this.props;
-      navigation.navigate(ROUTES.AuthRoute);
-    };
+    //navigate
+    const { navigation } = this.props;
+    const route = isLoggedIn? ROUTES.AppRoute : ROUTES.AuthRoute;
+    navigation.navigate(route);
   };
   
   render(){

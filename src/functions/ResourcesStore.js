@@ -70,7 +70,7 @@ export class ResourcesStore {
       return (data);
 
     } catch(error){
-      console.log('Failed to read resources from store.');
+      console.error('Failed to read resources from store.');
       throw error;
     };
   };
