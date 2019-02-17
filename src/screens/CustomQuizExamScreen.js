@@ -1,8 +1,8 @@
 import React, { Fragment } from 'react';
-import { View, LayoutAnimation, ScrollView, ViewPropTypes, Text, TouchableOpacity, AsyncStorage, StyleSheet, Platform } from 'react-native';
+import { View, LayoutAnimation, ScrollView, ViewPropTypes, Text, TouchableOpacity, AsyncStorage, StyleSheet, Platform , Alert} from 'react-native';
 import PropTypes from 'prop-types';
 
-import { plural } from '../functions/Utils';
+import { plural , timeout} from '../functions/Utils';
 import { SubjectItem } from '../functions/ModuleStore';
 
 import { ViewWithBlurredHeader, Card, AnimatedListItem } from '../components/Views';
@@ -20,6 +20,44 @@ import * as Animatable from 'react-native-animatable';
 import { Divider, Icon } from 'react-native-elements';
 import TimeAgo from 'react-native-timeago';
 
+//custom header left component
+class CancelButton extends React.PureComponent {
+  static styles = StyleSheet.create({
+    container: {
+      flexDirection: 'row',
+      paddingHorizontal: 10,
+      alignItems: 'center',
+    },
+    label: {
+      fontSize: 17,
+      fontWeight: '100',
+      marginLeft: 7,
+      marginBottom: 2,
+      color: 'white',
+    },
+  });
+
+  render(){
+    const { styles } = DoneButton;
+    
+    return(
+      <TouchableOpacity 
+        style={styles.container}
+        onPress={this.onPress}
+      >
+        <Icon
+          name={'ios-close-circle'}
+          type={'ionicon'}
+          color={'white'}
+          size={22}
+        />
+        <Text style={styles.label}>Cancel</Text>
+      </TouchableOpacity>
+    );
+  };
+};
+
+//custom header title
 class HeaderTitle extends React.PureComponent {
   static styles = StyleSheet.create({
     container: {
@@ -87,25 +125,69 @@ class HeaderTitle extends React.PureComponent {
   };
 };
 
-class OptionsButton extends React.PureComponent {
+//custom header right component
+class DoneButton extends React.PureComponent {
+  static styles = StyleSheet.create({
+    container: {
+      flexDirection: 'row',
+      paddingHorizontal: 10,
+      alignItems: 'center',
+    },
+    label: {
+      fontSize: 17,
+      fontWeight: '100',
+      marginLeft: 7,
+      marginBottom: 2,
+      color: 'white',
+    },
+  });
 
+  animate = () => {
+    this._animatable.rubberBand(1250);
+  };
+
+  render(){
+    const { styles } = DoneButton;
+    
+    return(
+      <Animatable.View
+        ref={r => this._animatable = r}
+        useNativeDriver={true}
+      >
+        <TouchableOpacity 
+          style={styles.container}
+          onPress={this._handleOnPress}
+        >
+          <Icon
+            name={'ios-checkmark-circle'}
+            type={'ionicon'}
+            color={'white'}
+            size={22}
+          />
+          <Text style={styles.label}>Done</Text>
+        </TouchableOpacity>
+      </Animatable.View>
+    );
+  };
 };
 
 //access callbacks and references
 let References = {
-  HeaderTitle: null,
+  CancelButton: null,
+  HeaderTitle : null,
+  DoneButton  : null,
 };
 
-const headerTitle = () => <HeaderTitle
-  ref={r => References.HeaderTitle = r}
-/>
+const headerLeft  = <CancelButton ref={r => References.CancelButton = r}/>
+const headerTitle = <HeaderTitle  ref={r => References.HeaderTitle  = r}/>
+const headerRight = <DoneButton   ref={r => References.DoneButton   = r}/>
 
 class CustomQuizExamScreen extends React.Component {
   static navigationOptions = ({ navigation }) => {
     const { state } = navigation;
 
     return ({
-      headerTitle,
+      headerTitle, headerRight, headerLeft,
       headerTitleStyle: STYLES.glow,
       //custom android header
       ...Platform.select({
@@ -119,10 +201,46 @@ class CustomQuizExamScreen extends React.Component {
 
   constructor(props){
     super(props);
+    this.didShowAlert = false;
+  };
+
+  async componentDidMount(){
+    const { navigation } = this.props;
+
+    //get data from previous screen: ExamScreen
+    const quiz = navigation.getParam('quiz' , null);
+    const { questions = [] } = quiz;
+
+    await timeout(100);
+    References.HeaderTitle.setTotal(questions.length);
+    
   };
 
   _handleOnSnapToItem = (index) => {
     References.HeaderTitle.setIndex(index + 1);
+  };
+
+  _onPressAlertCancel = () => {
+    References.DoneButton.animate();
+  };
+
+  _onPressAlertOK = () => {
+
+  };
+
+  _handleOnAnsweredAllQuestions = () => {
+    if(!this.didShowAlert){
+      Alert.alert(
+        "All Questions Answered",
+        "If you're done answering, press 'OK', if not press 'Cancel' (You can press 'Done' on the upper right corner later when you're finished.)",
+        [
+          {text: 'Cancel', onPress: this._onPressAlertCancel, style: 'cancel'},
+          {text: 'OK'    , onPress: this._onPressAlertOK},
+        ],
+        {cancelable: false},
+      );
+      this.didShowAlert = true;
+    };
   };
 
   render(){
@@ -134,9 +252,7 @@ class CustomQuizExamScreen extends React.Component {
       <ViewWithBlurredHeader hasTabBar={false}>
         <CustomQuizList
           onSnapToItem={this._handleOnSnapToItem}
-          onEndReached={this._handleOnEndReached}
-          onListInit  ={this._handleOnListInit  }
-          onNextItem  ={this._handleOnNextItem  } 
+          onAnsweredAllQuestions={this._handleOnAnsweredAllQuestions}
           {...{quiz}}
         />
       </ViewWithBlurredHeader>

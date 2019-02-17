@@ -7,7 +7,7 @@ import { Header } from 'react-navigation';
 import Carousel from 'react-native-snap-carousel';
 import { Icon } from 'react-native-elements';
 
-import { getLetter , shuffleArray} from '../functions/Utils';
+import { getLetter , shuffleArray, setStateAsync, timeout} from '../functions/Utils';
 import { PURPLE } from '../Colors';
 
 class ChoiceItem extends React.PureComponent {
@@ -22,7 +22,7 @@ class ChoiceItem extends React.PureComponent {
 
   static styles = StyleSheet.create({
     container: {
-      minHeight: 37,
+      minHeight: 38,
       paddingVertical : 7,
       paddingHorizontal: 10,
       alignItems: 'center',
@@ -123,6 +123,7 @@ class Choices extends React.PureComponent {
   static propTypes = {
     choices: PropTypes.array,
     answer: PropTypes.string,
+    onPressChoice: PropTypes.func,
   };
 
   static styles =  StyleSheet.create({
@@ -151,7 +152,16 @@ class Choices extends React.PureComponent {
   };
 
   _handleOnPressChoice = ({choice, answer, isCorrect}) => {
+    const { onPressChoice } = this.props;
+
+    //store prev selected and update selected
+    const prevSelected = this.state.selected;
     this.setState({selected: choice});
+
+    //pass params to callback prop
+    onPressChoice && onPressChoice({
+      prevSelected, choice, answer, isCorrect
+    });
   };
 
   _renderChoices(){
@@ -194,6 +204,9 @@ class Question extends React.PureComponent {
   };
   
   static styles = StyleSheet.create({
+    scrollview: {
+      marginBottom: 10,
+    },
     question: {
       flex: 1,
       fontSize: 18,
@@ -209,10 +222,15 @@ class Question extends React.PureComponent {
     const { question, index } = this.props;
 
     return(
-      <Text style={styles.question}>
-        <Text style={styles.number}>{index + 1}. </Text>
-        {question}
-      </Text>
+      <ScrollView 
+        style={styles.scrollview}
+        alwaysBounceVertical={false}
+      >
+        <Text style={styles.question}>
+          <Text style={styles.number}>{index + 1}. </Text>
+          {question}
+        </Text>
+      </ScrollView>
     );
   };
 };
@@ -222,6 +240,7 @@ class QuestionItem extends React.PureComponent {
     question: PropTypes.object,
     isLast: PropTypes.bool,
     index: PropTypes.number,
+    onPressChoice: PropTypes.func,
   };
 
   static styles = StyleSheet.create({
@@ -245,14 +264,24 @@ class QuestionItem extends React.PureComponent {
     super(props);
   };
 
+  _handleOnPressChoice = (choicesProps = {prevSelected, choice, answer, isCorrect}) => {
+    const { onPressChoice, ...questionItemProps } = this.props;
+
+    //pass props to callback
+    onPressChoice && onPressChoice({...choicesProps, ...questionItemProps});
+  };
+
   render(){
     const { styles } = QuestionItem;
-    const {index, question: {question, choices, answer}} = this.props;
+    const {index, question: {question = "?", choices, answer}} = this.props;
 
     return(
       <View style={styles.container}>
         <Question {...{question, index }}/>
-        <Choices  {...{choices , answer}}/>
+        <Choices
+          onPressChoice={this._handleOnPressChoice}
+          {...{choices, answer}}
+        />
       </View>
     );
   };  
@@ -261,6 +290,7 @@ class QuestionItem extends React.PureComponent {
 export class CustomQuizList extends React.Component {
   static propTypes = {
     quiz: PropTypes.object,
+    onAnsweredAllQuestions: PropTypes.func,
   };
 
   static styles = StyleSheet.create({
@@ -274,21 +304,67 @@ export class CustomQuizList extends React.Component {
 
     //extract questions and assign default value
     const {quiz: {questions = []}} = props;
+    this.questions = [...questions];
 
     this.state = {
-      questions: [...questions],
+      questionList: [this.questions.pop()],
     };
+
+    //store user answers
+    this.answers = [];
+  };
+
+  async addQuestionToList(){
+    const { questionList } = this.state;
+
+    const nextQuestion = this.questions.pop();
+    const newQuestionList = [...questionList, nextQuestion];
+
+    await setStateAsync(this, {questionList: newQuestionList});
+  };
+
+  addAnswer({question, userAnswer, isCorrect}){
+    const new_answer = {
+      //id used for comparison 
+      answerID: `${question.indexID_module}-${question.indexID_subject}-${question.indexID_question}`,
+      //append params
+      question, userAnswer, isCorrect
+    };
+
+    //to avoid duplicates, filter out new answer from answers
+    const filtered = this.answers.filter(item => 
+      item.answerID != new_answer.answerID
+    );
+
+    //update answers
+    this.answers = [...filtered, new_answer];
+  };
+
+  _handleOnQuestionPressChoice = async ({prevSelected, choice, answer, isCorrect, question, isLast, index}) => {
+    const { onAnsweredAllQuestions } = this.props;
+
+    if(isLast){
+      onAnsweredAllQuestions && onAnsweredAllQuestions();
+
+    } else if(prevSelected == null){
+      await Promise.all([
+        this.addQuestionToList(),
+        timeout(400)
+      ]);
+      this._carousel.snapToNext();
+    };
+
+    this.addAnswer({question, userAnswer: choice, isCorrect});
   };
 
   _renderItem = ({item, index}) => {
-    const isLast = false;
+    const {quiz: {questions = []}} = this.props;
+    const isLast = (index == questions.length - 1);
     
     return (
       <QuestionItem
         question={item}
-        onPressNextQuestion={this._onPressNextQuestion}
-        onEndReached={this.props.onEndReached}
-        onAnswerSelected={this._onAnswerSelected}
+        onPressChoice={this._handleOnQuestionPressChoice}
         {...{isLast, index}}
       />
     );
@@ -333,7 +409,7 @@ export class CustomQuizList extends React.Component {
       <View style={styles.container}>
         <Carousel
           ref={r => this._carousel = r }
-          data={this.state.questions}
+          data={this.state.questionList}
           renderItem={this._renderItem}
           //onSnapToItem={this._handleOnSnapToItem}
           //scrollview props
