@@ -16,7 +16,7 @@ import { Divider } from 'react-native-elements';
 
 
 class ModulesHeader extends React.PureComponent {
-  static PropTypes = {
+  static propTypes = {
     modules: PropTypes.array,
     lastUpdated: PropTypes.number,
   };

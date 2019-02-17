@@ -298,7 +298,7 @@ export class CreateCustomQuizList extends React.PureComponent {
 };
 
 class CustomQuizItem extends React.PureComponent {
-  static PropTypes = {
+  static propTypes = {
     quiz: PropTypes.object,
     onPressQuiz: PropTypes.func,
   }; 
@@ -361,7 +361,7 @@ class CustomQuizItem extends React.PureComponent {
 };
 
 export class CustomQuizList extends React.PureComponent {
-  static PropTypes = {
+  static propTypes = {
     quizes: PropTypes.array,
   };
 

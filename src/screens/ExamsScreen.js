@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, ScrollView, StyleSheet, Text, TouchableOpacity, AsyncStorage } from 'react-native';
+import { View, ScrollView, StyleSheet, Text, Platform, TouchableOpacity, AsyncStorage } from 'react-native';
 import PropTypes from 'prop-types';
 
 import { ROUTES, HEADER_HEIGHT , STYLES} from '../Constants';
@@ -20,7 +20,7 @@ import { Divider } from 'react-native-elements';
 
 // shown when no exams have been created yet
 class ExamHeader extends React.PureComponent {
-  static PropTypes = {
+  static propTypes = {
     onPress: PropTypes.func,
   };
 

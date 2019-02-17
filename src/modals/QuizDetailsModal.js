@@ -582,6 +582,9 @@ class ModalContents extends React.PureComponent {
       <View style={styles.body}>
         <Animatable.View
           ref={r => this.formTitleContainer = r}
+          animation={'fadeInUp'}
+          duration={300}
+          delay={200}
           useNativeDriver={true}
         >
           <FormTitle 
@@ -591,6 +594,9 @@ class ModalContents extends React.PureComponent {
         </Animatable.View>
         <Animatable.View
           ref={r => this.formDescriptionContainer = r}
+          animation={'fadeInUp'}
+          duration={300}
+          delay={300}
           useNativeDriver={true}
         >
           <FormDescription 

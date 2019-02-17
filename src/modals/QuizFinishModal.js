@@ -2,7 +2,7 @@ import React, { Fragment } from 'react';
 import { StyleSheet, View, Text, TouchableOpacity, Platform, SectionList, Animated, TextInput, TouchableWithoutFeedback, Keyboard, Alert } from 'react-native';
 import PropTypes from 'prop-types';
 
-import { STYLES } from '../Constants';
+import { STYLES , ROUTES} from '../Constants';
 import { PURPLE } from '../Colors';
 
 import { plural , setStateAsync, timeout, isEmpty } from '../functions/Utils';
@@ -16,6 +16,7 @@ import { BlurView, LinearGradient, DangerZone } from 'expo';
 import { Icon, Divider } from 'react-native-elements';
 import * as Animatable from 'react-native-animatable';
 import {  } from 'react-native-paper';
+import NavigationService from '../NavigationService';
 
 const { Lottie } = DangerZone;
 
@@ -404,6 +405,8 @@ export class QuizFinishModal extends React.PureComponent {
     const customQuiz = CreateCustomQuiz.createQuiz({title, description, selected});
     let t = [customQuiz.quiz];
     await CustomQuizStore.set(t);
+
+    NavigationService.navigateApp(ROUTES.CustomQuizExamScreen);
   };
 
   _handleOnPressCancel = () => {

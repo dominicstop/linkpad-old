@@ -1,5 +1,5 @@
 import React, { Fragment } from 'react';
-import { Text, View, ViewPropTypes, Platform, StyleSheet, StatusBar } from 'react-native';
+import { Text, View, ViewPropTypes, Platform, StyleSheet } from 'react-native';
 import PropTypes from 'prop-types';
 
 import { STYLES } from '../Constants';

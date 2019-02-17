@@ -1,5 +1,5 @@
 import React, { Fragment } from 'react';
-import { View, LayoutAnimation, ScrollView, ViewPropTypes, Text, TouchableOpacity, AsyncStorage, StyleSheet, FlatList } from 'react-native';
+import { View, LayoutAnimation, ScrollView, ViewPropTypes, Text, TouchableOpacity, AsyncStorage, StyleSheet, Platform } from 'react-native';
 import PropTypes from 'prop-types';
 
 import { plural } from '../functions/Utils';
@@ -85,6 +85,10 @@ class HeaderTitle extends React.PureComponent {
       </Animatable.View>
     );
   };
+};
+
+class OptionsButton extends React.PureComponent {
+
 };
 
 //access callbacks and references

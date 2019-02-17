@@ -119,7 +119,7 @@ class TitleDescription extends React.PureComponent {
 };
 
 class TitleDescriptionCard extends React.PureComponent {
-  static PropTypes = {
+  static propTypes = {
     title: PropTypes.string,
     description: PropTypes.string,
     onPressEditDetails: PropTypes.func,
@@ -241,7 +241,7 @@ class TitleDescriptionCard extends React.PureComponent {
 };
 
 class AddSubjectsCard extends React.PureComponent {
-  static PropTypes = {
+  static propTypes = {
     onPressAddSubject: PropTypes.func,
   };
 
