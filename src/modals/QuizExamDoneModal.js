@@ -28,6 +28,19 @@ const Screen = {
   height: Dimensions.get('window').height,
 };
 
+class ModalSectionItemQuestion extends React.PureComponent {
+  static propTypes = {
+    answerID: PropTypes.string,
+    question: PropTypes.object,
+    userAnswer: PropTypes.string,
+    isCorrect: PropTypes.bool,
+  };
+
+  render(){
+    return null;
+  };
+};
+
 class ModalSectionItemDetails extends React.PureComponent {
   static propTypes = {
     quiz: PropTypes.object,
@@ -39,7 +52,7 @@ class ModalSectionItemDetails extends React.PureComponent {
       paddingVertical: 10,
       ...Platform.select({
         ios: {
-          backgroundColor: 'rgba(255, 255, 255, 0.4)',
+          backgroundColor: 'rgba(245, 245, 245, 0.5)',
         }
       }),
     },
@@ -55,7 +68,7 @@ class ModalSectionItemDetails extends React.PureComponent {
     },
     date: {
       fontSize: 17,
-      color: PURPLE[900],
+      color: 'black',
       fontWeight: '300',
     },
     dateLabel: {
@@ -67,10 +80,10 @@ class ModalSectionItemDetails extends React.PureComponent {
     },
     description: {
       fontSize: 20,
-      fontWeight: '200'
+      fontWeight: '300'
     },
     descriptionLabel: {
-      fontWeight: '300'      
+      fontWeight: '400'      
     }
   });
 
@@ -354,7 +367,7 @@ class ModalContents extends React.PureComponent {
       sections: [
         {type: SECTION_TYPES.DETAILS  , data: [{quiz}]},
         {type: SECTION_TYPES.STATS    , data: [{}]},
-        {type: SECTION_TYPES.QUESTIONS, data: [{questions, questionList, answers, currentIndex}]},
+        {type: SECTION_TYPES.QUESTIONS, data: [...answers]},
       ],
     };
   };
@@ -438,13 +451,14 @@ class ModalContents extends React.PureComponent {
 
   _renderItem = ({item, index, section: {type}}) => {
     const { SECTION_TYPES } = ModalContents;
+    const { currentIndex } = this.props;
     
     switch (type) {
       case SECTION_TYPES.DETAILS: return(
         <ModalSectionItemDetails {...item}/>
       );
       case SECTION_TYPES.QUESTIONS: return(
-        <Text>Questions</Text>
+        <ModalSectionItemQuestion {...item}/>
       );
       default: return null;
     }
@@ -525,7 +539,7 @@ export class QuizExamDoneModal extends React.PureComponent {
   };
 
   openModal = async ({currentIndex, questionList, answers, questions, quiz}) => {
-    //Clipboard.setString(JSON.stringify(quiz));
+    //Clipboard.setString(JSON.stringify(answers));
 
     this.setState({mountContent: true, currentIndex, questionList, answers, questions, quiz});
     this._modal.showModal();

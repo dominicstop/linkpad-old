@@ -299,6 +299,7 @@ export class CustomQuizList extends React.Component {
   static propTypes = {
     quiz: PropTypes.object,
     onAnsweredAllQuestions: PropTypes.func,
+    onNewAnswerSelected: PropTypes.func,
   };
 
   static styles = StyleSheet.create({
@@ -366,12 +367,13 @@ export class CustomQuizList extends React.Component {
   };
 
   _handleOnQuestionPressChoice = async ({prevSelected, choice, answer, isCorrect, question, isLast, index}) => {
-    const { onAnsweredAllQuestions } = this.props;
+    const { onAnsweredAllQuestions, onNewAnswerSelected} = this.props;
 
     if(isLast){
       onAnsweredAllQuestions && onAnsweredAllQuestions();
 
     } else if(prevSelected == null){
+      onNewAnswerSelected && onNewAnswerSelected();
       await Promise.all([
         this.addQuestionToList(),
         timeout(400)

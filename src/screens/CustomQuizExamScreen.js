@@ -257,6 +257,23 @@ class CustomQuizExamScreen extends React.Component {
     this.quizExamDoneModal = getRefQuizExamDoneModal();
   };
 
+  openDoneModal = () => {
+    //get data from previous screen: ExamScreen
+    const { navigation } = this.props;
+    const quiz = navigation.getParam('quiz' , null);
+
+    //get current state of customQuizList
+    const customQuizListState = {
+      currentIndex: this._carousel.currentIndex,
+      questionList: this.customQuizList.getQuestionList(),
+      answers     : this.customQuizList.getAnswers(),
+      questions   : this.customQuizList.getQuestions(),
+    };
+
+    //open modal and pass current state of quizlist
+    this.quizExamDoneModal.openModal({quiz, ...customQuizListState});
+  };
+
   _onPressCancelAlertOK = () => {
     const { navigation } = this.props;
     navigation.navigate(ROUTES.HomeRoute);
@@ -275,20 +292,7 @@ class CustomQuizExamScreen extends React.Component {
   };
 
   _handleOnPressHeaderDone = () => {
-    //get data from previous screen: ExamScreen
-    const { navigation } = this.props;
-    const quiz = navigation.getParam('quiz' , null);
-
-    //get current state of customQuizList
-    const customQuizListState = {
-      currentIndex: this._carousel.currentIndex,
-      questionList: this.customQuizList.getQuestionList(),
-      answers     : this.customQuizList.getAnswers(),
-      questions   : this.customQuizList.getQuestions(),
-    };
-
-    //open modal and pass current state of quizlist
-    this.quizExamDoneModal.openModal({quiz, ...customQuizListState});
+    this.openDoneModal();
   };
 
   _handleOnSnapToItem = (index) => {
@@ -299,8 +303,8 @@ class CustomQuizExamScreen extends React.Component {
     References.DoneButton.animate();
   };
 
-  _onPressAlertOK = () => {
-    
+  _onPressFinishAlertOK = () => {
+    this.openDoneModal();    
   };
 
   _handleOnAnsweredAllQuestions = () => {
@@ -318,6 +322,10 @@ class CustomQuizExamScreen extends React.Component {
     };
   };
 
+  _handleOnNewAnswerSelected = () => {
+    this._listContainer.pulse(750);
+  };
+
   render(){
     const { styles } = CustomQuizExamScreen;
     const { navigation } = this.props;
@@ -328,6 +336,7 @@ class CustomQuizExamScreen extends React.Component {
     return (
       <ViewWithBlurredHeader hasTabBar={false}>
         <Animatable.View
+          ref={r => this._listContainer = r}
           style={styles.container}
           animation={'fadeInUp'}
           duration={500}
@@ -338,6 +347,7 @@ class CustomQuizExamScreen extends React.Component {
             ref={r => this.customQuizList = r}
             onSnapToItem={this._handleOnSnapToItem}
             onAnsweredAllQuestions={this._handleOnAnsweredAllQuestions}
+            onNewAnswerSelected={this._handleOnNewAnswerSelected}
             {...{quiz}}
           />
         </Animatable.View>
