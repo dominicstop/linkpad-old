@@ -8,9 +8,9 @@ import './src/Global';
 import Constants from './src/Constants';
 import { ROUTES } from './src/Constants';
 
-import { DrawerStackContainer       } from './src/screens/Drawer';
-import { PracticeExamStackContainer } from './src/screens/PracticeExamScreen';
-import { CustomQuizExamStack        } from './src/screens/CustomQuizExamScreen';
+import { DrawerStackContainer         } from './src/screens/Drawer';
+import { PracticeExamStackContainer   } from './src/screens/PracticeExamScreen';
+import { CustomQuizExamStackContainer } from './src/screens/CustomQuizExamScreen';
 
 import AuthLoadingScreen from './src/screens/AuthLoadingScreen';
 import AuthScreen        from './src/screens/AuthScreen';
@@ -23,7 +23,7 @@ useScreens();
 const AppStack = createStackNavigator({
     [ROUTES.HomeRoute           ]: DrawerStackContainer,
     [ROUTES.PracticeExamRoute   ]: PracticeExamStackContainer,
-    [ROUTES.CustomQuizExamScreen]: CustomQuizExamStack,
+    [ROUTES.CustomQuizExamScreen]: CustomQuizExamStackContainer,
   },{
     headerMode: 'hidden',
     initialRouteName: 'HomeRoute',

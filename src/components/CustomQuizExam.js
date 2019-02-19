@@ -2,12 +2,15 @@ import React, { Fragment } from 'react';
 import { View, LayoutAnimation, ScrollView, ViewPropTypes, Text, TouchableOpacity, AsyncStorage, StyleSheet, FlatList, Dimensions, Clipboard, Platform, StatusBar } from 'react-native';
 import PropTypes from 'prop-types';
 
+import _ from 'lodash';
 import * as Animatable from 'react-native-animatable';
-import { Header } from 'react-navigation';
 import Carousel from 'react-native-snap-carousel';
+
+import { LinearGradient } from 'expo';
+import { Header } from 'react-navigation';
 import { Icon } from 'react-native-elements';
 
-import { getLetter , shuffleArray, setStateAsync, timeout} from '../functions/Utils';
+import { getLetter , shuffleArray, setStateAsync, timeout, hexToRgbA} from '../functions/Utils';
 import { PURPLE } from '../Colors';
 
 class ChoiceItem extends React.PureComponent {
@@ -51,7 +54,7 @@ class ChoiceItem extends React.PureComponent {
     PURPLE[1000],
     PURPLE[1100],
     PURPLE[1200],
-  ];
+  ].map(color => hexToRgbA(color, 0.75));
 
   _handleOnPress = () => {
     const { onPressChoice, choice, answer, selected } = this.props;
@@ -186,9 +189,14 @@ class Choices extends React.PureComponent {
     const { styles } = Choices;
 
     return(
-      <View style={styles.container}>
+      <LinearGradient 
+        style={styles.container}
+        start={{x: 0.0, y: 0.25}} 
+        end  ={{x: 0.5, y: 1.00}}
+        colors={[PURPLE[500], PURPLE[1000]]}
+      >
         {this._renderChoices()}
-      </View>
+      </LinearGradient>
     );
   };
 };
@@ -321,6 +329,23 @@ export class CustomQuizList extends React.Component {
     const newQuestionList = [...questionList, nextQuestion];
 
     await setStateAsync(this, {questionList: newQuestionList});
+  };
+
+  getQuestions = () =>  {
+    return JSON.parse(JSON.stringify(this.questions));
+  };
+
+  getAnswers = () => {
+    return JSON.parse(JSON.stringify(this.answers));
+  };
+
+  getQuestionList = () => {
+    const { questionList } = this.state;
+    return questionList;
+  };
+
+  getCarouselRef = () => {
+    return this._carousel;
   };
 
   addAnswer({question, userAnswer, isCorrect}){

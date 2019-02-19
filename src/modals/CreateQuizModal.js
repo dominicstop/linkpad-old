@@ -5,7 +5,7 @@ import PropTypes from 'prop-types';
 import { STYLES } from '../Constants';
 import { PURPLE } from '../Colors';
 
-import { plural , setStateAsync, timeout } from '../functions/Utils';
+import { plural , setStateAsync, timeout , isEmpty} from '../functions/Utils';
 import { SubjectItem, ModuleItemModel, ModuleStore } from '../functions/ModuleStore';
 
 import { MODAL_DISTANCE_FROM_TOP, MODAL_EXTRA_HEIGHT, SwipableModal, ModalBackground, ModalTopIndicator } from '../components/SwipableModal';
@@ -114,11 +114,13 @@ class ModalSectionHeader extends React.PureComponent {
     //deconstruct module properties
     const { modulename, description, lastupdated } = moduleModel.get();
     const subjectCount = moduleModel.getLenghtSubjects();
+    
+    const moduleDescription = isEmpty(description)? 'No Description' : description;
 
     return(
       <Fragment>
         <Text numberOfLines={1} style={styles.headerTitle}>{modulename}</Text>
-        <Text numberOfLines={2} style={styles.headerSubtitle}>{description}</Text>
+        <Text numberOfLines={2} style={styles.headerSubtitle}>{moduleDescription}</Text>
       </Fragment>
     );
   };
@@ -162,10 +164,6 @@ class ModalSectionItem extends React.PureComponent {
     subjectData: PropTypes.object,
     onPressItem: PropTypes.func,
     isSelected : PropTypes.bool,
-  };
-
-  defaultProps = {
-    isSelected: true,
   };
 
   static styles = StyleSheet.create({

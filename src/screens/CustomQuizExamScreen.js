@@ -10,7 +10,6 @@ import { PlatformTouchableIconButton } from '../components/Buttons';
 import { AndroidHeader, AndroidBackButton} from '../components/AndroidHeader';
 import { CustomQuizList } from '../components/CustomQuizExam';
 
-
 import Constants from '../Constants'
 import { ROUTES, STYLES } from '../Constants';
 import { PURPLE, RED } from '../Colors';
@@ -19,6 +18,7 @@ import { createStackNavigator } from 'react-navigation';
 import * as Animatable from 'react-native-animatable';
 import { Divider, Icon } from 'react-native-elements';
 import TimeAgo from 'react-native-timeago';
+import {QuizExamDoneModal} from '../modals/QuizExamDoneModal';
 
 //custom header left component
 class CancelButton extends React.PureComponent {
@@ -37,13 +37,23 @@ class CancelButton extends React.PureComponent {
     },
   });
 
+  constructor(props){
+    super(props);
+    //assignable callback
+    this.onPress = null;
+  };
+
+  _handleOnPress = () => {
+    this.onPress && this.onPress();
+  };
+
   render(){
     const { styles } = DoneButton;
     
     return(
       <TouchableOpacity 
         style={styles.container}
-        onPress={this.onPress}
+        onPress={this._handleOnPress}
       >
         <Icon
           name={'ios-close-circle'}
@@ -142,6 +152,16 @@ class DoneButton extends React.PureComponent {
     },
   });
 
+  constructor(props){
+    super(props);
+    //assignable callback
+    this.onPress = null;
+  };
+
+  _handleOnPress = () => {
+    this.onPress && this.onPress();
+  };
+
   animate = () => {
     this._animatable.rubberBand(1250);
   };
@@ -178,6 +198,7 @@ let References = {
   DoneButton  : null,
 };
 
+//header components
 const headerLeft  = <CancelButton ref={r => References.CancelButton = r}/>
 const headerTitle = <HeaderTitle  ref={r => References.HeaderTitle  = r}/>
 const headerRight = <DoneButton   ref={r => References.DoneButton   = r}/>
@@ -199,9 +220,18 @@ class CustomQuizExamScreen extends React.Component {
     });
   };
 
+  static styles = StyleSheet.create({
+    container: {
+      flex: 1,
+    },
+  });
+
   constructor(props){
     super(props);
     this.didShowAlert = false;
+
+    this.quizExamDoneModal = null;
+    this._carousel = null;
   };
 
   async componentDidMount(){
@@ -210,22 +240,67 @@ class CustomQuizExamScreen extends React.Component {
     //get data from previous screen: ExamScreen
     const quiz = navigation.getParam('quiz' , null);
     const { questions = [] } = quiz;
+    
+    //assign carousel ref
+    this._carousel = this.customQuizList.getCarouselRef();
 
     await timeout(100);
+    //set header title total
     References.HeaderTitle.setTotal(questions.length);
-    
+
+    //assign callbacks to header buttons
+    References.CancelButton.onPress = this._handleOnPressHeaderCancel;
+    References.DoneButton  .onPress = this._handleOnPressHeaderDone;
+
+    //get ref from screenprops
+    const { getRefQuizExamDoneModal } = this.props.screenProps;
+    this.quizExamDoneModal = getRefQuizExamDoneModal();
+  };
+
+  _onPressCancelAlertOK = () => {
+    const { navigation } = this.props;
+    navigation.navigate(ROUTES.HomeRoute);
+  };
+
+  _handleOnPressHeaderCancel = () => {
+    Alert.alert(
+      "Cancel Custom Quiz",
+      "Are you sure you want to cancel? All of your progress will be lost.",
+      [
+        {text: 'Cancel', style: 'cancel'},
+        {text: 'OK'    , onPress: this._onPressCancelAlertOK},
+      ],
+      {cancelable: false},
+    );
+  };
+
+  _handleOnPressHeaderDone = () => {
+    //get data from previous screen: ExamScreen
+    const { navigation } = this.props;
+    const quiz = navigation.getParam('quiz' , null);
+
+    //get current state of customQuizList
+    const customQuizListState = {
+      currentIndex: this._carousel.currentIndex,
+      questionList: this.customQuizList.getQuestionList(),
+      answers     : this.customQuizList.getAnswers(),
+      questions   : this.customQuizList.getQuestions(),
+    };
+
+    //open modal and pass current state of quizlist
+    this.quizExamDoneModal.openModal({quiz, ...customQuizListState});
   };
 
   _handleOnSnapToItem = (index) => {
     References.HeaderTitle.setIndex(index + 1);
   };
 
-  _onPressAlertCancel = () => {
+  _onPressFinishAlertCancel = () => {
     References.DoneButton.animate();
   };
 
   _onPressAlertOK = () => {
-
+    
   };
 
   _handleOnAnsweredAllQuestions = () => {
@@ -234,8 +309,8 @@ class CustomQuizExamScreen extends React.Component {
         "All Questions Answered",
         "If you're done answering, press 'OK', if not press 'Cancel' (You can press 'Done' on the upper right corner later when you're finished.)",
         [
-          {text: 'Cancel', onPress: this._onPressAlertCancel, style: 'cancel'},
-          {text: 'OK'    , onPress: this._onPressAlertOK},
+          {text: 'Cancel', onPress: this._onPressFinishAlertCancel, style: 'cancel'},
+          {text: 'OK'    , onPress: this._onPressFinishAlertOK},
         ],
         {cancelable: false},
       );
@@ -244,23 +319,34 @@ class CustomQuizExamScreen extends React.Component {
   };
 
   render(){
+    const { styles } = CustomQuizExamScreen;
     const { navigation } = this.props;
+    
     //get data from previous screen: ExamScreen
     const quiz = navigation.getParam('quiz' , null);
     
     return (
       <ViewWithBlurredHeader hasTabBar={false}>
-        <CustomQuizList
-          onSnapToItem={this._handleOnSnapToItem}
-          onAnsweredAllQuestions={this._handleOnAnsweredAllQuestions}
-          {...{quiz}}
-        />
+        <Animatable.View
+          style={styles.container}
+          animation={'fadeInUp'}
+          duration={500}
+          delay={300}
+          useNativeDriver={true}
+        >
+          <CustomQuizList
+            ref={r => this.customQuizList = r}
+            onSnapToItem={this._handleOnSnapToItem}
+            onAnsweredAllQuestions={this._handleOnAnsweredAllQuestions}
+            {...{quiz}}
+          />
+        </Animatable.View>
       </ViewWithBlurredHeader>
     );
   };
 };
 
-export const CustomQuizExamStack = createStackNavigator({
+const CustomQuizExamStack = createStackNavigator({
   CustomQuizExamRoute: {
       screen: CustomQuizExamScreen,
     },
@@ -274,3 +360,48 @@ export const CustomQuizExamStack = createStackNavigator({
     },
   }
 );
+
+//container for the stacknav: CustomQuizExamStack
+export class CustomQuizExamStackContainer extends React.PureComponent {
+  static router = CustomQuizExamStack.router;
+
+  static styles = StyleSheet.create({
+    rootContainer: {
+      flex: 1, 
+      height: '100%', 
+      width: '100%', 
+      backgroundColor: 'rgb(233, 232, 239)'
+    },
+  });
+
+  _renderContents(){
+    return(
+      <CustomQuizExamStack
+        navigation={this.props.navigation}
+        screenProps={{
+          ...this.props.screenProps,
+          getRefQuizExamDoneModal: () => this.quizExamDoneModal,
+        }}
+      />
+    );
+  };
+
+  _renderModals(){
+    return(
+      <Fragment>
+        <QuizExamDoneModal ref={r => this.quizExamDoneModal = r}/>
+      </Fragment>
+    );
+  };
+
+  render(){
+    const { styles } = CustomQuizExamStackContainer;
+
+    return (
+      <View style={styles.rootContainer}>
+        {this._renderContents()}
+        {this._renderModals  ()}
+      </View>
+    );
+  }
+};

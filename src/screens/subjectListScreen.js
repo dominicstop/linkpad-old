@@ -20,7 +20,7 @@ import {plural} from '../functions/Utils';
 const SubjectListHeader = (props) => <CustomHeader {...props}/>
 
 class SubjectHeader extends React.PureComponent {
-  static PropTypes = {
+  static propTypes = {
     moduleData: PropTypes.object,
   };
 

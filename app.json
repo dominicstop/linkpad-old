@@ -18,7 +18,9 @@
       "fallbackToCacheTimeout": 0
     },
     "assetBundlePatterns": [
-      "**/*"
+      "**/*",
+      "assets/*",
+      "assets/icons/*"
     ],
     "ios": {
       "bundleIdentifier": "com.yourcompany.yourappname"

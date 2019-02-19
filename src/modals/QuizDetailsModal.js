@@ -458,7 +458,7 @@ class FormDescription extends React.PureComponent {
 };
 
 class ModalContents extends React.PureComponent {
-  static PropTypes = {
+  static propTypes = {
     title: PropTypes.string,
     description: PropTypes.string,
     onPressSaveChanges: PropTypes.func,
@@ -622,7 +622,6 @@ class ModalContents extends React.PureComponent {
         animation={'fadeInUp'}
         duration={300}
         delay={300}
-        easing={'easeIn'}
         useNativeDriver={true}
       >
         <TouchableOpacity onPress={this._handleOnPress}>
