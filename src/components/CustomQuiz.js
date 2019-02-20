@@ -24,7 +24,7 @@ Animatable.initializeRegistryWithDefinitions({
 });
 
 class QuizItem extends React.PureComponent {
-  static PropTypes = {
+  static propTypes = {
     subjectData  : PropTypes.object,  
     onPressDelete: PropTypes.func,
   };

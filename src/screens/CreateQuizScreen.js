@@ -428,6 +428,7 @@ export class CreateQuizScreen extends React.Component {
       title: '',
       description: '',
       selected: [],
+      selectedModules: [],
     };
 
     //get ref from screenprops
@@ -447,7 +448,7 @@ export class CreateQuizScreen extends React.Component {
   };
 
   _handleOnPressNext = () => {
-    const {selected, title, description} = this.state;
+    const {selected, selectedModules, title, description} = this.state;
 
     const isValid = (isEmpty(title) || isEmpty(description));
 
@@ -462,7 +463,9 @@ export class CreateQuizScreen extends React.Component {
         "Press 'Edit Deatils' to add a title and description.",
       );
     } else {
-      this.finishModal.openModal({selected, title, description});
+      this.finishModal.openModal({
+        selected, selectedModules, title, description
+      });
     };
   };
 
@@ -482,24 +485,24 @@ export class CreateQuizScreen extends React.Component {
       //assign callback to modal
       this.quizModal.onPressAddSubject = this._handleModalOnPressAddSubject;
 
-      const {selected } = this.state;
+      const {selected, selectedModules} = this.state;
       //show modal
-      this.quizModal.openModal(selected);
+      this.quizModal.openModal({selected, selectedModules});
     };
   };
 
   //callback from createquiz modal
-  _handleModalOnPressAddSubject = async (selected) => {
+  _handleModalOnPressAddSubject = async ({selected, selectedModules}) => {
     const prevCount = this.state.selected.length;
     const nextCount = selected.length;
 
     if(prevCount > nextCount){
       await this.listContainer.fadeOut(300);
-      this.setState({selected});
+      this.setState({selected, selectedModules});
       await this.listContainer.fadeInUp(300);
 
     } else {
-      this.setState({selected});
+      this.setState({selected, selectedModules});
     };
   };
 

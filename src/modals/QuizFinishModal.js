@@ -1,5 +1,5 @@
 import React, { Fragment } from 'react';
-import { StyleSheet, View, Text, TouchableOpacity, Platform, SectionList, Animated, TextInput, TouchableWithoutFeedback, Keyboard, Alert } from 'react-native';
+import { StyleSheet, View, Text, TouchableOpacity, Platform, SectionList, Animated, TextInput, TouchableWithoutFeedback, Keyboard, Alert, Dimensions } from 'react-native';
 import PropTypes from 'prop-types';
 
 import { STYLES , ROUTES} from '../Constants';
@@ -19,6 +19,11 @@ import {  } from 'react-native-paper';
 import NavigationService from '../NavigationService';
 
 const { Lottie } = DangerZone;
+
+const Screen = {
+  width : Dimensions.get('window').width ,
+  height: Dimensions.get('window').height,
+};
 
 class CheckAnimation extends React.PureComponent {
   constructor(props){
@@ -64,10 +69,11 @@ class CheckAnimation extends React.PureComponent {
 };
 
 class QuizCard extends React.PureComponent {
-  static PropTypes = {
+  static propTypes = {
     title: PropTypes.string,
     description: PropTypes.string,
     selected: PropTypes.array,
+    selectedModules: PropTypes.array,
   };
 
   static styles = StyleSheet.create({
@@ -79,16 +85,58 @@ class QuizCard extends React.PureComponent {
     },
     textLabel: {
       fontWeight: '600', 
-      fontSize: 16,
+      fontSize: 17,
       marginBottom: 3,
     },
     textLabelValue: {
       fontWeight: '200',
-    }
+    },
+    detailTitle: {
+      color: '#0c0c0c',
+      fontSize: 17,
+      ...Platform.select({
+        ios: {
+          fontWeight: '500'
+        },
+        android: {
+          fontWeight: '900'
+        }
+      }),
+    },
+    detailSubtitle: Platform.select({
+      ios: {
+        fontSize: 22,
+        fontWeight: '200',
+        color: '#161616',
+      },
+      android: {
+        fontSize: 22,
+        fontWeight: '100',
+        color: '#424242'
+      },
+    }),
   });
 
   constructor(props){
     super(props);
+
+    const { selected, selectedModules } = props;
+
+    let questionCount = 0;
+    selected.forEach((subject) => {
+      const { questions = [] } = subject;
+      questionCount += questions.length;
+    });
+
+    console.log(questionCount);
+
+
+    this.state = {
+      subjectCount: selected.length,
+      moduleCount: selectedModules.length,
+      questionCount, 
+    };
+
     this.imageCard = require('../../assets/icons/notes-pencil.png');
   };
 
@@ -116,32 +164,27 @@ class QuizCard extends React.PureComponent {
 
   _renderDetails(){
     const { styles } = QuizCard;
-
-    const labelSubjects = (global.usePlaceholder
-      ? 'Ultricies Nibh: '
-      : 'Total Subjects: '
-    );
-
-    const labelQuestions = (global.usePlaceholder
-      ? 'Quam Vehicula Amet: '
-      : 'Question per Subject: '
-    );
+    const { subjectCount, moduleCount, questionCount } = this.state;
 
     return(
-      <Fragment>
-        <Text style={styles.textLabel} numberOfLines={1}>
-          {labelSubjects}
-          <Text style={styles.textLabelValue}>
-            {'16 Subjects'}
-          </Text>
-        </Text>
-        <Text style={styles.textLabel} numberOfLines={4}>
-          {labelQuestions}
-          <Text style={styles.textLabelValue}>
-            {'12 Questions'}
-          </Text>
-        </Text>
-      </Fragment>
+      <View>
+        <View style={{flexDirection: 'row'}}>
+          <View style={{flex: 1}}>
+            <Text numberOfLines={1} style={styles.detailTitle   }>{'Modules: '}</Text>
+            <Text numberOfLines={1} style={styles.detailSubtitle}>{`${moduleCount} ${plural('moodule', module)}`}</Text>
+          </View>
+          <View style={{flex: 1}}>
+            <Text numberOfLines={1} style={styles.detailTitle   }>{'Subjects: '}</Text>
+            <Text numberOfLines={1} style={styles.detailSubtitle}>{`${subjectCount} ${plural('subject', subjectCount)}`}</Text>
+          </View>
+        </View>
+        <View style={{flexDirection: 'row', marginTop: 7}}>
+          <View style={{flex: 1}}>
+            <Text numberOfLines={1} style={styles.detailTitle   }>{'Questions: '}</Text>
+            <Text numberOfLines={1} style={styles.detailSubtitle}>{`${questionCount} ${plural('question', questionCount)}`}</Text>
+          </View>
+        </View>
+      </View>
     );
   };
 
@@ -170,10 +213,11 @@ class QuizCard extends React.PureComponent {
 };
 
 class ModalContents extends React.PureComponent {
-  static PropTypes = {
+  static propTypes = {
     title: PropTypes.string,
     description: PropTypes.string,
     selected: PropTypes.array,
+    selectedModules: PropTypes.array,
     onPressCreateQuiz: PropTypes.func,
     onPressCancel: PropTypes.func,
   };
@@ -288,11 +332,11 @@ class ModalContents extends React.PureComponent {
 
   _renderBody(){
     const { styles } = ModalContents;
-    const {title, description, selected} = this.props;
+    const {title, description, selected, selectedModules} = this.props;
 
     return(
       <View style={styles.body}>
-        <QuizCard {...{title, description, selected}}/>
+        <QuizCard {...{title, description, selected, selectedModules}}/>
       </View>
     );
   };
@@ -380,14 +424,15 @@ export class QuizFinishModal extends React.PureComponent {
       mountContent: false,
       title: '', 
       description: '',
-      selected: [], 
+      selected: [],
+      selectedModules: [],
     };
   };
 
-  openModal = async ({selected, title, description}) => {
+  openModal = async ({selected, selectedModules, title, description}) => {
     this.setState({
       mountContent: true, 
-      selected, title, description
+      selected, selectedModules, title, description
     });
 
     this._modal.showModal();
@@ -402,6 +447,7 @@ export class QuizFinishModal extends React.PureComponent {
 
   _handleOnPressCreateQuiz = async () => {
     const { title, description, selected } = this.state;
+
     const customQuiz = CreateCustomQuiz.createQuiz({title, description, selected});
     let t = [customQuiz.quiz];
     await CustomQuizStore.set(t);
@@ -414,12 +460,12 @@ export class QuizFinishModal extends React.PureComponent {
   };
 
   _renderContent(){
-    const {title, description, selected} = this.state;
+    const {title, description, selected, selectedModules} = this.state;
     return(
       <ModalContents 
         onPressCreateQuiz={this._handleOnPressCreateQuiz}
         onPressCancel={this._handleOnPressCancel}
-        {...{title, description, selected}}
+        {...{title, description, selected, selectedModules}}
       />
     );
   };
@@ -427,12 +473,15 @@ export class QuizFinishModal extends React.PureComponent {
   render(){
     const { mountContent } = this.state;
 
+    const MODAL_SIZE = 475;
+    const TOP_DISTANCE = Screen.height - MODAL_SIZE;
+
     const paddingBottom = (
-      MODAL_EXTRA_HEIGHT + MODAL_DISTANCE_FROM_TOP
+      MODAL_EXTRA_HEIGHT - MODAL_DISTANCE_FROM_TOP
     );
 
     const snapPoints = [
-      SwipableModal.snapPoints.halfscreen,
+      { y: TOP_DISTANCE },
       SwipableModal.snapPoints.hidden,
     ];
     

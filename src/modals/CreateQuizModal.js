@@ -162,6 +162,7 @@ class ModalSectionHeader extends React.PureComponent {
 class ModalSectionItem extends React.PureComponent {
   static propTypes = {
     subjectData: PropTypes.object,
+    moduleData: PropTypes.object,
     onPressItem: PropTypes.func,
     isSelected : PropTypes.bool,
   };
@@ -195,8 +196,10 @@ class ModalSectionItem extends React.PureComponent {
     const { isSelected } = this.state;
     this.setState({ isSelected: !isSelected });
 
-    const { onPressItem, subjectData } = this.props;
-    onPressItem && onPressItem(!isSelected, subjectData);
+    const { onPressItem, subjectData, moduleData } = this.props;
+    onPressItem && onPressItem({
+      isSelected: !isSelected, subjectData, moduleData
+    });
   };
 
   _renderCheckbox(){
@@ -565,7 +568,7 @@ class ModalContents extends React.PureComponent {
   static propTypes = {
     onPressAddItems: PropTypes.func,
     modules: PropTypes.array,
-    selected: PropTypes.array
+    selected: PropTypes.array,
   };
   
   static styles = StyleSheet.create({
@@ -613,18 +616,39 @@ class ModalContents extends React.PureComponent {
   };
 
   _handleOnPressAdd = () => {
+    const { modules } = this.props;
     //create a copy of selected
     const selected = [...this.selected];
+
+    const selectedModulesIndex = [...new Set(selected.map(
+      subject => subject.indexID_module
+    ))];
+
+    const selectedModules = selectedModulesIndex.map((indexID_module) => {
+      const match_module = modules.find((module) => 
+        module.indexid == indexID_module
+      );
+
+      const match_subjects = selected.filter(subject => 
+        subject.indexID_module == indexID_module
+      );
+
+      return {
+        ...match_module,
+        subjects: match_subjects,
+      };
+    });
     
     const { onPressAddItems } = this.props;
-    onPressAddItems && onPressAddItems(selected);
+    onPressAddItems && onPressAddItems({selected, selectedModules});
   };
 
-  _handleOnPressItem = (isSelected, subjectData) => {
+  _handleOnPressItem = ({isSelected, subjectData, moduleData}) => {
     const selected_id = `${subjectData.indexID_module}-${subjectData.indexid}`;
     //store the previous value of selected before add/remove
     const old_selected = [...this.selected];
     
+    //add/remove subjects from selected
     if(isSelected){
       //add to selected list
       this.selected.push(subjectData);
@@ -678,6 +702,7 @@ class ModalContents extends React.PureComponent {
 
     return (
       <ModalSectionItem
+        moduleData={section}
         subjectData={item}
         onPressItem={this._handleOnPressItem}
         {...{isSelected}}
@@ -775,7 +800,7 @@ export class CreateQuizModal extends React.PureComponent {
     this._deltaY = this._modal._deltaY
   };
 
-  openModal = async (selected) => {
+  openModal = async ({selected}) => {
     const modules = await this._getModules();
     this.setState({modules, selected, mountContent: true});
     this._modal.showModal();
@@ -808,7 +833,7 @@ export class CreateQuizModal extends React.PureComponent {
     this.setState({mountContent: false});
   };
 
-  _handleOnPressAddSubjects = async (selected) => {
+  _handleOnPressAddSubjects = async ({selected, selectedModules}) => {
     //only if callback is defined
     if(this.onPressAddSubject != null){
       //hide button
@@ -828,7 +853,7 @@ export class CreateQuizModal extends React.PureComponent {
       
       //wait for modal to close
       await this._modal.hideModal();
-      this.onPressAddSubject(selected);
+      this.onPressAddSubject({selected, selectedModules});
     };
   };
 

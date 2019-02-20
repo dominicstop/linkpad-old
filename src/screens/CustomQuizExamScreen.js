@@ -255,6 +255,7 @@ class CustomQuizExamScreen extends React.Component {
     //get ref from screenprops
     const { getRefQuizExamDoneModal } = this.props.screenProps;
     this.quizExamDoneModal = getRefQuizExamDoneModal();
+    this.quizExamDoneModal.onPressQuestionItem = this._handleOnPressQuestionItem;
   };
 
   openDoneModal = () => {
@@ -326,6 +327,13 @@ class CustomQuizExamScreen extends React.Component {
     this._listContainer.pulse(750);
   };
 
+  //callback assigned from done modal
+  _handleOnPressQuestionItem = async ({index}) => {
+    this._carousel.snapToItem(index, true);
+    await timeout(500);
+    await this._listContainer.pulse(750);
+  };
+
   render(){
     const { styles } = CustomQuizExamScreen;
     const { navigation } = this.props;
@@ -348,6 +356,7 @@ class CustomQuizExamScreen extends React.Component {
             onSnapToItem={this._handleOnSnapToItem}
             onAnsweredAllQuestions={this._handleOnAnsweredAllQuestions}
             onNewAnswerSelected={this._handleOnNewAnswerSelected}
+            onPressQuestionItem={this._handleOnPressQuestionItem}
             {...{quiz}}
           />
         </Animatable.View>
