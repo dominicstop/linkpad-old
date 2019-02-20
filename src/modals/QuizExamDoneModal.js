@@ -53,7 +53,7 @@ class ModalSectionItemQuestion extends React.PureComponent {
     },
     question: {
       fontSize: 18,
-      fontWeight: '300'
+      fontWeight: '400'
     },
     questionNumber: {
       fontWeight: '600',
@@ -65,7 +65,7 @@ class ModalSectionItemQuestion extends React.PureComponent {
     answer: {
       flex: 1,
       fontSize: 18,
-      fontWeight: '300',
+      fontWeight: '400',
       marginTop: 2,
       color: 'rgb(50, 50, 50)',
     },
