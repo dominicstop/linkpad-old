@@ -1,15 +1,16 @@
 import React, { Fragment } from 'react';
-import { Text, View, ViewPropTypes, Platform, StyleSheet } from 'react-native';
+import { Text, View, ViewPropTypes, Platform, StyleSheet, Image, ActivityIndicator } from 'react-native';
 import PropTypes from 'prop-types';
 
 import { STYLES } from '../Constants';
 
 import { getStatusBarHeight, getBottomSpace, isIphoneX } from 'react-native-iphone-x-helper';
-import { Icon     } from 'react-native-elements';
-import { Header   } from 'react-navigation';
+import { Icon } from 'react-native-elements';
+import { Header } from 'react-navigation';
 import Expo, { BlurView } from 'expo';
 import * as Animatable from 'react-native-animatable';
 import { LinearGradient } from 'expo';
+import {timeout} from '../functions/Utils';
 
 const overlayOpacity = 0.4
 //declare animations
@@ -500,6 +501,71 @@ export class IconFooter extends React.PureComponent {
         </View>
       );
     };
+  };
+};
+
+export class ImageFromStorage extends React.PureComponent {
+  static propTypes = {
+    fileURI: PropTypes.string,
+  };
+
+  static styles = StyleSheet.create({
+    container: {
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+  });
+
+  constructor(props){
+    super(props);
+    this.state = {
+      uri: null,
+      loading: true,
+    };
+  };
+
+  async componentDidMount(){
+    const { fileURI } = this.props;
+    const uri = await Expo.FileSystem.readAsStringAsync(fileURI);
+    this.setState({uri});
+  };
+
+  _renderLoading(){
+    const { styles } = ImageFromStorage;
+    const { style, ...otherProps } = this.props;
+    const { uri } = this.state;
+
+    return(
+      <View style={[styles.container, style]}>
+        <ActivityIndicator size={'small'}/>
+      </View>
+    );
+  };
+  
+  _renderImage(){
+    const { style, ...otherProps } = this.props;
+    const { uri } = this.state;
+
+    return(
+      <Image
+        style={[style]}
+        source={{uri}} 
+        {...otherProps}
+        fadeDuration={500}
+      />
+    );
+
+  };
+
+  render(){
+    const { style, ...otherProps } = this.props;
+    const { uri } = this.state;
+
+    return(uri
+      ? this._renderImage()
+      : this._renderLoading()
+    );
+    
   };
 };
 

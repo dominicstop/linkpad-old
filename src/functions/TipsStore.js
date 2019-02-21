@@ -1,10 +1,75 @@
+import { FileSystem } from 'react-native';
+import Expo from 'expo';
+
 import store from 'react-native-simple-store';
 import _ from 'lodash';
 
+import { createFolderIfDoesntExist, isBase64Image } from './Utils';
+
+//temp store tips for caching
 let _tipsData = null;
+
+const BASE_DIR   = Expo.FileSystem.documentDirectory;
+const FOLDER_KEY = 'tips_images';
+
+/** store Base64 images to storage and replace with URI */
+async function _saveBase64ToStorage(_tips = [tipModel.structure]){
+  const tips = _.cloneDeep(_tips);
+
+  try {
+    //create folder if does not exist
+    await createFolderIfDoesntExist(BASE_DIR + FOLDER_KEY);
+
+    for (const tip of tips){
+      const { photouri, photofilename } = tip;
+
+      //check if uri is image
+      const isImage = isBase64Image(photouri);
+      //construct the uri for where the image is saved
+      const img_uri = `${BASE_DIR}${FOLDER_KEY}/${photofilename}`;
+
+      try {
+        if(isImage){
+          //save the base64 image to the fs
+          await Expo.FileSystem.writeAsStringAsync(img_uri, photouri);
+          //update tip uri
+          tip.photouri = img_uri;
+
+        } else {
+          //replace with null if invalid uri
+          tip.photouri = null;
+        };
+
+      } catch(error){
+        //replace with null if cannot be saved to fs
+        tip.photouri = null;
+        console.log(`Unable to save image ${photofilename}`); 
+        console.log(error);
+      };
+    };
+
+    //resolve tips
+    return tips;
+
+  } catch(error){
+    console.log('Unable to save images.');
+    console.log(error);
+    throw error;
+  };
+};
+
 export class TipsStore {
   static get KEY(){
     return 'tips';
+  };
+
+  /** describes the current operation being done*/
+  static STATUS = {
+    READING      : 'READING',
+    WRITING      : 'WRITING',
+    FETCHING     : 'FETCHING',
+    SAVING_IMAGES: 'SAVING_IMAGES',
+    FINISHED     : 'FINISHED',
   };
 
   static get URL(){
@@ -43,21 +108,33 @@ export class TipsStore {
   };
 
   /** read/fetch tips */
-  static async get(){
+  static async get(status){
+    const { STATUS } = TipsStore;
+
     if(_tipsData == null){
+      status && status(STATUS.READING);
       //not init, get from store
       _tipsData = await TipsStore.read();
     };
 
     if(_tipsData == null){
+      status && status(STATUS.FETCHING);
       //fetch tips from server
-      _tipsData = await TipsStore.fetch();
+      const raw_tips = await TipsStore.fetch();
 
+      status && status(STATUS.SAVING_IMAGES);
+      const tips = await _saveBase64ToStorage(raw_tips);
+
+      status && status(STATUS.WRITING);
       //write tips to storage
-      await store.save(TipsStore.KEY, _tipsData);
+      await store.save(TipsStore.KEY, tips);
+
+      //update global value for caching
+      _tipsData = tips;
     };
 
     //resolve
+    status && status(STATUS.FINISHED);
     return (_tipsData);
   };
 

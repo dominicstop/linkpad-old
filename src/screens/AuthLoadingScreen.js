@@ -1,4 +1,5 @@
 import React from 'react';
+import Expo from 'expo';
 import { StyleSheet, Text, View, ActivityIndicator, AsyncStorage, Dimensions, Alert, Image } from 'react-native';
 import PropTypes from 'prop-types';
 
@@ -6,9 +7,11 @@ import * as Animatable from 'react-native-animatable';
 import { BarIndicator } from 'react-native-indicators';
 import store from 'react-native-simple-store';
 
-import { ModuleStore    }  from '../functions/ModuleStore'   ;
-import { TipsStore      }  from '../functions/TipsStore'     ;
-import { ResourcesStore }  from '../functions/ResourcesStore';
+import { ImageFromStorage } from '../components/Views';
+
+import { ModuleStore    } from '../functions/ModuleStore'   ;
+import { TipsStore      } from '../functions/TipsStore'     ;
+import { ResourcesStore } from '../functions/ResourcesStore';
 
 import { ROUTES } from '../Constants';
 
@@ -16,8 +19,6 @@ import UserStore         from '../functions/UserStore'        ;
 import PreboardExamStore from '../functions/PreboardExamStore';
 import { ModulesLastUpdated, ResourcesLastUpdated } from '../functions/MiscStore';
 import { FlatList } from 'react-native-gesture-handler';
-import Expo from 'expo';
-
 
 Animatable.initializeRegistryWithDefinitions({
   zoomInTransition: {
@@ -25,72 +26,6 @@ Animatable.initializeRegistryWithDefinitions({
     to    : { opacity: 0, transform: [{ scale: 10 }] },
   }
 });
-
-class ImageFromStorage extends React.PureComponent {
-  static propTypes = {
-    fileURI: PropTypes.string,
-  };
-
-  constructor(props){
-    super(props);
-    this.state = {
-      uri: null,
-      loading: true,
-    };
-  };
-
-  async componentDidMount(){
-    const { fileURI } = this.props;
-    const uri = await Expo.FileSystem.readAsStringAsync(fileURI);
-    this.setState({uri});
-  };
-
-  _handleOnLoad = () => {
-    this.container.transitionTo({opacity: 1}, 750);
-  };
-
-  _renderLoading(){
-    const { style, ...otherProps } = this.props;
-    const { uri } = this.state;
-
-    return(
-      <View style={[style]}>
-
-      </View>
-    );
-  };
-  
-  _renderImage(){
-    const { style, ...otherProps } = this.props;
-    const { uri } = this.state;
-
-    return(
-      <Animatable.View
-        style={{opacity: 0}}
-        ref={r => this.container = r}
-        useNativeDriver={true}
-      >
-        <Image 
-          source={{uri}} 
-          {...{style, ...otherProps}}
-          onLoad={this._handleOnLoad}
-        />
-      </Animatable.View>
-    );
-
-  };
-
-  render(){
-    const { style, ...otherProps } = this.props;
-    const { uri } = this.state;
-
-    return(uri
-      ? this._renderImage()
-      : this._renderLoading()
-    );
-    
-  };
-};
 
 export default class AuthLoadingScreen extends React.Component { 
   constructor(props) {
@@ -101,6 +36,13 @@ export default class AuthLoadingScreen extends React.Component {
   }
 
   componentDidMount = async () => {
+    const tips = await TipsStore.get((status) => console.log(status));
+    console.log(tips);
+    this.setState({resources: tips});
+
+
+    return;
+    //await AsyncStorage.clear();
     const resources = await ResourcesStore.get((status) => console.log(status));
     console.log(resources);
     this.setState({resources});
@@ -115,7 +57,7 @@ export default class AuthLoadingScreen extends React.Component {
 
       //load modules and tips if logged in
       if(isLoggedIn){
-        await this.loadData();
+        await this._loadData();
       };
 
       this.animateOut();
@@ -146,7 +88,7 @@ export default class AuthLoadingScreen extends React.Component {
     };
   };
 
-  async loadData(){
+  async _loadData(){
     try {
       await Promise.all([
         ModuleStore   .get(),

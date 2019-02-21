@@ -130,3 +130,23 @@ export function isBase64Image(photouri){
   return(isBase64 && isImage);
 };
 
+export async function createFolderIfDoesntExist(folder_uri){
+  try {
+    //get details of folder
+    const info = await Expo.FileSystem.getInfoAsync(folder_uri, {size: false, md5: false});
+    const { exists, isDirectory } = info;
+
+    const shouldMakeDirectory = (!exists && !isDirectory);
+    if(shouldMakeDirectory){
+      //create direcory
+      await Expo.FileSystem.makeDirectoryAsync(folder_uri);
+      _doesFolderExist = true;
+    };
+
+  } catch(error){
+    console.log('Unable to create folder');
+    console.log(error);
+    throw error;
+  };
+};
+

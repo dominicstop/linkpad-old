@@ -1,13 +1,13 @@
 import { FileSystem } from 'react-native';
+import Expo from 'expo';
+
 import store from 'react-native-simple-store';
 import _ from 'lodash';
 
-import { isDataURL , getBase64MimeType, isMimeTypeImage, isBase64Image} from './Utils';
-import Expo from 'expo';
+import { createFolderIfDoesntExist, isBase64Image } from './Utils';
 
-let _doesFolderExist = false;
+//temp store resources for caching
 let _resourcesData = null;
-
 const DEBUG = false;
 
 const BASE_DIR   = Expo.FileSystem.documentDirectory;
@@ -49,38 +49,13 @@ export class ResourceModel {
   };
 };
 
-async function _createFolderIfDoesntExist(){
-  //params for getinfoasync
-  const folder_uri = BASE_DIR + FOLDER_KEY;
-  const options    = {size: false, md5: false};
-
-  try {
-    //get details of folder
-    const info = await Expo.FileSystem.getInfoAsync(folder_uri, options);
-    const { exists, isDirectory } = info;
-
-    const shouldMakeDirectory = (!exists && !isDirectory);
-    if(shouldMakeDirectory){
-      //create direcory
-      await Expo.FileSystem.makeDirectoryAsync(folder_uri);
-      _doesFolderExist = true;
-      alert('Make Directory');
-    };
-
-  } catch(error){
-    console.log('Unable to create folder');
-    console.log(error);
-    throw error;
-  };
-};
-
 /** store Base64 images to storage and replace with URI */
 async function _saveBase64ToStorage(_resources = [ResourceModel.structure]){
   const resources = _.cloneDeep(_resources);
 
   try {
     //create folder if does not exist
-    await _createFolderIfDoesntExist();
+    await createFolderIfDoesntExist(BASE_DIR + FOLDER_KEY);
 
     for (const resource of resources){
       const { photouri, photofilename } = resource;
@@ -185,7 +160,7 @@ export class ResourcesStore {
 
         status && status(STATUS.SAVING_IMAGES);
         //process base64 images and store
-        const resources = await _saveBase64ToStorage(raw_resources);   
+        const resources = await _saveBase64ToStorage(raw_resources);
         
         status && status(STATUS.WRITING);
         //write resources to storage
