@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, Text, View, ActivityIndicator, AsyncStorage, Dimensions } from 'react-native';
+import { StyleSheet, Text, View, ActivityIndicator, AsyncStorage, Dimensions, Alert } from 'react-native';
 
 import * as Animatable from 'react-native-animatable';
 import { BarIndicator } from 'react-native-indicators';
@@ -29,41 +29,77 @@ export default class AuthLoadingScreen extends React.Component {
   }
 
   componentDidMount = async () => {
-    let delay = ms => new Promise(r => setTimeout(r, ms));
+    const { navigation } = this.props;
+    try {
+      //animate in and authenticate
+      const userData = this._authenticate();
 
-    //animate in and authenticate
-    const results = await Promise.all([
-      UserStore.getUserData(),
-      this.animatedRoot.fadeIn(250),
-      this.animatedLoading.zoomIn(1250),
-    ]);
+      const isLoggedIn = userData != null;
+      const route = isLoggedIn? ROUTES.AppRoute : ROUTES.AuthRoute;
 
-    //get UserData from promise
-    const userData   = results[0];
-    const isLoggedIn = userData != null;
+      //load modules and tips if logged in
+      if(isLoggedIn){
+        await this.loadData();
+      };
 
-    //load modules and tips if logged in
-    if(isLoggedIn){
+      this.animateOut();
+      navigation.navigate(route);
+
+    } catch(error) {
+      Alert.alert(
+        "An Error as occured",
+        `${error} (you have been logged out).`,
+        [{text: 'OK', onPress: this._onPressAlertOK}],
+      );
+    };
+  };
+
+  async _authenticate(){
+    try {
+      const results = await Promise.all([
+        UserStore.getUserData(),
+        this.animatedRoot.fadeIn(250),
+        this.animatedLoading.zoomIn(1250),
+      ]);
+      //return UserData from promise
+      return results[0];
+
+    } catch(error){
+      console.log("Error: Could not Authenticate.");
+      throw "Could not Authenticate.";
+    };
+  };
+
+  async loadData(){
+    try {
       await Promise.all([
         ModuleStore   .get(),
         ResourcesStore.get(),
         TipsStore     .get(),
+      ]);
+      await Promise.all([
         PreboardExamStore   .get(),
         ModulesLastUpdated  .get(),
         ResourcesLastUpdated.get(),
-      ])
-    }
+      ]);
+    } catch(error) {
+      console.log('Error: Unable to load data.');
+      throw "Unable to load data from store";      
+    };
+  };
 
-    //animate out
+  async animateOut(){
     await Promise.all([
       this.animatedLoading.zoomInTransition(750),
       this.animatedRoot.fadeOut(500),
     ]);
+  };
 
-    //navigate
+  _onPressAlertOK = async () => {
     const { navigation } = this.props;
-    const route = isLoggedIn? ROUTES.AppRoute : ROUTES.AuthRoute;
-    navigation.navigate(route);
+    await AsyncStorage.clear();
+    await this.animateOut();
+    navigation.navigate(ROUTES.AuthRoute);
   };
   
   render(){

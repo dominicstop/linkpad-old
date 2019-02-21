@@ -55,7 +55,8 @@ export class ResourcesStore {
       return (json);
 
     } catch(error) {
-      console.error('Failed to fetch resources...');
+      console.log(error);
+      console.log('Failed to fetch resources.');
       throw error;
     };
   };
@@ -66,34 +67,39 @@ export class ResourcesStore {
       //read from store
       let data = await store.get(ResourcesStore.KEY);
       _resourcesData = data;
-
       return (data);
 
     } catch(error){
-      console.error('Failed to read resources from store.');
+      console.log(error);
+      console.log('Failed to read resources from store.');
       throw error;
     };
   };
 
   /** read/fetch resources */
   static async get(){
-    if(_resourcesData == null){
-      //not init, get from store
-      _resourcesData = await ResourcesStore.read();
-    };
-
-    if(_resourcesData == null){
-      //fetch resources from server
-      _resourcesData = await ResourcesStore.fetch();
-
-      //write resources to storage
-      for(let module in _resourcesData){
-        await store.push('resources', _resourcesData[module]);
+    try {
+      if(_resourcesData == null){
+        //not init, get from store
+        _resourcesData = await ResourcesStore.read();
       };
-    };
+  
+      if(_resourcesData == null){
+        //fetch resources from server
+        _resourcesData = await ResourcesStore.fetch();
+  
+        //write resources to storage
+        await store.save(ResourcesStore.KEY, _resourcesData);
+      };
+  
+      //resolve
+      return (_resourcesData);
 
-    //resolve
-    return (_resourcesData);
+    } catch(error){
+      console.log(error);
+      console.log('Failed to read/fetch resources from store.');
+      throw error;
+    };
   };
 
   static async refresh(){
@@ -109,9 +115,8 @@ export class ResourcesStore {
       ResourcesStore.delete();
 
       //write resources to storage
-      for(let module in new_resources){
-        await store.push('resources', new_resources[module]);
-      };
+      await store.save(ResourcesStore.KEY, _resourcesData);
+
 
       //update global var
       _resourcesData = new_resources;

@@ -404,7 +404,7 @@ export class CreateQuizScreen extends React.Component {
       ...Platform.select({
         android: { header: props => 
           <AndroidHeader 
-            {...{titleStyle, ...props}}
+            {...{titleStyle, headerRight, ...props}}
           />
       }}),
     });

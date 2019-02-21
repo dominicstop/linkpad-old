@@ -20,7 +20,8 @@ export class TipsStore {
       return (json);
 
     } catch(error) {
-      console.error('Failed to fetch tips...');
+      console.log('Failed to fetch tips from server.');
+      console.log(error);
       throw error;
     };
   };
@@ -35,7 +36,8 @@ export class TipsStore {
       return (data);
 
     } catch(error){
-      console.error('Failed to read tips from store.');
+      console.log('Failed to read tips from store.');
+      console.log(error);
       throw error;
     };
   };
@@ -52,9 +54,7 @@ export class TipsStore {
       _tipsData = await TipsStore.fetch();
 
       //write tips to storage
-      for(let module in _tipsData){
-        await store.push('tips', _tipsData[module]);
-      };
+      await store.save(TipsStore.KEY, _tipsData);
     };
 
     //resolve
@@ -74,9 +74,7 @@ export class TipsStore {
       TipsStore.delete();
 
       //write tips to storage
-      for(let tip in new_tips){
-        await store.push('tips', new_tips[tip]);
-      };
+      await store.save(TipsStore.KEY, new_tips);
 
       //update global var
       _tipsData = new_tips;
@@ -92,7 +90,7 @@ export class TipsStore {
       console.log(error);
       
       throw error;
-    }
+    };
   };
 
   static clear(){
