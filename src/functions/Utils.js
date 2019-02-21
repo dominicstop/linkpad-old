@@ -100,3 +100,33 @@ export function hexToRgbA(hex, opacity){
   };
   throw new Error('Bad Hex');
 };
+
+const isDataUrlRegex = /^\s*data:([a-z]+\/[a-z]+(;[a-z\-]+\=[a-z\-]+)?)?(;base64)?,[a-z0-9\!\$\&\'\,\(\)\*\+\,\;\=\-\.\_\~\:\@\/\?\%\s]*\s*$/i;
+export function isDataURL(s) {
+  return !!s.match(isDataUrlRegex);
+};
+
+/** returns null if not valid */
+export function getBase64MimeType(encoded = '') {
+  if (typeof encoded !== 'string') return null;
+  const mime = encoded.match(/data:([a-zA-Z0-9]+\/[a-zA-Z0-9-.+]+).*,.*/);
+  if (mime && mime.length) {
+    return mime[1];
+  };
+};
+
+const imageMimeTypes = ['image/png', 'image/jpeg'];
+export function isMimeTypeImage(type){
+  return imageMimeTypes.includes(type)
+};
+
+export function isBase64Image(photouri){
+  //check if uri is valid base64
+  const isBase64 = isDataURL(photouri);
+  //check if uri is an image
+  const type    = getBase64MimeType(photouri);
+  const isImage = isMimeTypeImage(type);
+  //check if uri is a valid base64image
+  return(isBase64 && isImage);
+};
+

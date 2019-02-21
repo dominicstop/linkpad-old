@@ -1,5 +1,6 @@
 import React from 'react';
-import { StyleSheet, Text, View, ActivityIndicator, AsyncStorage, Dimensions, Alert } from 'react-native';
+import { StyleSheet, Text, View, ActivityIndicator, AsyncStorage, Dimensions, Alert, Image } from 'react-native';
+import PropTypes from 'prop-types';
 
 import * as Animatable from 'react-native-animatable';
 import { BarIndicator } from 'react-native-indicators';
@@ -14,6 +15,8 @@ import { ROUTES } from '../Constants';
 import UserStore         from '../functions/UserStore'        ;
 import PreboardExamStore from '../functions/PreboardExamStore';
 import { ModulesLastUpdated, ResourcesLastUpdated } from '../functions/MiscStore';
+import { FlatList } from 'react-native-gesture-handler';
+import Expo from 'expo';
 
 
 Animatable.initializeRegistryWithDefinitions({
@@ -23,12 +26,85 @@ Animatable.initializeRegistryWithDefinitions({
   }
 });
 
+class ImageFromStorage extends React.PureComponent {
+  static propTypes = {
+    fileURI: PropTypes.string,
+  };
+
+  constructor(props){
+    super(props);
+    this.state = {
+      uri: null,
+      loading: true,
+    };
+  };
+
+  async componentDidMount(){
+    const { fileURI } = this.props;
+    const uri = await Expo.FileSystem.readAsStringAsync(fileURI);
+    this.setState({uri});
+  };
+
+  _handleOnLoad = () => {
+    this.container.transitionTo({opacity: 1}, 750);
+  };
+
+  _renderLoading(){
+    const { style, ...otherProps } = this.props;
+    const { uri } = this.state;
+
+    return(
+      <View style={[style]}>
+
+      </View>
+    );
+  };
+  
+  _renderImage(){
+    const { style, ...otherProps } = this.props;
+    const { uri } = this.state;
+
+    return(
+      <Animatable.View
+        style={{opacity: 0}}
+        ref={r => this.container = r}
+        useNativeDriver={true}
+      >
+        <Image 
+          source={{uri}} 
+          {...{style, ...otherProps}}
+          onLoad={this._handleOnLoad}
+        />
+      </Animatable.View>
+    );
+
+  };
+
+  render(){
+    const { style, ...otherProps } = this.props;
+    const { uri } = this.state;
+
+    return(uri
+      ? this._renderImage()
+      : this._renderLoading()
+    );
+    
+  };
+};
+
 export default class AuthLoadingScreen extends React.Component { 
   constructor(props) {
     super(props);
+    this.state = {
+      resources: [],
+    };
   }
 
   componentDidMount = async () => {
+    const resources = await ResourcesStore.get((status) => console.log(status));
+    console.log(resources);
+    this.setState({resources});
+    return;
     const { navigation } = this.props;
     try {
       //animate in and authenticate
@@ -102,7 +178,7 @@ export default class AuthLoadingScreen extends React.Component {
     navigation.navigate(ROUTES.AuthRoute);
   };
   
-  render(){
+  _render(){
     return(
       <Animatable.View 
         style={styles.rootContainer}
@@ -122,7 +198,28 @@ export default class AuthLoadingScreen extends React.Component {
         </Animatable.View>
       </Animatable.View>
     );
-  }
+  };
+
+  render(){
+    return(
+      <View style={{flex: 1, padding: 20, backgroundColor: 'red'}}>
+        <FlatList
+          data={this.state.resources}
+          renderItem={({item}) => {
+            return(
+              <View style={{backgroundColor: 'orange'}}>
+                <Text>{item.photouri}</Text>
+                <ImageFromStorage 
+                  fileURI={item.photouri}
+                  style={{flex: 1, height: 100}}
+                />
+              </View>
+            );
+          }}
+        />
+      </View>
+    );
+  };
 }
 
 const styles = StyleSheet.create({
