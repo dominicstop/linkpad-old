@@ -6,7 +6,7 @@ import { plural , timeout} from '../functions/Utils';
 import { SubjectItem } from '../functions/ModuleStore';
 
 import { ViewWithBlurredHeader, Card, AnimatedListItem } from '../components/Views';
-import { PlatformTouchableIconButton } from '../components/Buttons';
+import { PlatformTouchableIconButton, RippleBorderButton } from '../components/Buttons';
 import { AndroidHeader, AndroidBackButton } from '../components/AndroidHeader';
 import { CustomQuizList } from '../components/CustomQuizExam';
 
@@ -151,12 +151,9 @@ class HeaderTitle extends React.PureComponent {
 //custom header right component
 class DoneButton extends React.PureComponent {
   static styles = StyleSheet.create({
-    container: Platform.select({android: {
-      overflow: 'hidden',
-      paddingVertical: 5,
-      borderRadius: 12,
+    button: {
       marginRight: 5,
-    }}),
+    },
     buttonContainer: {
       flexDirection: 'row',
       paddingHorizontal: 10,
@@ -213,25 +210,23 @@ class DoneButton extends React.PureComponent {
     
     return(
       <Animatable.View
-        style={styles.container}
         ref={r => this._animatable = r}
         useNativeDriver={true}
       >
-        {Platform.select({
-          ios: (
-            <TouchableOpacity onPress={this._handleOnPress}>
-              {this._renderContent()}
-            </TouchableOpacity>
-          ),
-          android: (
-            <TouchableNativeFeedback
-              background={TouchableNativeFeedback.Ripple('white', true)}
-              onPress={this._handleOnPress}
-            >
-              {this._renderContent()}
-            </TouchableNativeFeedback>
-          ),
-        })}
+        <RippleBorderButton 
+          containerStyle={styles.button}
+          onPress={this._handleOnPress}
+        >
+          <View style={styles.buttonContainer}>
+            <Icon
+              name={'ios-checkmark-circle'}
+              type={'ionicon'}
+              color={'white'}
+              size={24}
+            />
+            <Text style={styles.label}>Done</Text>
+          </View>
+        </RippleBorderButton>
       </Animatable.View>
     );
   };

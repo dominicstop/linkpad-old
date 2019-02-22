@@ -19,6 +19,7 @@ import IncompletePracticeExamStore, { IncompletePracticeExamModel } from '../fun
 import TimeAgo from 'react-native-timeago';
 import { Icon, Divider } from 'react-native-elements';
 import { ROUTES } from '../Constants';
+import {PURPLE} from '../Colors';
 
 const Screen = {
   width : Dimensions.get('window').width ,
@@ -350,7 +351,7 @@ export class ModalTopIndicator extends React.PureComponent {
           backgroundColor: 'rgba(0, 0, 0, 0.25)',
         },
         android: {
-          backgroundColor: '#00000040',
+          backgroundColor: PURPLE[200],
         }
       })
     }
@@ -360,9 +361,16 @@ export class ModalTopIndicator extends React.PureComponent {
     const { styles } = ModalTopIndicator;
     
     return(
-      <View style={styles.container}>
+      <Animatable.View 
+        style={styles.container}
+        animation={'pulse'}
+        duration={3000}
+        iterationCount={'infinite'}
+        iterationDelay={3000}
+        useNativeDriver={true}
+      >
         <View style={styles.indicator}/>
-      </View>
+      </Animatable.View>
     );
   };
 };

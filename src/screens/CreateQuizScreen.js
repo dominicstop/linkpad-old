@@ -10,7 +10,7 @@ import { PURPLE } from '../Colors';
 import { CreateCustomQuizList } from '../components/CustomQuiz';
 import { AndroidHeader } from '../components/AndroidHeader';
 import { ViewWithBlurredHeader, IconText, Card } from '../components/Views' ;
-import { PlatformTouchableIconButton } from '../components/Buttons';
+import { PlatformTouchableIconButton, RippleBorderButton } from '../components/Buttons';
 
 import * as Animatable from 'react-native-animatable';
 import { Header, NavigationEvents  } from 'react-navigation';
@@ -25,29 +25,38 @@ const titleStyle = {
   color: 'white',
 };
 
-class DoneButton extends React.PureComponent {
+class NextButton extends React.PureComponent {
   static styles = StyleSheet.create({
+    button: {
+      marginRight: 5,
+    },
     buttonLabel: {
-      fontSize: 18, 
       color: 'white', 
       ...Platform.select({
         ios: {
+          fontSize: 18,
           margin: 10,
         },
         android: {
+          fontSize: 19,          
           margin: 15,
           fontWeight: '500'
         }
       })
     },
   });
+  
+  
 
   render(){
-    const { styles } = DoneButton;
+    const { styles } = NextButton;
     return(
-      <TouchableOpacity {...this.props}>
+      <RippleBorderButton 
+        containerStyle={styles.button}
+        {...this.props}
+      >
         <Text style={styles.buttonLabel}>Next</Text>
-      </TouchableOpacity>
+      </RippleBorderButton>
     );
   };
 };
@@ -184,6 +193,10 @@ class TitleDescriptionCard extends React.PureComponent {
     didChange && this.titleDescription.changeText({title, description});
   };
 
+  animatePulse(){
+    this._container.pulse(750);
+  };
+
   _handleOnPressEditDetails = () => {
     const { onPressEditDetails } = this.props;
     onPressEditDetails && onPressEditDetails();
@@ -245,6 +258,7 @@ class TitleDescriptionCard extends React.PureComponent {
 
     return(
       <Animatable.View
+        ref={r => this._container = r}
         duration={500}
         easing={'ease-in-out'}
         useNativeDriver={true}
@@ -317,6 +331,10 @@ class AddSubjectsCard extends React.PureComponent {
     this.imageHeader = require('../../assets/icons/file-circle.png');
   };
 
+  animatePulse(){
+    this._container.pulse(750);
+  };
+
   _handleOnPressAddSubject = () => {
     const { onPressAddSubject } = this.props;
     onPressAddSubject && onPressAddSubject();
@@ -387,6 +405,7 @@ class AddSubjectsCard extends React.PureComponent {
 
     return(
       <Animatable.View
+        ref={r => this._container = r}
         duration={500}
         delay={100}
         easing={'ease-in-out'}
@@ -404,7 +423,7 @@ class AddSubjectsCard extends React.PureComponent {
 };
 
 let _onPressNext;
-const headerRight = <DoneButton onPress={() => _onPressNext && _onPressNext()}/>
+const headerRight = <NextButton onPress={() => _onPressNext && _onPressNext()}/>
 
 export class CreateQuizScreen extends React.Component {
   static navigationOptions = ({ navigation }) => {
@@ -471,6 +490,18 @@ export class CreateQuizScreen extends React.Component {
     setDrawerSwipe(false);
   };
 
+  _onPressAlertOK = () => {
+    const {selected, title, description} = this.state;
+    const isValid = (isEmpty(title) || isEmpty(description));
+
+    if(selected <= 0){
+      this._headerAddCard.animatePulse();
+
+    } else if(isValid){
+      this._headerTitleCard.animatePulse();      
+    };
+  };
+
   _handleOnPressNext = () => {
     const {selected, selectedModules, title, description} = this.state;
 
@@ -480,11 +511,14 @@ export class CreateQuizScreen extends React.Component {
       Alert.alert(
         'Not Enough Items',
         "Please add at least one subject to continue.",
+        [{text: 'OK', onPress: this._onPressAlertOK}],
+        //{cancelable: false},
       );
     } else if(isValid){
       Alert.alert(
         'No Title/Description',
         "Press 'Edit Deatils' to add a title and description.",
+        [{text: 'OK', onPress: this._onPressAlertOK}],
       );
     } else {
       this.finishModal.openModal({
@@ -540,11 +574,13 @@ export class CreateQuizScreen extends React.Component {
     
     return(
       <Fragment>
-        <TitleDescriptionCard 
+        <TitleDescriptionCard
+          ref={r => this._headerTitleCard = r}
           onPressEditDetails={this._handleOnPressEditDetails}
           {...{title, description}} 
         />
-        <AddSubjectsCard 
+        <AddSubjectsCard
+          ref={r => this._headerAddCard = r}
           onPressAddSubject={this._handleOnPressAddSubject}
         />
       </Fragment>

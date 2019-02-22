@@ -787,6 +787,60 @@ export class AnimatedCollapsable extends React.PureComponent {
 
 }
 
+export class RippleBorderButton extends React.PureComponent {
+  static propTypes = {
+    onPress: PropTypes.func,
+    rippleColor: PropTypes.string,
+    containerStyle: PropTypes.any,
+  };
+
+  static defaultProps = {
+    rippleColor: 'white'
+  };
+
+  static styles = StyleSheet.create({
+    container: Platform.select({android: {
+      overflow: 'hidden',
+      paddingVertical: 5,
+      borderRadius: 12,
+    }}),
+  });
+
+  _handleOnPress = () => {
+    const { onPress } = this.props;
+    onPress && onPress();
+  };
+  
+
+  render(){
+    const { styles } = RippleBorderButton;
+    const { rippleColor, containerStyle, onPress, ...otherProps } = this.props;
+    return (
+      <View style={[styles.container, containerStyle]}>
+        {Platform.select({
+          ios:(
+            <TouchableOpacity 
+              onPress={this._handleOnPress}
+              {...otherProps}
+            >
+              {this.props.children}
+            </TouchableOpacity>
+          ),
+          android:(
+            <TouchableNativeFeedback
+              background={TouchableNativeFeedback.Ripple(rippleColor, true)}
+              onPress={this._handleOnPress}
+              {...otherProps}
+            >
+              {this.props.children}
+            </TouchableNativeFeedback>
+          ),
+        })}
+      </View>
+    );
+  };
+};
+
 export class Checkbox extends React.Component {
   //props definition
   static propTypes = {
