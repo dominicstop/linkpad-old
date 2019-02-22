@@ -83,20 +83,27 @@ class CancelButton extends React.PureComponent {
 //custom header title
 class HeaderTitle extends React.PureComponent {
   static styles = StyleSheet.create({
-    container: {
-      paddingHorizontal: 7,
-      paddingVertical: 4,
-      borderWidth: 1,
-      borderColor: 'white',
-      borderRadius: 10,
-      backgroundColor: 'rgba(255, 255, 255, 0.8)'
-    },
-    title: {
-      fontSize: 16,
-      fontWeight: '200',
-    },
+    container: Platform.select({
+      ios: {
+        paddingHorizontal: 7,
+        paddingVertical: 4,
+        borderRadius: 10,
+        backgroundColor: 'rgba(255, 255, 255, 0.8)'
+      }
+    }),
+    title: Platform.select({
+      ios: {
+        fontSize: 16,
+        fontWeight: '200',
+      },
+      android: {
+        fontSize: 19,
+        fontWeight: '400',
+        color: 'white',
+      },
+    }),
     titleCount: {
-      fontWeight: '600'
+      fontWeight: '700'
     },
   });
 
@@ -188,21 +195,6 @@ class DoneButton extends React.PureComponent {
 
   animate = () => {
     this._animatable.rubberBand(1250);
-  };
-
-  _renderContent(){
-    const { styles } = DoneButton;
-    return(
-      <View style={styles.buttonContainer}>
-        <Icon
-          name={'ios-checkmark-circle'}
-          type={'ionicon'}
-          color={'white'}
-          size={24}
-        />
-        <Text style={styles.label}>Done</Text>
-      </View>
-    );
   };
 
   render(){

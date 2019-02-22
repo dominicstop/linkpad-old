@@ -20,6 +20,7 @@ class ChoiceItem extends React.PureComponent {
     index: PropTypes.number,
     isLast: PropTypes.bool,
     selected: PropTypes.string,
+    selectedInex: PropTypes.number,
     onPressChoice: PropTypes.func,
   };
 
@@ -57,19 +58,21 @@ class ChoiceItem extends React.PureComponent {
   ].map(color => hexToRgbA(color, 0.75));
 
   _handleOnPress = () => {
-    const { onPressChoice, choice, answer, selected } = this.props;
+    const { onPressChoice, choice, answer, selected, index } = this.props;
     const isCorrect = choice === answer;
 
     //call callback with params
-    onPressChoice && onPressChoice({choice, answer, isCorrect, selected});
+    onPressChoice && onPressChoice({
+      choice, answer, isCorrect, selected, index
+    });
   };
 
   _renderChoiceText(){
     const { styles } = ChoiceItem;
-    const { onPressChoice, choice, index, selected } = this.props;
+    const { index, selectedIndex, choice } = this.props;
 
-    const answerKey = getLetter(index);
-    const isSelected = selected == choice;
+    const answerKey  = getLetter(index);
+    const isSelected = index == selectedIndex;
 
     return(
       <Text style={isSelected? styles.choiceTextSelected : styles.choiceText}>
@@ -80,8 +83,8 @@ class ChoiceItem extends React.PureComponent {
   };
 
   _renderIndicator(){
-    const { selected, choice } = this.props;
-    const isSelected = selected == choice;
+    const { index, selectedIndex } = this.props;
+    const isSelected = index == selectedIndex;
 
     if(!isSelected) return null;
 
@@ -103,11 +106,16 @@ class ChoiceItem extends React.PureComponent {
 
   render(){
     const { styles, colors } = ChoiceItem;
-    const { index, isLast } = this.props;
+    const { index, selectedIndex } = this.props;
+
+    const isSelected = index == selectedIndex;
 
     const containerStyle = {
       //diff bg color based on index
-      backgroundColor: colors[index],
+      backgroundColor: (isSelected
+        ? PURPLE.A700
+        : colors[index]
+      ),
     };
 
     return(
@@ -151,15 +159,16 @@ class Choices extends React.PureComponent {
     this.state = {
       choices: shuffled,
       selected: null,
+      selectedIndex: -1,
     };
   };
 
-  _handleOnPressChoice = ({choice, answer, isCorrect}) => {
+  _handleOnPressChoice = ({choice, answer, isCorrect, index}) => {
     const { onPressChoice } = this.props;
 
     //store prev selected and update selected
     const prevSelected = this.state.selected;
-    this.setState({selected: choice});
+    this.setState({selected: choice, selectedIndex: index});
 
     //pass params to callback prop
     onPressChoice && onPressChoice({
@@ -169,7 +178,7 @@ class Choices extends React.PureComponent {
 
   _renderChoices(){
     const { answer } = this.props;
-    const { selected, choices } = this.state;
+    const { selected, selectedIndex, choices } = this.state;
 
     return choices.map((choice, index) => {
       //component must have unique key
@@ -179,7 +188,7 @@ class Choices extends React.PureComponent {
       return(
         <ChoiceItem
           onPressChoice={this._handleOnPressChoice}
-          {...{choice, key, index, answer, isLast, selected}}
+          {...{choice, key, index, answer, isLast, selected, selectedIndex}}
         />
       );
     });
@@ -188,12 +197,22 @@ class Choices extends React.PureComponent {
   render(){
     const { styles } = Choices;
 
+    const gradientProps = Platform.select({
+      ios: {
+        start: {x: 0.0, y: 0.25}, 
+        end  : {x: 0.5, y: 1.00}
+      },
+      android: {
+        start: {x: 0, y: 0}, 
+        end  : {x: 1, y: 0}
+      }
+    });
+
     return(
       <LinearGradient 
         style={styles.container}
-        start={{x: 0.0, y: 0.25}} 
-        end  ={{x: 0.5, y: 1.00}}
         colors={[PURPLE[500], PURPLE[1000]]}
+        {...gradientProps}
       >
         {this._renderChoices()}
       </LinearGradient>
@@ -258,13 +277,20 @@ class QuestionItem extends React.PureComponent {
       margin: 12,
       padding: 10,
       borderRadius: 20,
-      shadowColor: 'black',
-      shadowRadius: 5,
-      shadowOpacity: 0.5,
-      shadowOffset: {  
-        width: 2,  
-        height: 4,  
-      },
+      ...Platform.select({
+        ios: {
+          shadowColor: 'black',
+          shadowRadius: 5,
+          shadowOpacity: 0.5,
+          shadowOffset: {  
+            width: 2,  
+            height: 4,  
+          },
+        },
+        android: {
+          elevation: 15,
+        }
+      }),
     }
   });
 
