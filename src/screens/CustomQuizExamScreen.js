@@ -1,5 +1,5 @@
 import React, { Fragment } from 'react';
-import { View, LayoutAnimation, ScrollView, ViewPropTypes, Text, TouchableOpacity, AsyncStorage, StyleSheet, Platform , Alert} from 'react-native';
+import { View, LayoutAnimation, ScrollView, ViewPropTypes, Text, TouchableOpacity, AsyncStorage, StyleSheet, Platform , Alert, TouchableNativeFeedback} from 'react-native';
 import PropTypes from 'prop-types';
 
 import { plural , timeout} from '../functions/Utils';
@@ -7,7 +7,7 @@ import { SubjectItem } from '../functions/ModuleStore';
 
 import { ViewWithBlurredHeader, Card, AnimatedListItem } from '../components/Views';
 import { PlatformTouchableIconButton } from '../components/Buttons';
-import { AndroidHeader, AndroidBackButton} from '../components/AndroidHeader';
+import { AndroidHeader, AndroidBackButton } from '../components/AndroidHeader';
 import { CustomQuizList } from '../components/CustomQuizExam';
 
 import Constants from '../Constants'
@@ -47,7 +47,7 @@ class CancelButton extends React.PureComponent {
     this.onPress && this.onPress();
   };
 
-  render(){
+  _renderIOS(){
     const { styles } = DoneButton;
     
     return(
@@ -64,6 +64,19 @@ class CancelButton extends React.PureComponent {
         <Text style={styles.label}>Cancel</Text>
       </TouchableOpacity>
     );
+  };
+
+  _renderAndroid(){
+    return(
+      <AndroidBackButton onPress={this._handleOnPress}/>
+    );
+  };
+
+  render(){
+    return Platform.select({
+      ios    : this._renderIOS(),
+      android: this._renderAndroid(),
+    });
   };
 };
 
@@ -138,17 +151,31 @@ class HeaderTitle extends React.PureComponent {
 //custom header right component
 class DoneButton extends React.PureComponent {
   static styles = StyleSheet.create({
-    container: {
+    container: Platform.select({android: {
+      overflow: 'hidden',
+      paddingVertical: 5,
+      borderRadius: 12,
+      marginRight: 5,
+    }}),
+    buttonContainer: {
       flexDirection: 'row',
       paddingHorizontal: 10,
       alignItems: 'center',
     },
     label: {
-      fontSize: 17,
-      fontWeight: '100',
       marginLeft: 7,
-      marginBottom: 2,
       color: 'white',
+      ...Platform.select({
+        ios: {
+          marginBottom: 2,
+          fontSize: 17,
+          fontWeight: '100',
+        },
+        android: {
+          fontSize: 18,
+          fontWeight: '400',
+        }
+      })
     },
   });
 
@@ -166,26 +193,45 @@ class DoneButton extends React.PureComponent {
     this._animatable.rubberBand(1250);
   };
 
+  _renderContent(){
+    const { styles } = DoneButton;
+    return(
+      <View style={styles.buttonContainer}>
+        <Icon
+          name={'ios-checkmark-circle'}
+          type={'ionicon'}
+          color={'white'}
+          size={24}
+        />
+        <Text style={styles.label}>Done</Text>
+      </View>
+    );
+  };
+
   render(){
     const { styles } = DoneButton;
     
     return(
       <Animatable.View
+        style={styles.container}
         ref={r => this._animatable = r}
         useNativeDriver={true}
       >
-        <TouchableOpacity 
-          style={styles.container}
-          onPress={this._handleOnPress}
-        >
-          <Icon
-            name={'ios-checkmark-circle'}
-            type={'ionicon'}
-            color={'white'}
-            size={22}
-          />
-          <Text style={styles.label}>Done</Text>
-        </TouchableOpacity>
+        {Platform.select({
+          ios: (
+            <TouchableOpacity onPress={this._handleOnPress}>
+              {this._renderContent()}
+            </TouchableOpacity>
+          ),
+          android: (
+            <TouchableNativeFeedback
+              background={TouchableNativeFeedback.Ripple('white', true)}
+              onPress={this._handleOnPress}
+            >
+              {this._renderContent()}
+            </TouchableNativeFeedback>
+          ),
+        })}
       </Animatable.View>
     );
   };
@@ -215,6 +261,7 @@ class CustomQuizExamScreen extends React.Component {
         android: { header: props => 
           <AndroidHeader
             centerComponent={headerTitle}
+            rightComponent={headerRight}
             {...props}
           />
       }}),

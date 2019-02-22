@@ -550,8 +550,8 @@ export class ImageFromStorage extends React.PureComponent {
       <Image
         style={[style]}
         source={{uri}} 
-        {...otherProps}
         fadeDuration={500}
+        {...otherProps}
       />
     );
 

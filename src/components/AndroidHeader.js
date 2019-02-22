@@ -19,7 +19,7 @@ class BackButton extends React.PureComponent {
     const { navigation, onPress } = this.props;
     
     if(onPress){
-      onPress();
+      onPress && onPress();
     } else {
       navigation && navigation.goBack();
     };
