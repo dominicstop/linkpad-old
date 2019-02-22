@@ -1,5 +1,5 @@
 import React, { Fragment } from 'react';
-import { StyleSheet, View, Text, TouchableOpacity, Platform, SectionList, Animated, TextInput, TouchableWithoutFeedback, Keyboard, Alert, Dimensions } from 'react-native';
+import { StyleSheet, View, Text, TouchableOpacity, Platform, SectionList, Animated, TextInput, TouchableWithoutFeedback, Keyboard, Alert, Dimensions, StatusBar } from 'react-native';
 import PropTypes from 'prop-types';
 
 import { STYLES , ROUTES} from '../Constants';
@@ -261,9 +261,19 @@ class ModalContents extends React.PureComponent {
       borderBottomColor: 'rgb(200, 200, 200)',
       borderTopWidth: 1,
       borderBottomWidth: 1,
+      ...Platform.select({
+        android: {
+          height: 85,
+        },
+      })
     },
     buttonsContainer: {
       flexDirection: 'row',
+      ...Platform.select({
+        android: {
+          flex: 1,
+        },
+      })
     },
     buttonContainer: {
       flex: 1,
@@ -379,9 +389,8 @@ class ModalContents extends React.PureComponent {
   };
 
   render(){
-    const paddingBottom = SwipableModal.snapPoints.halfscreen.y - MODAL_DISTANCE_FROM_TOP;
     return(
-      <View style={{flex: 1, paddingBottom}}>
+      <View style={{flex: 1}}>
         <ModalTopIndicator/>
         {this._renderTitle()}
         <View style={{flex: 1}}>
@@ -452,7 +461,7 @@ export class QuizFinishModal extends React.PureComponent {
     let t = [customQuiz.quiz];
     await CustomQuizStore.set(t);
 
-    NavigationService.navigateApp(ROUTES.CustomQuizExamScreen);
+    NavigationService.navigateApp(ROUTES.TabExamsRoute);
   };
 
   _handleOnPressCancel = () => {
@@ -473,18 +482,18 @@ export class QuizFinishModal extends React.PureComponent {
   render(){
     const { mountContent } = this.state;
 
-    const MODAL_SIZE = 475;
-    const TOP_DISTANCE = Screen.height - MODAL_SIZE;
+    const MODAL_SIZE = 500;
 
-    const paddingBottom = (
-      MODAL_EXTRA_HEIGHT - MODAL_DISTANCE_FROM_TOP
-    );
+    const TOP_DISTANCE     = Screen.height - MODAL_SIZE;
+    const CONTAINER_HEIGHT = Screen.height + MODAL_EXTRA_HEIGHT;
+
+    const paddingBottom = (CONTAINER_HEIGHT - MODAL_SIZE);
 
     const snapPoints = [
       { y: TOP_DISTANCE },
       SwipableModal.snapPoints.hidden,
     ];
-    
+
     return(
       <SwipableModal 
         ref={r => this._modal = r}

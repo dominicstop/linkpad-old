@@ -25,12 +25,32 @@ const titleStyle = {
   color: 'white',
 };
 
-let _onPressNext;
-const headerRight = (
-  <TouchableOpacity onPress={() => _onPressNext && _onPressNext()}>
-    <Text style={{fontSize: 18, color: 'white', margin: 10}}>Next</Text>
-  </TouchableOpacity>
-);
+class DoneButton extends React.PureComponent {
+  static styles = StyleSheet.create({
+    buttonLabel: {
+      fontSize: 18, 
+      color: 'white', 
+      ...Platform.select({
+        ios: {
+          margin: 10,
+        },
+        android: {
+          margin: 15,
+          fontWeight: '500'
+        }
+      })
+    },
+  });
+
+  render(){
+    const { styles } = DoneButton;
+    return(
+      <TouchableOpacity {...this.props}>
+        <Text style={styles.buttonLabel}>Next</Text>
+      </TouchableOpacity>
+    );
+  };
+};
 
 class TitleDescription extends React.PureComponent {
   static styles = StyleSheet.create({
@@ -383,6 +403,9 @@ class AddSubjectsCard extends React.PureComponent {
   };
 };
 
+let _onPressNext;
+const headerRight = <DoneButton onPress={() => _onPressNext && _onPressNext()}/>
+
 export class CreateQuizScreen extends React.Component {
   static navigationOptions = ({ navigation }) => {
     const { state } = navigation;
@@ -403,8 +426,9 @@ export class CreateQuizScreen extends React.Component {
       //custom android header
       ...Platform.select({
         android: { header: props => 
-          <AndroidHeader 
-            {...{titleStyle, headerRight, ...props}}
+          <AndroidHeader
+            rightComponent={headerRight}
+            {...{titleStyle, ...props}}
           />
       }}),
     });

@@ -36,21 +36,10 @@ export default class AuthLoadingScreen extends React.Component {
   }
 
   componentDidMount = async () => {
-    const tips = await TipsStore.get((status) => console.log(status));
-    console.log(tips);
-    this.setState({resources: tips});
-
-
-    return;
-    //await AsyncStorage.clear();
-    const resources = await ResourcesStore.get((status) => console.log(status));
-    console.log(resources);
-    this.setState({resources});
-    return;
     const { navigation } = this.props;
     try {
       //animate in and authenticate
-      const userData = this._authenticate();
+      const userData = await this._authenticate();
 
       const isLoggedIn = userData != null;
       const route = isLoggedIn? ROUTES.AppRoute : ROUTES.AuthRoute;
@@ -120,7 +109,7 @@ export default class AuthLoadingScreen extends React.Component {
     navigation.navigate(ROUTES.AuthRoute);
   };
   
-  _render(){
+  render(){
     return(
       <Animatable.View 
         style={styles.rootContainer}
@@ -142,7 +131,7 @@ export default class AuthLoadingScreen extends React.Component {
     );
   };
 
-  render(){
+  _render(){
     return(
       <View style={{flex: 1, padding: 20, backgroundColor: 'red'}}>
         <FlatList

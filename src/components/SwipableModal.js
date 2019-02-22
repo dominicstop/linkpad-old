@@ -46,7 +46,7 @@ export class ModalBackground extends React.PureComponent {
       flex: 1, 
       backgroundColor: Platform.select({
         ios    : 'transparent',
-        android: 'white',
+        android: 'rgb(245, 245, 245)',
       }),
     },
     backgroundImage: {

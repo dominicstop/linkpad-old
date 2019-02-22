@@ -213,8 +213,9 @@ class CustomQuizExamScreen extends React.Component {
       //custom android header
       ...Platform.select({
         android: { header: props => 
-          <AndroidHeader 
-            {...{titleStyle, ...props}}
+          <AndroidHeader
+            centerComponent={headerTitle}
+            {...props}
           />
       }}),
     });
