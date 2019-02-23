@@ -37,20 +37,25 @@ class ModalSectionItemQuestion extends React.PureComponent {
     index: PropTypes.number,
     currentIndex: PropTypes.number,
     onPressItem: PropTypes.func,
+    isLast: PropTypes.bool,
   };
 
   static styles = StyleSheet.create({
-    container: {
-      paddingHorizontal: 12,
-      paddingVertical: 10,
-      borderBottomWidth: 1,
-      ...Platform.select({
-        ios: {
-          backgroundColor: 'rgba(245, 245, 245, 0.5)',
-          borderBottomColor: 'rgba(0, 0, 0, 0.1)', 
-        }
-      }),
-    },
+    container: Platform.select({
+      ios: {
+        paddingHorizontal: 12,
+        paddingVertical: 10,
+        borderBottomWidth: 1,
+        backgroundColor: 'rgba(245, 245, 245, 0.5)',
+        borderBottomColor: 'rgba(0, 0, 0, 0.1)', 
+      },
+      android: {
+        paddingHorizontal: 10,
+        paddingVertical: 15,
+        backgroundColor: 'white',
+        elevation: 8,
+      },
+    }),
     question: {
       fontSize: 18,
       fontWeight: '400'
@@ -122,10 +127,33 @@ class ModalSectionItemQuestion extends React.PureComponent {
 
   render(){
     const { styles } = ModalSectionItemQuestion;
-    const { index, currentIndex } = this.props;
+    const { index, currentIndex, isLast } = this.props;
 
+    const isFirst    = (index == 0);
     const isSelected = (index == currentIndex);
+
+    const RADIUS = 10;
     const containerStyle = {
+      ...Platform.select({ android: {
+        marginHorizontal: 12,
+        borderColor: 'rgb(200, 200, 200)',
+        ...(isFirst && isLast)? {
+          borderRadius: RADIUS,
+          marginBottom: 13,
+          marginTop: 5,
+        } : isFirst? {
+          marginTop: 5,
+          borderTopLeftRadius : RADIUS,
+          borderTopRightRadius: RADIUS,
+        } : isLast? {
+          marginBottom: 13,
+          borderTopWidth: 1,
+          borderBottomLeftRadius : RADIUS,
+          borderBottomRightRadius: RADIUS,
+        } : {
+          borderTopWidth: 1
+        },
+      }}),
       ...isSelected? {
         backgroundColor: PURPLE[100],
       } : null,
@@ -133,7 +161,7 @@ class ModalSectionItemQuestion extends React.PureComponent {
 
     return (
       <TouchableOpacity 
-        style={[styles.container, containerStyle]}
+        style={[styles.container, containerStyle, {}]}
         onPress={this._handleOnPress}
         activeOpacity={0.75}
       >
@@ -150,15 +178,22 @@ class ModalSectionItemDetails extends React.PureComponent {
   };
 
   static styles = StyleSheet.create({
-    container: {
-      paddingHorizontal: 12,
-      paddingVertical: 10,
-      ...Platform.select({
-        ios: {
-          backgroundColor: 'rgba(245, 245, 245, 0.5)',
-        }
-      }),
-    },
+    container: Platform.select({
+      ios: {
+        paddingHorizontal: 12,
+        paddingVertical: 10,
+        backgroundColor: 'rgba(245, 245, 245, 0.5)',
+      },
+      android: {
+        backgroundColor: 'white',
+        elevation: 7,
+        marginHorizontal: 12,
+        marginTop: 5,
+        marginBottom: 15,
+        padding: 12,
+        borderRadius: 10,
+      }
+    }),
     divider: {
       margin: 10,
       height: 1,
@@ -183,7 +218,7 @@ class ModalSectionItemDetails extends React.PureComponent {
       fontWeight: '100',
     },
     description: {
-      fontSize: 20,
+      fontSize: 18,
       fontWeight: '300'
     },
     descriptionLabel: {
@@ -260,21 +295,36 @@ class ModalSectionFooter extends React.PureComponent {
   };
 
   static styles = StyleSheet.create({
-    seperator: {
-      marginBottom: 20, 
-      borderBottomWidth: 1,
-      borderBottomColor: 'rgba(0, 0, 0, 0.1)', 
-    },
+    seperator: Platform.select({
+      ios: {
+        marginBottom: 20,
+        borderBottomWidth: 1,
+        borderBottomColor: 'rgba(0, 0, 0, 0.1)', 
+      },
+      android: {
+        marginBottom: 15,        
+      }
+    }),
     container: {
       flexDirection: 'row',
-      paddingHorizontal: 17,
-      paddingVertical: 20,
-      borderBottomWidth: 1,
       ...Platform.select({
-        ios: {
+        ios:{
+          paddingHorizontal: 17,
+          paddingVertical: 20,
+          borderBottomWidth: 1,
           backgroundColor: 'rgba(245, 245, 245, 0.5)',
           borderBottomColor: 'rgba(0, 0, 0, 0.1)', 
-        }
+        },
+        android: {
+          alignItems: 'center',
+          backgroundColor: 'white',
+          elevation: 7,
+          marginHorizontal: 12,
+          marginTop: 5,
+          marginBottom: 15,
+          padding: 15,
+          borderRadius: 10,
+        },
       }),
     },
     image: {
@@ -307,10 +357,11 @@ class ModalSectionFooter extends React.PureComponent {
       paddingVertical: 10,
       paddingHorizontal: 15,
       backgroundColor: PURPLE[700],
-      alignItems: 'center'
+      alignItems: 'center',
+      elevation: 5,
     },
     buttonText: {
-      fontSize: 19,
+      fontSize: 16,
       fontWeight: '400',
       color: 'white',
       marginLeft: 10,
@@ -406,16 +457,18 @@ class ModalSectionHeader extends React.PureComponent {
 
   static styles = StyleSheet.create({
     container: {
-      marginTop: -1,
       padding: 10,
       ...Platform.select({
         ios: {
           backgroundColor: 'rgba(255, 255, 255, 0.20)',
         },
         android: {
-          backgroundColor: 'white',
-          borderBottomColor: 'rgb(200,200,200)',
+          backgroundColor: PURPLE[50],
+          borderColor: 'rgb(200,200,200)',
           borderBottomWidth: 1,
+          borderTopWidth: 1,
+          elevation: 10,
+          marginBottom: 15,
         }
       }),
     },
@@ -555,8 +608,8 @@ class ModalContents extends React.PureComponent {
   static styles = StyleSheet.create({
     scrollview: {
       flex: 1, 
-      borderTopColor: 'rgb(200, 200, 200)', 
-      borderTopWidth: 1
+      //borderTopColor: 'rgb(200, 200, 200)', 
+      //borderTopWidth: 1
     },
     title: {
       color: '#160656',
@@ -585,7 +638,6 @@ class ModalContents extends React.PureComponent {
       borderTopWidth: 1
     },
     buttonContainer: {
-      padding: 12,
       borderTopColor: 'rgba(0, 0, 0, 0.25)',
       borderBottomColor: 'rgba(0, 0, 0, 0.25)',
       borderTopWidth: 1,
@@ -597,7 +649,9 @@ class ModalContents extends React.PureComponent {
       justifyContent: 'center',
       backgroundColor: PURPLE[700], 
       borderRadius: 12,
+      margin: 12,
       padding: 15,
+      elevation: 10,
     },
     buttonText: {
       flex: 1,
@@ -633,38 +687,23 @@ class ModalContents extends React.PureComponent {
   _renderTitle(){
     const { styles } = ModalContents;
 
-    const text = (global.usePlaceholder
-      ? 'Tristique Dolor Aenean'
-      : 'Custom Quiz Details'
-    );
-
-    const subtitle = (global.usePlaceholder
-      ? 'Tortor Inceptos Cursus Etiam Vestibulum.'
-      : 'Give your quiz a title and description.'
-    );
-
     return(
       <IconText
         containerStyle={styles.titleContainer}
         textStyle={styles.title}
+        text={'Custom Quiz Details'}
         subtitleStyle={styles.subtitle}
+        subtitle={"When you're done, press finish. "}
         iconName={'notebook'}
         iconType={'simple-line-icon'}
         iconColor={'#512DA8'}
         iconSize={26}
-        {...{text, subtitle}}
       />
     );
   };
 
   _renderFinishButton(){
     const { styles } = ModalContents;
-
-    const buttonText = (global.usePlaceholder
-      ? 'Condimentum Amet'
-      : 'Save Changes'
-    );
-
     return(
       <Animatable.View
         style={styles.buttonContainer}
@@ -685,7 +724,7 @@ class ModalContents extends React.PureComponent {
               color={'white'}
               size={24}
             />
-            <Text style={styles.buttonText}>{buttonText}</Text>
+            <Text style={styles.buttonText}>{"Finish Quiz"}</Text>
             <Icon
               name={'chevron-right'}
               type={'feather'}
@@ -715,7 +754,9 @@ class ModalContents extends React.PureComponent {
 
   _renderItem = ({item, index, section: {type}}) => {
     const { SECTION_TYPES } = ModalContents;
-    const { currentIndex } = this.props;
+    const { currentIndex, answers } = this.props;
+
+    const isLast = (index == (answers.length - 1));
     
     switch (type) {
       case SECTION_TYPES.DETAILS: return(
@@ -724,7 +765,7 @@ class ModalContents extends React.PureComponent {
       case SECTION_TYPES.QUESTIONS: return(
         <ModalSectionItemQuestion 
           onPressItem={this._handleOnPressQuestionItem}
-          {...{index, currentIndex, ...item}}
+          {...{index, currentIndex, isLast, ...item}}
         />
       );
       default: return null;
@@ -733,7 +774,7 @@ class ModalContents extends React.PureComponent {
 
   _renderListFooter = () => {
     return(
-      <View style={{marginBottom: 50}}/>
+      <View style={{marginBottom: 75}}/>
     );
   };
 
@@ -753,6 +794,7 @@ class ModalContents extends React.PureComponent {
             ListFooterComponent={this._renderListFooter}
             SectionSeparatorComponent={this._renderSectionSeperator}
             keyExtractor={(item, index) => item + index}
+            stickySectionHeadersEnabled={true}
             {...{sections}}
           />
         </View>
@@ -787,7 +829,10 @@ export class QuizExamDoneModal extends React.PureComponent {
       width: '50%', 
       height: '50%', 
       marginBottom: 325
-    }
+    },
+    modalBackground: {
+      backgroundColor: 'rgb(175, 175, 175)'
+    },
   });
 
   constructor(props){
@@ -855,6 +900,7 @@ export class QuizExamDoneModal extends React.PureComponent {
   };
 
   render(){
+    const { styles } = QuizExamDoneModal;
     const { mountContent } = this.state;
     const paddingBottom = (
       MODAL_EXTRA_HEIGHT + MODAL_DISTANCE_FROM_TOP
@@ -867,7 +913,7 @@ export class QuizExamDoneModal extends React.PureComponent {
         onModalHide={this._handleOnModalHide}
       >
         <Fragment>
-          <ModalBackground style={{paddingBottom}}>
+          <ModalBackground style={[{paddingBottom}, styles.modalBackground]}>
             <ModalTopIndicator/>
             {mountContent && this._renderContent()}
           </ModalBackground>

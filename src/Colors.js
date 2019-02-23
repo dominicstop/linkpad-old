@@ -59,6 +59,7 @@ export const VIOLET = {
 };
 
 export const PURPLE = {
+  '50'   :'#EDE7F6',
   '100'  :'#D1C4E9',
   '200'  :'#B39DDB',
   '300'  :'#9575CD',
