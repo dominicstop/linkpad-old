@@ -32,7 +32,7 @@ class HeaderCard extends React.PureComponent {
       flex: 1,
       flexDirection: 'row',
       marginTop: 0,
-      marginBottom: 20,
+      marginBottom: 15,
       marginHorizontal: 0,
       paddingTop: 15,
       paddingHorizontal: 12,
@@ -173,10 +173,6 @@ class HeaderCard extends React.PureComponent {
 
 //show the setting screen
 export class ResourcesScreen extends React.Component {
-  static styles = StyleSheet.create({
-    
-  });
-  
   constructor(props){
     super(props);
     this.DEBUG = false;

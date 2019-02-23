@@ -61,52 +61,29 @@ class ResourceItem extends React.PureComponent {
     onPress && onPress(resource);
   };
 
-  _renderHeader(){
+  render(){
     const { styles } = ResourceItem;
     const { resource } = this.props;
 
     //wrap inside model
     const model = new ResourceModel(resource);
 
-    return(
-      <View collapsable={true}>
-        
-      </View>
-    );
-  };
-
-  _renderContent(){
-    const { styles } = ResourceItem;
-    const { resource } = this.props;
-
-    //wrap inside model
-    const model = new ResourceModel(resource);
-
-    return (
-      <Fragment>
-        <Text style={styles.textTitle}>
-          {model.title}
-        </Text>
-        <Text style={styles.textSubtitle}>
-          {`Last updated on ${model.dateposted}`}
-        </Text>
-        <Divider style={styles.divider}/>
-        <Text style={styles.textBody} numberOfLines={4}>
-          {model.description}
-        </Text>
-        <Text style={styles.textLink}>
-          {resource.link}
-        </Text>
-      </Fragment>
-    );
-  };
-
-  render(){ 
     return(
       <Card>      
         <TouchableOpacity onPress={this._handleOnPress}>
-          {this._renderHeader ()}
-          {this._renderContent()}
+          <Text style={styles.textTitle}>
+            {model.title}
+          </Text>
+          <Text style={styles.textSubtitle}>
+            {`Last updated on ${model.dateposted}`}
+          </Text>
+          <Divider style={styles.divider}/>
+          <Text style={styles.textBody} numberOfLines={4}>
+            {model.description}
+          </Text>
+          <Text style={styles.textLink}>
+            {resource.link}
+          </Text>
         </TouchableOpacity>
       </Card>
     );
