@@ -16,6 +16,7 @@ import { Icon } from 'react-native-elements';
 
 import * as _Reanimated from 'react-native-reanimated';
 import * as Animatable from 'react-native-animatable';
+import {CustomQuizStore} from '../functions/CustomQuizStore';
 
 const { Lottie } = DangerZone;
 const { Easing } = _Reanimated;
@@ -530,6 +531,11 @@ class ModalContents extends React.PureComponent {
     const isTitleEmpty       = isEmpty(title);
     const isDescriptionEmpty = isEmpty(description);
 
+    //check if title already exists
+    const quizes   = CustomQuizStore.get();
+    const titles   = quizes.map(quiz => quiz.title);
+    const hasMatch = titles.includes(title);
+
     if(isTitleEmpty || isDescriptionEmpty){
       await Promise.all([
         //animate input when empty
@@ -540,8 +546,14 @@ class ModalContents extends React.PureComponent {
         'Invalid Title/Description',
         "Make sure that all fields have been filled.",
       );
-
+    } else if(hasMatch) {
+      await this.formTitleContainer.shake(500);
+      Alert.alert(
+        'Title Already Exists',
+        "Please thimk of another title for your quiz.",
+      );
     } else {
+      Keyboard.dismiss();
       const { onPressSaveChanges } = this.props;
       onPressSaveChanges && onPressSaveChanges({title, description});
     };
