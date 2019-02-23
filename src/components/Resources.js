@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Fragment } from 'react';
 import { StyleSheet, Text, View, Dimensions, ScrollView, ViewPropTypes, TouchableOpacity, Animated, Easing, FlatList, Platform } from 'react-native';
 import PropTypes from 'prop-types';
 
@@ -19,6 +19,7 @@ import { AnimatedListItem } from './Views';
 
 import { DangerZone } from 'expo';
 import {ResourceModel} from '../functions/ResourcesStore';
+import {BLUE, PURPLE} from '../Colors';
 const { Lottie } = DangerZone;
 
 const RESOURCES_SHAPE = {
@@ -29,16 +30,21 @@ const RESOURCES_SHAPE = {
   link: PropTypes.string,
 };
 
-export class ResourceItem extends React.PureComponent { 
+class ResourceItem extends React.PureComponent { 
   static propTypes = {
     resource: PropTypes.shape(RESOURCES_SHAPE),
     onPress : PropTypes.func,
   };
 
   static styles = StyleSheet.create({
+    divider: {
+      marginVertical: 10,
+      marginHorizontal: 15,
+    },
     textTitle: {
       fontSize: 24, 
-      fontWeight: 'bold'
+      fontWeight: 'bold',
+      color: PURPLE[1100]
     },
     textSubtitle: {
       fontSize: 16, 
@@ -52,7 +58,7 @@ export class ResourceItem extends React.PureComponent {
     },
     textLink: {
       fontSize: 18, 
-      color: 'blue', 
+      color: BLUE[800], 
       textDecorationLine: 'underline', 
       marginTop: 5
     },
@@ -76,20 +82,7 @@ export class ResourceItem extends React.PureComponent {
 
     return(
       <View collapsable={true}>
-        <Text style={styles.textTitle   }>{model.title}</Text>
-        <Text style={styles.textSubtitle}>Last updated on {model.dateposted}</Text>
-        <Divider style={{margin: 10}}/>
-      </View>
-    );
-  };
-
-  _renderFooter(){
-    const { styles } = ResourceItem;
-    const { resource } = this.props;
-
-    return(
-      <View collapsable={true}>
-        <Text style={styles.textLink}>{resource.link}</Text>
+        
       </View>
     );
   };
@@ -102,9 +95,21 @@ export class ResourceItem extends React.PureComponent {
     const model = new ResourceModel(resource);
 
     return (
-      <Text style={styles.textBody} numberOfLines={4}>
-        {model.description}
-      </Text>
+      <Fragment>
+        <Text style={styles.textTitle}>
+          {model.title}
+        </Text>
+        <Text style={styles.textSubtitle}>
+          {`Last updated on ${model.dateposted}`}
+        </Text>
+        <Divider style={styles.divider}/>
+        <Text style={styles.textBody} numberOfLines={4}>
+          {model.description}
+        </Text>
+        <Text style={styles.textLink}>
+          {resource.link}
+        </Text>
+      </Fragment>
     );
   };
 
@@ -115,7 +120,6 @@ export class ResourceItem extends React.PureComponent {
           {this._renderHeader ()}
           {this._renderContent()}
         </TouchableOpacity>
-        {this._renderFooter()}
       </Card>
     );
   };
