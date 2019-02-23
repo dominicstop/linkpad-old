@@ -5,6 +5,7 @@ import store from 'react-native-simple-store';
 import _ from 'lodash';
 
 import { createFolderIfDoesntExist, isBase64Image } from './Utils';
+import { ResourceModel } from '../models/ResourceModel';
 
 //temp store resources for caching
 let _resourcesData = null;
@@ -12,42 +13,6 @@ const DEBUG = false;
 
 const BASE_DIR   = Expo.FileSystem.documentDirectory;
 const FOLDER_KEY = 'resource_images';
-
-export class ResourceModel {
-  static structure = {
-    description  : '',
-    dateposted   : '',
-    title        : '',
-    link         : '',
-    indexid      : -1,
-    photouri     : '',
-    photofilename: '',
-  };
-
-  constructor(data = ResourceModel.structure){
-    this.data = {...ResourceModel.structure, ...data};
-  };
-
-  get title(){
-    return this.data.title || '';
-  };
-
-  get link(){
-    return this.data.link || '';
-  };
-
-  get dateposted(){
-    return this.data.dateposted || '';
-  };
-
-  get description(){
-    return this.data.description || '';
-  };
-
-  get(){
-    return this.data;
-  };
-};
 
 /** store Base64 images to storage and replace with URI */
 async function _saveBase64ToStorage(_resources = [ResourceModel.structure]){

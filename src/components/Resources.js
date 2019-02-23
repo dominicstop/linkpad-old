@@ -2,25 +2,13 @@ import React, { Fragment } from 'react';
 import { StyleSheet, Text, View, Dimensions, ScrollView, ViewPropTypes, TouchableOpacity, Animated, Easing, FlatList, Platform } from 'react-native';
 import PropTypes from 'prop-types';
 
-import { setStateAsync, timeout, shuffleArray } from '../functions/Utils';
-import { STYLES } from '../Constants';
-
-import { Button, ExpandCollapseTextWithHeader } from './Buttons';
-import { Card } from './Views';
+import { ResourceModel } from '../models/ResourceModel';
+import { BLUE, PURPLE } from '../Colors';
+import { Card, AnimatedListItem } from './Views';
 
 import _ from 'lodash';
-
 import * as Animatable from 'react-native-animatable';
-import      Carousel   from 'react-native-snap-carousel';
-import    { Header   } from 'react-navigation';
-import    { Divider  } from 'react-native-elements';
-
-import { AnimatedListItem } from './Views';
-
-import { DangerZone } from 'expo';
-import {ResourceModel} from '../functions/ResourcesStore';
-import {BLUE, PURPLE} from '../Colors';
-const { Lottie } = DangerZone;
+import { Divider } from 'react-native-elements';
 
 const RESOURCES_SHAPE = {
   dateposted: PropTypes.string,

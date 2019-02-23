@@ -10,7 +10,8 @@ import * as Animatable from 'react-native-animatable';
 import { Header, NavigationEvents  } from 'react-navigation';
 
 import {plural} from '../functions/Utils';
-import { ResourceModel } from '../functions/ResourcesStore';
+import { ResourceModel } from '../models/ResourceModel';
+
 import { Divider } from 'react-native-elements';
 
 const ViewResourceHeader = (props) => <CustomHeader {...props}/>
