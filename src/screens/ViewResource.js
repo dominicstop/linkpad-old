@@ -37,6 +37,7 @@ class ImageCard extends React.PureComponent {
       borderRadius: 10,
     },
     loadingImageContainer: {
+      height: 400,
       backgroundColor: PURPLE[100],
     },
     loadingContainer: {
@@ -80,13 +81,22 @@ class ImageCard extends React.PureComponent {
 
   async componentDidMount(){
     const { fileURI } = this.props;
+    await timeout(1250);
     
-    const results = await Promise.all([
-      Expo.FileSystem.readAsStringAsync(fileURI),
-      timeout(1000)
-    ]);
+    try {
+      const uri = await Expo.FileSystem.readAsStringAsync(fileURI);
+      this.setState({uri, loading: false});
 
-    this.setState({uri: results[0], loading: false});
+    } catch(error){
+      this.setState({uri: null, loading: false});
+      Alert.alert('Error', 'Image could not be loaded.');
+      this._handleOnLoadEnd();
+      console.log(error);
+    };
+  };
+
+  componentDidCatch(){
+    console.log('Unable to load image.');
   };
 
   _handleOnLoadEnd = () => {
@@ -125,6 +135,8 @@ class ImageCard extends React.PureComponent {
   _renderImage(){
     const { styles } = ImageCard;
     const { uri } = this.state;
+    if(uri == null) return null;
+
     return(
       <TouchableOpacity
         onPress={this._handleImageOnPress}

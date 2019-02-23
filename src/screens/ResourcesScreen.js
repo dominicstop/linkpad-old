@@ -179,6 +179,7 @@ export class ResourcesScreen extends React.Component {
     this.state = {
       resources: [],
       refreshing: false,
+      refreshControlTitle: '',
       showContent: false,
       mount: false,
       lastUpdated: null,
@@ -212,28 +213,46 @@ export class ResourcesScreen extends React.Component {
     }
   };
 
+  _getStatusText(status){
+    const { STATUS } = ResourcesStore;
+    switch (status) {
+      case STATUS.FETCHING: return 'Fetching resources from server...';
+      case STATUS.SAVING_IMAGES: return 'Saving resources...';
+      case STATUS.FINISHED: return 'Refresh finished.';
+    };
+  };
+
+  _onRefreshStateChange = (status) => {
+    const refreshControlTitle = this._getStatusText(status);
+    this.setState({refreshControlTitle});
+  };
+
   _onRefresh = async () => {
     //set ui to refrshing
     await setStateAsync(this, {refreshing: true });
 
     try {
       //get resources
-      const {resources, isResourcesNew} = await ResourcesStore.refresh();
+      const {resources, isResourcesNew} = await ResourcesStore.refresh(this._onRefreshStateChange);
+      //set date last updated
+      const lastUpdated = await ResourcesLastUpdated.setTimestamp();
+
+      if(Platform.OS === 'ios'){
+        //to reduce stutter
+        await timeout(500);      
+      };
 
       if(isResourcesNew){
         //show alert when there are no changes
         Alert.alert('Sorry', 'No new resources to show')
       };
 
-      //set date last updated
-      const lastUpdated = await ResourcesLastUpdated.setTimestamp();
-
       this.setState({refreshing: false, resources, lastUpdated});
 
     } catch(error){
       //avoid flicker
       await timeout(750);
-
+      console.log(error);
       Alert.alert('Error', 'Unable to fetch new resources (Please try again)');
       this.setState({refreshing: false});
     };
@@ -252,13 +271,15 @@ export class ResourcesScreen extends React.Component {
   };
 
   _renderRefreshCotrol(){
-    const { refreshing } = this.state;
-    const prefix = refreshing? 'Checking' : 'Pull down to check';
+    const { refreshing, refreshControlTitle } = this.state;
+
+    const title = refreshing? refreshControlTitle : 'Pull down to check for changes...';
+
     return(
       <RefreshControl 
         refreshing={this.state.refreshing} 
         onRefresh={this._onRefresh}
-        title={prefix + ' for changes...'}
+        {...{title}}
       />
     );
   };

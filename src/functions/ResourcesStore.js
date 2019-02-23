@@ -146,24 +146,31 @@ export class ResourcesStore {
     };
   };
 
-  static async refresh(){
+  static async refresh(status){
+    const { STATUS } = ResourcesStore;
     let isResourcesNew = false;
     
     try {
+      status && status(STATUS.FETCHING);
       //fetch resources from server
       let new_resources = await ResourcesStore.fetch();
       //check for changes
-      isResourcesNew = _.isEqual(_resourcesData, new_resources);
+      isResourcesNew = !_.isEqual(_resourcesData, new_resources);
       
+      status && status(STATUS.SAVING_IMAGES);
       //delete previous resources stored
-      ResourcesStore.delete();
+      await ResourcesStore.delete();
+
+      //process base64 images and store
+      const resources = await _saveBase64ToStorage(new_resources);
 
       //write resources to storage
-      await store.save(ResourcesStore.KEY, _resourcesData);
+      await store.save(ResourcesStore.KEY, resources);
 
       //update global var
-      _resourcesData = new_resources;
+      _resourcesData = resources;
 
+      status && status(STATUS.FINISHED);
       //resolve
       return ({
         resources: _resourcesData,
