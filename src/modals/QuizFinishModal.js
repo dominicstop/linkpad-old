@@ -458,9 +458,13 @@ export class QuizFinishModal extends React.PureComponent {
     const { title, description, selected } = this.state;
 
     const customQuiz = CreateCustomQuiz.createQuiz({title, description, selected});
-    let t = [customQuiz.quiz];
-    await CustomQuizStore.set(t);
 
+    const old_quizes = await CustomQuizStore.read(quizes);
+    const quizes = [...old_quizes, customQuiz.quiz];
+    await CustomQuizStore.set(quizes);
+
+    this._modal.hideModal();
+    Alert.alert('Quiz Created', `"${title}" quiz has been created and added to the list.`);
     NavigationService.navigateApp(ROUTES.TabExamsRoute);
   };
 

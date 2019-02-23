@@ -89,7 +89,7 @@ export class CreateCustomQuiz {
 
     const customQuiz = new CustomQuiz({
       title, description, questions,
-      indexID_quiz: 0,
+      indexID_quiz: getTimestamp(),
     });
 
     customQuiz.setTimestampCreated();
