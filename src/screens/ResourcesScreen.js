@@ -17,17 +17,35 @@ import { ResourcesLastUpdated   } from '../functions/MiscStore';
 
 import * as Animatable from 'react-native-animatable';
 import { Header, createStackNavigator, NavigationEvents } from 'react-navigation';
-import { Icon } from 'react-native-elements';
+import { Icon, Divider } from 'react-native-elements';
 import _ from 'lodash';
 import TimeAgo from 'react-native-timeago';
 
+class HeaderCard extends React.PureComponent {
+  static propTypes = {
+    resources: PropTypes.array,
+    lastUpdated: PropTypes.number,
+  };
 
-//show the setting screen
-export class ResourcesScreen extends React.Component {
-  static styles = StyleSheet.create({
+  static styles = {
     card: {
+      flex: 1,
       flexDirection: 'row',
-      marginBottom: 10,
+      marginTop: 0,
+      marginBottom: 20,
+      marginHorizontal: 0,
+      paddingTop: 15,
+      paddingHorizontal: 12,
+      paddingBottom: 16,
+      backgroundColor: 'white',
+      shadowColor: 'black',
+      elevation: 10,
+      shadowRadius: 4,
+      shadowOpacity: 0.4,
+      shadowOffset:{
+        width: 2,  
+        height: 3,  
+      },
     },
     image: {
       width: 75, 
@@ -37,13 +55,17 @@ export class ResourcesScreen extends React.Component {
     },
     headerTextContainer: {
       flex: 1, 
-      alignItems: 'center', 
       justifyContent: 'center', 
     },
     headerTitle: {
+      textAlign: 'center',      
       color: '#512DA8',
       fontSize: 20, 
       fontWeight: '800'
+    },
+    divider: {
+      marginHorizontal: 15,
+      marginVertical: 8,
     },
     headerSubtitle: {
       fontSize: 16, 
@@ -78,6 +100,81 @@ export class ResourcesScreen extends React.Component {
         color: '#424242'
       },
     }),
+  };
+
+  constructor(props){
+    super(props);
+    this.imageHeader = require('../../assets/icons/book-keyboard.png');
+  };
+
+  _renderDetails(){
+    const { styles } = HeaderCard;
+    const { resources, lastUpdated } = this.props;
+    
+    const time  = lastUpdated * 1000;
+    const count = resources.length || '--';
+
+    const Time = (props) => (lastUpdated?
+      <TimeAgo {...props} {...{time}}/> :
+      <Text    {...props}>
+        {'--:--'}
+      </Text>
+    );
+
+    return(
+      <View style={{flexDirection: 'row'}}>
+        <View style={{flex: 1}}>
+          <Text numberOfLines={1} style={styles.detailTitle   }>{'Resources: '}</Text>
+          <Text numberOfLines={1} style={styles.detailSubtitle}>{`${count} ${plural('item', count)}`}</Text>
+        </View>
+        <View style={{flex: 1}}>
+          <Text numberOfLines={1} style={styles.detailTitle   }>{'Updated: '}</Text>
+          <Time numberOfLines={1} style={styles.detailSubtitle}/>              
+        </View>
+      </View>
+    );
+  };
+
+  render(){
+    const { styles } = HeaderCard;
+
+    const animation = Platform.select({
+      ios    : 'fadeInUp',
+      android: 'zoomIn'  ,
+    });
+
+    return(
+      <Animatable.View
+        style={styles.card}
+        duration={500}
+        easing={'ease-in-out'}
+        useNativeDriver={true}
+        {...{animation}}
+      >
+        <Animatable.Image
+          source={this.imageHeader}
+          style={styles.image}
+          animation={'pulse'}
+          easing={'ease-in-out'}
+          iterationCount={"infinite"}
+          duration={5000}
+          useNativeDriver={true}
+        />
+        <View style={styles.headerTextContainer}>
+          <Text style={styles.headerTitle   }>Study Resources</Text>
+          <Text style={styles.headerSubtitle}>A list of resources to help you learn more about a topic!</Text>
+          <Divider style={styles.divider}/>
+          {this._renderDetails()}
+        </View>
+      </Animatable.View>
+    );
+  };
+};
+
+//show the setting screen
+export class ResourcesScreen extends React.Component {
+  static styles = StyleSheet.create({
+    
   });
   
   constructor(props){
@@ -90,8 +187,6 @@ export class ResourcesScreen extends React.Component {
       mount: false,
       lastUpdated: null,
     };
-
-    this.imageHeader = require('../../assets/icons/book-keyboard.png');
   };
 
   async componentWillMount(){
@@ -173,57 +268,9 @@ export class ResourcesScreen extends React.Component {
   };
 
   _renderHeader = () => {
-    const { styles } = ResourcesScreen;
     const { resources, lastUpdated } = this.state;
-    
-    const time  = lastUpdated * 1000;
-    const count = resources.length || '--';
-
-    const animation = Platform.select({
-      ios    : 'fadeInUp',
-      android: 'zoomIn'  ,
-    });
-
-    const Time = (props) => (lastUpdated?
-      <TimeAgo {...props} {...{time}}/> :
-      <Text    {...props}>
-        {'--:--'}
-      </Text>
-    );
-
     return(
-      <Animatable.View
-        duration={500}
-        easing={'ease-in-out'}
-        useNativeDriver={true}
-        {...{animation}}
-      >
-        <Card style={styles.card}>
-          <Animatable.Image
-            source={this.imageHeader}
-            style={styles.image}
-            animation={'pulse'}
-            easing={'ease-in-out'}
-            iterationCount={"infinite"}
-            duration={5000}
-            useNativeDriver={true}
-          />
-          <View style={styles.headerTextContainer}>
-            <Text style={styles.headerTitle   }>Study Resources</Text>
-            <Text style={styles.headerSubtitle}>A list of resources to help you learn more about a topic!</Text>
-            <View style={{flexDirection: 'row', marginTop: 5}}>
-              <View style={{flex: 1}}>
-                <Text numberOfLines={1} style={styles.detailTitle   }>{'Resources: '}</Text>
-                <Text numberOfLines={1} style={styles.detailSubtitle}>{`${count} ${plural('item', count)}`}</Text>
-              </View>
-              <View style={{flex: 1}}>
-                <Text numberOfLines={1} style={styles.detailTitle   }>{'Updated: '}</Text>
-                <Time numberOfLines={1} style={styles.detailSubtitle}/>              
-              </View>
-            </View>
-          </View>
-        </Card>
-      </Animatable.View>
+      <HeaderCard {...{ resources, lastUpdated}}/>
     );
   };
 
@@ -246,15 +293,13 @@ export class ResourcesScreen extends React.Component {
           //adjust top distance
           contentInset ={{top: offset}}
           contentOffset={{x: 0, y: -offset}}
-          //extra top distance
-          contentContainerStyle={{ paddingTop: 12 }}
           //callbacks
-          onPress     ={this._handleOnPress     }
+          onPress={this._handleOnPress}
           onEndReached={this._handleOnEndReached}
           //render UI
-          refreshControl     ={this._renderRefreshCotrol()}
-          ListHeaderComponent={this._renderHeader       ()}
-          ListFooterComponent={this._renderFooter       ()}
+          refreshControl={this._renderRefreshCotrol()}
+          ListHeaderComponent={this._renderHeader()}
+          ListFooterComponent={this._renderFooter()}
           //pass down props
           {...{resources}}
         />}

@@ -70,7 +70,7 @@ class ModulesHeader extends React.PureComponent {
       })
     },
     divider: {
-      marginHorizontal: 10,
+      marginHorizontal: 15,
       marginVertical: 8,
     },  
     detailTitle: Platform.select({
