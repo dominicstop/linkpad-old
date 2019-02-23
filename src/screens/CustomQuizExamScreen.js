@@ -48,7 +48,7 @@ class CancelButton extends React.PureComponent {
   };
 
   _renderIOS(){
-    const { styles } = DoneButton;
+    const { styles } = CancelButton;
     
     return(
       <TouchableOpacity 
