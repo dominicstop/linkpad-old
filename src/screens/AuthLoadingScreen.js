@@ -17,7 +17,7 @@ import { ROUTES } from '../Constants';
 
 import UserStore         from '../functions/UserStore'        ;
 import PreboardExamStore from '../functions/PreboardExamStore';
-import { ModulesLastUpdated, ResourcesLastUpdated } from '../functions/MiscStore';
+import { ModulesLastUpdated, ResourcesLastUpdated , TipsLastUpdated} from '../functions/MiscStore';
 import { FlatList } from 'react-native-gesture-handler';
 
 Animatable.initializeRegistryWithDefinitions({
@@ -80,14 +80,16 @@ export default class AuthLoadingScreen extends React.Component {
   async _loadData(){
     try {
       await Promise.all([
-        ModuleStore   .get(),
-        ResourcesStore.get(),
-        TipsStore     .get(),
+        ModuleStore      .get(),
+        TipsStore        .get(),
+        ResourcesStore   .get(),
+        PreboardExamStore.get(),
       ]);
       await Promise.all([
-        PreboardExamStore   .get(),
+        //load lastupdated from store
         ModulesLastUpdated  .read(),
         ResourcesLastUpdated.read(),
+        TipsLastUpdated     .read(),
       ]);
     } catch(error) {
       console.log('Error: Unable to load data.');

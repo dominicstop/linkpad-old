@@ -5,6 +5,7 @@ import store from 'react-native-simple-store';
 import _ from 'lodash';
 
 import { createFolderIfDoesntExist, isBase64Image } from './Utils';
+import { TipModel } from '../models/TipModel';
 
 //temp store tips for caching
 let _tipsData = null;
@@ -95,10 +96,15 @@ export class TipsStore {
   static async read(){
     try {
       //read from store
-      let data = await store.get(TipsStore.KEY);
-      _tipsData = data;
+      const data = await store.get(TipsStore.KEY);
+      
+      //written like this, so that VS code can infer type
+      const tips = [...data].map(tip => new TipModel(tip).get());
 
-      return (data);
+      //update cache var
+      _tipsData = tips;
+      //resolve
+      return (tips);
 
     } catch(error){
       console.log('Failed to read tips from store.');
@@ -138,29 +144,30 @@ export class TipsStore {
     return (_tipsData);
   };
 
-  static async refresh(){
+  static async refresh(status){
+    const { STATUS } = TipsStore;
     let isTipsNew = false;
 
     try {
+      status && status(STATUS.FETCHING);
       //fetch tips from server
       let new_tips = await TipsStore.fetch();
+
       //check for changes
       isTipsNew = _.isEqual(_tipsData, new_tips);
-      
-      //delete previous tips stored
-      TipsStore.delete();
 
+      status && status(STATUS.WRITING);
+      //delete previous tips stored
+      await TipsStore.delete();
       //write tips to storage
       await store.save(TipsStore.KEY, new_tips);
 
       //update global var
       _tipsData = new_tips;
 
+      status && status(STATUS.FINISHED);
       //resolve
-      return ({
-        tips: _tipsData,
-        isTipsNew
-      });
+      return ({tips: _tipsData, isTipsNew});
 
     } catch(error) {
       console.log('Unable to refresh tips.');
@@ -175,6 +182,7 @@ export class TipsStore {
   };
 
   static async delete(){
+    _tipsData = null;
     await store.delete(TipsStore.KEY);
   };
 };

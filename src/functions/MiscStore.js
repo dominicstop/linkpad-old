@@ -83,12 +83,8 @@ export class TipsLastUpdated {
     return timestamp;
   };
 
-  static async get(shouldRefresh = false){
-    if(shouldRefresh || _tipsLastUpdated == null){
-      let timestamp = await TipsLastUpdated.read();
-      _tipsLastUpdated = timestamp;
-    };
-
+  /** return timestamp from cache */
+  static get(shouldRefresh = false){
     return _tipsLastUpdated;
   };
 };

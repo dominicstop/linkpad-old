@@ -10,16 +10,165 @@ import { DrawerButton          } from '../components/Buttons';
 
 import { timeout, setStateAsync, plural } from '../functions/Utils';
 import { TipsStore } from '../functions/TipsStore';
+import { TipsLastUpdated } from '../functions/MiscStore';
 
 import { ViewWithBlurredHeader, IconFooter, Card } from '../components/Views';
 
-import { Header, createStackNavigator, NavigationEvents } from 'react-navigation';
-import { Icon } from 'react-native-elements';
-import * as Animatable from 'react-native-animatable';
 import _ from 'lodash';
+import * as Animatable from 'react-native-animatable';
 import TimeAgo from 'react-native-timeago';
-import { TipsLastUpdated } from '../functions/MiscStore';
+import { Header, NavigationEvents } from 'react-navigation';
+import { Divider } from 'react-native-elements';
 
+class HeaderCard extends React.PureComponent {
+  static propTypes = {
+    tips: PropTypes.array,
+    lastUpdated: PropTypes.number,
+  };
+
+  static styles = {
+    card: {
+      flex: 1,
+      flexDirection: 'row',
+      marginTop: 0,
+      marginBottom: 15,
+      marginHorizontal: 0,
+      paddingTop: 15,
+      paddingHorizontal: 12,
+      paddingBottom: 16,
+      backgroundColor: 'white',
+      shadowColor: 'black',
+      elevation: 10,
+      shadowRadius: 4,
+      shadowOpacity: 0.4,
+      shadowOffset:{
+        width: 2,  
+        height: 3,  
+      },
+    },
+    image: {
+      width: 75, 
+      height: 75,
+      marginRight: 12,
+      marginVertical: 12,
+    },
+    headerTextContainer: {
+      flex: 1, 
+      justifyContent: 'center', 
+    },
+    headerTitle: {
+      textAlign: 'center',      
+      color: '#512DA8',
+      fontSize: 20, 
+      fontWeight: '800'
+    },
+    divider: {
+      marginHorizontal: 15,
+      marginVertical: 8,
+    },
+    headerSubtitle: {
+      fontSize: 16, 
+      ...Platform.select({
+        ios: {
+          fontWeight: '200'
+        },
+        android: {
+          fontWeight: '100',
+          color: '#424242'
+        },
+      })
+    },
+    detailTitle: Platform.select({
+      ios: {
+        fontSize: 17,
+        fontWeight: '500'
+      },
+      android: {
+        fontSize: 17,
+        fontWeight: '900'
+      }
+    }),
+    detailSubtitle: Platform.select({
+      ios: {
+        fontSize: 16,
+        fontWeight: '200'
+      },
+      android: {
+        fontSize: 16,
+        fontWeight: '100',
+        color: '#424242'
+      },
+    }),
+  };
+
+  constructor(props){
+    super(props);
+    this.imageHeader = require('../../assets/icons/lightbulb.png');
+  };
+
+  _renderDetails(){
+    const { styles } = HeaderCard;
+    const { tips, lastUpdated } = this.props;
+    
+    const time  = lastUpdated * 1000;
+    const count = tips.length || '--';
+
+    const Time = (props) => (lastUpdated?
+      <TimeAgo {...props} {...{time}}/> :
+      <Text    {...props}>
+        {'--:--'}
+      </Text>
+    );
+
+    return(
+      <View style={{flexDirection: 'row'}}>
+        <View style={{flex: 1}}>
+          <Text numberOfLines={1} style={styles.detailTitle   }>{'Resources: '}</Text>
+          <Text numberOfLines={1} style={styles.detailSubtitle}>{`${count} ${plural('item', count)}`}</Text>
+        </View>
+        <View style={{flex: 1}}>
+          <Text numberOfLines={1} style={styles.detailTitle   }>{'Updated: '}</Text>
+          <Time numberOfLines={1} style={styles.detailSubtitle}/>              
+        </View>
+      </View>
+    );
+  };
+
+  render(){
+    const { styles } = HeaderCard;
+
+    const animation = Platform.select({
+      ios    : 'fadeInUp',
+      android: 'zoomIn'  ,
+    });
+
+    return(
+      <Animatable.View
+        style={styles.card}
+        duration={500}
+        easing={'ease-in-out'}
+        useNativeDriver={true}
+        {...{animation}}
+      >
+        <Animatable.Image
+          source={this.imageHeader}
+          style={styles.image}
+          animation={'pulse'}
+          easing={'ease-in-out'}
+          iterationCount={"infinite"}
+          duration={5000}
+          useNativeDriver={true}
+        />
+        <View style={styles.headerTextContainer}>
+          <Text style={styles.headerTitle   }>Useful Tips</Text>
+          <Text style={styles.headerSubtitle}>A bunch of tips to help you in study and do better!</Text>
+          <Divider style={styles.divider}/>
+          {this._renderDetails()}
+        </View>
+      </Animatable.View>
+    );
+  };
+};
 
 //show the setting screen
 export class TipsScreen extends React.Component {
@@ -81,27 +230,25 @@ export class TipsScreen extends React.Component {
 
   constructor(props){
     super(props);
+
+    const lastUpdated = TipsLastUpdated.get();
     this.state = {
       tips: [],
       refreshing: false,
       showContent: false,
-      lastUpdated: null,
+      lastUpdated,
     };
-
-    this.imageHeader = require('../../assets/icons/lightbulb.png');
   };
 
   async componentWillMount(){
     //load data from storage
-    const tips        = await TipsStore      .get();
-    const lastUpdated = await TipsLastUpdated.get();
-
-    await setStateAsync(this, {tips, lastUpdated});
-  }
+    const tips = await TipsStore.get();
+    await setStateAsync(this, {tips});
+  };
 
   shouldComponentUpdate(nextProps, nextState){
     return !_.isEqual(this.state, nextState)
-  }
+  };
 
   componentDidFocus = () => {
     //mount or show contents on first show
@@ -154,57 +301,9 @@ export class TipsScreen extends React.Component {
   };
 
   _renderHeader = () => {
-    const { styles } = TipsScreen;
     const { tips, lastUpdated } = this.state;
-    
-    const time  = lastUpdated * 1000;
-    const count = tips.length || '--';
-
-    const animation = Platform.select({
-      ios    : 'fadeInUp',
-      android: 'zoomIn'  ,
-    });
-
-    const Time = (props) => (lastUpdated?
-      <TimeAgo {...props} {...{time}}/> :
-      <Text    {...props}>
-        {'--:--'}
-      </Text>
-    );
-
     return(
-      <Animatable.View
-        duration={500}
-        easing={'ease-in-out'}
-        useNativeDriver={true}
-        {...{animation}}
-      >
-        <Card style={styles.card}>
-          <Animatable.Image
-            source={this.imageHeader}
-            style={styles.image}
-            animation={'pulse'}
-            easing={'ease-in-out'}
-            iterationCount={"infinite"}
-            duration={5000}
-            useNativeDriver={true}
-          />
-          <View style={styles.headerTextContainer}>
-            <Text style={styles.headerTitle   }>Useful Tips</Text>
-            <Text style={styles.headerSubtitle}>A bunch of tips to help you in study and do better!</Text>
-            <View style={{flexDirection: 'row', marginTop: 5}}>
-              <View style={{flex: 1}}>
-                <Text numberOfLines={1} style={styles.detailTitle   }>{'Resources: '}</Text>
-                <Text numberOfLines={1} style={styles.detailSubtitle}>{`${count} ${plural('item', count)}`}</Text>
-              </View>
-              <View style={{flex: 1}}>
-                <Text numberOfLines={1} style={styles.detailTitle   }>{'Updated: '}</Text>
-                <Time numberOfLines={1} style={styles.detailSubtitle}/>              
-              </View>
-            </View>
-          </View>
-        </Card>
-      </Animatable.View>
+      <HeaderCard {...{tips, lastUpdated}}/>
     );
   };
 
@@ -217,34 +316,31 @@ export class TipsScreen extends React.Component {
   };
 
   render(){
-    const { tips } = this.state;
+    const { tips, showContent } = this.state;
     const offset = Header.HEIGHT;
     
     const onEndReachedThreshold = Platform.select({
-      ios    : 0  ,
-      android: 0.1,
+      ios: 0, android: 0.1,
     });
 
     return(
       <ViewWithBlurredHeader hasTabBar={true} enableAndroid={false}>
         <NavigationEvents onDidFocus={this.componentDidFocus}/>
-        {this.state.showContent && <TipList
+        {showContent && <TipList
           //adjust top distance
           contentInset ={{top: offset}}
           contentOffset={{x: 0, y: -offset}}
-          //extra top distance
-          contentContainerStyle={{ paddingTop: 12 }}
           //callbacks
           onEndReached={this._handleOnEndReached}
           //render UI
-          refreshControl     ={this._renderRefreshCotrol()}
-          ListHeaderComponent={this._renderHeader       ()}
-          ListFooterComponent={this._renderFooter       ()}
+          refreshControl={this._renderRefreshCotrol()}
+          ListHeaderComponent={this._renderHeader()}
+          ListFooterComponent={this._renderFooter()}
           //pass down props
           {...{tips, onEndReachedThreshold}}
         />}
       </ViewWithBlurredHeader>
     );
   }
-}
+};
 
