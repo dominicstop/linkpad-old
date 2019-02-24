@@ -312,13 +312,13 @@ export class TipsScreen extends React.Component {
   };
 
   _renderRefreshCotrol(){
-    const { refreshing } = this.state;
-    const prefix = refreshing? 'Checking' : 'Pull down to check';
+    const { refreshing, refreshControlTitle } = this.state;
+    const title = refreshing? refreshControlTitle : 'Pull down to check for changes...';
+
     return(
       <RefreshControl 
-        refreshing={this.state.refreshing} 
         onRefresh={this._onRefresh}
-        title={prefix + ' for changes...'}
+        {...{title, refreshing}}
       />
     );
   };

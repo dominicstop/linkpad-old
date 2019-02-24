@@ -275,14 +275,12 @@ export class ResourcesScreen extends React.Component {
 
   _renderRefreshCotrol(){
     const { refreshing, refreshControlTitle } = this.state;
-
     const title = refreshing? refreshControlTitle : 'Pull down to check for changes...';
 
     return(
       <RefreshControl 
-        refreshing={this.state.refreshing} 
         onRefresh={this._onRefresh}
-        {...{title}}
+        {...{title, refreshing}}
       />
     );
   };
