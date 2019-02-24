@@ -188,6 +188,7 @@ export class ResourcesStore {
   };
 
   static async delete(){
+    _resourcesData = null;
     await store.delete(ResourcesStore.KEY);
   };
 };

@@ -16,7 +16,7 @@ import { ResourceModel } from '../models/ResourceModel';
 
 import { Divider } from 'react-native-elements';
 import { BLUE , GREY, PURPLE} from '../Colors';
-import {STYLES} from '../Constants';
+import {STYLES, ROUTES} from '../Constants';
 
 const ViewResourceHeader = (props) => <CustomHeader {...props}/>
 
@@ -24,14 +24,17 @@ class ImageCard extends React.PureComponent {
   static propTypes = {
     fileURI: PropTypes.string,
     onLoadEnd: PropTypes.func,
+    onPressImage: PropTypes.func,
   };
 
   static styles = StyleSheet.create({
-    card: { 
+    card: {
       marginHorizontal: 12, 
-      marginBottom: 12, 
+      marginBottom: 12,
+      elevation: 7,
     },
     cardContainer: {
+      flex: 1,
       overflow: 'hidden',
       backgroundColor: 'white',
       borderRadius: 10,
@@ -102,6 +105,12 @@ class ImageCard extends React.PureComponent {
   _handleOnLoadEnd = () => {
     const { onLoadEnd } = this.props;
     onLoadEnd && onLoadEnd();
+  };
+
+  _handleImageOnPress = () => {
+    const { uri } = this.state;
+    const { onPressImage } = this.props;
+    onPressImage && onPressImage({imageBase64: uri});
   };
 
   _renderTitle(){
@@ -251,6 +260,11 @@ export default class ViewResourceScreen extends React.Component {
     this.setState({mountFooter: true});
   };
 
+  _handleOnPressImage = ({imageBase64}) => {
+    const { navigation } = this.props;
+    navigation && navigation.navigate(ROUTES.ViewImageRoute, {imageBase64});
+  };
+
   _renderHeader(){
     const { styles } = ViewResourceScreen;
     const { resource } = this.state;
@@ -321,6 +335,7 @@ export default class ViewResourceScreen extends React.Component {
       <ImageCard 
         fileURI={model.photouri}
         onLoadEnd={this._handleOnLoadEnd}
+        onPressImage={this._handleOnPressImage}
       />
     );
   };

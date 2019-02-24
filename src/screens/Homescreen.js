@@ -1,10 +1,12 @@
 import React, { Fragment } from 'react';
-import { View, Platform, Text, StyleSheet, Clipboard } from 'react-native';
+import { View, Platform, StyleSheet } from 'react-native';
 
 import Constants, { STYLES, ROUTES } from '../Constants';
-import { CustomHeader } from '../components/Header' ;
+import { CustomHeader  } from '../components/Header' ;
+import { AndroidHeader } from '../components/AndroidHeader';
 
 import { SubjectModal     } from '../components/SwipableModal';
+import { DrawerButton     } from '../components/Buttons';
 import { CreateQuizModal  } from '../modals/CreateQuizModal';
 import { QuizDetailsModal } from '../modals/QuizDetailsModal';
 import { QuizFinishModal  } from '../modals/QuizFinishModal';
@@ -13,22 +15,20 @@ import { ModuleListScreen } from './ModuleListScreen';
 import { ResourcesScreen  } from './ResourcesScreen';
 import { ExamsScreen      } from './ExamsScreen';
 import { TipsScreen       } from './TipsScreen';
-import { DrawerButton     } from '../components/Buttons';
 import { CreateQuizScreen } from './CreateQuizScreen';
+import { ViewImageScreen  } from './ViewImageScreen';
 
+import ViewResourceScreen from './ViewResource';
 import SubjectListScreen from './SubjectListScreen';
 
-import { createBottomTabNavigator, createStackNavigator, Header } from 'react-navigation';
-import { createMaterialBottomTabNavigator } from 'react-navigation-material-bottom-tabs';
 import * as Animatable from 'react-native-animatable';
+import { createBottomTabNavigator, createStackNavigator } from 'react-navigation';
+import { createMaterialBottomTabNavigator } from 'react-navigation-material-bottom-tabs';
 import { Icon } from 'react-native-elements';
 import { LinearGradient } from 'expo';
-import { IconText } from '../components/Views';
-import { AndroidHeader } from '../components/AndroidHeader';
-import ViewResourceScreen from './ViewResource';
 
 /**
- * each tab has a shared header because tabnav it is wrapped inside a stack
+ * each tab has a shared header because tabnav is wrapped inside a stack
  * and is overriden manually when changing tabs
  */
 const routeConfig = {
@@ -215,6 +215,7 @@ export const TabNavigationStack = createStackNavigator({
     [ROUTES.SubjectListRoute  ]: SubjectListScreen,
     [ROUTES.ViewResourceRoute ]: ViewResourceScreen,
     [ROUTES.CreateQuizRoute   ]: CreateQuizScreen,
+    [ROUTES.ViewImageRoute    ]: ViewImageScreen,    
   }, Platform.select({
     ios: {
       navigationOptions: Constants.HEADER_PROPS, 
