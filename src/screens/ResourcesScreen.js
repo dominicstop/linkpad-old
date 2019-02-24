@@ -215,7 +215,7 @@ export class ResourcesScreen extends React.Component {
     const { STATUS } = ResourcesStore;
     switch (status) {
       case STATUS.FETCHING: return 'Fetching Resources from Server...';
-      case STATUS.SAVING_IMAGES: return 'Saving Resources to Device...';
+      case STATUS.WRITING : return 'Saving Resources to Device...';
       case STATUS.FINISHED: return 'Refresh finished.';
     };
   };

@@ -157,7 +157,7 @@ export class ResourcesStore {
       //check for changes
       isResourcesNew = !_.isEqual(_resourcesData, new_resources);
       
-      status && status(STATUS.SAVING_IMAGES);
+      status && status(STATUS.WRITING);
       //delete previous resources stored
       await ResourcesStore.delete();
 

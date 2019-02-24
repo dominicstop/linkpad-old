@@ -205,9 +205,9 @@ export class TipsScreen extends React.Component {
   _getStatusText(status){
     const { STATUS } = TipsStore;
     switch (status) {
-      case STATUS.FETCHING     : return 'Fetching Tips from Server...';
-      case STATUS.SAVING_IMAGES: return 'Saving Tips to Device...';
-      case STATUS.FINISHED     : return 'Refresh has finished.';
+      case STATUS.FETCHING: return 'Fetching Tips from Server...';
+      case STATUS.WRITING : return 'Saving Tips to Device...';
+      case STATUS.FINISHED: return 'Refresh has finished.';
     };
   };
 

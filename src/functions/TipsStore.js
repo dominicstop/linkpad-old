@@ -163,13 +163,12 @@ export class TipsStore {
       //check for changes
       isTipsNew = !_.isEqual(_tipsData, new_tips);
 
-      status && status(STATUS.SAVING_IMAGES);
+      status && status(STATUS.WRITING);
       //save base64 images to fs
       const tips_processed = await _saveBase64ToStorage(new_tips);
       //wrap in tipmodel for vscode autocomplete
       const tips_wrapped = tips_processed.map(tip => new TipModel(tip).get());
       
-      status && status(STATUS.WRITING);
       //delete previous tips stored
       await TipsStore.delete();
       //write tips to storage
