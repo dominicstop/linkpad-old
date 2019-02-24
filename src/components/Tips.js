@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, FlatList } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, FlatList, Platform } from 'react-native';
 import PropTypes from 'prop-types';
 
 import { BLUE, PURPLE } from '../Colors';
@@ -97,12 +97,16 @@ export class TipList extends React.PureComponent {
   };
 
   _renderItemTip = ({item, index}) => {
+
+    const animation = Platform.select({ios: 'fadeInUp', android: 'zoomIn'});
+
     return(
       <AnimatedListItem
         index={index}
         duration={500}
         multiplier={100}
         last={6}
+        {...{animation}}
       >
         <TipItem 
           tip={item}
