@@ -224,7 +224,7 @@ export class ResourcesScreen extends React.Component {
     const refreshControlTitle = this._getStatusText(status);
 
     if(Platform.OS === 'android'){
-      ToastAndroid.showWithGravity(refreshControlTitle, ToastAndroid.SHORT, ToastAndroid.BOTTOM, 0, 125);
+      ToastAndroid.showWithGravityAndOffset(refreshControlTitle, ToastAndroid.SHORT, ToastAndroid.BOTTOM, 0, 125);
     } else {
       this.setState({refreshControlTitle});
     };
