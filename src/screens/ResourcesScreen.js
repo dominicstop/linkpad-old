@@ -214,7 +214,7 @@ export class ResourcesScreen extends React.Component {
   _getStatusText(status){
     const { STATUS } = ResourcesStore;
     switch (status) {
-      case STATUS.FETCHING: return 'Fetching resources from server...';
+      case STATUS.FETCHING: return 'Fetching resources...';
       case STATUS.SAVING_IMAGES: return 'Saving resources...';
       case STATUS.FINISHED: return 'Refresh finished.';
     };
@@ -222,13 +222,12 @@ export class ResourcesScreen extends React.Component {
 
   _onRefreshStateChange = (status) => {
     const refreshControlTitle = this._getStatusText(status);
-    ToastAndroid.showWithGravityAndOffset(
-      refreshControlTitle,
-      ToastAndroid.SHORT,
-      ToastAndroid.BOTTOM,
-      0, 125,
-    );
-    this.setState({refreshControlTitle});
+
+    if(Platform.OS === 'android'){
+      ToastAndroid.showWithGravity(refreshControlTitle, ToastAndroid.SHORT, ToastAndroid.BOTTOM, 0, 125);
+    } else {
+      this.setState({refreshControlTitle});
+    };
   };
 
   _onRefresh = async () => {

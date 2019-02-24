@@ -23,10 +23,11 @@ export const ROUTES = {
   TabResourcesRoute : 'TabResourcesRoute' ,
   TabTipsRoute      : 'TabTipsRoute'      ,
   //tabstack routes
-  HomeTabRoute: 'HomeTabRoute',
-  SubjectListRoute: 'SubjectListRoute',
+  HomeTabRoute     : 'HomeTabRoute'     ,
+  SubjectListRoute : 'SubjectListRoute' ,
   ViewResourceRoute: 'ViewResourceRoute',
-  CreateQuizRoute: 'CreateQuizRoute',
+  ViewTipRoute     : 'ViewTipRoute'     ,
+  CreateQuizRoute  : 'CreateQuizRoute'  ,
 };
 
 

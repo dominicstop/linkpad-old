@@ -97,7 +97,7 @@ export class TipsStore {
     try {
       //read from store
       const data = await store.get(TipsStore.KEY);
-      
+
       //written like this, so that VS code can infer type
       const tips = [...data].map(tip => new TipModel(tip).get());
 
@@ -151,23 +151,29 @@ export class TipsStore {
     try {
       status && status(STATUS.FETCHING);
       //fetch tips from server
-      let new_tips = await TipsStore.fetch();
+      const new_tips = await TipsStore.fetch();
 
       //check for changes
-      isTipsNew = _.isEqual(_tipsData, new_tips);
+      isTipsNew = !_.isEqual(_tipsData, new_tips);
 
+      status && status(STATUS.SAVING_IMAGES);
+      //save base64 images to fs
+      const tips_processed = await _saveBase64ToStorage(new_tips);
+      //wrap in tipmodel for vscode autocomplete
+      const tips_wrapped = tips_processed.map(tip => new TipModel(tip).get());
+      
       status && status(STATUS.WRITING);
       //delete previous tips stored
       await TipsStore.delete();
       //write tips to storage
-      await store.save(TipsStore.KEY, new_tips);
+      await store.save(TipsStore.KEY, tips_wrapped);
 
-      //update global var
-      _tipsData = new_tips;
+      //update cache var
+      _tipsData = tips_wrapped;
 
       status && status(STATUS.FINISHED);
       //resolve
-      return ({tips: _tipsData, isTipsNew});
+      return ({tips: tips_wrapped, isTipsNew});
 
     } catch(error) {
       console.log('Unable to refresh tips.');

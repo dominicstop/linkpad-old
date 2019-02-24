@@ -1,12 +1,9 @@
 import React from 'react';
-import { StyleSheet, RefreshControl, Alert, View, Text, AsyncStorage, FlatList, Platform } from 'react-native';
+import { StyleSheet, RefreshControl, Alert, View, Text, Platform, ToastAndroid } from 'react-native';
 import PropTypes from 'prop-types';
 
-import   NavigationService       from '../NavigationService' ;
-import { HEADER_PROPS          } from '../Constants'         ;
-import { CustomHeader          } from '../components/Header' ;
-import { TipList               } from '../components/Tips'   ;
-import { DrawerButton          } from '../components/Buttons';
+import { ROUTES } from '../Constants';
+import { TipList } from '../components/Tips';
 
 import { timeout, setStateAsync, plural } from '../functions/Utils';
 import { TipsStore } from '../functions/TipsStore';
@@ -236,6 +233,7 @@ export class TipsScreen extends React.Component {
       tips: [],
       refreshing: false,
       showContent: false,
+      refreshControlTitle: '',
       lastUpdated,
     };
   };
@@ -257,13 +255,32 @@ export class TipsScreen extends React.Component {
     };
   };
 
+  _getStatusText(status){
+    const { STATUS } = TipsStore;
+    switch (status) {
+      case STATUS.FETCHING     : return 'Fetching tips...';
+      case STATUS.SAVING_IMAGES: return 'Saving tips...';
+      case STATUS.FINISHED     : return 'Refresh finished.';
+    };
+  };
+
+  _onRefreshStateChange = (status) => {
+    const refreshControlTitle = this._getStatusText(status);
+    
+    if(Platform.OS === 'android'){
+      ToastAndroid.showWithGravity(refreshControlTitle, ToastAndroid.SHORT, ToastAndroid.BOTTOM, 0, 125);
+    } else {
+      this.setState({refreshControlTitle});
+    };
+  };
+
   _onRefresh = async () => {
     //set ui to refrshing
     await setStateAsync(this, {refreshing: true });
 
     try {
       //get tips
-      const {tips, isTipsNew} = await TipsStore.refresh();
+      const {tips, isTipsNew} = await TipsStore.refresh(this._onRefreshStateChange);
       
       if(isTipsNew){
         //show alert when there are no changes
@@ -272,20 +289,26 @@ export class TipsScreen extends React.Component {
 
       //set date last updated
       const lastUpdated = await TipsLastUpdated.setTimestamp();
-
       this.setState({refreshing: false, tips, lastUpdated});
 
     } catch(error){
+      console.log('Unable to refresh tips...');
+      console.log(error);
+
       //avoid flicker
       await timeout(750);
-
       Alert.alert('Error', 'Unable to fetch new tips (Please try again)');
       this.setState({refreshing: false});
-    }
+    };
   };
   
   _handleOnEndReached = () => {
     this.footer.show();
+  };
+
+  _handleOnPressTip = ({tip, tips, index}) => {
+    const { navigation } = this.props;
+    navigation && navigation.navigate(ROUTES.ViewTipRoute, {tip, tips, index});
   };
 
   _renderRefreshCotrol(){
@@ -332,6 +355,7 @@ export class TipsScreen extends React.Component {
           contentOffset={{x: 0, y: -offset}}
           //callbacks
           onEndReached={this._handleOnEndReached}
+          onPressTip={this._handleOnPressTip}
           //render UI
           refreshControl={this._renderRefreshCotrol()}
           ListHeaderComponent={this._renderHeader()}

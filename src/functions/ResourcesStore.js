@@ -178,7 +178,8 @@ export class ResourcesStore {
       });
 
     } catch(error) {
-      console.error('Unable to refresh resources.');
+      console.log('Unable to refresh resources.');
+      console.log(error);
       throw error;
     };
   };

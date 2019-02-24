@@ -18,8 +18,9 @@ import { TipsScreen       } from './TipsScreen';
 import { CreateQuizScreen } from './CreateQuizScreen';
 import { ViewImageScreen  } from './ViewImageScreen';
 
+import ViewTipScreen      from './ViewTipScreen';
 import ViewResourceScreen from './ViewResource';
-import SubjectListScreen from './SubjectListScreen';
+import SubjectListScreen  from './SubjectListScreen';
 
 import * as Animatable from 'react-native-animatable';
 import { createBottomTabNavigator, createStackNavigator } from 'react-navigation';
@@ -211,11 +212,12 @@ const TabNavigation = Platform.select({
 
 //shared header for each stack
 export const TabNavigationStack = createStackNavigator({
-    [ROUTES.HomeTabRoute      ]: TabNavigation,
-    [ROUTES.SubjectListRoute  ]: SubjectListScreen,
-    [ROUTES.ViewResourceRoute ]: ViewResourceScreen,
-    [ROUTES.CreateQuizRoute   ]: CreateQuizScreen,
-    [ROUTES.ViewImageRoute    ]: ViewImageScreen,    
+    [ROUTES.HomeTabRoute     ]: TabNavigation,
+    [ROUTES.SubjectListRoute ]: SubjectListScreen,
+    [ROUTES.CreateQuizRoute  ]: CreateQuizScreen,
+    [ROUTES.ViewResourceRoute]: ViewResourceScreen,
+    [ROUTES.ViewImageRoute   ]: ViewImageScreen,
+    [ROUTES.ViewTipRoute     ]: ViewTipScreen, 
   }, Platform.select({
     ios: {
       navigationOptions: Constants.HEADER_PROPS, 

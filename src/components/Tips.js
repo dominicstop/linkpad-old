@@ -15,6 +15,7 @@ class TipItem extends React.PureComponent {
   static propTypes = {
     tip: PropTypes.object,
     onPress: PropTypes.func,
+    index: PropTypes.number,
   };
 
   static styles = StyleSheet.create({
@@ -50,8 +51,8 @@ class TipItem extends React.PureComponent {
   };
 
   _handleOnPress = () => {
-    const { onPress, tip } = this.props;
-    onPress && onPress(tip);
+    const { onPress, tip, index } = this.props;
+    onPress && onPress({tip, index});
   };
 
   render(){
@@ -83,10 +84,16 @@ class TipItem extends React.PureComponent {
 export class TipList extends React.PureComponent {
   static propTypes = {
     tips: PropTypes.array,
+    onPressTip:PropTypes.func,
   };
 
   _handleKeyExtractor = (item) => {
     return `tipno:${item.tipnumber}-indexid:${item.indexid}`;
+  };
+
+  _handleOnPressTip = ({tip, index}) => {
+    const { tips, onPressTip } = this.props;
+    onPressTip && onPressTip({tip, tips, index});
   };
 
   _renderItemTip = ({item, index}) => {
@@ -100,6 +107,7 @@ export class TipList extends React.PureComponent {
         <TipItem 
           tip={item}
           onPress={this._handleOnPressTip}
+          {...{index}}
         />
       </AnimatedListItem>
     );
