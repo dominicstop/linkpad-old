@@ -25,7 +25,7 @@ export class ModulesLastUpdated {
     return timestamp;
   };
 
-  static get(shouldRefresh = false){
+  static get(){
     return _modulesLastUpdated;
   };
 };
@@ -54,12 +54,7 @@ export class ResourcesLastUpdated {
     return timestamp;
   };
 
-  static async get(shouldRefresh = false){
-    if(shouldRefresh || _resourcesLastUpdated == null){
-      let timestamp = await ResourcesLastUpdated.read();
-      _resourcesLastUpdated = timestamp;
-    };
-
+  static get(){
     return _resourcesLastUpdated;
   };
 };

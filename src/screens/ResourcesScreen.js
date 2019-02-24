@@ -175,26 +175,24 @@ class HeaderCard extends React.PureComponent {
 export class ResourcesScreen extends React.Component {
   constructor(props){
     super(props);
-    this.DEBUG = false;
+
+    const lastUpdated = ResourcesLastUpdated.get();
+    console.log(lastUpdated);
+
     this.state = {
       resources: [],
       refreshing: false,
       refreshControlTitle: '',
       showContent: false,
       mount: false,
-      lastUpdated: null,
+      lastUpdated
     };
   };
 
   async componentWillMount(){
     //load data from storage
-    const resources   = await ResourcesStore      .get();
-    const lastUpdated = await ResourcesLastUpdated.get();
-
-    console.log('lastUpdated');
-    console.log(lastUpdated);
-
-    this.setState({resources, lastUpdated});
+    const resources = await ResourcesStore.get();
+    this.setState({resources});
   };
 
   componentDidMount = async () => {
