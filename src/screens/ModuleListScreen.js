@@ -181,12 +181,14 @@ export class ModuleListScreen extends React.Component {
   constructor(props){
     super(props);
 
+    const lastUpdated = ModulesLastUpdated.get();
+
     this.state = {
       modules: [], 
       refreshing: false,
       mount: false,
       mountFooter: false,
-      lastUpdated: null,
+      lastUpdated,
     };
   };
 

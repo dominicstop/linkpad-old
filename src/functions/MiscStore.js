@@ -25,12 +25,7 @@ export class ModulesLastUpdated {
     return timestamp;
   };
 
-  static async get(shouldRefresh = false){
-    if(shouldRefresh || _modulesLastUpdated == null){
-      let timestamp = await ModulesLastUpdated.read();
-      _modulesLastUpdated = timestamp;
-    };
-
+  static get(shouldRefresh = false){
     return _modulesLastUpdated;
   };
 };

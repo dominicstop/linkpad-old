@@ -12,6 +12,7 @@ import { ModuleStore    } from '../functions/ModuleStore';
 import { ResourcesStore } from '../functions/ResourcesStore';
 
 import UserStore from '../functions/UserStore';
+import { ModulesLastUpdated, ResourcesLastUpdated, TipsLastUpdated } from '../functions/MiscStore';
 
 import _ from 'lodash';
 import { BlurView } from 'expo';
@@ -19,6 +20,7 @@ import { Header, NavigationEvents } from 'react-navigation';
 import * as Animatable from 'react-native-animatable';
 import { Icon } from 'react-native-elements';
 import store from 'react-native-simple-store';
+import { ROUTES } from '../Constants';
 
 //enable layout animation
 UIManager.setLayoutAnimationEnabledExperimental && UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -141,19 +143,27 @@ export class LoginContainer extends React.Component {
 
       //wait for animation and fetch to finish
       await Promise.all([
-        TipsStore     .get(),
-        ModuleStore   .get(),
+        TipsStore.get(),
+        ModuleStore.get(),
         ResourcesStore.get(),
         onLoginFetching(),
+      ]);
+
+      //set update timestamps
+      await Promise.all([
+        ModulesLastUpdated.setTimestamp(),
+        ResourcesLastUpdated.setTimestamp(),
+        TipsLastUpdated.setTimestamp()
       ]);
 
       //save user data to storage
       UserStore.setUserData(login_response);
       //login finished
       onLoginFinished && await onLoginFinished(login_response);
-      navigation.navigate('AppRoute');
+      navigation.navigate(ROUTES.AppRoute);
 
     } catch(error){
+      console.log(error);
       await onLoginError();
     }
   }

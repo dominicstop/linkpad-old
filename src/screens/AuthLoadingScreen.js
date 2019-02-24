@@ -86,8 +86,8 @@ export default class AuthLoadingScreen extends React.Component {
       ]);
       await Promise.all([
         PreboardExamStore   .get(),
-        ModulesLastUpdated  .get(),
-        ResourcesLastUpdated.get(),
+        ModulesLastUpdated  .read(),
+        ResourcesLastUpdated.read(),
       ]);
     } catch(error) {
       console.log('Error: Unable to load data.');

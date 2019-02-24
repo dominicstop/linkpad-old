@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, RefreshControl, Alert, View, Text, Platform, AsyncStorage, FlatList, ScrollView } from 'react-native';
+import { StyleSheet, RefreshControl, Alert, View, Text, Platform, AsyncStorage, FlatList, ScrollView, ToastAndroid } from 'react-native';
 import PropTypes from 'prop-types';
 
 import   NavigationService       from '../NavigationService'   ;
@@ -224,6 +224,12 @@ export class ResourcesScreen extends React.Component {
 
   _onRefreshStateChange = (status) => {
     const refreshControlTitle = this._getStatusText(status);
+    ToastAndroid.showWithGravityAndOffset(
+      refreshControlTitle,
+      ToastAndroid.SHORT,
+      ToastAndroid.BOTTOM,
+      0, 125,
+    );
     this.setState({refreshControlTitle});
   };
 
@@ -244,7 +250,7 @@ export class ResourcesScreen extends React.Component {
 
       if(isResourcesNew){
         //show alert when there are no changes
-        Alert.alert('Sorry', 'No new resources to show')
+        Alert.alert('Sorry', 'There are no new resources to show.')
       };
 
       this.setState({refreshing: false, resources, lastUpdated});
