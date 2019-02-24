@@ -37,15 +37,22 @@ async function _saveBase64ToStorage(_tips = [tipModel.structure]){
           tip.photouri = img_uri;
 
         } else {
+          //debug
+          console.log('invalid base64 uri');
+          console.log(tip.photouri.slice(0, 15));
+
           //replace with null if invalid uri
           tip.photouri = null;
         };
 
       } catch(error){
-        //replace with null if cannot be saved to fs
-        tip.photouri = null;
-        console.log(`Unable to save image ${photofilename}`); 
+        //debug
+        console.log(`Unable to save image ${photofilename}`);
+        console.log(`photouri: ${tip.photouri.slice(0, 20)}`);
         console.log(error);
+
+        tip.photouri = null;
+        //replace with null if cannot be saved to fs
       };
     };
 

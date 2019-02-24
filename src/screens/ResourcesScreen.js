@@ -214,8 +214,8 @@ export class ResourcesScreen extends React.Component {
   _getStatusText(status){
     const { STATUS } = ResourcesStore;
     switch (status) {
-      case STATUS.FETCHING: return 'Fetching resources...';
-      case STATUS.SAVING_IMAGES: return 'Saving resources...';
+      case STATUS.FETCHING: return 'Fetching Resources from Server...';
+      case STATUS.SAVING_IMAGES: return 'Saving Resources to Device...';
       case STATUS.FINISHED: return 'Refresh finished.';
     };
   };
@@ -247,7 +247,7 @@ export class ResourcesScreen extends React.Component {
 
       if(isResourcesNew){
         //show alert when there are no changes
-        Alert.alert('Sorry', 'There are no new resources to show.')
+        Alert.alert('Sorry...', 'There are no new resources to show.')
       };
 
       this.setState({refreshing: false, resources, lastUpdated});

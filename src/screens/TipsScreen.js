@@ -170,59 +170,6 @@ class HeaderCard extends React.PureComponent {
 //show the setting screen
 export class TipsScreen extends React.Component {
   static styles = StyleSheet.create({
-    card: {
-      flexDirection: 'row',
-      marginBottom: 10,
-    },
-    image: {
-      width: 75, 
-      height: 75,
-      marginRight: 12,
-      marginVertical: 12,
-    },
-    headerTextContainer: {
-      flex: 1, 
-      alignItems: 'center', 
-      justifyContent: 'center', 
-    },
-    headerTitle: {
-      color: '#512DA8',
-      fontSize: 20, 
-      fontWeight: '800'
-    },
-    headerSubtitle: {
-      fontSize: 16, 
-      ...Platform.select({
-        ios: {
-          fontWeight: '200'
-        },
-        android: {
-          fontWeight: '100',
-          color: '#424242'
-        },
-      })
-    },
-    detailTitle: Platform.select({
-      ios: {
-        fontSize: 17,
-        fontWeight: '500'
-      },
-      android: {
-        fontSize: 17,
-        fontWeight: '900'
-      }
-    }),
-    detailSubtitle: Platform.select({
-      ios: {
-        fontSize: 16,
-        fontWeight: '200'
-      },
-      android: {
-        fontSize: 16,
-        fontWeight: '100',
-        color: '#424242'
-      },
-    }),
   });
 
   constructor(props){
@@ -258,9 +205,9 @@ export class TipsScreen extends React.Component {
   _getStatusText(status){
     const { STATUS } = TipsStore;
     switch (status) {
-      case STATUS.FETCHING     : return 'Fetching tips...';
-      case STATUS.SAVING_IMAGES: return 'Saving tips...';
-      case STATUS.FINISHED     : return 'Refresh finished.';
+      case STATUS.FETCHING     : return 'Fetching Tips from Server...';
+      case STATUS.SAVING_IMAGES: return 'Saving Tips to Device...';
+      case STATUS.FINISHED     : return 'Refresh has finished.';
     };
   };
 
@@ -284,7 +231,7 @@ export class TipsScreen extends React.Component {
       
       if(isTipsNew){
         //show alert when there are no changes
-        Alert.alert('Sorry', 'No new tips to show');
+        Alert.alert('Sorry...', 'There are no new tips to show.');
       };
 
       //set date last updated
