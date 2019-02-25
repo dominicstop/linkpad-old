@@ -3,7 +3,7 @@ import { StyleSheet, View, Text, TouchableOpacity, Platform, Animated, TextInput
 import PropTypes from 'prop-types';
 
 import { STYLES } from '../Constants';
-import { PURPLE } from '../Colors';
+import { PURPLE , GREY} from '../Colors';
 
 import { setStateAsync, isEmpty , getTimestamp} from '../functions/Utils';
 
@@ -33,7 +33,7 @@ function addLeadingZero(number){
   return number < 10? `0${number}`: number;
 };
 
-class TimeElasped extends React.Component {
+class TimeElasped extends React.PureComponent {
   static propTypes = {
     startTime: PropTypes.number,
   };
@@ -73,7 +73,7 @@ class TimeElasped extends React.Component {
     const { startTime } = this.props;
     //stop if there's already a timer
     if(this.interval) return;
-    
+
     this.interval = setInterval(() => {
       const time = this.getTimeElapsed();
       this.setState({time});
@@ -104,6 +104,7 @@ class ModalSectionItemQuestion extends React.PureComponent {
     isCorrect: PropTypes.bool,
     index: PropTypes.number,
     currentIndex: PropTypes.number,
+    timestampAnswered: PropTypes.number,
     onPressItem: PropTypes.func,
     isLast: PropTypes.bool,
   };
@@ -134,19 +135,25 @@ class ModalSectionItemQuestion extends React.PureComponent {
       color: PURPLE[1000],
     },
     answerContainer: {
-      flexDirection: 'row'
+      flexDirection: 'row',
+      marginTop: 2,
+      alignItems: 'center',
     },
     answer: {
       flex: 1,
       fontSize: 18,
       fontWeight: '400',
-      marginTop: 2,
       color: 'rgb(50, 50, 50)',
     },
     answerLabel: {
       fontWeight: '600',
       color: PURPLE[1000],
     },
+    answerTime: {
+      fontSize: 16,
+      fontWeight: '100',
+      color: GREY[600]
+    }
   });
 
   _handleOnPress = () => {
@@ -175,7 +182,7 @@ class ModalSectionItemQuestion extends React.PureComponent {
 
   _renderDetails(){
     const { styles } = ModalSectionItemQuestion;
-    const { userAnswer, index, currentIndex } = this.props;
+    const { userAnswer, index, currentIndex, timestampAnswered } = this.props;
 
     const isSelected = (index == currentIndex);
     const answerStyle = {
@@ -184,12 +191,15 @@ class ModalSectionItemQuestion extends React.PureComponent {
       } : null,
     };
 
+    const answerTime = moment(timestampAnswered).format('LTS');
+
     return(
       <View style={styles.answerContainer}>
         <Text style={[styles.answer, answerStyle]} numberOfLines={1}>
           <Text style={styles.answerLabel}>{'Answer: '}</Text>
           {userAnswer}
         </Text>
+        <Text style={styles.answerTime}>{answerTime}</Text>
       </View>
     );
   };
@@ -240,7 +250,7 @@ class ModalSectionItemStats extends React.PureComponent {
     detailTitle: Platform.select({
       ios: {
         fontSize: 17,
-        fontWeight: '500',
+        fontWeight: '600',
         color: PURPLE[1000]
       },
       android: {
@@ -250,11 +260,11 @@ class ModalSectionItemStats extends React.PureComponent {
     }),
     detailSubtitle: Platform.select({
       ios: {
-        fontSize: 20,
+        fontSize: 21,
         fontWeight: '200'
       },
       android: {
-        fontSize: 20,
+        fontSize: 21,
         fontWeight: '100',
         color: '#424242'
       },
@@ -663,13 +673,22 @@ class ModalSectionHeader extends React.PureComponent {
     const { title, description } = this.getHeaderDetails(type);
 
     return(
-      <View style={styles.contentContainer}>
+      <Animatable.View 
+        style={styles.contentContainer}
+        animation={'pulse'}
+        duration={10000}
+        delay={2000}
+        iterationCount={'infinite'}
+        iterationDelay={5000}
+        easing={'ease-in-out'}
+        useNativeDriver={true}
+      >
         {this._renderIcon()}
         <View style={styles.titleContainer}>
           <Text numberOfLines={1} style={styles.headerTitle}>{title}</Text>
           <Text numberOfLines={2} style={styles.headerSubtitle}>{description}</Text>
         </View>
-      </View>
+      </Animatable.View>
     );
   };
 
@@ -893,7 +912,7 @@ class ModalContents extends React.PureComponent {
         />
       );
       default: return null;
-    }
+    };
   };
 
   _renderListFooter = () => {
@@ -984,7 +1003,6 @@ export class QuizExamDoneModal extends React.PureComponent {
 
   openModal = async ({currentIndex, questionList, answers, questions, quiz, startTime}) => {
     //Clipboard.setString(JSON.stringify(answers));
-
     this.setState({mountContent: true, currentIndex, questionList, answers, questions, quiz, startTime});
     this._modal.showModal();
   };
@@ -994,7 +1012,7 @@ export class QuizExamDoneModal extends React.PureComponent {
 
   _handleOnModalHide = () => {
     //reset state
-    this.setState({mountContent: false});
+    this.setState({mountContent: false, });
   };
 
   _handleOnPressQuestionItem = async ({index}) => {

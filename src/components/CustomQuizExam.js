@@ -10,8 +10,10 @@ import { LinearGradient } from 'expo';
 import { Header } from 'react-navigation';
 import { Icon } from 'react-native-elements';
 
-import { getLetter , shuffleArray, setStateAsync, timeout, hexToRgbA} from '../functions/Utils';
+import { getLetter , shuffleArray, setStateAsync, timeout, hexToRgbA, getTimestamp} from '../functions/Utils';
 import { PURPLE } from '../Colors';
+import { QuizAnswer } from '../models/Quiz';
+
 
 class ChoiceItem extends React.PureComponent {
   static propTypes = {
@@ -346,7 +348,7 @@ export class CustomQuizList extends React.Component {
     };
 
     //store user answers
-    this.answers = [];
+    this.answers = QuizAnswer.wrapArray([]);
   };
 
   async addQuestionToList(){
@@ -358,12 +360,14 @@ export class CustomQuizList extends React.Component {
     await setStateAsync(this, {questionList: newQuestionList});
   };
 
+  /** get a copy of all the questions */
   getQuestions = () =>  {
-    return JSON.parse(JSON.stringify(this.questions));
+    return (_.cloneDeep(this.questions));
   };
 
+  /** get a copy of all the current answers */
   getAnswers = () => {
-    return JSON.parse(JSON.stringify(this.answers));
+    return _.cloneDeep(this.answers);
   };
 
   getQuestionList = () => {
@@ -376,20 +380,31 @@ export class CustomQuizList extends React.Component {
   };
 
   addAnswer({question, userAnswer, isCorrect}){
-    const new_answer = {
+    //wrap object for vscode types/autocomplete
+    const new_answer = QuizAnswer.wrap({
       //id used for comparison 
       answerID: `${question.indexID_module}-${question.indexID_subject}-${question.indexID_question}`,
-      //append params
+      timestampAnswered: getTimestamp(true),
+      //append params to object
       question, userAnswer, isCorrect
-    };
+    });
+    
+    //wrap array for vscode autocomplete
+    const answers = QuizAnswer.wrapArray(this.answers);
 
-    //to avoid duplicates, filter out new answer from answers
-    const filtered = this.answers.filter(item => 
-      item.answerID != new_answer.answerID
+    const matchIndex = answers.findIndex(item => 
+      item.answerID == new_answer.answerID
     );
 
-    //update answers
-    this.answers = [...filtered, new_answer];
+    if(matchIndex != -1){
+      //replace existing answer
+      answers[matchIndex] = new_answer;
+      this.answers = answers;
+
+    } else {
+      //append new answer to answers
+      this.answers = [...answers, new_answer]
+    };
   };
 
   _handleOnQuestionPressChoice = async ({prevSelected, choice, answer, isCorrect, question, isLast, index}) => {
@@ -400,11 +415,15 @@ export class CustomQuizList extends React.Component {
 
     } else if(prevSelected == null){
       onNewAnswerSelected && onNewAnswerSelected();
+      console.log('Answer: ' +  choice);
+      
       await Promise.all([
         this.addQuestionToList(),
         timeout(400)
       ]);
       this._carousel.snapToNext();
+    } else {
+      console.log('replace, New Answer Selected: ' +  choice);
     };
 
     this.addAnswer({question, userAnswer: choice, isCorrect});
