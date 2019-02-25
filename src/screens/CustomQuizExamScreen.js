@@ -321,6 +321,8 @@ class CustomQuizExamScreen extends React.Component {
 
   _onPressCancelAlertOK = () => {
     const { navigation } = this.props;
+
+    this.quizExamDoneModal && this.quizExamDoneModal.resetPrevTimestamps();
     navigation.navigate(ROUTES.HomeRoute);
   };
 

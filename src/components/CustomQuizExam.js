@@ -415,15 +415,12 @@ export class CustomQuizList extends React.Component {
 
     } else if(prevSelected == null){
       onNewAnswerSelected && onNewAnswerSelected();
-      console.log('Answer: ' +  choice);
       
       await Promise.all([
         this.addQuestionToList(),
         timeout(400)
       ]);
       this._carousel.snapToNext();
-    } else {
-      console.log('replace, New Answer Selected: ' +  choice);
     };
 
     this.addAnswer({question, userAnswer: choice, isCorrect});

@@ -15,10 +15,11 @@ import _ from 'lodash';
 import moment from "moment";
 import TimeAgo from 'react-native-timeago';
 import { LinearGradient, BlurView, DangerZone } from 'expo';
-import { Icon } from 'react-native-elements';
+import { Icon, Divider } from 'react-native-elements';
 
 import * as _Reanimated from 'react-native-reanimated';
 import * as Animatable from 'react-native-animatable';
+import { QuizAnswer } from '../models/Quiz';
 
 const { Lottie } = DangerZone;
 const { Easing } = _Reanimated;
@@ -29,8 +30,44 @@ const Screen = {
   height: Dimensions.get('window').height,
 };
 
+prevTimestamps = [];
+
 function addLeadingZero(number){
   return number < 10? `0${number}`: number;
+};
+
+function getAverage(nums = []){
+  const numbers = [...nums];
+
+  //remove duplicates
+  const filtered = numbers.filter((number, index, array) => 
+    array.indexOf(number) === index
+  );
+
+  //sort timestamps
+  filtered.sort((a, b) => a - b);
+
+  //subtract diff
+  const diffs = filtered.map((value, index, array) => {
+    //if not last item
+    if(index < array.length - 1){
+      const nextValue = array[index + 1];
+      return Math.abs(value - nextValue);
+    };
+    //remove undefined values
+  }).filter(item => item != undefined);
+
+  const sum = diffs.reduce((acc, value) => acc + value, 0);
+  const avg = Math.floor(sum / diffs.length);
+
+  const min = Math.min(...diffs); 
+  const max = Math.max(...diffs);
+
+  return({ 
+    avg, sum, 
+    min: isFinite(min)? min : null,
+    max: isFinite(max)? max : null, 
+  });
 };
 
 class TimeElasped extends React.PureComponent {
@@ -232,11 +269,13 @@ class ModalSectionItemQuestion extends React.PureComponent {
 class ModalSectionItemStats extends React.PureComponent {
   static propTypes = {
     startTime: PropTypes.number,
+    answers: PropTypes.array,
   };
 
   static styles = StyleSheet.create({
     container: Platform.select({
       ios: {
+        flex: 1,
         paddingHorizontal: 12,
         paddingVertical: 10,
         backgroundColor: 'rgba(245, 245, 245, 0.5)',
@@ -247,6 +286,22 @@ class ModalSectionItemStats extends React.PureComponent {
         paddingBottom: 15,
       }
     }),
+    divider: {
+      height: 1,
+      margin: 10,
+      backgroundColor: 'rgba(0,0,0, 0.12)'
+    },
+    detailsCompContainer: {
+    },
+    title: {
+      fontWeight: '600',
+      fontSize: 18,
+      color: PURPLE[1000],
+    },
+    subtitle: {
+      fontSize: 17,
+      fontWeight: '200'
+    },
     detailTitle: Platform.select({
       ios: {
         fontSize: 17,
@@ -271,7 +326,30 @@ class ModalSectionItemStats extends React.PureComponent {
     }),
   });
 
-  _renderDetails(){
+  constructor(props){
+    super(props);
+
+    const answers = QuizAnswer.wrapArray(props.answers);
+    
+    //extract timestamps
+    const new_timestamps = answers.map(answer => answer.timestampAnswered);
+    const timestamps = [...prevTimestamps, ...new_timestamps];
+
+    //update old timestamps
+    prevTimestamps = [...timestamps];
+
+    //compute avg time to answer
+    const { min, max, avg, sum } = getAverage(timestamps);
+
+    this.state = { 
+      min: min? min / 1000 : null, 
+      max: max? max / 1000 : null, 
+      avg: avg? avg / 1000 : null, 
+      sum: sum? sum / 1000 : null, 
+    };
+  };
+
+  _renderDetailsTime(){
     const { styles } = ModalSectionItemStats;
     const { startTime } = this.props;
 
@@ -290,6 +368,37 @@ class ModalSectionItemStats extends React.PureComponent {
     );
   };
 
+  _renderDetailsComp(){
+    const { styles } = ModalSectionItemStats;
+    const { min, max, avg, sum } = this.state;
+
+    const minText = min? `${min.toFixed(1)} Seconds` : 'N/A';
+    const maxText = max? `${max.toFixed(1)} Seconds` : 'N/A';
+    const avgText = avg? `${avg.toFixed(1)} Seconds` : 'N/A';
+    
+    return(
+      <View style={styles.detailsCompContainer}>
+        <Text style={styles.title}>Time Per Answer</Text>
+        <Text style={styles.subtitle}>Computes the amount of time it took to answer each question.</Text>
+        <View style={{flexDirection: 'row', marginTop: 10}}>
+          <View style={{flex: 1}}>
+            <Text numberOfLines={1} style={styles.detailTitle   }>{'Shortest: '}</Text>
+            <Text numberOfLines={1} style={styles.detailSubtitle}>{minText}</Text>
+          </View>
+          <View style={{flex: 1}}>
+            <Text numberOfLines={1} style={styles.detailTitle   }>{'Longest: '}</Text>
+            <Text numberOfLines={1} style={styles.detailSubtitle}>{maxText}</Text>
+          </View>
+        </View>
+        <View style={{flexDirection: 'row', marginTop: 10}}>
+          <View style={{flex: 1}}>
+            <Text numberOfLines={1} style={styles.detailTitle   }>{'Average: '}</Text>
+            <Text numberOfLines={1} style={styles.detailSubtitle}>{avgText}</Text>
+          </View>
+        </View>
+      </View>
+    );
+  };
 
   render(){
     const { styles } = ModalSectionItemStats;
@@ -299,7 +408,9 @@ class ModalSectionItemStats extends React.PureComponent {
 
     return(
       <View style={styles.container}>
-        {this._renderDetails()}
+        {this._renderDetailsTime()}
+        <View style={styles.divider}/>
+        {this._renderDetailsComp()}
       </View>
     );
   };
@@ -903,7 +1014,7 @@ class ModalContents extends React.PureComponent {
         <ModalSectionItemDetails {...item}/>
       );
       case SECTION_TYPES.STATS: return(
-        <ModalSectionItemStats {...{startTime}}/>
+        <ModalSectionItemStats {...{startTime, answers}}/>
       );
       case SECTION_TYPES.QUESTIONS: return(
         <ModalSectionItemQuestion 
@@ -1005,6 +1116,10 @@ export class QuizExamDoneModal extends React.PureComponent {
     //Clipboard.setString(JSON.stringify(answers));
     this.setState({mountContent: true, currentIndex, questionList, answers, questions, quiz, startTime});
     this._modal.showModal();
+  };
+
+  resetPrevTimestamps = () => {
+    prevTimestamps = [];
   };
 
   _handleOnModalShow = () => {
