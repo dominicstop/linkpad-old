@@ -50,10 +50,11 @@ class ModalSectionItemQuestion extends React.PureComponent {
         borderBottomColor: 'rgba(0, 0, 0, 0.1)', 
       },
       android: {
-        paddingHorizontal: 10,
+        paddingHorizontal: 12,
         paddingVertical: 15,
         backgroundColor: 'white',
-        elevation: 8,
+        borderBottomWidth: 1,
+        borderColor: 'rgb(190,190,190)',
       },
     }),
     question: {
@@ -129,31 +130,9 @@ class ModalSectionItemQuestion extends React.PureComponent {
     const { styles } = ModalSectionItemQuestion;
     const { index, currentIndex, isLast } = this.props;
 
-    const isFirst    = (index == 0);
     const isSelected = (index == currentIndex);
 
-    const RADIUS = 10;
     const containerStyle = {
-      ...Platform.select({ android: {
-        marginHorizontal: 12,
-        borderColor: 'rgb(200, 200, 200)',
-        ...(isFirst && isLast)? {
-          borderRadius: RADIUS,
-          marginBottom: 13,
-          marginTop: 5,
-        } : isFirst? {
-          marginTop: 5,
-          borderTopLeftRadius : RADIUS,
-          borderTopRightRadius: RADIUS,
-        } : isLast? {
-          marginBottom: 13,
-          borderTopWidth: 1,
-          borderBottomLeftRadius : RADIUS,
-          borderBottomRightRadius: RADIUS,
-        } : {
-          borderTopWidth: 1
-        },
-      }}),
       ...isSelected? {
         backgroundColor: PURPLE[100],
       } : null,
@@ -186,12 +165,8 @@ class ModalSectionItemDetails extends React.PureComponent {
       },
       android: {
         backgroundColor: 'white',
-        elevation: 7,
-        marginHorizontal: 12,
-        marginTop: 5,
-        marginBottom: 15,
         padding: 12,
-        borderRadius: 10,
+        paddingBottom: 15,
       }
     }),
     divider: {
@@ -302,10 +277,11 @@ class ModalSectionFooter extends React.PureComponent {
         borderBottomColor: 'rgba(0, 0, 0, 0.1)', 
       },
       android: {
-        marginBottom: 15,        
+        padding: 15,
+        backgroundColor: 'white'        
       }
     }),
-    container: {
+    container: {  
       flexDirection: 'row',
       ...Platform.select({
         ios:{
@@ -318,12 +294,10 @@ class ModalSectionFooter extends React.PureComponent {
         android: {
           alignItems: 'center',
           backgroundColor: 'white',
-          elevation: 7,
-          marginHorizontal: 12,
-          marginTop: 5,
-          marginBottom: 15,
-          padding: 15,
-          borderRadius: 10,
+          borderColor: 'rgb(190,190,190)',
+          borderBottomWidth: 1,
+          paddingVertical: 20,
+          paddingHorizontal: 15,
         },
       }),
     },
@@ -456,21 +430,21 @@ class ModalSectionHeader extends React.PureComponent {
   };
 
   static styles = StyleSheet.create({
-    container: {
+    container: Platform.select({
+      ios: {
+        padding: 10,
+        backgroundColor: 'rgba(255, 255, 255, 0.20)',
+      },
+      android: {
+        backgroundColor: 'white',
+        borderColor: 'rgb(190,190,190)',
+        borderBottomWidth: 1,
+        borderTopWidth: 1,
+      }
+    }),
+    wrapper: {
       padding: 10,
-      ...Platform.select({
-        ios: {
-          backgroundColor: 'rgba(255, 255, 255, 0.20)',
-        },
-        android: {
-          backgroundColor: PURPLE[50],
-          borderColor: 'rgb(200,200,200)',
-          borderBottomWidth: 1,
-          borderTopWidth: 1,
-          elevation: 10,
-          marginBottom: 15,
-        }
-      }),
+      backgroundColor: 'white', 
     },
     contentContainer: {
       flexDirection: 'row',
@@ -576,7 +550,9 @@ class ModalSectionHeader extends React.PureComponent {
 
     return(
       <View style={styles.container}>
-        {this._renderContent()}
+        <View style={styles.wrapper}>
+          {this._renderContent()}
+        </View>
       </View>
     );
   };
@@ -607,7 +583,7 @@ class ModalContents extends React.PureComponent {
   
   static styles = StyleSheet.create({
     scrollview: {
-      flex: 1, 
+      flex: 1,
       //borderTopColor: 'rgb(200, 200, 200)', 
       //borderTopWidth: 1
     },

@@ -489,14 +489,12 @@ class ModalTitle extends React.PureComponent {
 
     if((old_selectedCount == 0 && selectedCount == 1) || (old_selectedCount == 1 && selectedCount == 0)){
       //animate in/out changed subtitle
-      await this.subtitleText.fadeOut(300);
       await setStateAsync(this, {...titleText, selectedCount});
-      await this.subtitleText.fadeIn (300);
 
     } else {
       //no fade animation
       this.subtitleText.pulse(300);
-      this.setState({...titleText, selectedCount});
+      await setStateAsync(this, {...titleText, selectedCount});
     };
   };
 

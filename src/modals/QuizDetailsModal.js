@@ -532,7 +532,7 @@ class ModalContents extends React.PureComponent {
     const isDescriptionEmpty = isEmpty(description);
 
     //check if title already exists
-    const quizes   = CustomQuizStore.get();
+    const quizes   = CustomQuizStore.get() || [];
     const titles   = quizes.map(quiz => quiz.title);
     const hasMatch = titles.includes(title);
 

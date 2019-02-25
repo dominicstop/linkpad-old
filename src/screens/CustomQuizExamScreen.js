@@ -281,7 +281,7 @@ class CustomQuizExamScreen extends React.Component {
 
     await timeout(100);
     //set header title total
-    References.HeaderTitle.setTotal(questions.length);
+    References && References.HeaderTitle.setTotal(questions.length);
 
     //assign callbacks to header buttons
     References.CancelButton.onPress = this._handleOnPressHeaderCancel;
@@ -332,11 +332,11 @@ class CustomQuizExamScreen extends React.Component {
   };
 
   _handleOnSnapToItem = (index) => {
-    References.HeaderTitle.setIndex(index + 1);
+    References && References.HeaderTitle.setIndex(index + 1);
   };
 
   _onPressFinishAlertCancel = () => {
-    References.DoneButton.animate();
+    References && References.DoneButton.animate();
   };
 
   _onPressFinishAlertOK = () => {
