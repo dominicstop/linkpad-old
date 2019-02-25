@@ -60,9 +60,9 @@ export function plural(string = "", count = 0, suffix = 's'){
   return string + (count > 1? suffix : '');
 }
 
-export function getTimestamp(){
+export function getTimestamp(inMilliseconds = false){
   const dateTime  = new Date().getTime();
-  return Math.floor(dateTime / 1000);
+  return Math.floor(dateTime / (inMilliseconds? 1 : 1000));
 }
 
 /** returns undefined when index is invalid */

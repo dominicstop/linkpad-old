@@ -5,13 +5,14 @@ import PropTypes from 'prop-types';
 import { STYLES } from '../Constants';
 import { PURPLE } from '../Colors';
 
-import { setStateAsync, isEmpty } from '../functions/Utils';
+import { setStateAsync, isEmpty , getTimestamp} from '../functions/Utils';
 
 import { MODAL_DISTANCE_FROM_TOP, MODAL_EXTRA_HEIGHT, SwipableModal, ModalBackground, ModalTopIndicator } from '../components/SwipableModal';
 import { IconText, AnimateInView } from '../components/Views';
 import { PlatformTouchableIconButton } from '../components/Buttons';
 
 import _ from 'lodash';
+import moment from "moment";
 import TimeAgo from 'react-native-timeago';
 import { LinearGradient, BlurView, DangerZone } from 'expo';
 import { Icon } from 'react-native-elements';
@@ -26,6 +27,73 @@ const Reanimated = _Reanimated.default;
 const Screen = {
   width : Dimensions.get('window').width ,
   height: Dimensions.get('window').height,
+};
+
+function addLeadingZero(number){
+  return number < 10? `0${number}`: number;
+};
+
+class TimeElasped extends React.Component {
+  static propTypes = {
+    startTime: PropTypes.number,
+  };
+
+  constructor(props){
+    super(props);
+    this.state = {
+      time: this.getTimeElapsed(),
+    };
+
+    this.interval = null;
+  };
+
+  componentDidMount(){
+    this.start();
+  };
+
+  getTimeElapsed = () => {
+    const { startTime } = this.props;
+    const currentTime = new Date().getTime();
+
+    const diffTime = currentTime - startTime;
+    const duration = moment.duration(diffTime, 'milliseconds');
+
+    const hours    = addLeadingZero(duration.hours  ());
+    const minutes  = addLeadingZero(duration.minutes());
+    const seconds  = addLeadingZero(duration.seconds());
+
+    return(`${hours}:${minutes}:${seconds}`);
+  };
+
+  componentWillUnmount(){
+    this.stop();
+  };
+
+  start = () => {
+    const { startTime } = this.props;
+    //stop if there's already a timer
+    if(this.interval) return;
+    
+    this.interval = setInterval(() => {
+      const time = this.getTimeElapsed();
+      this.setState({time});
+    }, 1000);
+  };
+
+  stop(){
+    if(this.interval){
+      clearInterval(this.interval);
+      this.interval = null;
+    };
+  };
+
+  render(){
+    const { startTime, ...textProps } = this.props;
+    const { time } = this.state;
+    return(
+      <Text {...textProps}>{time}</Text>
+    );
+  };
 };
 
 class ModalSectionItemQuestion extends React.PureComponent {
@@ -147,6 +215,82 @@ class ModalSectionItemQuestion extends React.PureComponent {
         {this._renderQuestion()}
         {this._renderDetails()}
       </TouchableOpacity>
+    );
+  };
+};
+
+class ModalSectionItemStats extends React.PureComponent {
+  static propTypes = {
+    startTime: PropTypes.number,
+  };
+
+  static styles = StyleSheet.create({
+    container: Platform.select({
+      ios: {
+        paddingHorizontal: 12,
+        paddingVertical: 10,
+        backgroundColor: 'rgba(245, 245, 245, 0.5)',
+      },
+      android: {
+        backgroundColor: 'white',
+        padding: 12,
+        paddingBottom: 15,
+      }
+    }),
+    detailTitle: Platform.select({
+      ios: {
+        fontSize: 17,
+        fontWeight: '500',
+        color: PURPLE[1000]
+      },
+      android: {
+        fontSize: 17,
+        fontWeight: '900'
+      }
+    }),
+    detailSubtitle: Platform.select({
+      ios: {
+        fontSize: 20,
+        fontWeight: '200'
+      },
+      android: {
+        fontSize: 20,
+        fontWeight: '100',
+        color: '#424242'
+      },
+    }),
+  });
+
+  _renderDetails(){
+    const { styles } = ModalSectionItemStats;
+    const { startTime } = this.props;
+
+    const timeStarted = moment(startTime).format('LT');
+    return(
+      <View style={{flexDirection: 'row'}}>
+        <View style={{flex: 1}}>
+          <Text numberOfLines={1} style={styles.detailTitle   }>{'Started: '}</Text>
+          <Text numberOfLines={1} style={styles.detailSubtitle}>{timeStarted}</Text>
+        </View>
+        <View style={{flex: 1}}>
+          <Text        numberOfLines={1} style={styles.detailTitle   }>{'Elapsed: '}</Text>
+          <TimeElasped numberOfLines={1} style={styles.detailSubtitle} {...{startTime}}/>
+        </View>
+      </View>
+    );
+  };
+
+
+  render(){
+    const { styles } = ModalSectionItemStats;
+    const { startTime } = this.props;
+
+    const timeStarted = moment(startTime).format('LT');
+
+    return(
+      <View style={styles.container}>
+        {this._renderDetails()}
+      </View>
     );
   };
 };
@@ -573,6 +717,7 @@ class ModalContents extends React.PureComponent {
     answers: PropTypes.array, 
     currentIndex: PropTypes.number,
     onPressQuestionItem: PropTypes.func,
+    startTime: PropTypes.number
   };
 
   static SECTION_TYPES = {
@@ -730,13 +875,16 @@ class ModalContents extends React.PureComponent {
 
   _renderItem = ({item, index, section: {type}}) => {
     const { SECTION_TYPES } = ModalContents;
-    const { currentIndex, answers } = this.props;
+    const { currentIndex, answers, startTime } = this.props;
 
     const isLast = (index == (answers.length - 1));
     
     switch (type) {
       case SECTION_TYPES.DETAILS: return(
         <ModalSectionItemDetails {...item}/>
+      );
+      case SECTION_TYPES.STATS: return(
+        <ModalSectionItemStats {...{startTime}}/>
       );
       case SECTION_TYPES.QUESTIONS: return(
         <ModalSectionItemQuestion 
@@ -817,6 +965,7 @@ export class QuizExamDoneModal extends React.PureComponent {
     this.state = {
       mountContent: false,
       currentIndex: -1,
+      startTime: -1,
       questionList: [], 
       answers: [],
       questions: [], 
@@ -833,10 +982,10 @@ export class QuizExamDoneModal extends React.PureComponent {
     this._deltaY = this._modal._deltaY;
   };
 
-  openModal = async ({currentIndex, questionList, answers, questions, quiz}) => {
+  openModal = async ({currentIndex, questionList, answers, questions, quiz, startTime}) => {
     //Clipboard.setString(JSON.stringify(answers));
 
-    this.setState({mountContent: true, currentIndex, questionList, answers, questions, quiz});
+    this.setState({mountContent: true, currentIndex, questionList, answers, questions, quiz, startTime});
     this._modal.showModal();
   };
 
@@ -854,7 +1003,7 @@ export class QuizExamDoneModal extends React.PureComponent {
   };
 
   _renderContent(){
-    const { quiz, questions, questionList, answers, currentIndex } = this.state;
+    const { quiz, questions, questionList, answers, currentIndex, startTime } = this.state;
 
     const style = {
       flex: 1,
@@ -869,7 +1018,7 @@ export class QuizExamDoneModal extends React.PureComponent {
       <Reanimated.View {...{style}}>
         <ModalContents
           onPressQuestionItem={this._handleOnPressQuestionItem}
-          {...{quiz, questions, questionList, answers, currentIndex}}
+          {...{quiz, questions, questionList, answers, currentIndex, startTime}}
         />
       </Reanimated.View>
     );

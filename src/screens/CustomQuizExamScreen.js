@@ -2,7 +2,7 @@ import React, { Fragment } from 'react';
 import { View, LayoutAnimation, ScrollView, ViewPropTypes, Text, TouchableOpacity, AsyncStorage, StyleSheet, Platform , Alert, TouchableNativeFeedback} from 'react-native';
 import PropTypes from 'prop-types';
 
-import { plural , timeout} from '../functions/Utils';
+import { plural , timeout, getTimestamp} from '../functions/Utils';
 import { SubjectItem } from '../functions/ModuleStore';
 
 import { ViewWithBlurredHeader, Card, AnimatedListItem } from '../components/Views';
@@ -265,6 +265,11 @@ class CustomQuizExamScreen extends React.Component {
     super(props);
     this.didShowAlert = false;
 
+    this.state = {
+      startTime: getTimestamp(true),
+    };
+
+    //references
     this.quizExamDoneModal = null;
     this._carousel = null;
   };
@@ -294,8 +299,10 @@ class CustomQuizExamScreen extends React.Component {
   };
 
   openDoneModal = () => {
-    //get data from previous screen: ExamScreen
     const { navigation } = this.props;
+    const { startTime } = this.state;
+
+    //get data from previous screen: ExamScreen
     const quiz = navigation.getParam('quiz' , null);
 
     //get current state of customQuizList
@@ -304,6 +311,8 @@ class CustomQuizExamScreen extends React.Component {
       questionList: this.customQuizList.getQuestionList(),
       answers     : this.customQuizList.getAnswers(),
       questions   : this.customQuizList.getQuestions(),
+      //pass down state
+      startTime,
     };
 
     //open modal and pass current state of quizlist
