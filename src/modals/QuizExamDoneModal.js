@@ -5,7 +5,7 @@ import PropTypes from 'prop-types';
 import { STYLES } from '../Constants';
 import { PURPLE , GREY} from '../Colors';
 
-import { setStateAsync, isEmpty , getTimestamp} from '../functions/Utils';
+import { setStateAsync, isEmpty , getTimestamp, plural} from '../functions/Utils';
 
 import { MODAL_DISTANCE_FROM_TOP, MODAL_EXTRA_HEIGHT, SwipableModal, ModalBackground, ModalTopIndicator } from '../components/SwipableModal';
 import { IconText, AnimateInView } from '../components/Views';
@@ -270,6 +270,7 @@ class ModalSectionItemStats extends React.PureComponent {
   static propTypes = {
     startTime: PropTypes.number,
     answers: PropTypes.array,
+    questions: PropTypes.array,
   };
 
   static styles = StyleSheet.create({
@@ -345,32 +346,49 @@ class ModalSectionItemStats extends React.PureComponent {
       min: min? min / 1000 : null, 
       max: max? max / 1000 : null, 
       avg: avg? avg / 1000 : null, 
-      sum: sum? sum / 1000 : null, 
+      sum: sum? sum / 1000 : null,
+      timestamps,
     };
   };
 
   _renderDetailsTime(){
     const { styles } = ModalSectionItemStats;
-    const { startTime } = this.props;
+    const { startTime, answers, questions } = this.props;
+    const { timestamps } = this.state;
 
+    const progress = `${answers.length}/${questions.length} times`;
+    const timesAnswered = `${timestamps.length} items`;
     const timeStarted = moment(startTime).format('LT');
+
     return(
-      <View style={{flexDirection: 'row'}}>
-        <View style={{flex: 1}}>
-          <Text numberOfLines={1} style={styles.detailTitle   }>{'Started: '}</Text>
-          <Text numberOfLines={1} style={styles.detailSubtitle}>{timeStarted}</Text>
+      <Fragment>
+        <View style={{flexDirection: 'row'}}>
+          <View style={{flex: 1}}>
+            <Text numberOfLines={1} style={styles.detailTitle   }>{'Started: '}</Text>
+            <Text numberOfLines={1} style={styles.detailSubtitle}>{timeStarted}</Text>
+          </View>
+          <View style={{flex: 1}}>
+            <Text        numberOfLines={1} style={styles.detailTitle   }>{'Elapsed: '}</Text>
+            <TimeElasped numberOfLines={1} style={styles.detailSubtitle} {...{startTime}}/>
+          </View>
         </View>
-        <View style={{flex: 1}}>
-          <Text        numberOfLines={1} style={styles.detailTitle   }>{'Elapsed: '}</Text>
-          <TimeElasped numberOfLines={1} style={styles.detailSubtitle} {...{startTime}}/>
+        <View style={{flexDirection: 'row', marginTop: 10}}>
+          <View style={{flex: 1}}>
+            <Text numberOfLines={1} style={styles.detailTitle   }>{'Progress: '}</Text>
+            <Text numberOfLines={1} style={styles.detailSubtitle}>{progress}</Text>
+          </View>
+          <View style={{flex: 1}}>
+            <Text numberOfLines={1} style={styles.detailTitle   }>{'Answered:'}</Text>
+            <Text numberOfLines={1} style={styles.detailSubtitle}>{timesAnswered}</Text>
+          </View>
         </View>
-      </View>
+      </Fragment>
     );
   };
 
   _renderDetailsComp(){
     const { styles } = ModalSectionItemStats;
-    const { min, max, avg, sum } = this.state;
+    const { min, max, avg, sum, timestamps } = this.state;
 
     const minText = min? `${min.toFixed(1)} Seconds` : 'N/A';
     const maxText = max? `${max.toFixed(1)} Seconds` : 'N/A';
@@ -382,17 +400,17 @@ class ModalSectionItemStats extends React.PureComponent {
         <Text style={styles.subtitle}>Computes the amount of time it took to answer each question.</Text>
         <View style={{flexDirection: 'row', marginTop: 10}}>
           <View style={{flex: 1}}>
-            <Text numberOfLines={1} style={styles.detailTitle   }>{'Shortest: '}</Text>
+            <Text numberOfLines={1} style={styles.detailTitle   }>{'Shortest:'}</Text>
             <Text numberOfLines={1} style={styles.detailSubtitle}>{minText}</Text>
           </View>
           <View style={{flex: 1}}>
-            <Text numberOfLines={1} style={styles.detailTitle   }>{'Longest: '}</Text>
+            <Text numberOfLines={1} style={styles.detailTitle   }>{'Longest:'}</Text>
             <Text numberOfLines={1} style={styles.detailSubtitle}>{maxText}</Text>
           </View>
         </View>
         <View style={{flexDirection: 'row', marginTop: 10}}>
           <View style={{flex: 1}}>
-            <Text numberOfLines={1} style={styles.detailTitle   }>{'Average: '}</Text>
+            <Text numberOfLines={1} style={styles.detailTitle   }>{'Average:'}</Text>
             <Text numberOfLines={1} style={styles.detailSubtitle}>{avgText}</Text>
           </View>
         </View>
@@ -1005,7 +1023,7 @@ class ModalContents extends React.PureComponent {
 
   _renderItem = ({item, index, section: {type}}) => {
     const { SECTION_TYPES } = ModalContents;
-    const { currentIndex, answers, startTime } = this.props;
+    const { currentIndex, answers, questions, startTime } = this.props;
 
     const isLast = (index == (answers.length - 1));
     
@@ -1014,7 +1032,7 @@ class ModalContents extends React.PureComponent {
         <ModalSectionItemDetails {...item}/>
       );
       case SECTION_TYPES.STATS: return(
-        <ModalSectionItemStats {...{startTime, answers}}/>
+        <ModalSectionItemStats {...{startTime, answers, questions}}/>
       );
       case SECTION_TYPES.QUESTIONS: return(
         <ModalSectionItemQuestion 
