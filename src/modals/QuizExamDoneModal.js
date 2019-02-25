@@ -271,6 +271,7 @@ class ModalSectionItemStats extends React.PureComponent {
     startTime: PropTypes.number,
     answers: PropTypes.array,
     questions: PropTypes.array,
+    quiz: PropTypes.object,
   };
 
   static styles = StyleSheet.create({
@@ -353,12 +354,13 @@ class ModalSectionItemStats extends React.PureComponent {
 
   _renderDetailsTime(){
     const { styles } = ModalSectionItemStats;
-    const { startTime, answers, questions } = this.props;
-    const { timestamps } = this.state;
+    const { startTime, answers, quiz, questions } = this.props;
 
-    const progress = `${answers.length}/${questions.length} times`;
-    const timesAnswered = `${timestamps.length} items`;
     const timeStarted = moment(startTime).format('LT');
+    const total = quiz.questions.length || 'N/A';
+
+    const progress = `${answers.length}/${total} items`;
+    const left     = `${total - answers.length} remaining`;
 
     return(
       <Fragment>
@@ -378,9 +380,12 @@ class ModalSectionItemStats extends React.PureComponent {
             <Text numberOfLines={1} style={styles.detailSubtitle}>{progress}</Text>
           </View>
           <View style={{flex: 1}}>
-            <Text numberOfLines={1} style={styles.detailTitle   }>{'Answered:'}</Text>
-            <Text numberOfLines={1} style={styles.detailSubtitle}>{timesAnswered}</Text>
+            <Text numberOfLines={1} style={styles.detailTitle   }>{'Questions: '}</Text>
+            <Text numberOfLines={1} style={styles.detailSubtitle}>{left}</Text>
           </View>
+        </View>
+        <View style={{flexDirection: 'row', marginTop: 10}}>
+          
         </View>
       </Fragment>
     );
@@ -389,6 +394,8 @@ class ModalSectionItemStats extends React.PureComponent {
   _renderDetailsComp(){
     const { styles } = ModalSectionItemStats;
     const { min, max, avg, sum, timestamps } = this.state;
+
+    const timesAnswered = `${timestamps.length} times`;
 
     const minText = min? `${min.toFixed(1)} Seconds` : 'N/A';
     const maxText = max? `${max.toFixed(1)} Seconds` : 'N/A';
@@ -412,6 +419,10 @@ class ModalSectionItemStats extends React.PureComponent {
           <View style={{flex: 1}}>
             <Text numberOfLines={1} style={styles.detailTitle   }>{'Average:'}</Text>
             <Text numberOfLines={1} style={styles.detailSubtitle}>{avgText}</Text>
+          </View>
+          <View style={{flex: 1}}>
+            <Text numberOfLines={1} style={styles.detailTitle   }>{'Answered:'}</Text>
+            <Text numberOfLines={1} style={styles.detailSubtitle}>{timesAnswered}</Text>
           </View>
         </View>
       </View>
@@ -1023,7 +1034,7 @@ class ModalContents extends React.PureComponent {
 
   _renderItem = ({item, index, section: {type}}) => {
     const { SECTION_TYPES } = ModalContents;
-    const { currentIndex, answers, questions, startTime } = this.props;
+    const { currentIndex, answers, quiz, startTime, questions } = this.props;
 
     const isLast = (index == (answers.length - 1));
     
@@ -1032,7 +1043,7 @@ class ModalContents extends React.PureComponent {
         <ModalSectionItemDetails {...item}/>
       );
       case SECTION_TYPES.STATS: return(
-        <ModalSectionItemStats {...{startTime, answers, questions}}/>
+        <ModalSectionItemStats {...{startTime, answers, questions, quiz}}/>
       );
       case SECTION_TYPES.QUESTIONS: return(
         <ModalSectionItemQuestion 
