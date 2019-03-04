@@ -10,8 +10,8 @@ import { DrawerButton          } from '../components/Buttons';
 
 
 import ModuleStore from '../functions/ModuleStore';
-import TipsStore from '../functions/TipsStore';
-import UserStore from '../functions/UserStore';
+import TipsStore   from '../functions/TipsStore';
+import UserStore   from '../functions/UserStore';
 
 import { setStateAsync } from '../functions/Utils';
 

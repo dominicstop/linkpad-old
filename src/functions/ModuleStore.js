@@ -1,301 +1,120 @@
+import { FileSystem, Clipboard } from 'react-native';
+import Expo from 'expo';
+
 import store from 'react-native-simple-store';
 import _ from 'lodash';
-import {IncompletePracticeExamModel, AnswerModel} from './IncompletePracticeExamStore';
-import { Question } from '../components/Exam';
-import { getTimestamp } from './Utils';
 
-//structure of single question item in module subject.questions array
-export class QuestionItem {
-  constructor(question = {
-    //modeled from backend response
-    question   : '', 
-    explanation: '', 
-    answer     : '', 
-    choices    : [],
-    //used for identification
-    indexID_module  : -1,
-    indexID_subject : -1,
-    indexID_question: -1,
-    //store the answer
-    user_answer: '',
-    timestamp_answered: 0,
-  }){
-    this.question = {
-      timestamp_answered: 0,
-      user_answer: '',
-      ...question,
-    };
-  };
-
-  get = () => {
-    return this.question;
-  };
-
-  getCopy = () => {
-    return _.cloneDeep(this.question);
-  };
-
-  setIndexIDs = (indexIDs = {indexID_module: -1, indexID_subject: -1, indexID_question: -1}) => {
-    this.question.indexID_module   = indexIDs.indexID_module  ;
-    this.question.indexID_subject  = indexIDs.indexID_subject ;
-    this.question.indexID_question = indexIDs.indexID_question;
-  };
-
-  setUserAnswer(user_answer = ''){
-    //set answer
-    this.question.user_answer = user_answer;
-  };
-
-  setAnswerTimestamp(){
-    //set timestamp
-    this.question.timestamp_answered = getTimestamp();
-  };
-
-  initFromAnswer(model = new AnswerModel()){
-    const { answer, timestamp_answered } = model.get();
-
-    this.question.user_answer        = answer;
-    this.question.timestamp_answered = timestamp_answered;
-  };
-
-  getAnswerModel(){
-    const { indexID_module, indexID_subject, indexID_question, answer } = this.getCopy();
-
-    let model = new AnswerModel();
-    //append indexid's to answer model
-    model.setIndexIDs({indexID_module, indexID_subject, indexID_question});
-    //append answers to answer model
-    model.setAnswerKey(answer);
-
-    return model;
-  };
-  
-  getChoices(){
-    const { choices, answer } = this.get();
-    //extract choice from object
-    let mapped = choices.map((choice) => choice.value);
-
-    return mapped.concat(answer);
-  };
-
-  getAnswerModel(){
-    const { indexID_module, indexID_subject, indexID_question, answer, user_answer, timestamp_answered } = this.question;
-
-    return new AnswerModel({
-      //pas down indexid's
-      indexID_module, indexID_subject, indexID_question,
-      answer   : user_answer,
-      answerKey: answer,
-      isCorrect: this.isCorrect(),
-      timestamp_answered,
-    });
-  };
-
-  isAnswered(){
-    const { user_answer } = this.get();
-    return user_answer != '';
-  };
-
-  isCorrect(){
-    const { answer, user_answer } = this.get();
-    return answer == user_answer;
-  };
-}
-
-//structure of single subject item in modules.subjects array
-export class SubjectItem {
-  constructor(subject = {
-    //modeled from backend response
-    indexid    : -1, 
-    subjectname: '',
-    description: '', 
-    lastupdated: '', 
-    questions  : [new QuestionItem().get()],
-    //used for identification
-    indexID_module: -1,
-  }){
-    this.data = {
-      //to avoid null when param is incomplete/invalid
-      questions: [],
-      indexID_module: -1,
-      ...subject
-    };
-
-    const { indexID_module, indexid } = subject;
-    //if subj is not init., replace with empty array
-    if(indexID_module == -1 && indexid == -1){
-      this.subject.questions = [];
-    };
-  };
-
-  setModuleIndexID(indexID_module = -1){
-    this.data.indexID_module = indexID_module;
-  };
-
-  get(){
-    return this.data;
-  };
-
-  getCopy(){
-    return _.cloneDeep(this.data);
-  };
-
-  getQuestions(){
-    //to avoid mutations by ref
-    const { questions, indexID_module, indexid } = this.getCopy();
-
-    //wrap questions inside a model
-    return questions.map((item, index) => {
-      let model = new QuestionItem(item);
-      //append index id's
-      model.setIndexIDs({
-        indexID_module,
-        indexID_subject : indexid,
-        indexID_question: index  
-      });
-      return model;
-    });
-  };
-
-  getQuestionLength() {
-    if( this.data == null || this.data.questions == null){
-      return 0;
-    };
-    return this.data.questions.length;
-  };
-
-  /** returns null when there is no match */
-  getQuestionModelByIndex(index = 0){
-    const { questions, indexID_module, indexid } = this.getCopy();
-
-    //invalid index given
-    if(questions.length == 0 || questions.length < index + 1 || index < 0){
-      console.warn(`Invalid index: ${index} with length: ${questions.length}`);
-      return null;
-    };
-
-    //wrap data inside a model
-    let model = new QuestionItem(questions[index]);
-
-    //append index id's
-    model.setIndexIDs({
-      indexID_module,
-      indexID_subject : indexid,
-      indexID_question: index  
-    });
-
-    return model;
-  };
-
-  /** returns an iPE model that is initialized with this subject details */
-  getIncompletePracticeExamModel = () => {
-    //to avoid mutations by ref
-    const { indexid, indexID_module } = this.getCopy();
-
-    let model = new IncompletePracticeExamModel();
-    //append indexid's to model
-    model.setIndexIDs({indexID_module, indexID_subject: indexid});
-    return model;
-  };
-
-  getIndexIDs(){
-    const  { indexID_module, indexid } = this.getCopy();
-    return { indexID_module, indexID_subject: indexid };
-  };
-
-  isQuestionsEmpty(){
-    const { questions } = this.data;
-    return questions.length == 0;
-  };
-
-  /** returns undefined when there is no match */
-  getAnsweredQuestions(){
-    const { questions } = this.get();
-
-    //return questions that has user_answer set
-    return questions.filter((question) => 
-      question.user_answer != ''
-    );
-  };
-
-  /** returns undefined when there is no match */
-  getUnansweredQuestions(){
-    const questions = this.getQuestions();
-
-    //return questions that has user_answer set
-    return (
-      questions
-        .filter((question) => !question.isAnswered())
-        .map   ((question) =>  question.get       ())
-    );
-  };
-};
-
-//represents the structure for a single module item
-export class ModuleItemModel {
-  constructor(module = {
-    //modeled from backend response
-    description: '', 
-    modulename : '', 
-    lastupdated: '', 
-    indexid    : 0 , 
-    subjects   : [],
-  }){
-    this.module = module;
-  }
-
-  get(){
-    //returns a copy as a ref    
-    return this.module;
-  };
-
-  getCopy(){
-    //returns a copy w/o a ref
-    return _.cloneDeep(this.module);
-  };
-
-  /** returns an array of SubjectItem */
-  getSubjects(){
-    const { subjects, indexid } = this.getCopy();
-
-    //wraps subjects inside a model object
-    return subjects.map((item) => {
-      let model = new SubjectItem(item);
-
-      //append module indexid to model
-      model.setModuleIndexID(indexid);
-      return model;
-    });
-  };
-
-  getSubjectByID(index_id){
-    let subjectModels = this.getSubjects();
-
-    //return matching subject
-    return subjectModels.find((subject) => 
-      subject.data.indexid == index_id
-    );
-  };
-
-  getLenghtSubjects(){
-    const { subjects } = this.module;
-    return _.compact(subjects).length;
-  };
-
-  getTotalQuestions(){
-    const subjectModels = this.getSubjects();
-
-    let total = 0;
-    subjectModels.forEach((subject) => 
-      total += subject.getQuestionLength()
-    );
-
-    return total;
-  };
-};
+import { createFolderIfDoesntExist, isBase64Image } from './Utils';
+import { ModuleItemModel, SubjectItem, QuestionItem } from '../models/ModuleModels';
 
 //save a copy of modules
-let _moduleData = null;
+let _modules = null;
+
+const BASE_DIR   = Expo.FileSystem.documentDirectory;
+const FOLDER_KEY = 'resource_images';
+
+/** makes sure all the properties exists and removes invalid items */
+function _filterModules(_modules = [ModuleItemModel.structure]){
+  try {
+    const modules = _.cloneDeep(_modules);
+  
+    //make sure each/all modules have default values/properties
+    return modules.map(module => {
+      //assign default values and missing properties to module
+      const module_wrapped = ModuleItemModel.wrap(module);
+      const {subjects} = module_wrapped;
+
+      //filter out null subjects
+      const subjects_filtered = subjects.filter(subject => subject != null);
+
+      return {
+        ...module_wrapped,
+        //make sure each/all subjects have default values/properties
+        subjects: subjects_filtered.map(subject => {
+          //assign default values and missing properties to subject
+          const subject_wrapped = SubjectItem.wrap(subject);
+          const {questions} = subject_wrapped;
+
+          //filter out null questions
+          const quesions_filtered = questions.filter(question => question != null);
+
+          return {
+            ...subject_wrapped,
+            //assign indexid's
+            indexID_module: module_wrapped.indexid,
+            //make sure each/all subjects have default values/properties
+            questions: quesions_filtered.map(question => {
+              //assign default values and missing properties to question
+              const question_wrapped = QuestionItem.wrap(question);
+
+              return {
+                ...question_wrapped,
+                //assign indexid's
+                indexID_module: module_wrapped.indexid,
+                indexID_subject: subject_wrapped.indexid,
+              };
+            })
+          };
+        })
+      };
+    });
+  } catch(error){
+    console.log('Unable to filter modules');
+    console.log(error);
+    throw error;
+  };
+};
+
+/** store Base64 images to storage and replace with URI */
+async function _saveBase64ToStorage(_modules = [ModuleItemModel.structure]){
+  const modules = _.cloneDeep(_modules);
+
+  try {
+    //create folder if does not exist
+    await createFolderIfDoesntExist(BASE_DIR + FOLDER_KEY);
+
+    for (const module of modules){
+      for(const subject of module.subjects){
+        for(const question of subject.questions){
+          const { photouri, photofilename } = QuestionItem.wrap(question);
+
+          //check if uri is image
+          const isImage = isBase64Image(photouri);
+          //construct the uri for where the image is saved
+          const img_uri = `${BASE_DIR}${FOLDER_KEY}/${photofilename}`;
+
+          try {
+            if(isImage){
+              //save the base64 image to the fs
+              await Expo.FileSystem.writeAsStringAsync(img_uri, photouri);
+              //update module uri
+              module.photouri = img_uri;
+
+            } else {
+              //replace with null if invalid uri
+              module.photouri = null;
+            };
+
+          } catch(error){
+            //replace with null if cannot be saved to fs
+            module.photouri = null;
+            console.log(`Unable to save image ${photofilename}`); 
+            console.log(error);
+          };
+        };
+      };
+    };
+
+    //resolve modules
+    return modules;
+
+  } catch(error){
+    console.log('Unable to save images.');
+    console.log(error);
+    throw error;
+  };
+};
+
 export class ModuleStore {
   static get KEY(){
     return 'modules';
@@ -303,6 +122,15 @@ export class ModuleStore {
 
   static get URL(){
     return 'https://linkpad-pharmacy-reviewer.firebaseapp.com/getallmodules';
+  };
+
+  /** describes the current operation being done*/
+  static STATUS = {
+    READING      : 'READING',
+    WRITING      : 'WRITING',
+    FETCHING     : 'FETCHING',
+    SAVING_IMAGES: 'SAVING_IMAGES',
+    FINISHED     : 'FINISHED',
   };
 
   /** get from backend */
@@ -325,7 +153,7 @@ export class ModuleStore {
     try {
       //read from store
       let data = await store.get(ModuleStore.KEY);
-      _moduleData = data;
+      _modules = data;
 
       return (data);
 
@@ -336,24 +164,44 @@ export class ModuleStore {
   };
 
   /** read/fetch modules */
-  static async get(){
-    if(_moduleData == null){
-      //not init, get from store
-      _moduleData = await ModuleStore.read();
-    };
-
-    if(_moduleData == null){
-      //fetch modules from server
-      _moduleData = await ModuleStore.fetch();
-
-      //write modules to storage
-      for(let module in _moduleData){
-        await store.push('modules', _moduleData[module]);
+  static async get(status){
+    const { STATUS } = ModuleStore;
+    try {
+      if(_modules == null){
+        status && status(STATUS.READING);
+        //not init, get from store
+        _modules = await ModuleStore.read();
       };
-    };
+  
+      if(_modules == null){
+        status && status(STATUS.FETCHING);
+        //fetch modules from server
+        const modules_raw = await ModuleStore.fetch();
+  
+        //makes sure all of the properties exists and has a default value
+        const modules_filtered = _filterModules(modules_raw);
+        
+        status && status(STATUS.SAVING_IMAGES);
+        //process base64 images and store      
+        const modules = await _saveBase64ToStorage(modules_filtered);
+        
+        status && status(STATUS.WRITING);
+        //write modules to storage
+        await store.save(ModuleStore.KEY, modules);
+  
+        //update cache variable
+        _modules = modules;
+      };
 
-    //resolve
-    return (_moduleData);
+      //resolve
+      status && status(STATUS.FINISHED);      
+      return (_modules);
+
+    } catch(error){
+      console.log(error);
+      console.log('Failed to read/fetch modules from store.');
+      throw error;
+    };
   };
 
   static async refresh(){
@@ -370,9 +218,9 @@ export class ModuleStore {
       };
 
       //update global var
-      _moduleData = new_modules;
+      _modules = new_modules;
       //resolve
-      return (_moduleData);
+      return (_modules);
 
     } catch(error) {
       console.error('Unable to refresh modules.');
@@ -381,7 +229,7 @@ export class ModuleStore {
   };
 
   static clear(){
-    _moduleData = null;
+    _modules = null;
   };
 
   static async delete(){

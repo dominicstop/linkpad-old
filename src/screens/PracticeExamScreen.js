@@ -1,21 +1,20 @@
 import React from 'react';
 import { StyleSheet, Text, View, Platform, TouchableOpacity, Alert } from 'react-native';
 
-import   Constants, { STYLES   } from '../Constants';
+import   Constants, { STYLES } from '../Constants';
 import { ViewWithBlurredHeader } from '../components/Views';
-import { PracticeExamList      } from '../components/Exam';
-import { AndroidHeader, AndroidBackButton} from '../components/AndroidHeader';
-
+import { PracticeExamList } from '../components/Exam';
+import { AndroidHeader, AndroidBackButton } from '../components/AndroidHeader';
+import { PracticeExamOptionsModal } from '../components/SwipableModal';
 
 import { IncompletePracticeExamModel } from '../functions/IncompletePracticeExamStore';
-
+import { ModuleItemModel, SubjectItem } from '../models/ModuleModels';
 
 import { Icon } from 'react-native-elements';
 import * as Animatable from 'react-native-animatable';
 import { createStackNavigator } from 'react-navigation';
-import { ModuleItemModel, SubjectItem } from '../functions/ModuleStore';
-import { PracticeExamOptionsModal } from '../components/SwipableModal';
 import { IconButton } from 'react-native-paper';
+
 
 export class PracticeExamHeader extends React.PureComponent {
   constructor(props){

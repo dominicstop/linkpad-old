@@ -1,29 +1,21 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { StyleSheet, Text, View, Dimensions, Image, FlatList, TouchableOpacity, ViewPropTypes, Platform } from 'react-native';
+import { StyleSheet, Text, View, Dimensions, FlatList, TouchableOpacity, ViewPropTypes, Platform } from 'react-native';
 
 import { IconText  , AnimatedListItem } from './Views';
-import { GaugeChart, GradeDougnut     } from './Charts';
-
 import { colorShift , timeout} from '../functions/Utils';
+import { ModuleItemModel, SubjectItem } from '../models/ModuleModels';
 
-import Chroma from 'chroma-js';
-import Carousel from 'react-native-snap-carousel';
-import * as Animatable from 'react-native-animatable';
-import { LinearGradient } from 'expo';
-import { material, human, systemWeights } from 'react-native-typography';
 import _ from 'lodash';
-import ProgressBar from 'react-native-progress/Bar';
-import { Bar } from 'react-native-progress';
-import {ModuleItemModel, SubjectItem} from '../functions/ModuleStore';
+import * as Animatable from 'react-native-animatable';
+import Carousel from 'react-native-snap-carousel';
 
-const cardGroupHeight = 150;
 
 export const subjectProps = {
   subjectID  : PropTypes.string,
   subjectName: PropTypes.string,
   subjectDesc: PropTypes.string,
-}
+};
 
 export const moduleProps = {
   indexid: PropTypes.oneOfType([
@@ -35,116 +27,7 @@ export const moduleProps = {
   subjects   : PropTypes.arrayOf(
     PropTypes.shape(subjectProps)
   ),
-}
-
-export const progressProps = {
-  mistakes : PropTypes.number,
-  correct  : PropTypes.number,
-  questions: PropTypes.number,
-}
-
-//shows a the progress in a pie chart
-export class SubjectProgress extends React.PureComponent {
-  static propTypes = {
-    progressData: PropTypes.shape(progressProps),
-  }
-
-  constructor(props){
-    super(props);
-    this.state = {
-      mode: 0,
-    }
-  }
-
-  toggle(callback){
-    const { mode } = this.state;
-    this.setState({
-      mode: (mode == 2) ? 0 : mode+1 
-    }, callback());
-  }
-
-  _animateChartZoomout = () => {
-    this.chartView.fadeOut(100).then(() => {
-      this.toggle(() => {
-        this.chartView.bounceIn(500)
-      });
-    });
-  }
-
-  _animateChartFade = () => {
-    this.chartView.fadeOut(100).then(() => {
-      this.toggle(() => {
-        this.chartView.fadeIn(500)
-      });
-    });
-  }
-
-  _onPressChart = () => {
-    const { mode } = this.state;
-    if (mode == 0) this._animateChartFade   ();
-    else           this._animateChartZoomout();
-  }
-
-  render(){
-    const { size, progressData, color, backgroundColor } = this.props;
-    const { mode } = this.state;
-
-    //const { correct, questions } = progressData;
-
-    //ui computations
-    const margin      = 0;
-    const chartRadius = 50;
-    const chartSize   = chartRadius * 2;
-    const viewWidth   = chartSize + margin;
-
-    //grade computations
-    const answher = (progressData.correct + progressData.mistakes) 
-    const percent = answher / progressData.questions * 100;
-
-    const progress = <GaugeChart 
-      percent={percent}
-      radius={chartRadius}
-      thickness={10}
-      color={color}
-      backgroundColor={backgroundColor}
-      containerStyle={{}}
-    />
-
-    const mistakes = <GradeDougnut
-      mistakes={progressData.mistakes}
-      correct ={progressData.correct }
-      colors={['green', 'red']}
-      radius={50}
-      thickness={10}
-    />
-
-    const fraction = <View
-      style={{borderColor: color, borderWidth: 3, width: chartSize, height: chartSize, alignItems: 'center', justifyContent: 'center', borderRadius: chartSize,}}  
-    >
-      <Text>
-        <Text style={{fontSize: 22, fontWeight: '900'}}>{answher}</Text>
-        <Text style={{fontSize: 18, fontWeight: '100'}}>/{progressData.questions}</Text>
-      </Text>
-    </View>
-
-    const comp = [progress, mistakes, fraction];
- 
-    return(
-      <TouchableOpacity 
-        style={{marginLeft: margin, width: viewWidth, alignItems: 'center', justifyContent: 'center'}}
-        onPress={this._onPressChart}
-        activeOpacity={0.9}
-      >
-        <Animatable.View
-          ref={(r) => this.chartView = r}
-          useNativeDriver={true}
-        >
-          {comp[mode]}
-        </Animatable.View>
-      </TouchableOpacity>
-    );
-  }
-}
+};
 
 //subject title and desc 
 export class SubjectDetails extends React.PureComponent {
@@ -191,7 +74,7 @@ export class SubjectDetails extends React.PureComponent {
       </TouchableOpacity>
     );
   }
-}
+};
 
 //shows a single subject card and holds SubjectDetails and SubjectProgess
 export class SubjectListItem extends React.PureComponent {
@@ -353,7 +236,7 @@ export class SubjectListItem extends React.PureComponent {
       </View>
     );
   }
-}
+};
 
 //displays a single module item and a list of subjects
 export class ModuleItem extends React.PureComponent {
@@ -522,7 +405,7 @@ export class ModuleItem extends React.PureComponent {
       </View>
     );
   }
-}
+};
 
 //displays the list of modules
 export class ModuleList extends React.PureComponent {

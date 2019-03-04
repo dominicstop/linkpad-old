@@ -876,6 +876,7 @@ class ModalContents extends React.PureComponent {
     answers: PropTypes.array, 
     currentIndex: PropTypes.number,
     onPressQuestionItem: PropTypes.func,
+    onPressFinish: PropTypes.func,
     startTime: PropTypes.number
   };
 
@@ -964,6 +965,11 @@ class ModalContents extends React.PureComponent {
     onPressQuestionItem && onPressQuestionItem({index});
   };
 
+  _handleOnPressFinish = () => {
+    const { onPressFinish } = this.props;
+    onPressFinish && onPressFinish();
+  };
+
   _renderTitle(){
     const { styles } = ModalContents;
 
@@ -992,7 +998,7 @@ class ModalContents extends React.PureComponent {
         delay={300}
         useNativeDriver={true}
       >
-        <TouchableOpacity onPress={this._handleOnPress}>
+        <TouchableOpacity onPress={this._handleOnPressFinish}>
           <LinearGradient
             style={[styles.button, STYLES.mediumShadow]}
             colors={[PURPLE[800], PURPLE[500]]}

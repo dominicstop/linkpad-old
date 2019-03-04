@@ -175,9 +175,7 @@ class ExamHeader extends React.PureComponent {
 
 export class ExamsScreen extends React.Component {
   static styles = StyleSheet.create({
-    scrollview: {
-      
-    },
+
   });
 
   constructor(props){

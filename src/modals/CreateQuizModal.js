@@ -6,7 +6,8 @@ import { STYLES } from '../Constants';
 import { PURPLE } from '../Colors';
 
 import { plural , setStateAsync, timeout , isEmpty} from '../functions/Utils';
-import { SubjectItem, ModuleItemModel, ModuleStore } from '../functions/ModuleStore';
+import { ModuleStore } from '../functions/ModuleStore';
+import { ModuleItemModel } from '../models/ModuleModels';
 
 import { MODAL_DISTANCE_FROM_TOP, MODAL_EXTRA_HEIGHT, SwipableModal, ModalBackground, ModalTopIndicator } from '../components/SwipableModal';
 import { IconText, AnimateInView } from '../components/Views';

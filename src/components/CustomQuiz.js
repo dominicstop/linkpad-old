@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, Platform, StyleSheet, FlatList } from 're
 import PropTypes from 'prop-types';
 
 import { plural } from '../functions/Utils';
-import { SubjectItem } from '../functions/ModuleStore';
+import { SubjectItem, QuestionItem } from '../models/ModuleModels';
 import NavigationService from '../NavigationService';
 
 import { Card, AnimatedListItem } from '../components/Views';
@@ -392,11 +392,16 @@ export class CustomQuizList extends React.PureComponent {
   };
 
   _renderItem = ({item, index}) => {
+    const animation = Platform.select({
+      ios    : 'fadeInUp',
+      android: 'zoomIn'  ,
+    });
+
     return(
       <AnimatedListItem
-        duration={500}
+        duration={300}
         last={5}
-        {...{index}}
+        {...{index, animation}}
       >
         <CustomQuizItem 
           onPressQuiz={this._handleOnPressQuiz}
@@ -420,13 +425,13 @@ export class CustomQuizList extends React.PureComponent {
 
     const animation = Platform.select({
       ios: 'fadeInUp', 
-      android: 'fadeInRight'
+      android: 'zoomIn'
     });
 
     return(
       <Animatable.View
         style={styles.headerContainer}
-        duration={500}
+        duration={300}
         easing={'ease-in-out'}
         useNativeDriver={true}
         {...{animation}}

@@ -9,7 +9,7 @@ import   Interactable                   from './Interactable';
 import { AnimatedCollapsable          } from './Buttons';
 import { IconText, AnimateInView      } from '../components/Views';
 import { IconButton                   } from '../components/Buttons';
-import { SubjectItem, ModuleItemModel } from '../functions/ModuleStore';
+import { ModuleItemModel, SubjectItem } from '../models/ModuleModels';
 import { timeout, setStateAsync       } from '../functions/Utils';
 
 import * as Animatable from 'react-native-animatable';

@@ -106,7 +106,7 @@ export class TipsStore {
       const data = await store.get(TipsStore.KEY);
 
       //written like this, so that VS code can infer type
-      const tips = [...data].map(tip => new TipModel(tip).get());
+      const tips = [...data || []].map(tip => new TipModel(tip).get());
 
       //update cache var
       _tipsData = tips;

@@ -1,8 +1,9 @@
 import { Clipboard } from 'react-native'
-import { shuffleArray, getTimestamp } from './Utils';
-import { QuestionItem } from './ModuleStore';
-import store from 'react-native-simple-store';
 import _ from 'lodash';
+import store from 'react-native-simple-store';
+
+import { shuffleArray, getTimestamp } from './Utils';
+import { QuestionItem } from '../models/ModuleModels';
 
 let _quizes = [];
 
