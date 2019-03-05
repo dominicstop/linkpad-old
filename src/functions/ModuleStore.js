@@ -11,7 +11,7 @@ import { ModuleItemModel, SubjectItem, QuestionItem } from '../models/ModuleMode
 let _modules = null;
 
 const BASE_DIR   = Expo.FileSystem.documentDirectory;
-const FOLDER_KEY = 'resource_images';
+const FOLDER_KEY = 'module_images';
 
 /** makes sure all the properties exists and removes invalid items */
 function _filterModules(_modules = [ModuleItemModel.structure]){
@@ -88,16 +88,16 @@ async function _saveBase64ToStorage(_modules = [ModuleItemModel.structure]){
               //save the base64 image to the fs
               await Expo.FileSystem.writeAsStringAsync(img_uri, photouri);
               //update module uri
-              module.photouri = img_uri;
+              question.photouri = img_uri;
 
             } else {
               //replace with null if invalid uri
-              module.photouri = null;
+              question.photouri = null;
             };
 
           } catch(error){
             //replace with null if cannot be saved to fs
-            module.photouri = null;
+            question.photouri = null;
             console.log(`Unable to save image ${photofilename}`); 
             console.log(error);
           };
@@ -184,6 +184,8 @@ export class ModuleStore {
         status && status(STATUS.SAVING_IMAGES);
         //process base64 images and store      
         const modules = await _saveBase64ToStorage(modules_filtered);
+
+        console.log(modules);
         
         status && status(STATUS.WRITING);
         //write modules to storage
