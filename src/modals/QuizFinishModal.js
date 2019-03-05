@@ -458,9 +458,10 @@ export class QuizFinishModal extends React.PureComponent {
     const { title, description, selected } = this.state;
 
     const customQuiz = CreateCustomQuiz.createQuiz({title, description, selected});
+    const new_quiz = customQuiz.quiz;
 
-    const old_quizes = await CustomQuizStore.read(quizes) || [];
-    const quizes = [...old_quizes, customQuiz];
+    const old_quizes = await CustomQuizStore.read() || [];
+    const quizes = [...old_quizes, new_quiz];
     await CustomQuizStore.set(quizes);
 
     this._modal.hideModal();
