@@ -14,7 +14,6 @@ import { getLetter , shuffleArray, setStateAsync, timeout, hexToRgbA, getTimesta
 import { PURPLE } from '../Colors';
 import { QuizAnswer } from '../models/Quiz';
 
-
 class ChoiceItem extends React.PureComponent {
   static propTypes = {
     choice: PropTypes.string, 
@@ -344,6 +343,7 @@ class Question extends React.PureComponent {
     index: PropTypes.number,
     photofilename: PropTypes.string,
     photouri: PropTypes.string,
+    onPressImage: PropTypes.func,
   };
 
   static defaultProps = {
@@ -364,6 +364,13 @@ class Question extends React.PureComponent {
     },
   });
 
+  _handleOnPressImage = ({base64Image, photofilename, photouri}) => {
+    const { onPressImage, question, index } = this.props;
+    onPressImage && onPressImage({
+      question, index, base64Image, photofilename, photouri
+    });
+  };
+
   render(){
     const { styles } = Question;
     const { question, index, photofilename, photouri } = this.props;
@@ -377,7 +384,10 @@ class Question extends React.PureComponent {
           <Text style={styles.number}>{index + 1}. </Text>
           {question}
         </Text>
-        <QuestionImage {...{photofilename, photouri}}/>
+        <QuestionImage 
+          onPressImage={this._handleOnPressImage}
+          {...{photofilename, photouri}}
+        />
       </ScrollView>
     );
   };
@@ -389,6 +399,8 @@ class QuestionItem extends React.PureComponent {
     isLast: PropTypes.bool,
     index: PropTypes.number,
     onPressChoice: PropTypes.func,
+    //pass down to Question
+    onPressImage: PropTypes.func,
   };
 
   static styles = StyleSheet.create({
@@ -428,12 +440,12 @@ class QuestionItem extends React.PureComponent {
 
   render(){
     const { styles } = QuestionItem;
-    const {index, question: {question, choices, answer, photofilename, photouri}} = this.props;
+    const {index, onPressImage, question: {question, choices, answer, photofilename, photouri}} = this.props;
 
     return(
       <View style={styles.container}>
-        <Question 
-          {...{question, index, photofilename, photouri}}
+        <Question
+          {...{question, index, photofilename, photouri, onPressImage}}
         />
         <Choices
           onPressChoice={this._handleOnPressChoice}
@@ -449,6 +461,8 @@ export class CustomQuizList extends React.Component {
     quiz: PropTypes.object,
     onAnsweredAllQuestions: PropTypes.func,
     onNewAnswerSelected: PropTypes.func,
+    //passed down Question
+    onPressImage: PropTypes.func,
   };
 
   static styles = StyleSheet.create({
@@ -548,14 +562,14 @@ export class CustomQuizList extends React.Component {
   };
 
   _renderItem = ({item, index}) => {
-    const {quiz: {questions = []}} = this.props;
+    const {onPressImage, quiz: {questions = []}} = this.props;
     const isLast = (index == questions.length - 1);
     
     return (
       <QuestionItem
         question={item}
         onPressChoice={this._handleOnQuestionPressChoice}
-        {...{isLast, index}}
+        {...{isLast, index, onPressImage}}
       />
     );
   };

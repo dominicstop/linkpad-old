@@ -9,6 +9,7 @@ import { ViewWithBlurredHeader, Card, AnimatedListItem } from '../components/Vie
 import { PlatformTouchableIconButton, RippleBorderButton } from '../components/Buttons';
 import { AndroidHeader, AndroidBackButton } from '../components/AndroidHeader';
 import { CustomQuizList } from '../components/CustomQuizExam';
+import { ViewImageScreen } from './ViewImageScreen';
 
 import Constants from '../Constants'
 import { ROUTES, STYLES } from '../Constants';
@@ -241,6 +242,7 @@ class CustomQuizExamScreen extends React.Component {
     const { state } = navigation;
 
     return ({
+      title: 'Custom Quiz',
       headerTitle, headerRight, headerLeft,
       headerTitleStyle: STYLES.glow,
       //custom android header
@@ -380,6 +382,13 @@ class CustomQuizExamScreen extends React.Component {
     await this._listContainer.pulse(750);
   };
 
+  _handleOnPressImage = ({question, index, base64Image, photofilename, photouri}) => {
+    const { navigation } = this.props;
+    navigation && navigation.navigate(
+      ROUTES.CustomQuizViewImage, {imageBase64: base64Image}
+    );
+  };
+
   render(){
     const { styles } = CustomQuizExamScreen;
     const { navigation } = this.props;
@@ -403,6 +412,7 @@ class CustomQuizExamScreen extends React.Component {
             onAnsweredAllQuestions={this._handleOnAnsweredAllQuestions}
             onNewAnswerSelected={this._handleOnNewAnswerSelected}
             onPressQuestionItem={this._handleOnPressQuestionItem}
+            onPressImage={this._handleOnPressImage}
             {...{quiz}}
           />
         </Animatable.View>
@@ -412,9 +422,8 @@ class CustomQuizExamScreen extends React.Component {
 };
 
 const CustomQuizExamStack = createStackNavigator({
-  CustomQuizExamRoute: {
-      screen: CustomQuizExamScreen,
-    },
+    [ROUTES.CustomQuizExamRoute]: CustomQuizExamScreen,
+    [ROUTES.CustomQuizViewImage]: ViewImageScreen, 
   }, {
     headerMode: 'float',
     headerTransitionPreset: 'uikit',

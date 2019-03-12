@@ -17,6 +17,9 @@ export const ROUTES = {
   ViewImageRoute      : 'ViewImageRoute'      ,
   PracticeExamRoute   : 'PracticeExamRoute'   ,
   CustomQuizExamScreen: 'CustomQuizExamScreen',
+  //custom quiz exam routes
+  CustomQuizExamRoute: 'CustomQuizExamRoute',
+  CustomQuizViewImage: 'CustomQuizViewImage',
   //tabscreen routes
   TabModuleListRoute: 'TabModuleListRoute',
   TabExamsRoute     : 'TabExamsRoute'     ,
