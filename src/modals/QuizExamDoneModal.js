@@ -20,6 +20,7 @@ import { Icon, Divider } from 'react-native-elements';
 import * as _Reanimated from 'react-native-reanimated';
 import * as Animatable from 'react-native-animatable';
 import { QuizAnswer } from '../models/Quiz';
+import { ifIphoneX, getBottomSpace } from 'react-native-iphone-x-helper';
 
 const { Lottie } = DangerZone;
 const { Easing } = _Reanimated;
@@ -937,6 +938,10 @@ class ModalContents extends React.PureComponent {
       margin: 12,
       padding: 15,
       elevation: 10,
+      ...ifIphoneX({
+        marginBottom: getBottomSpace(),
+        borderRadius: 17,
+      }),
     },
     buttonText: {
       flex: 1,

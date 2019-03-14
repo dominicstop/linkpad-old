@@ -13,6 +13,7 @@ import * as Animatable from 'react-native-animatable';
 import TimeAgo from 'react-native-timeago';
 import { Header, NavigationEvents } from 'react-navigation';
 import { Divider } from 'react-native-elements';
+import {HEADER_HEIGHT} from '../Constants';
 
 
 class ModulesHeader extends React.PureComponent {
@@ -293,10 +294,10 @@ export class ModuleListScreen extends React.Component {
   render(){
     const { modules } = this.state;
     
-    const offset = Header.HEIGHT;
     const flatListProps = {
-      contentInset : {top: offset},
-      contentOffset: {x: 0, y: -offset},
+      //adjust top distance
+      contentInset: {top: HEADER_HEIGHT},
+      contentOffset: {x: 0, y: -HEADER_HEIGHT},
       //onEndReached callback not fired when on android
       onEndReachedThreshold: Platform.select({
         ios    : 0  ,

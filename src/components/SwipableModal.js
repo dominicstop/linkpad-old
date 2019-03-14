@@ -1,5 +1,5 @@
 import React, { Component, Fragment } from 'react';
-import { StyleSheet, View, Dimensions, Image, Text, TouchableOpacity, ScrollView, Platform, Alert, LayoutAnimation, UIManager, SectionList } from 'react-native';
+import { StyleSheet, View, Dimensions, Image, Text, TouchableOpacity, ScrollView, Platform, Alert, LayoutAnimation, UIManager, SectionList, SafeAreaView } from 'react-native';
 import PropTypes from 'prop-types';
 
 import Animated, { Easing } from 'react-native-reanimated';
@@ -20,13 +20,14 @@ import TimeAgo from 'react-native-timeago';
 import { Icon, Divider } from 'react-native-elements';
 import { ROUTES } from '../Constants';
 import {PURPLE} from '../Colors';
+import { isIphoneX, ifIphoneX } from 'react-native-iphone-x-helper';
 
 const Screen = {
   width : Dimensions.get('window').width ,
   height: Dimensions.get('window').height,
 };
 
-export const MODAL_DISTANCE_FROM_TOP = 40;
+export const MODAL_DISTANCE_FROM_TOP = isIphoneX? 65 : 40;
 export const MODAL_EXTRA_HEIGHT = 300;
 
 //enable layout animation on android
@@ -71,6 +72,7 @@ export class ModalBackground extends React.PureComponent {
   _renderIOS(){
     const { styles } = ModalBackground;
     const { style, children, ...otherProps } = this.props;
+
     return(
       <BlurView 
         style={[styles.container, style]} 
@@ -79,7 +81,9 @@ export class ModalBackground extends React.PureComponent {
         {...otherProps}
       >
         {this._renderBG()}
-        {children}
+        <SafeAreaView style={{flex: 1}}>
+          {children}
+        </SafeAreaView>
       </BlurView>
     );
   };
@@ -618,13 +622,17 @@ export class SubjectModal extends React.PureComponent {
       flexDirection: 'row', 
       height: 80, 
       padding: 10,
-      paddingVertical: 15, 
+      paddingVertical: 15,
       borderTopColor: 'rgba(0, 0, 0, 0.25)', 
       borderTopWidth: 1, 
       shadowOffset:{  width: 2,  height: 3,  }, 
       shadowColor: 'black', 
       shadowRadius: 3, 
       shadowOpacity: 0.5,
+      ...ifIphoneX({
+        paddingBottom: 22,
+        height: 90,
+      }),
     },
     //shared styles for buttons
     buttonContainer: {
@@ -632,7 +640,7 @@ export class SubjectModal extends React.PureComponent {
       padding: 10,
       alignItems: 'center',
       justifyContent: 'center',
-      elevation: 5
+      elevation: 5,
     },
     buttonText: {
       flex: 0,
@@ -1111,7 +1119,7 @@ export class SubjectModal extends React.PureComponent {
     const { styles } = SubjectModal;
     const { mountPracticeExams } = this.state;
 
-    const borderRadius = 10;
+    const borderRadius = isIphoneX? 17 : 10;
     //shared props
     const buttonProps = {
       iconSize: 22,

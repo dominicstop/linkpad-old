@@ -17,6 +17,7 @@ import { Icon, Divider } from 'react-native-elements';
 
 import * as Animatable  from 'react-native-animatable';
 import * as _Reanimated from 'react-native-reanimated';
+import { isIphoneX, ifIphoneX } from 'react-native-iphone-x-helper';
 
 const { Lottie } = DangerZone;
 const { Easing } = _Reanimated;
@@ -291,9 +292,13 @@ class ModalAddButton extends React.PureComponent {
       alignItems: 'center',
       justifyContent: 'center',
       backgroundColor: PURPLE[700], 
-      margin: 12, 
+      margin: 12,
       borderRadius: 10,
       paddingHorizontal: 15,
+      ...ifIphoneX({
+        marginBottom: 20,
+        borderRadius: 17,
+      }),
     },
     buttonText: {
       flex: 1,
@@ -312,7 +317,7 @@ class ModalAddButton extends React.PureComponent {
     this._height = new Reanimated.Value(0);
     this._showConfig = {
       duration: 300,
-      toValue : 80,
+      toValue : isIphoneX? 90 : 80,
       easing  : Easing.inOut(Easing.ease),
     };
 

@@ -13,6 +13,7 @@ import { Icon } from 'react-native-elements';
 import { getLetter , shuffleArray, setStateAsync, timeout, hexToRgbA, getTimestamp, isBase64Image} from '../functions/Utils';
 import { PURPLE } from '../Colors';
 import { QuizAnswer } from '../models/Quiz';
+import { ifIphoneX, getStatusBarHeight, getBottomSpace } from 'react-native-iphone-x-helper';
 
 class ChoiceItem extends React.PureComponent {
   static propTypes = {
@@ -419,6 +420,9 @@ class QuestionItem extends React.PureComponent {
             width: 2,  
             height: 4,  
           },
+          ...ifIphoneX({
+            marginBottom: getBottomSpace(),
+          }),
         },
         android: {
           elevation: 15,
@@ -591,7 +595,10 @@ export class CustomQuizList extends React.Component {
 
     const carouseProps = {
       scrollEnabled: true,
-      itemHeight: screenHeight - headerHeight,
+      itemHeight: ifIphoneX(
+        screenHeight - headerHeight - getStatusBarHeight(),
+        screenHeight - headerHeight,
+      ),
       ...Platform.select({
         ios: {
           sliderHeight: screenHeight,

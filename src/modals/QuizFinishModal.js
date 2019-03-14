@@ -17,6 +17,7 @@ import { Icon, Divider } from 'react-native-elements';
 import * as Animatable from 'react-native-animatable';
 import {  } from 'react-native-paper';
 import NavigationService from '../NavigationService';
+import { ifIphoneX, isIphoneX } from 'react-native-iphone-x-helper';
 
 const { Lottie } = DangerZone;
 
@@ -265,7 +266,10 @@ class ModalContents extends React.PureComponent {
         android: {
           height: 85,
         },
-      })
+      }),
+      ...ifIphoneX({
+        paddingBottom: 20,
+      }),
     },
     buttonsContainer: {
       flexDirection: 'row',
@@ -354,7 +358,7 @@ class ModalContents extends React.PureComponent {
   _renderButtons(){
     const { styles } = ModalContents;
 
-    const borderRadius = 10;
+    const borderRadius = isIphoneX? 17 : 10;
     //shared props
     const buttonProps = {
       iconSize: 22,

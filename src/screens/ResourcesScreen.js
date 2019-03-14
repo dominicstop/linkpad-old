@@ -3,7 +3,7 @@ import { StyleSheet, RefreshControl, Alert, View, Text, Platform, AsyncStorage, 
 import PropTypes from 'prop-types';
 
 import   NavigationService       from '../NavigationService'   ;
-import { HEADER_PROPS          } from '../Constants'           ;
+import { HEADER_PROPS          , HEADER_HEIGHT} from '../Constants'           ;
 import { CustomHeader          } from '../components/Header'   ;
 import { DrawerButton          } from '../components/Buttons'  ;
 import { ResourceList          } from '../components/Resources';
@@ -302,15 +302,14 @@ export class ResourcesScreen extends React.Component {
 
   render(){
     const { resources, mount, showContent } = this.state;
-    const offset = Header.HEIGHT;
 
     return(
       <ViewWithBlurredHeader hasTabBar={true}>
         <NavigationEvents onDidFocus={this.componentDidFocus}/>
         {mount && showContent && <ResourceList
           //adjust top distance
-          contentInset ={{top: offset}}
-          contentOffset={{x: 0, y: -offset}}
+          contentInset ={{top: HEADER_HEIGHT}}
+          contentOffset={{x: 0, y: -HEADER_HEIGHT}}
           //callbacks
           onPress={this._handleOnPress}
           onEndReached={this._handleOnEndReached}

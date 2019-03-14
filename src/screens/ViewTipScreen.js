@@ -16,7 +16,7 @@ import { isEmpty, timeout} from '../functions/Utils';
 import { TipModel } from '../models/TipModel';
 
 import { BLUE , GREY, PURPLE} from '../Colors';
-import { STYLES, ROUTES } from '../Constants';
+import { STYLES, ROUTES , HEADER_HEIGHT} from '../Constants';
 
 const ViewResourceHeader = (props) => <CustomHeader {...props}/>
 
@@ -330,15 +330,14 @@ export default class ViewTipScreen extends React.Component {
 
   render(){
     const { mountFooter } = this.state;
-    const offset = Header.HEIGHT;
     
     return(
       <ViewWithBlurredHeader hasTabBar={false}>
         <NavigationEvents onDidFocus={this.componentDidFocus}/>
         <ScrollView
           //adjust top distance
-          contentInset ={{top: offset}}
-          contentOffset={{x: 0, y: -offset}}
+          contentInset ={{top: HEADER_HEIGHT}}
+          contentOffset={{x: 0, y: -HEADER_HEIGHT}}
         >
           <AnimateInView duration={500}>
             {this._renderHeader  ()}

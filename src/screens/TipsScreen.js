@@ -2,7 +2,7 @@ import React from 'react';
 import { StyleSheet, RefreshControl, Alert, View, Text, Platform, ToastAndroid } from 'react-native';
 import PropTypes from 'prop-types';
 
-import { ROUTES } from '../Constants';
+import { ROUTES , HEADER_HEIGHT} from '../Constants';
 import { TipList } from '../components/Tips';
 
 import { timeout, setStateAsync, plural } from '../functions/Utils';
@@ -287,7 +287,6 @@ export class TipsScreen extends React.Component {
 
   render(){
     const { tips, showContent } = this.state;
-    const offset = Header.HEIGHT;
     
     const onEndReachedThreshold = Platform.select({
       ios: 0, android: 0.1,
@@ -298,8 +297,8 @@ export class TipsScreen extends React.Component {
         <NavigationEvents onDidFocus={this.componentDidFocus}/>
         {showContent && <TipList
           //adjust top distance
-          contentInset ={{top: offset}}
-          contentOffset={{x: 0, y: -offset}}
+          contentInset ={{top: HEADER_HEIGHT}}
+          contentOffset={{x: 0, y: -HEADER_HEIGHT}}
           //callbacks
           onEndReached={this._handleOnEndReached}
           onPressTip={this._handleOnPressTip}
