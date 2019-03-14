@@ -27,7 +27,7 @@ const Screen = {
   height: Dimensions.get('window').height,
 };
 
-export const MODAL_DISTANCE_FROM_TOP = isIphoneX? 65 : 40;
+export const MODAL_DISTANCE_FROM_TOP = isIphoneX()? 65 : 40;
 export const MODAL_EXTRA_HEIGHT = 300;
 
 //enable layout animation on android
