@@ -193,11 +193,6 @@ export class ModuleListScreen extends React.Component {
     };
   };
 
-  shouldComponentUpdate(nextProps, nextState){
-    const { modules, mount } = this.state;
-    return modules != nextState.modules || mount != nextState.mount;
-  };
-
   componentDidFocus = () => {
     //enable drawer when this screen is active
     const { setDrawerSwipe, getRefSubjectModal } = this.props.screenProps;
@@ -269,9 +264,9 @@ export class ModuleListScreen extends React.Component {
     const prefix = refreshing? 'Checking' : 'Pull down to check';
     return(
       <RefreshControl 
-        refreshing={this.state.refreshing} 
         onRefresh={this._onRefresh}
         title={prefix + ' for changes...'}
+        {...{refreshing}}
       />
     );
   };

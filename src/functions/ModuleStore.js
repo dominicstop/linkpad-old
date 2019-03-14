@@ -184,8 +184,6 @@ export class ModuleStore {
         status && status(STATUS.SAVING_IMAGES);
         //process base64 images and store      
         const modules = await _saveBase64ToStorage(modules_filtered);
-
-        console.log(modules);
         
         status && status(STATUS.WRITING);
         //write modules to storage
@@ -206,28 +204,42 @@ export class ModuleStore {
     };
   };
 
-  static async refresh(){
+  static async refresh(status){
+    const { STATUS } = ModuleStore;
+    let isModuleNew = false;
+
     try {
+      status && status(STATUS.FETCHING);
       //fetch modules from server
-      let new_modules = await ModuleStore.fetch();
+      let modules_raw = await ModuleStore.fetch();
+      //check for changes
+      isModuleNew = !_.isEqual(_modules, modules_raw);
+
+      //makes sure all of the properties exists and has a default value
+      const modules_filtered = _filterModules(modules_raw);
+        
+      status && status(STATUS.SAVING_IMAGES);
+      //process base64 images and store      
+      const modules = await _saveBase64ToStorage(modules_filtered);
       
+      status && status(STATUS.WRITING);
       //delete previous modules stored
-      ModuleStore.delete();
-
+      await ModuleStore.delete();
       //write modules to storage
-      for(let module in new_modules){
-        await store.push('modules', new_modules[module]);
-      };
+      await store.save(ModuleStore.KEY, modules);
 
-      //update global var
-      _modules = new_modules;
+      //update cache variable
+      _modules = modules;
+
       //resolve
+      status && status(STATUS.FINISHED);      
       return (_modules);
 
     } catch(error) {
-      console.error('Unable to refresh modules.');
+      console.log('Unable to refresh modules.');
+      console.error(error);
       throw error;
-    }
+    };
   };
 
   static clear(){
