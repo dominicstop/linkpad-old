@@ -18,8 +18,9 @@ export const ROUTES = {
   PracticeExamRoute   : 'PracticeExamRoute'   ,
   CustomQuizExamScreen: 'CustomQuizExamScreen',
   //custom quiz exam routes
-  CustomQuizExamRoute: 'CustomQuizExamRoute',
-  CustomQuizViewImage: 'CustomQuizViewImage',
+  CustomQuizExamRoute      : 'CustomQuizExamRoute'      ,
+  CustomQuizViewImageRoute : 'CustomQuizViewImageRoute' ,
+  CustomQuizExamResultRoute: 'CustomQuizExamResultRoute',
   //tabscreen routes
   TabModuleListRoute: 'TabModuleListRoute',
   TabExamsRoute     : 'TabExamsRoute'     ,

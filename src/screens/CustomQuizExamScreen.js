@@ -5,11 +5,14 @@ import PropTypes from 'prop-types';
 import { plural , timeout, getTimestamp} from '../functions/Utils';
 import { SubjectItem } from '../functions/ModuleStore';
 
-import { ViewWithBlurredHeader, Card, AnimatedListItem } from '../components/Views';
-import { PlatformTouchableIconButton, RippleBorderButton } from '../components/Buttons';
+import { ViewWithBlurredHeader } from '../components/Views';
+import { RippleBorderButton } from '../components/Buttons';
 import { AndroidHeader, AndroidBackButton } from '../components/AndroidHeader';
 import { CustomQuizList } from '../components/CustomQuizExam';
+
 import { ViewImageScreen } from './ViewImageScreen';
+import { QuizExamDoneModal} from '../modals/QuizExamDoneModal';
+import { CustomQuizExamResultScreen } from './CustomQuizExamResultScreen';
 
 import Constants from '../Constants'
 import { ROUTES, STYLES } from '../Constants';
@@ -17,9 +20,7 @@ import { PURPLE, RED } from '../Colors';
 
 import { createStackNavigator } from 'react-navigation';
 import * as Animatable from 'react-native-animatable';
-import { Divider, Icon } from 'react-native-elements';
-import TimeAgo from 'react-native-timeago';
-import {QuizExamDoneModal} from '../modals/QuizExamDoneModal';
+import { Icon } from 'react-native-elements';
 
 //custom header left component
 class CancelButton extends React.PureComponent {
@@ -297,7 +298,9 @@ class CustomQuizExamScreen extends React.Component {
     //get ref from screenprops
     const { getRefQuizExamDoneModal } = this.props.screenProps;
     this.quizExamDoneModal = getRefQuizExamDoneModal();
+    //assign callbacks to modal
     this.quizExamDoneModal.onPressQuestionItem = this._handleOnPressQuestionItem;
+    this.quizExamDoneModal.onPressFinishButton = this._handleOnPressFinishButton;
   };
 
   openDoneModal = () => {
@@ -382,10 +385,26 @@ class CustomQuizExamScreen extends React.Component {
     await this._listContainer.pulse(750);
   };
 
+  //callback assigned from done modal
+  _handleOnPressFinishButton = ({timeStats}) => {
+    const { navigation } = this.props;
+
+    //data to be passed to the next screen
+    const params = {
+      timeStats,
+    };
+
+    //goto exam results screen
+    navigation && navigation.navigate(ROUTES.CustomQuizExamResultRoute, params);
+
+    //console.log(timeStats);
+    //alert('Done');
+  };
+
   _handleOnPressImage = ({question, index, base64Image, photofilename, photouri}) => {
     const { navigation } = this.props;
     navigation && navigation.navigate(
-      ROUTES.CustomQuizViewImage, {imageBase64: base64Image}
+      ROUTES.CustomQuizViewImageRoute, {imageBase64: base64Image}
     );
   };
 
@@ -422,8 +441,9 @@ class CustomQuizExamScreen extends React.Component {
 };
 
 const CustomQuizExamStack = createStackNavigator({
-    [ROUTES.CustomQuizExamRoute]: CustomQuizExamScreen,
-    [ROUTES.CustomQuizViewImage]: ViewImageScreen, 
+    [ROUTES.CustomQuizExamRoute      ]: CustomQuizExamScreen,
+    [ROUTES.CustomQuizViewImageRoute ]: ViewImageScreen, 
+    [ROUTES.CustomQuizExamResultRoute]: CustomQuizExamResultScreen,
   }, {
     headerMode: 'float',
     headerTransitionPreset: 'uikit',

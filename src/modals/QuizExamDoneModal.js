@@ -352,6 +352,10 @@ class ModalSectionItemStats extends React.PureComponent {
     };
   };
 
+  getState = () => {
+    return(this.state);
+  };
+
   _renderDetailsTime(){
     const { styles } = ModalSectionItemStats;
     const { startTime, answers, quiz, questions } = this.props;
@@ -967,7 +971,10 @@ class ModalContents extends React.PureComponent {
 
   _handleOnPressFinish = () => {
     const { onPressFinish } = this.props;
-    onPressFinish && onPressFinish();
+    //get computed time stats
+    const timeStats = this.modalSectionItemStats.getState();
+    //pass down timestats to callback
+    onPressFinish && onPressFinish({timeStats});
   };
 
   _renderTitle(){
@@ -1049,7 +1056,10 @@ class ModalContents extends React.PureComponent {
         <ModalSectionItemDetails {...item}/>
       );
       case SECTION_TYPES.STATS: return(
-        <ModalSectionItemStats {...{startTime, answers, questions, quiz}}/>
+        <ModalSectionItemStats
+          ref={r => this.modalSectionItemStats = r}
+          {...{startTime, answers, questions, quiz}}
+        />
       );
       case SECTION_TYPES.QUESTIONS: return(
         <ModalSectionItemQuestion 
@@ -1138,8 +1148,8 @@ export class QuizExamDoneModal extends React.PureComponent {
     };
 
     this._deltaY = null;
-    //called when save changes is pressed
-    this.onPressSaveChanges = null;
+    //callbacks
+    this.onPressFinishButton = null;
     this.onPressQuestionItem = null;
   };
 
@@ -1170,6 +1180,12 @@ export class QuizExamDoneModal extends React.PureComponent {
     this.onPressQuestionItem && this.onPressQuestionItem({index});
   };
 
+  _handleOnPressFinishButton = ({timeStats}) => {
+    this._modal.hideModal();
+    //call callback and pass down params
+    this.onPressFinishButton && this.onPressFinishButton({timeStats});
+  };
+
   _renderContent(){
     const { quiz, questions, questionList, answers, currentIndex, startTime } = this.state;
 
@@ -1186,6 +1202,7 @@ export class QuizExamDoneModal extends React.PureComponent {
       <Reanimated.View {...{style}}>
         <ModalContents
           onPressQuestionItem={this._handleOnPressQuestionItem}
+          onPressFinish={this._handleOnPressFinishButton}
           {...{quiz, questions, questionList, answers, currentIndex, startTime}}
         />
       </Reanimated.View>
