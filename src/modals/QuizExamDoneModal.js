@@ -134,6 +134,50 @@ class TimeElasped extends React.PureComponent {
   };
 };
 
+class FireworksAnimation extends React.PureComponent {
+  constructor(props){
+    super(props);
+
+    this.state = {
+      mountAnimation: false,
+    };
+
+    this._source = require('../animations/fireworks.json');
+    this._value = new Animated.Value(0.5);
+    this._config = { 
+      toValue: 1,
+      duration: 1000,
+      useNativeDriver: true 
+    };
+    this._animated = Animated.timing(this._value, this._config);
+  };
+
+  //start animation
+  start = () => {
+    return new Promise(async resolve => {
+      await setStateAsync(this, {mountAnimation: true});
+      this._animated.start(() => resolve());
+    });
+  };
+
+  render(){
+    //dont mount until animation starts
+    //if(!this.state.mountAnimation) return null;
+
+    return(
+      <Lottie
+        style={{backgroundColor: 'blue', width: 400, height: 400}}
+        resizeMode={'contain'}
+        ref={r => this.animation = r}
+        progress={this._value}
+        source={this._source}
+        loop={false}
+        autoplay={false}
+      />
+    );
+  };
+};
+
 class ModalSectionItemQuestion extends React.PureComponent {
   static propTypes = {
     answerID: PropTypes.string,
@@ -336,7 +380,9 @@ class ModalSectionItemStats extends React.PureComponent {
     
     //extract timestamps
     const new_timestamps = answers.map(answer => answer.timestampAnswered);
-    const timestamps = [...prevTimestamps, ...new_timestamps];
+    const timestamps = [...new Set([...prevTimestamps, ...new_timestamps])];
+
+    console.log(timestamps);
 
     //update old timestamps
     prevTimestamps = [...timestamps];
@@ -1119,8 +1165,6 @@ export class QuizExamDoneModal extends React.PureComponent {
       position: 'absolute',
       height: '100%',
       width: '100%',
-      alignItems: 'center',
-      justifyContent: 'center',
     },
     overlay: {
       position: 'absolute',
@@ -1129,10 +1173,14 @@ export class QuizExamDoneModal extends React.PureComponent {
       opacity: 0,
       backgroundColor: 'white',
     },
-    checkContainer: {
-      width: '50%', 
-      height: '50%', 
-      marginBottom: 325
+    fireworksContainer: {
+      width: '100%',
+      height: 500,
+      //alignItems: 'flex-start',
+      //justifyContent: 'flex-start',
+      //width: '100%', 
+      //height: '100%', 
+      backgroundColor: 'red'
     },
     modalBackground: {
       backgroundColor: 'rgb(175, 175, 175)'
@@ -1185,7 +1233,21 @@ export class QuizExamDoneModal extends React.PureComponent {
     this.onPressQuestionItem && this.onPressQuestionItem({index});
   };
 
-  _handleOnPressFinishButton = ({timeStats}) => {
+  _handleOnPressFinishButton = async ({timeStats}) => {
+    const overlayOpacity = Platform.select({
+      ios: 0.4, android: 0.7,
+    });
+
+    /*
+    //wait to finish
+    await Promise.all([
+      //show overlay
+      this.overlay.transitionTo({opacity: overlayOpacity}, 500),
+      //show check animation
+      this.animationFireworks.start(),
+    ]);
+    */
+
     this._modal.hideModal();
     //call callback and pass down params
     this.onPressFinishButton && this.onPressFinishButton({timeStats});
@@ -1214,6 +1276,25 @@ export class QuizExamDoneModal extends React.PureComponent {
     );
   };
 
+  _renderOverlay(){
+    const { styles } = QuizExamDoneModal;
+    return (
+      <View 
+        style={styles.overlayContainer}
+        pointerEvents={'none'}
+      >
+        <Animatable.View 
+          ref={r => this.overlay = r}
+          style={styles.overlay}
+          useNativeDriver={true}
+        />
+        <View style={styles.fireworksContainer}>
+          <FireworksAnimation ref={r => this.animationFireworks = r}/>
+        </View>
+      </View>
+    );
+  };
+
   render(){
     const { styles } = QuizExamDoneModal;
     const { mountContent } = this.state;
@@ -1232,6 +1313,7 @@ export class QuizExamDoneModal extends React.PureComponent {
             <ModalTopIndicator/>
             {mountContent && this._renderContent()}
           </ModalBackground>
+          {/** this._renderOverlay() */}
         </Fragment>
       </SwipableModal>
     );

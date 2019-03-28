@@ -33,8 +33,6 @@ export const ROUTES = {
   ViewTipRoute     : 'ViewTipRoute'     ,
   CreateQuizRoute  : 'CreateQuizRoute'  ,
 };
-
-
 export const HEADER_HEIGHT = Header.HEIGHT + (
   isIphoneX()? getStatusBarHeight(false) : 0
 );

@@ -48,10 +48,6 @@ export class CustomQuiz {
   };
 };
 
-export class CustomQuizes {
-
-};
-
 export class CreateCustomQuiz {
   static createQuiz({title = '', description = '', selected = []}){
     const selectedCopy = _.cloneDeep(selected);

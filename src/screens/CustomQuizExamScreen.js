@@ -312,13 +312,21 @@ class CustomQuizExamScreen extends React.Component {
 
     //get current state of customQuizList
     const customQuizListState = {
-      currentIndex: this._carousel.currentIndex,
-      questionList: this.customQuizList.getQuestionList(),
-      answers     : this.customQuizList.getAnswers(),
-      questions   : this.customQuizList.getQuestions(),
+      currentIndex: this._carousel.currentIndex          , //current question index
+      questionList: this.customQuizList.getQuestionList(), //list of questions shown
+      answers     : this.customQuizList.getAnswers     (), //answered questions
+      questions   : this.customQuizList.getQuestions   (), //all questions in quiz
       //pass down state
       startTime,
     };
+
+    //console.log(customQuizListState.answers);
+
+    console.log(`
+      answers     : ${customQuizListState.answers.length}
+      questionList: ${customQuizListState.questionList.length}
+      questions   : ${customQuizListState.questions.length}
+    `);
 
     //open modal and pass current state of quizlist
     this.quizExamDoneModal.openModal({quiz, ...customQuizListState});
@@ -388,13 +396,17 @@ class CustomQuizExamScreen extends React.Component {
   //callback assigned from done modal
   _handleOnPressFinishButton = ({timeStats}) => {
     const { navigation } = this.props;
+    const { startTime } = this.state;
 
     //data to be passed to the next screen
     const params = {
-      timeStats,
+      questionList: this.customQuizList.getQuestionList(), //list of questions shown
+      answers     : this.customQuizList.getAnswers     (), //answered questions
+      questions   : this.customQuizList.getQuestions   (), //all questions in quiz
+      timeStats, startTime,
     };
 
-    //goto exam results screen
+    //goto exam results screen and pass params
     navigation && navigation.navigate(ROUTES.CustomQuizExamResultRoute, params);
 
     //console.log(timeStats);
