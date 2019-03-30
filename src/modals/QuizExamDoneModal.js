@@ -5,7 +5,7 @@ import PropTypes from 'prop-types';
 import { STYLES } from '../Constants';
 import { PURPLE , GREY} from '../Colors';
 
-import { setStateAsync, isEmpty , getTimestamp, plural} from '../functions/Utils';
+import { setStateAsync, isEmpty , getTimestamp, plural, timeout} from '../functions/Utils';
 
 import { MODAL_DISTANCE_FROM_TOP, MODAL_EXTRA_HEIGHT, SwipableModal, ModalBackground, ModalTopIndicator } from '../components/SwipableModal';
 import { IconText, AnimateInView } from '../components/Views';
@@ -143,10 +143,10 @@ class FireworksAnimation extends React.PureComponent {
     };
 
     this._source = require('../animations/fireworks.json');
-    this._value = new Animated.Value(0.5);
+    this._value = new Animated.Value(0);
     this._config = { 
       toValue: 1,
-      duration: 1000,
+      duration: 2000,
       useNativeDriver: true 
     };
     this._animated = Animated.timing(this._value, this._config);
@@ -166,7 +166,6 @@ class FireworksAnimation extends React.PureComponent {
 
     return(
       <Lottie
-        style={{backgroundColor: 'blue', width: 400, height: 400}}
         resizeMode={'contain'}
         ref={r => this.animation = r}
         progress={this._value}
@@ -1175,12 +1174,12 @@ export class QuizExamDoneModal extends React.PureComponent {
     },
     fireworksContainer: {
       width: '100%',
-      height: 500,
+      height: '100%',
       //alignItems: 'flex-start',
       //justifyContent: 'flex-start',
       //width: '100%', 
       //height: '100%', 
-      backgroundColor: 'red'
+      //backgroundColor: 'red'
     },
     modalBackground: {
       backgroundColor: 'rgb(175, 175, 175)'
@@ -1238,17 +1237,11 @@ export class QuizExamDoneModal extends React.PureComponent {
       ios: 0.4, android: 0.7,
     });
 
-    /*
-    //wait to finish
-    await Promise.all([
-      //show overlay
-      this.overlay.transitionTo({opacity: overlayOpacity}, 500),
-      //show check animation
-      this.animationFireworks.start(),
-    ]);
-    */
+    this.overlay.transitionTo({opacity: overlayOpacity}, 750);
+    this.animationFireworks.start();
+    await timeout(1250);
+    await this._modal.hideModal();
 
-    this._modal.hideModal();
     //call callback and pass down params
     this.onPressFinishButton && this.onPressFinishButton({timeStats});
   };
@@ -1278,9 +1271,11 @@ export class QuizExamDoneModal extends React.PureComponent {
 
   _renderOverlay(){
     const { styles } = QuizExamDoneModal;
+    const paddingBottom = (MODAL_EXTRA_HEIGHT + MODAL_DISTANCE_FROM_TOP);
+
     return (
       <View 
-        style={styles.overlayContainer}
+        style={[styles.overlayContainer, {paddingBottom}]}
         pointerEvents={'none'}
       >
         <Animatable.View 
@@ -1313,7 +1308,7 @@ export class QuizExamDoneModal extends React.PureComponent {
             <ModalTopIndicator/>
             {mountContent && this._renderContent()}
           </ModalBackground>
-          {/** this._renderOverlay() */}
+          {this._renderOverlay()}
         </Fragment>
       </SwipableModal>
     );

@@ -315,7 +315,7 @@ class CustomQuizExamScreen extends React.Component {
       currentIndex: this._carousel.currentIndex          , //current question index
       questionList: this.customQuizList.getQuestionList(), //list of questions shown
       answers     : this.customQuizList.getAnswers     (), //answered questions
-      questions   : this.customQuizList.getQuestions   (), //all questions in quiz
+      questions   : this.customQuizList.getQuestions   (), //remaining questions
       //pass down state
       startTime,
     };
@@ -408,9 +408,6 @@ class CustomQuizExamScreen extends React.Component {
 
     //goto exam results screen and pass params
     navigation && navigation.navigate(ROUTES.CustomQuizExamResultRoute, params);
-
-    //console.log(timeStats);
-    //alert('Done');
   };
 
   _handleOnPressImage = ({question, index, base64Image, photofilename, photouri}) => {

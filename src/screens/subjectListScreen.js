@@ -16,6 +16,7 @@ import _ from 'lodash';
 
 import {ModuleItemModel} from '../functions/ModuleStore';
 import {plural} from '../functions/Utils';
+import {HEADER_HEIGHT} from '../Constants';
 
 const SubjectListHeader = (props) => <CustomHeader {...props}/>
 
@@ -242,8 +243,6 @@ export default class SubjectListScreen extends React.Component {
     const { styles } = SubjectListScreen;
     const { navigation } = this.props;
 
-    const offset = Header.HEIGHT;
-
     //get data from previous screen: module list
     const modules    = navigation.getParam('modules'   , null);
     const moduleData = navigation.getParam('moduleData', null);
@@ -252,8 +251,8 @@ export default class SubjectListScreen extends React.Component {
       <ViewWithBlurredHeader hasTabBar={false}>
         <NavigationEvents onDidFocus={this.componentDidFocus}/>
         <SubjectList
-          contentInset={{top: offset}}
-          contentOffset={{x: 0, y: -offset}}
+          contentInset={{top: HEADER_HEIGHT}}
+          contentOffset={{x: 0, y: -HEADER_HEIGHT}}
           contentContainerStyle={styles.subjectList}
           ListHeaderComponent={this._renderHeader}
           onPressSubject={this._onPressSubject}
