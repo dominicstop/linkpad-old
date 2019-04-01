@@ -27,8 +27,10 @@ async function _saveBase64ToStorage(_resources = [ResourceModel.structure]){
 
       //check if uri is image
       const isImage = isBase64Image(photouri);
+      //remove space from file name in ios
+      const filename = photofilename.replace(/\ /g, '');
       //construct the uri for where the image is saved
-      const img_uri = `${BASE_DIR}${FOLDER_KEY}/${photofilename}`;
+      const img_uri = `${BASE_DIR}${FOLDER_KEY}/${filename}`;
 
       try {
         if(isImage){

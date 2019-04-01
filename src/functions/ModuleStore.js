@@ -50,7 +50,7 @@ function _filterModules(_modules = [ModuleItemModel.structure]){
               return {
                 ...question_wrapped,
                 //assign indexid's
-                indexID_module: module_wrapped.indexid,
+                indexID_module : module_wrapped.indexid,
                 indexID_subject: subject_wrapped.indexid,
               };
             })
@@ -80,8 +80,10 @@ async function _saveBase64ToStorage(_modules = [ModuleItemModel.structure]){
 
           //check if uri is image
           const isImage = isBase64Image(photouri);
+          //remove space from file name in ios
+          const filename = photofilename.replace(/\ /g, '');
           //construct the uri for where the image is saved
-          const img_uri = `${BASE_DIR}${FOLDER_KEY}/${photofilename}`;
+          const img_uri = `${BASE_DIR}${FOLDER_KEY}/${filename}`;
 
           try {
             if(isImage){
