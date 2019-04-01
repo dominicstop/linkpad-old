@@ -2,21 +2,20 @@ import React from 'react';
 import { Text, View, Platform, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import PropTypes from 'prop-types';
 
-import { SubjectList, ModuleTitle, ModuleDescription , ModuleItem} from '../components/Modules';
+import { ModuleItemModel } from '../models/ModuleModels';
+import { plural } from '../functions/Utils';
+import { HEADER_HEIGHT } from '../Constants';
+
+import { SubjectList } from '../components/Modules';
 import { ViewWithBlurredHeader, IconText } from '../components/Views';
 import { AndroidHeader } from '../components/AndroidHeader';
 import { AnimatedCollapsable } from '../components/Buttons';
 import { CustomHeader } from '../components/Header' ;
 
-import { Header, NavigationEvents  } from 'react-navigation';
+import {  NavigationEvents  } from 'react-navigation';
 import { Divider } from 'react-native-elements' ;
 import * as Animatable from 'react-native-animatable';
 import _ from 'lodash';
-
-
-import {ModuleItemModel} from '../functions/ModuleStore';
-import {plural} from '../functions/Utils';
-import {HEADER_HEIGHT} from '../Constants';
 
 const SubjectListHeader = (props) => <CustomHeader {...props}/>
 
