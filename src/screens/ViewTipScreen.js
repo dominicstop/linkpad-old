@@ -18,7 +18,7 @@ import { TipModel } from '../models/TipModel';
 import { BLUE , GREY, PURPLE} from '../Colors';
 import { STYLES, ROUTES , HEADER_HEIGHT} from '../Constants';
 
-const ViewResourceHeader = (props) => <CustomHeader {...props}/>
+const headerTitle = (props) => <CustomHeader {...props}/>
 
 class ImageCard extends React.PureComponent {
   static propTypes = {
@@ -188,7 +188,7 @@ class ImageCard extends React.PureComponent {
 export default class ViewTipScreen extends React.Component {
   static navigationOptions = {
     title: 'View Resource',
-    headerTitle: ViewResourceHeader,
+    headerTitle,
     //custom android header
     ...Platform.select({
       android: { header: props => <AndroidHeader {...props}/> }

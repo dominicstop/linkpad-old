@@ -5,7 +5,7 @@ import PropTypes from 'prop-types';
 import { STYLES } from '../Constants';
 import { PURPLE , GREY} from '../Colors';
 
-import { setStateAsync, isEmpty , getTimestamp, plural, timeout} from '../functions/Utils';
+import { setStateAsync, isEmpty , getTimestamp, plural, timeout, addLeadingZero} from '../functions/Utils';
 
 import { MODAL_DISTANCE_FROM_TOP, MODAL_EXTRA_HEIGHT, SwipableModal, ModalBackground, ModalTopIndicator } from '../components/SwipableModal';
 import { IconText, AnimateInView } from '../components/Views';
@@ -33,9 +33,6 @@ const Screen = {
 
 prevTimestamps = [];
 
-function addLeadingZero(number){
-  return number < 10? `0${number}`: number;
-};
 
 function getAverage(nums = []){
   const numbers = [...nums];
@@ -142,11 +139,11 @@ class FireworksAnimation extends React.PureComponent {
       mountAnimation: false,
     };
 
-    this._source = require('../animations/fireworks.json');
+    this._source = require('../animations/checked_done_.json');
     this._value = new Animated.Value(0);
     this._config = { 
       toValue: 1,
-      duration: 2000,
+      duration: 1000,
       useNativeDriver: true 
     };
     this._animated = Animated.timing(this._value, this._config);
@@ -162,17 +159,24 @@ class FireworksAnimation extends React.PureComponent {
 
   render(){
     //dont mount until animation starts
-    //if(!this.state.mountAnimation) return null;
+    if(!this.state.mountAnimation) return null;
 
     return(
-      <Lottie
-        resizeMode={'contain'}
-        ref={r => this.animation = r}
-        progress={this._value}
-        source={this._source}
-        loop={false}
-        autoplay={false}
-      />
+      <Animatable.View
+        style={{width: '100%', height: '100%'}}
+        animation={'bounceIn'}
+        duration={1000}
+        useNativeDriver={true}
+      >
+        <Lottie
+          resizeMode={'contain'}
+          ref={r => this.animation = r}
+          progress={this._value}
+          source={this._source}
+          loop={false}
+          autoplay={false}
+        />
+      </Animatable.View>
     );
   };
 };
@@ -1211,6 +1215,7 @@ export class QuizExamDoneModal extends React.PureComponent {
 
   openModal = async ({currentIndex, questionList, answers, questions, quiz, startTime}) => {
     //Clipboard.setString(JSON.stringify(answers));
+    this.resetPrevTimestamps();
     this.setState({mountContent: true, currentIndex, questionList, answers, questions, quiz, startTime});
     this._modal.showModal();
   };
@@ -1234,12 +1239,12 @@ export class QuizExamDoneModal extends React.PureComponent {
 
   _handleOnPressFinishButton = async ({timeStats}) => {
     const overlayOpacity = Platform.select({
-      ios: 0.4, android: 0.7,
+      ios: 0.5, android: 0.7,
     });
 
-    this.overlay.transitionTo({opacity: overlayOpacity}, 750);
+    this.overlay.transitionTo({opacity: overlayOpacity}, 500);
     this.animationFireworks.start();
-    await timeout(1250);
+    await timeout(750);
     await this._modal.hideModal();
 
     //call callback and pass down params

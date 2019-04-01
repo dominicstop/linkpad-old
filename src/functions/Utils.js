@@ -150,3 +150,23 @@ export async function createFolderIfDoesntExist(folder_uri){
   };
 };
 
+export function addLeadingZero(number){
+  return number < 10? `0${number}`: number;
+};
+
+export function formatPercent(percent){
+  const isWhole = (percent % 1 === 0);
+  const formatted = isWhole? percent : percent.toFixed(2);
+  return(`${formatted}%`);
+};
+
+/** return null if false otherwise returns value */
+export function ifTrue(condition, value){
+  return condition? value : null
+};
+
+/** will call the function if true */
+export function callIfTrue(callback){
+  return callback && callback();
+};
+

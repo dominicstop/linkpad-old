@@ -320,14 +320,6 @@ class CustomQuizExamScreen extends React.Component {
       startTime,
     };
 
-    //console.log(customQuizListState.answers);
-
-    console.log(`
-      answers     : ${customQuizListState.answers.length}
-      questionList: ${customQuizListState.questionList.length}
-      questions   : ${customQuizListState.questions.length}
-    `);
-
     //open modal and pass current state of quizlist
     this.quizExamDoneModal.openModal({quiz, ...customQuizListState});
   };
@@ -396,14 +388,19 @@ class CustomQuizExamScreen extends React.Component {
   //callback assigned from done modal
   _handleOnPressFinishButton = ({timeStats}) => {
     const { navigation } = this.props;
-    const { startTime } = this.state;
+    const { startTime  } = this.state;
 
+    //get data from previous screen: ExamScreen
+    const quiz = navigation.getParam('quiz' , null);
+
+    const endTime = Date.now(); 
     //data to be passed to the next screen
     const params = {
       questionList: this.customQuizList.getQuestionList(), //list of questions shown
       answers     : this.customQuizList.getAnswers     (), //answered questions
       questions   : this.customQuizList.getQuestions   (), //all questions in quiz
-      timeStats, startTime,
+      //pass down items
+      timeStats, startTime, endTime, quiz
     };
 
     //goto exam results screen and pass params

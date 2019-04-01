@@ -88,6 +88,13 @@ export const STYLES = StyleSheet.create({
   },
 });
 
+export const LOAD_STATE = {
+  'INITIAL': 'INITIAL',
+  'LOADING': 'LOADING',
+  'SUCCESS': 'SUCCESS',
+  'ERROR'  : 'ERROR'  ,
+};
+
 export default {
   NAV_BGCOLOR ,
   HEADER_PROPS,
