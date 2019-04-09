@@ -1,5 +1,5 @@
 import React, { Fragment } from 'react';
-import { View, LayoutAnimation, ScrollView, ViewPropTypes, Text, TouchableOpacity, AsyncStorage, StyleSheet, Platform , Alert, TouchableNativeFeedback, Clipboard, FlatList, ActivityIndicator} from 'react-native';
+import { View, LayoutAnimation, ScrollView, ViewPropTypes, Text, TouchableOpacity, AsyncStorage, StyleSheet, Platform , Alert, TouchableNativeFeedback, Clipboard, FlatList, ActivityIndicator, Dimensions, Switch} from 'react-native';
 import PropTypes from 'prop-types';
 
 import { ViewWithBlurredHeader, IconText, Card, AnimateInView, IconFooter } from '../components/Views';
@@ -9,9 +9,14 @@ import { CustomHeader } from '../components/Header' ;
 import _ from 'lodash';
 import * as Animatable from 'react-native-animatable';
 import moment from "moment";
+import Pie from 'react-native-pie'
 import { Header, NavigationEvents } from 'react-navigation';
 import { Divider, Icon } from 'react-native-elements';
-import Pie from 'react-native-pie'
+import SegmentedControlTab from "react-native-segmented-control-tab";
+
+import * as shape from 'd3-shape'
+import { BarChart, Grid, XAxis, YAxis } from 'react-native-svg-charts'
+import { LinearGradient, Stop, Defs } from 'react-native-svg'
 
 import { STYLES, ROUTES , HEADER_HEIGHT, LOAD_STATE} from '../Constants';
 import { plural, isEmpty, timeout , formatPercent, ifTrue, callIfTrue} from '../functions/Utils';
@@ -30,7 +35,7 @@ Animatable.initializeRegistryWithDefinitions({
 const sharedStyles = StyleSheet.create({
   //header styles
   title: {
-    color: '#160656',
+    color: PURPLE[1200],
     ...Platform.select({
       ios: {
         fontSize: 24, 
@@ -45,6 +50,7 @@ const sharedStyles = StyleSheet.create({
   titleContainer: {
   },
   subtitle: {
+    flex: 1,
     fontWeight: '200',
     fontSize: 17,
   },
@@ -704,23 +710,104 @@ class StatsCard extends React.PureComponent {
   };
 };
 
-class ProgressCard extends React.PureComponent {
+class ProgressChartWrapper extends React.PureComponent {
+  render(){
+    const { showRecent, children } = this.props;
+    if(showRecent){
+      return(children);
+    } else {
+      return(
+        <ScrollView horizontal={true}>
+          {children}
+        </ScrollView>
+      );
+    };
+  };
+};
+
+class ScoreProgressCard extends React.PureComponent {
   static propTypes = {
-    quizResults: PropTypes.array,
-    quizResultsLoaded: PropTypes.string,
+    results          : PropTypes.object, //current quiz results
+    quizResults      : PropTypes.array , //prev. quiz results from store
+    quizResultsLoaded: PropTypes.string, //load error or successful
+  };
+
+  static MODE = {
+    CORRECT   : 0, //selected: correct
+    INCORRECT : 1, //selected: incorrect
+    UNANSWERED: 2, //selected: unanswered
   };
   
   static styles = StyleSheet.create({
     divider: {
       margin: 10,
     },
+    //switch styles
+    switchContainer: {
+      flexDirection: 'row',
+    },
+    switchIconTextContainer: {
+      flex: 1,
+      marginRight: 5,
+    },
+    switchIconTextTitle: {
+      fontSize: 17,
+      fontWeight: '800',
+      color: PURPLE[1200],    
+    },
+    switchIconTextSubtitle: {
+      fontSize: 17,
+      fontWeight: '200',
+      color: GREY[600],
+    },
+    segmentedControlContainer: {
+      marginVertical: 10,
+    },
   });
 
   constructor(props){
     super(props);
-    
-    console.log(props.quizResults);
-    Clipboard.setString(JSON.stringify(props.quizResult));
+    const { MODE } = ScoreProgressCard;
+    const { quizResults, results } = props;
+
+    //only show switch when there are > 10 items
+    const showSwitch = quizResults.length > 10;
+
+    //sort by date quiz started
+    quizResults.sort((a, b) => a.startTime - b.startTime);
+    //extract results
+    const resultItems = quizResults.map(item => item.results);
+    //used for chart data
+    this.correctData   = resultItems.map(result => ((result.correct  /result.total) * 100));
+    this.incorrectData = resultItems.map(result => ((result.incorrect/result.total) * 100));
+    this.unasweredData = resultItems.map(result => ((result.unaswered/result.total) * 100));
+
+    console.log(this.correctData);
+
+    this.state = {
+      mode: MODE.CORRECT,
+      showRecent: true,
+      showSwitch,
+    };
+  };
+
+  getStateFromMode(){
+    const { MODE } = ScoreProgressCard;
+    const { mode, showRecent } = this.state;
+
+    switch (mode) {
+      case MODE.CORRECT: return({
+        data: showRecent? this.correctData.slice(-10) : this.correctData,
+      });
+      case MODE.INCORRECT: return({
+        data: showRecent? this.incorrectData.slice(-10) : this.incorrectData,
+
+      });
+      case MODE.UNANSWERED: return({
+        data: showRecent? this.unasweredData.slice(-10) : this.unasweredData,
+
+      });
+    };
   };
 
   _renderHeader(){
@@ -728,9 +815,9 @@ class ProgressCard extends React.PureComponent {
       <IconText
         containerStyle={sharedStyles.titleContainer}
         textStyle={sharedStyles.title}
-        text={'Progress History'}
+        text={'Score Progress'}
         subtitleStyle={sharedStyles.subtitle}
-        subtitle={"Shows your previous scores and progress."}
+        subtitle={"Shows your previous scores."}
         iconName={'chart'}
         iconType={'simple-line-icon'}
         iconColor={'#512DA8'}
@@ -739,17 +826,134 @@ class ProgressCard extends React.PureComponent {
     );
   };
 
-  _renderContent(){
-    const { styles } = ProgressCard;
+  _handleSwitchOnValueChange = (showRecent) => {
+    this.switchIconTitleContainer.pulse(500);
+    this.setState({showRecent});
+  };
 
+  _handleOnTabPress = (mode) => {
+    this.animatedSegementedControlContaine.pulse(500);
+    this.setState({mode});
+  };
+
+  _renderSwitch(){
+    const { styles } = ScoreProgressCard;
+    const { showRecent, showSwitch } = this.state;
+    if(!showSwitch) return null; 
+
+    const iconName = showRecent? 'clock' : 'layers';
+    const subtitle = showRecent? 'Show last 10 items' : 'Show all results';
+    const text     = showRecent? 'Show Recent' : 'Show All';
+
+    return(
+      <View style={styles.switchContainer}>
+        <Animatable.View
+          style={{flex: 1}}
+          ref={r => this.switchIconTitleContainer = r}
+          useNativeDriver={true}
+        >
+          <IconText
+            containerStyle={styles.switchIconTextContainer}
+            textStyle={styles.switchIconTextTitle}
+            subtitleStyle={styles.switchIconTextSubtitle}
+            iconType={'simple-line-icon'}
+            iconSize={26}
+            {...{iconName, subtitle, text}}
+          />
+        </Animatable.View>
+        <Switch
+          onValueChange={this._handleSwitchOnValueChange}
+          value={this.state.showRecent}
+        />
+      </View>
+    );
+  };
+
+  _renderSegmentedControl(){
+    const { styles } = ScoreProgressCard;
+    return(
+      <Animatable.View
+        style={styles.segmentedControlContainer}
+        ref={r => this.animatedSegementedControlContaine = r}
+        useNativeDriver={true}
+      >
+        <SegmentedControlTab
+          values={["Correct", "Wrong", "Skipped"]}
+          borderRadius={15}
+          activeTabStyle={{backgroundColor: PURPLE.A700}}
+          tabStyle={{borderColor: PURPLE.A700, paddingVertical: 8}}
+          activeTabTextStyle={{fontWeight: '700'}}
+          tabTextStyle={{color: PURPLE.A700}}
+          selectedIndex={this.state.mode}
+          activeTabOpacity={0.75}
+          onTabPress={this._handleOnTabPress}
+        />
+      </Animatable.View>
+    );
+  };
+
+  _renderChart() {
+    const { showRecent } = this.state;
+    const items = this.correctData.length;
+
+    const { data } = this.getStateFromMode();
+
+    const contentInset = { top: 20, bottom: 20 };
+    const bandwidth = 50;
+
+    const Gradient = () => (
+      <Defs key={'gradient'}>
+        <LinearGradient id={'gradient'} x1={'0%'} y={'0%'} x2={'0%'} y2={'100%'}>
+          <Stop offset={'0%'} stopColor={'#8E54E9'}/>
+          <Stop offset={'100%'} stopColor={'#4776E6'}/>
+        </LinearGradient>
+      </Defs>
+    );
+
+    const screenWidth = Dimensions.get('window').width;
+    
+    const chartStyle = {
+      flex: 1, 
+      width: showRecent? null : (screenWidth - 80) + (10 * items)      
+    };
+
+    return (
+      <View style={{ height: 250, flexDirection: 'row' }}>
+        <YAxis
+          style={{marginRight: 5}}
+          svg={{fill: 'grey', fontSize: 10,}}
+          numberOfTicks={ 10 }
+          formatLabel={ value => `${value}%` }
+          max={100}
+          min={0}
+          {...{data, contentInset}}
+        />
+        <ProgressChartWrapper {...{showRecent}}>
+          <BarChart
+            style={chartStyle}
+            svg={{strokeWidth: 2, fill: 'url(#gradient)'}}
+            max={100}
+            yMax={100}
+            yMin={0}
+            {...{data, contentInset}}
+          >
+            <Grid/>
+            <Gradient/>
+          </BarChart>
+        </ProgressChartWrapper>
+      </View>
+    )
   };
   
   render(){
-    const { styles } = ProgressCard;
+    const { styles } = ScoreProgressCard;
     return(
       <Card>
         {this._renderHeader()}
         <Divider style={styles.divider}/>
+        {this._renderSegmentedControl()}
+        {this._renderSwitch()}
+        {this._renderChart()}
       </Card>
     );
   };
@@ -761,7 +965,7 @@ class Question extends React.PureComponent {
     index           : PropTypes.number,
     answer          : PropTypes.object, 
     question        : PropTypes.object, 
-    questionID      : PropTypes.object, 
+    questionID      : PropTypes.string, 
     hasMatchedAnswer: PropTypes.bool  ,
   };
 
@@ -1087,14 +1291,16 @@ export class CustomQuizExamResultScreen extends React.Component {
   };
 
   async loadQuizResults(){
+    const { indexID_quiz } = this.quiz;
     try {
       //load prev. quiz results
-      await CustomQuizResultsStore.delete();
       const quizResults = await CustomQuizResultsStore.read();
+      //filter results that belong to this quiz
+      const filtered = quizResults.filter((result) => result.indexID_quiz == indexID_quiz);
       //save quiz results and update loading state
       this.setState({
         quizResultsLoaded: LOAD_STATE.SUCCESS, 
-        quizResults
+        quizResults: filtered,
       });
 
     } catch(error){
@@ -1175,7 +1381,7 @@ export class CustomQuizExamResultScreen extends React.Component {
           endTime={this.endTime}
           {...{min, max, avg, sum, timestamps}}  
         />
-        <ProgressCard {...{quizResultsLoaded, quizResults}}/>
+        <ScoreProgressCard {...{quizResultsLoaded, quizResults, results}}/>
         <AnswersListCard {...{questionAnswersList}}/>
         <IconFooter
           animateIn={false}

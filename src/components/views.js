@@ -1,4 +1,4 @@
-import React, { Fragment } from 'react';
+import React from 'react';
 import { Text, View, ViewPropTypes, Platform, StyleSheet, Image, ActivityIndicator } from 'react-native';
 import PropTypes from 'prop-types';
 
@@ -72,11 +72,24 @@ export class IconText extends React.PureComponent {
     wrapperStyle  : ViewPropTypes.style ,
     textStyle     : Text.propTypes.style,
     subtitleStyle : Text.propTypes.style,
-  }
-
+  };
   render(){
     const {text, subtitle, iconName, iconColor, iconType, iconSize, containerStyle, textStyle, subtitleStyle, wrapperStyle, ...viewProps} = this.props;
     const childrenCount = React.Children.count(this.props.children);
+
+    const styles = StyleSheet.create({
+      titleSubtitleContainer: {
+        flex: 1,
+      },
+      subtitle: {
+        fontSize: 17,
+        fontWeight: '200',
+      },
+      IconTextContainer: {
+        flexDirection: 'row', 
+        alignItems: 'center',
+      }
+    });
 
     const Title = (props) => <Text 
       style={[textStyle]}
@@ -87,16 +100,18 @@ export class IconText extends React.PureComponent {
       {text}
     </Text>
 
-    const TitleSubtitle = (props) => <View>
-      <Title/>
-      <Text style={subtitleStyle}>
-        {subtitle}
-      </Text>
-    </View>
+    const TitleSubtitle = (props) => (
+      <View style={styles.titleSubtitleContainer}>
+        <Title/>
+        <Text style={[styles.subtitle, subtitleStyle]}>
+          {subtitle}
+        </Text>
+      </View>
+    );
 
     const IconText = (
       <View
-        style={[{flexDirection: 'row', alignItems: 'center'}, containerStyle]}
+        style={[styles.IconTextContainer, containerStyle]}
         {...viewProps}
       >
         <Icon
@@ -120,8 +135,8 @@ export class IconText extends React.PureComponent {
     return(
       childrenCount == 0 ? IconText : Wrapper
     );
-  }
-}
+  };
+};
 
 export class Card extends React.PureComponent {
   static styles = StyleSheet.create({
@@ -333,6 +348,22 @@ export class FlipView extends React.PureComponent {
     backContainerStyle : ViewPropTypes.style, 
   };
 
+  static styles = StyleSheet.create({
+    shadow: {
+      shadowOffset:{  width: 3,  height: 5,  },
+      shadowColor: 'black',
+      shadowRadius: 6,
+      shadowOpacity: 0.5,
+    },
+    cardBlackOverlay: {
+      position: 'absolute', 
+      width: '100%', 
+      height: '100%', 
+      backgroundColor: 'black',
+      opacity: 0,
+    }
+  });
+
   constructor(props){
     super(props);
     this.state = {
@@ -380,6 +411,7 @@ export class FlipView extends React.PureComponent {
 
   //shown when flipped: false
   _renderFrontView(){
+    const { styles } = FlipView;
     const { frontComponent, frontContainerStyle } = this.props;
     return(
       <View style={[frontContainerStyle]}>
@@ -395,6 +427,7 @@ export class FlipView extends React.PureComponent {
   }
 
   _renderBackView(){
+    const { styles } = FlipView;
     const { backComponent, backContainerStyle } = this.props;
     return(
       <View style={backContainerStyle}>
@@ -568,19 +601,3 @@ export class ImageFromStorage extends React.PureComponent {
     
   };
 };
-
-const styles = StyleSheet.create({
-  shadow: {
-    shadowOffset:{  width: 3,  height: 5,  },
-    shadowColor: 'black',
-    shadowRadius: 6,
-    shadowOpacity: 0.5,
-  },
-  cardBlackOverlay: {
-    position: 'absolute', 
-    width: '100%', 
-    height: '100%', 
-    backgroundColor: 'black',
-    opacity: 0,
-  }
-});

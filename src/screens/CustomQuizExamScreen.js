@@ -1,5 +1,5 @@
 import React, { Fragment } from 'react';
-import { View, LayoutAnimation, ScrollView, ViewPropTypes, Text, TouchableOpacity, AsyncStorage, StyleSheet, Platform , Alert, TouchableNativeFeedback} from 'react-native';
+import { View, LayoutAnimation, ScrollView, ViewPropTypes, Text, TouchableOpacity, AsyncStorage, StyleSheet, Platform , Alert, TouchableNativeFeedback, Clipboard} from 'react-native';
 import PropTypes from 'prop-types';
 
 import { plural , timeout, getTimestamp} from '../functions/Utils';
@@ -420,6 +420,7 @@ class CustomQuizExamScreen extends React.Component {
     
     //get data from previous screen: ExamScreen
     const quiz = navigation.getParam('quiz' , null);
+    Clipboard.setString(JSON.stringify(quiz));
     
     return (
       <ViewWithBlurredHeader hasTabBar={false}>

@@ -9,21 +9,23 @@ import Carousel from 'react-native-snap-carousel';
 import { LinearGradient } from 'expo';
 import { Header } from 'react-navigation';
 import { Icon } from 'react-native-elements';
+import { ifIphoneX, getStatusBarHeight, getBottomSpace } from 'react-native-iphone-x-helper';
 
 import { getLetter , shuffleArray, setStateAsync, timeout, hexToRgbA, getTimestamp, isBase64Image} from '../functions/Utils';
 import { PURPLE } from '../Colors';
-import { QuizAnswer } from '../models/Quiz';
-import { ifIphoneX, getStatusBarHeight, getBottomSpace } from 'react-native-iphone-x-helper';
+import { QuizAnswer , QuizQuestion} from '../models/Quiz';
+import { CustomQuiz } from '../functions/CustomQuizStore';
 
+/** Used in Choices: shows a single choice item */
 class ChoiceItem extends React.PureComponent {
   static propTypes = {
-    choice: PropTypes.string, 
-    answer: PropTypes.string, 
-    index: PropTypes.number,
-    isLast: PropTypes.bool,
-    selected: PropTypes.string,
-    selectedInex: PropTypes.number,
-    onPressChoice: PropTypes.func,
+    choice        : PropTypes.string, 
+    answer        : PropTypes.string, 
+    index         : PropTypes.number,
+    isLast        : PropTypes.bool,
+    selected      : PropTypes.string,
+    selectedInex  : PropTypes.number,
+    onPressChoice : PropTypes.func,
   };
 
   static styles = StyleSheet.create({
@@ -57,7 +59,7 @@ class ChoiceItem extends React.PureComponent {
     PURPLE[1000],
     PURPLE[1100],
     PURPLE[1200],
-  ].map(color => hexToRgbA(color, 0.75));
+  ];
 
   _handleOnPress = () => {
     const { onPressChoice, choice, answer, selected, index } = this.props;
@@ -115,8 +117,10 @@ class ChoiceItem extends React.PureComponent {
     const containerStyle = {
       //diff bg color based on index
       backgroundColor: (isSelected
+        // selected color
         ? PURPLE.A700
-        : colors[index]
+        // unselected color
+        : hexToRgbA(colors[index], 0.75)
       ),
     };
 
@@ -126,17 +130,19 @@ class ChoiceItem extends React.PureComponent {
         onPress={this._handleOnPress}
       >
         {this._renderChoiceText()}
-        {this._renderIndicator()}
+        {this._renderIndicator ()}
       </TouchableOpacity>
     );
   };
 };
 
+/** Used in QuestionItem: shows a list of choices */
 class Choices extends React.PureComponent {
   static propTypes = {
-    choices: PropTypes.array,
-    answer: PropTypes.string,
-    onPressChoice: PropTypes.func,
+    choices       : PropTypes.array ,
+    answer        : PropTypes.string,
+    matchedAnswer : PropTypes.object,
+    onPressChoice : PropTypes.func  ,
   };
 
   static styles =  StyleSheet.create({
@@ -158,10 +164,18 @@ class Choices extends React.PureComponent {
     const combined = [answer, ...extracted];
     const shuffled = shuffleArray(combined);
 
+    //used as initial value  for selected just in case this view unmounts
+    const matchedAnswer = QuizAnswer.wrap(props.matchedAnswer);
+    //set selected index if there's a matched answer otherwise -1 if none
+    const selectedIndex = (props.matchedAnswer != undefined
+      ? shuffled.findIndex(choice => choice == matchedAnswer.userAnswer) 
+      : -1
+    );
+  
     this.state = {
-      choices: shuffled,
-      selected: null,
-      selectedIndex: -1,
+      choices : shuffled,
+      selected: matchedAnswer.userAnswer || null,
+      selectedIndex,
     };
   };
 
@@ -174,6 +188,8 @@ class Choices extends React.PureComponent {
 
     //pass params to callback prop
     onPressChoice && onPressChoice({
+      selectedIndex: index,
+      //pass down
       prevSelected, choice, answer, isCorrect
     });
   };
@@ -200,10 +216,12 @@ class Choices extends React.PureComponent {
     const { styles } = Choices;
 
     const gradientProps = Platform.select({
+      //diagonal gradient
       ios: {
         start: {x: 0.0, y: 0.25}, 
         end  : {x: 0.5, y: 1.00}
       },
+      //horizonal gradient
       android: {
         start: {x: 0, y: 0}, 
         end  : {x: 1, y: 0}
@@ -222,11 +240,12 @@ class Choices extends React.PureComponent {
   };
 };
 
+/** Used in Question: shows the quesion's image */
 class QuestionImage extends React.PureComponent {
   static propTypes = {
     photofilename: PropTypes.string,
-    photouri: PropTypes.string,
-    onPressImage: PropTypes.func,
+    photouri     : PropTypes.string,
+    onPressImage : PropTypes.func,
   };
 
   static styles = StyleSheet.create({
@@ -253,8 +272,8 @@ class QuestionImage extends React.PureComponent {
     super(props);
 
     const hasImage = props.photouri != null;
-    console.log(props.photouri);
-
+    //console.log(props.photouri);
+    
     this.state = {
       hasImage,
       base64Image: null,
@@ -266,10 +285,10 @@ class QuestionImage extends React.PureComponent {
   async componentDidMount(){
     const { photouri } = this.props;
     const { hasImage, showImage } = this.state;
-
+    
     try {
       if(hasImage){
-        await timeout(750);
+        Platform.OS == 'android' && await timeout(750);
         const base64Image = await Expo.FileSystem.readAsStringAsync(photouri);
         const isValidBase64Image = isBase64Image(base64Image || '');
         this.setState({base64Image, loading: false, showImage: isValidBase64Image});
@@ -280,10 +299,11 @@ class QuestionImage extends React.PureComponent {
     };
   };
 
+  /** TouchableOpacity: called when image is pressed */
   _handleImageOnPress = () => {
     const { onPressImage, photofilename, photouri } = this.props;
     const { base64Image } = this.state;
-
+    
     onPressImage && onPressImage({
       base64Image, photofilename, photouri
     });
@@ -326,7 +346,7 @@ class QuestionImage extends React.PureComponent {
   render(){
     const { styles } = QuestionImage;
     const { loading, showImage, hasImage } = this.state;
-
+    //dont render when there's no image
     if(!hasImage) return null;
 
     return(
@@ -338,19 +358,16 @@ class QuestionImage extends React.PureComponent {
   };
 };
 
+/** Used in QuestionItem: shows the question text + image */
 class Question extends React.PureComponent {
   static propTypes = {
-    question: PropTypes.string,
-    index: PropTypes.number,
-    photofilename: PropTypes.string,
-    photouri: PropTypes.string,
-    onPressImage: PropTypes.func,
+    question      : PropTypes.string,
+    index         : PropTypes.number,
+    photofilename : PropTypes.string,
+    photouri      : PropTypes.string,
+    onPressImage  : PropTypes.func  ,
   };
 
-  static defaultProps = {
-    question: 'Aenean eu leo quam. Pellentesque ornare sem lacinia quam venenatis vestibulum.',
-  };
-  
   static styles = StyleSheet.create({
     scrollview: {
       marginBottom: 10,
@@ -360,11 +377,31 @@ class Question extends React.PureComponent {
       fontSize: 18,
       fontWeight: '200',
     },
+    numberCointainer: {
+      width : 22,
+      height: 22,
+      borderRadius: 22/2,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: PURPLE.A700,
+      marginBottom: -2,
+    },
     number: {
-      fontWeight: '500'
+      ...Platform.select({
+        ios: {
+          fontSize: 16,
+          color: 'white',
+          fontWeight: 'bold',
+        },
+        android: {
+          fontWeight: '500',
+          color: PURPLE.A700,
+        },
+      })
     },
   });
 
+  /** QuestionImage: called when an image has been pressed */
   _handleOnPressImage = ({base64Image, photofilename, photouri}) => {
     const { onPressImage, question, index } = this.props;
     onPressImage && onPressImage({
@@ -372,19 +409,47 @@ class Question extends React.PureComponent {
     });
   };
 
+  _renderQuestion(){
+    const { styles } = Question;
+    const { question, index } = this.props;
+
+    const numberStyle = {
+      fontSize:( 
+        (index + 1 < 9  )? 16 : 
+        (index + 1 < 100)? 14 : 12
+      ),
+    };
+
+    return Platform.select({
+      ios: (
+        <Text>
+          <View style={styles.numberCointainer}>
+            <Text style={[styles.number, numberStyle]}>{index + 1}</Text>
+          </View>
+          <Text style={styles.question}>
+            {` ${question}`}          
+          </Text>
+        </Text>
+      ),
+      android: (
+        <Text style={styles.question}>
+          <Text style={styles.number}>{index + 1}. </Text>
+          {question}
+        </Text>
+      ),
+    });
+  };
+
   render(){
     const { styles } = Question;
-    const { question, index, photofilename, photouri } = this.props;
+    const { photofilename, photouri } = this.props;
 
     return(
       <ScrollView 
         style={styles.scrollview}
         alwaysBounceVertical={false}
       >
-        <Text style={styles.question}>
-          <Text style={styles.number}>{index + 1}. </Text>
-          {question}
-        </Text>
+        {this._renderQuestion()}
         <QuestionImage 
           onPressImage={this._handleOnPressImage}
           {...{photofilename, photouri}}
@@ -394,17 +459,25 @@ class Question extends React.PureComponent {
   };
 };
 
+/** Used in CustomQuizList: shows a card w/ question text + image */
 class QuestionItem extends React.PureComponent {
   static propTypes = {
-    question: PropTypes.object,
-    isLast: PropTypes.bool,
-    index: PropTypes.number,
-    onPressChoice: PropTypes.func,
-    //pass down to Question
+    question      : PropTypes.object,
+    isLast        : PropTypes.bool  ,
+    index         : PropTypes.number,
+    onPressChoice : PropTypes.func  ,
+    answers       : PropTypes.array ,
+    //pass down to Question Component
     onPressImage: PropTypes.func,
   };
 
+  constructor(props){
+    super(props);
+    // note: sometimes questionItem is unmounted when list becomes to big
+  };
+
   static styles = StyleSheet.create({
+    //card container
     container: {
       flex: 1,
       backgroundColor: 'white',
@@ -412,6 +485,7 @@ class QuestionItem extends React.PureComponent {
       padding: 10,
       borderRadius: 20,
       ...Platform.select({
+        //ios card shadow
         ios: {
           shadowColor: 'black',
           shadowRadius: 5,
@@ -420,10 +494,12 @@ class QuestionItem extends React.PureComponent {
             width: 2,  
             height: 4,  
           },
+          //extra bottom space
           ...ifIphoneX({
             marginBottom: getBottomSpace(),
           }),
         },
+        //android card shadow
         android: {
           elevation: 15,
         }
@@ -431,29 +507,52 @@ class QuestionItem extends React.PureComponent {
     }
   });
 
-  constructor(props){
-    super(props);
+  /** returns the matching answer from answers array, otherwise returns undefined*/
+  getMatchedAnswer(){
+    //wrap answers object-array and question object props
+    const answers  = QuizAnswer.wrapArray(this.props.answers );
+    const question = QuizQuestion.wrap   (this.props.question);
+    
+    //check if there's a matching answer already, otherwise undefined
+    return answers.find((answer) => {
+      //combine indexID's of the question
+      const questionID = `${question.indexID_module}-${question.indexID_subject}-${question.indexID_question}`;
+      
+      //return answer if ID's match
+      return (answer.answerID == questionID);
+    });
   };
 
+  /** Choices: Called when a choice has been selected */
   _handleOnPressChoice = (choicesProps = {prevSelected, choice, answer, isCorrect}) => {
     const { onPressChoice, ...questionItemProps } = this.props;
-
     //pass props to callback
     onPressChoice && onPressChoice({...choicesProps, ...questionItemProps});
   };
 
   render(){
     const { styles } = QuestionItem;
-    const {index, onPressImage, question: {question, choices, answer, photofilename, photouri}} = this.props;
+    const { index, onPressImage } = this.props;
+
+    //wrap question object prop to prevent missing properties + vscode intellisense
+    const question = QuizQuestion.wrap(this.props.question);
+    //destruct/extract properties from question object
+    const { choices, answer, photofilename, photouri } = question;
+    //extract question text to variable
+    const questionText = question.question;
+
+    //used as initial value for choices when it's mounted
+    const matchedAnswer = this.getMatchedAnswer();
 
     return(
       <View style={styles.container}>
         <Question
-          {...{question, index, photofilename, photouri, onPressImage}}
+          question={questionText}
+          {...{index, photofilename, photouri, onPressImage}}
         />
         <Choices
           onPressChoice={this._handleOnPressChoice}
-          {...{choices, answer}}
+          {...{choices, answer, matchedAnswer}}
         />
       </View>
     );
@@ -462,11 +561,10 @@ class QuestionItem extends React.PureComponent {
 
 export class CustomQuizList extends React.Component {
   static propTypes = {
-    quiz: PropTypes.object,
-    onAnsweredAllQuestions: PropTypes.func,
-    onNewAnswerSelected: PropTypes.func,
-    //passed down Question
-    onPressImage: PropTypes.func,
+    quiz                   : PropTypes.object,
+    onAnsweredAllQuestions : PropTypes.func  ,
+    onNewAnswerSelected    : PropTypes.func  ,
+    onPressImage           : PropTypes.func  ,
   };
 
   static styles = StyleSheet.create({
@@ -478,28 +576,25 @@ export class CustomQuizList extends React.Component {
   constructor(props){
     super(props);
 
-    //extract questions and assign default value
-    const {quiz: {questions = []}} = props;
+    //store user answers
+    this.answers = QuizAnswer.wrapArray([]);
+
+    //wrap custom quiz to prevent missing properties
+    const custom_quiz = CustomQuiz.wrap(props.quiz);
+    //extract quations from custom quiz
+    const questions = custom_quiz.questions || [];
+    //assign questions as property
     this.questions = [...questions];
 
     this.state = {
+      // the current questions to display
+      // initialize question list with first item from quiz
       questionList: [this.questions.pop()],
     };
-
-    //store user answers
-    this.answers = QuizAnswer.wrapArray([]);
   };
 
-  async addQuestionToList(){
-    const { questionList } = this.state;
-
-    const nextQuestion = this.questions.pop();
-    const newQuestionList = [...questionList, nextQuestion];
-
-    await setStateAsync(this, {questionList: newQuestionList});
-  };
-
-  /** get a copy of all the questions */
+  //---- getters -----
+  /** get a copy of the remaining questions */
   getQuestions = () =>  {
     return (_.cloneDeep(this.questions));
   };
@@ -509,20 +604,41 @@ export class CustomQuizList extends React.Component {
     return _.cloneDeep(this.answers);
   };
 
+  /** get the current questions being displayed */
   getQuestionList = () => {
     const { questionList } = this.state;
     return questionList;
   };
 
+  /** returns a reference to the carousel component */
   getCarouselRef = () => {
     return this._carousel;
   };
 
+  //---- functions -----
+  /** gets a question and appends it to questionlist state*/
+  async addQuestionToList(){
+    const { questionList } = this.state;
+
+    //get the next question to dispaly - returns undefined when array is empty
+    const nextQuestion = this.questions.pop();
+    //dont add next question if undefined
+    if(nextQuestion != undefined){
+      //append the next question to the end of question list
+      const newQuestionList = [...questionList, nextQuestion];
+      await setStateAsync(this, {questionList: newQuestionList});
+
+    } else {
+      //debug
+      console.log('addQuestionToList: no more questions to add');
+    };
+  };
+
+  /** inserts a new answer to the list, otherwise overwrites prev answer */
   addAnswer({question, userAnswer, isCorrect}){
     //wrap object for vscode types/autocomplete
     const new_answer = QuizAnswer.wrap({
-      //id used for comparison 
-      answerID: `${question.indexID_module}-${question.indexID_subject}-${question.indexID_question}`,
+      //set timestamp of when question was answered
       timestampAnswered: getTimestamp(true),
       //append params to object
       question, userAnswer, isCorrect
@@ -530,7 +646,7 @@ export class CustomQuizList extends React.Component {
     
     //wrap array for vscode autocomplete
     const answers = QuizAnswer.wrapArray(this.answers);
-
+    //find matching answer, otherwise return -1 if no match
     const matchIndex = answers.findIndex(item => 
       item.answerID == new_answer.answerID
     );
@@ -546,34 +662,47 @@ export class CustomQuizList extends React.Component {
     };
   };
 
-  _handleOnQuestionPressChoice = async ({prevSelected, choice, answer, isCorrect, question, isLast, index}) => {
-    const { onAnsweredAllQuestions, onNewAnswerSelected} = this.props;
+  //----- event handlers -----
+  /** QuestionItem: called when a choice has been selected */
+  _handleOnPressChoice = async ({prevSelected, choice, answer, isCorrect, question, isLast, index}) => {
+    const { onAnsweredAllQuestions, onNewAnswerSelected } = this.props;
 
     if(isLast){
+      //event: last question has been answered
       onAnsweredAllQuestions && onAnsweredAllQuestions();
 
     } else if(prevSelected == null){
+      //event: new answer, no prev choice selected
       onNewAnswerSelected && onNewAnswerSelected();
       
+      //add answer with delay for animations to finish
       await Promise.all([
         this.addQuestionToList(),
         timeout(400)
       ]);
-      this._carousel.snapToNext();
+
+      //show next question if it's not the last item
+      !isLast && this._carousel.snapToNext();
     };
 
     this.addAnswer({question, userAnswer: choice, isCorrect});
   };
 
+  //----- render -----
   _renderItem = ({item, index}) => {
-    const {onPressImage, quiz: {questions = []}} = this.props;
+    const { onPressImage, quiz } = this.props;
+    const answers = this.answers;
+
+    //wrap quiz and extract questions
+    const { questions } = CustomQuiz.wrap(quiz);
+    //check if last item to be rendered
     const isLast = (index == questions.length - 1);
     
     return (
       <QuestionItem
         question={item}
-        onPressChoice={this._handleOnQuestionPressChoice}
-        {...{isLast, index, onPressImage}}
+        onPressChoice={this._handleOnPressChoice}
+        {...{isLast, index, answers, onPressImage}}
       />
     );
   };
@@ -599,12 +728,15 @@ export class CustomQuizList extends React.Component {
         screenHeight - headerHeight - getStatusBarHeight(),
         screenHeight - headerHeight,
       ),
+      //platform specific props
       ...Platform.select({
+        //swipe vertical on ios
         ios: {
           sliderHeight: screenHeight,
           activeSlideAlignment: 'end',
           vertical: true,
         },
+        //swipe horizontally on android
         android: {
           sliderHeight: screenHeight - headerHeight,
           sliderWidth : screenWidth,
@@ -613,6 +745,7 @@ export class CustomQuizList extends React.Component {
           activeSlideAlignment: 'center'
         }
       }),
+      //spread props
       ...otherProps,
     };
 
@@ -622,12 +755,11 @@ export class CustomQuizList extends React.Component {
           ref={r => this._carousel = r }
           data={this.state.questionList}
           renderItem={this._renderItem}
-          //onSnapToItem={this._handleOnSnapToItem}
           //scrollview props
           showsHorizontalScrollIndicator={true}
           bounces={true}
           lockScrollWhileSnapping={true}
-          //other props
+          //pass down props
           {...carouseProps}
         />
       </View>

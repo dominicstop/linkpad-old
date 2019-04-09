@@ -165,8 +165,26 @@ export function ifTrue(condition, value){
   return condition? value : null
 };
 
+/** returns returnValue if value is null, otherwise will return value */
+export function replaceIfNull(value, returnValue){
+  return value == null? returnValue : value;
+};
+
+
 /** will call the function if true */
 export function callIfTrue(callback){
   return callback && callback();
+};
+
+export function replacePropertiesWithNull(obj = {}){
+  //make a copy of the object
+  let new_obj = _.cloneDeep(obj);
+  //get an array of all the property names
+  const keys = Object.keys(obj);
+  //replace all the properties with null
+  keys.forEach((property) => {
+    new_obj[property] = null;
+  });
+  return(new_obj);
 };
 

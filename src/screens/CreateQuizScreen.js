@@ -1,20 +1,19 @@
 import React, { Fragment } from 'react';
-import { View, ScrollView, ViewPropTypes, Text, TouchableOpacity, AsyncStorage, StyleSheet, FlatList, TextInput, Platform, Alert } from 'react-native';
+import { View, ScrollView, Text, StyleSheet, FlatList, Platform, Alert } from 'react-native';
 import PropTypes from 'prop-types';
 
-import   NavigationService from '../NavigationService';
-import { setStateAsync , plural, isEmpty} from '../functions/Utils';
-import { ROUTES, STYLES, HEADER_HEIGHT } from '../Constants';
-import { PURPLE } from '../Colors';
+import { plural, isEmpty} from '../functions/Utils';
+import { STYLES, HEADER_HEIGHT } from '../Constants';
+import { PURPLE, RED } from '../Colors';
+import { SubjectItem, } from '../models/ModuleModels';
 
-import { CreateCustomQuizList } from '../components/CustomQuiz';
 import { AndroidHeader } from '../components/AndroidHeader';
-import { ViewWithBlurredHeader, IconText, Card } from '../components/Views' ;
+import { ViewWithBlurredHeader, AnimatedListItem, Card , IconFooter} from '../components/Views' ;
 import { PlatformTouchableIconButton, RippleBorderButton } from '../components/Buttons';
 
 import * as Animatable from 'react-native-animatable';
-import { Header, NavigationEvents  } from 'react-navigation';
-import { Icon, Divider } from 'react-native-elements';
+import { NavigationEvents  } from 'react-navigation';
+import { Divider } from 'react-native-elements';
 
 //android header text style
 const titleStyle = { 
@@ -418,6 +417,285 @@ class AddSubjectsCard extends React.PureComponent {
           {this._renderButtons()}
         </Card>
       </Animatable.View>
+    );
+  };
+};
+
+class QuizItem extends React.PureComponent {
+  static propTypes = {
+    subjectData  : PropTypes.object,  
+    onPressDelete: PropTypes.func,
+  };
+
+  static styles = StyleSheet.create({
+    card: {
+      //animated styles
+      opacity: 1,
+      transform: [
+        { scaleX : 1      }, 
+        { scaleY : 1      },
+        { rotateX: '0deg' }
+      ],
+      //layout styles
+      marginBottom: 12, 
+      marginTop: 5, 
+      overflow: 'visible', 
+      marginHorizontal: 12, 
+      paddingHorizontal: 15, 
+      paddingVertical: 10, 
+      borderRadius: 10,
+      backgroundColor: 'white', 
+      elevation: 7,
+    },
+    image: {
+      width: 75, 
+      height: 75,
+      marginRight: 12,
+      marginVertical: 12,
+    },
+    descriptionContainer: {
+      flex: 1, 
+      alignItems: 'flex-start', 
+      justifyContent: 'center', 
+    },
+    textTitle: {
+      color: PURPLE[700],
+      fontSize: 20, 
+      fontWeight: '900'
+    },
+    textSubtitle: {
+      color: PURPLE[1000],
+      fontSize: 18,
+      ...Platform.select({
+        ios: {
+          fontWeight: '500'
+        },
+        android: {
+          fontWeight: '300'
+        },
+      }),
+    },
+    textBody: {
+      fontSize: 16, 
+      ...Platform.select({
+        ios: {
+          fontWeight: '200'
+        },
+        android: {
+          fontWeight: '100',
+          color: '#424242'
+        },
+      })
+    },
+    divider: {
+      marginVertical: 5
+    },
+    buttonWrapper: {
+      marginTop: 5,
+      backgroundColor: RED[800],
+    },
+    buttonContainer: {
+      padding: 10,
+    },
+    buttonText: {
+      color: 'white',
+      fontSize: 17,
+      fontWeight: '600',
+    }
+  });
+
+  constructor(props){
+    super(props);
+
+    this.state = {
+      width : null,
+      height: null,
+    };
+  };
+
+  _handleOnPressDeleteButton = async () => {
+    const { onPressDelete } = this.props;
+
+    const exitStyle = {
+      opacity: 0, 
+      height: 0,
+      marginTop: 0, 
+      marginBottom: 0, 
+      paddingVertical: 0,
+      transform: [
+        { scaleX : 0.75    },
+        { scaleY : 0.50    },
+        { rotateX: '-45deg'},
+      ]
+    };
+
+    await this._rootContainer.transitionTo(exitStyle, 300, 'ease-in-out');
+    onPressDelete && onPressDelete();
+  };
+
+  _handleOnLayout = (event) => {
+    const {x, y, width, height} = event.nativeEvent.layout;
+    this.setState({width, height});
+  };
+
+  _renderDescription(){
+    const { styles } = QuizItem;
+    const { subjectData } = this.props;
+
+    const subjectModel = new SubjectItem(subjectData);
+    const { subjectname, description } = subjectModel.get();
+    const questionCount = subjectModel.getQuestionLength();
+
+    return(
+      <View style={styles.descriptionContainer}>
+        <Text 
+          style={styles.textTitle}
+          numberOfLines={1}
+          ellipsizeMode={'tail'}
+        >
+          {subjectname}
+        </Text>
+        <Text 
+          style={styles.textSubtitle}
+          numberOfLines={3}
+          ellipsizeMode={'tail'}
+        >
+          {`${questionCount} questions`}
+        </Text>
+        <Text 
+          style={styles.textBody}
+          numberOfLines={3}
+          ellipsizeMode={'tail'}
+        >
+          {description}
+        </Text>
+      </View>
+    );
+  };
+
+  _renderDeleteButton(){
+    const { styles } = QuizItem;
+
+    return(
+      <PlatformTouchableIconButton
+        onPress={this._handleOnPressDeleteButton}
+        wrapperStyle={[styles.buttonWrapper, STYLES.lightShadow]}
+        containerStyle={styles.buttonContainer}
+        text={'Remove Item'}
+        textStyle={styles.buttonText}
+        iconName={'trash-2'}
+        iconType={'feather'}
+        iconColor={'white'}
+        iconSize={24}
+      />
+    );
+  };
+
+  render(){
+    const { styles } = QuizItem;
+    const { width, height } = this.state;
+
+    return(
+      <Animatable.View
+        style={[{width, height}, STYLES.mediumShadow,  styles.card]}
+        easing={'ease-in-out'}
+        ref={r => this._rootContainer = r}
+        onLayout={this._handleOnLayout}
+        useNativeDriver={false}
+      >
+        {this._renderDescription()}
+        <Divider style={styles.divider}/>
+        {this._renderDeleteButton()}
+      </Animatable.View>
+    );
+  };
+};
+
+class CreateCustomQuizList extends React.PureComponent {
+  static propTypes = {
+    quizItems: PropTypes.array,
+  };
+
+  static styles = StyleSheet.create({
+    indicatorText: {
+      fontSize: 26,
+      fontWeight: '400',
+      marginTop: 15,
+      marginBottom: 5,
+      marginLeft: 12,
+    },
+  });
+
+  constructor(props){
+    super(props);
+  };
+
+  _handleOnPressDelete = () => {
+  };
+  
+  _keyExtractor(item, index){
+    return `${item.indexid}-${item.subjectname}`;
+  };
+
+  _renderItem = ({item, index}) => {
+    return(
+      <AnimatedListItem
+        duration={500}
+        last={5}
+        {...{index}}
+      >
+        <QuizItem 
+          onPressDelete={this._handleOnPressDelete}
+          subjectData={item}  
+        />
+      </AnimatedListItem>
+    );
+  };
+
+  _renderHeader = () => {
+    const { styles } = CreateCustomQuizList;
+
+    const { quizItems } = this.props;
+    if(quizItems.length == 0) return null;
+
+    const animation = Platform.select({
+      ios: 'fadeInUp', 
+      android: 'fadeInRight'
+    });
+
+    return(
+      <Animatable.Text
+        style={styles.indicatorText}
+        duration={500}
+        easing={'ease-in-out'}
+        useNativeDriver={true}
+        {...{animation}}
+      >
+        {`${quizItems.length} ${plural('Subject', quizItems.length)}`}
+      </Animatable.Text>
+    );
+  };
+
+  _renderFooter(){
+    return(
+      <IconFooter
+        animateIn={false}
+        hide={false}
+      />
+    );
+  };
+
+  render(){
+    const {quizItems, ...otherProps} = this.props;
+    return(
+      <FlatList
+        data={quizItems}
+        renderItem={this._renderItem}
+        keyExtractor={this._keyExtractor}
+        ListHeaderComponent={this._renderHeader}
+        ListFooterComponent={this._renderFooter}
+        {...otherProps}
+      />
     );
   };
 };

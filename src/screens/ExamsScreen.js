@@ -1,24 +1,100 @@
 import React from 'react';
-import { View, ScrollView, StyleSheet, Text, Platform, TouchableOpacity, AsyncStorage } from 'react-native';
+import { View, ScrollView, StyleSheet, Text, Platform, TouchableOpacity, FlatList } from 'react-native';
 import PropTypes from 'prop-types';
 
-import { ROUTES, HEADER_HEIGHT , STYLES} from '../Constants';
-import { PURPLE } from '../Colors';
-import { CustomQuizStore, CustomQuiz } from '../functions/CustomQuizStore';
-
 import NavigationService from '../NavigationService';
+import { plural } from '../functions/Utils';
+import { ROUTES, HEADER_HEIGHT , STYLES} from '../Constants';
+import { PURPLE, RED } from '../Colors';
+import { CustomQuizStore } from '../functions/CustomQuizStore';
 
-import { ViewWithBlurredHeader, IconFooter, Card } from '../components/Views';
+import { ViewWithBlurredHeader, IconFooter, Card, AnimatedListItem } from '../components/Views';
 import { PlatformTouchableIconButton } from '../components/Buttons';
-import { CustomQuizList } from '../components/CustomQuiz';
 
 import _ from 'lodash';
 import * as Animatable from 'react-native-animatable';
-
+import TimeAgo from 'react-native-timeago';
+import { Divider, Icon } from 'react-native-elements';
 import { Header, NavigationEvents } from 'react-navigation';
-import { Divider } from 'react-native-elements';
+
 
 // shown when no exams have been created yet
+class EmptyCard extends React.PureComponent {
+  static styles = StyleSheet.create({
+    card: {
+      flexDirection: 'row',
+      paddingVertical: 10,
+    },  
+    image: {
+      width: 75, 
+      height: 75,
+      marginRight: 12,
+      marginVertical: 12,
+    },
+    headerTextContainer: {
+      flex: 1, 
+      alignItems: 'center', 
+      justifyContent: 'center', 
+    },
+    headerTitle: {
+      color: '#512DA8',
+      fontSize: 20, 
+      fontWeight: '800'
+    },
+    headerSubtitle: {
+      fontSize: 16, 
+      ...Platform.select({
+        ios: {
+          fontWeight: '200'
+        },
+        android: {
+          fontWeight: '100',
+          color: '#424242'
+        },
+      })
+    },
+  });
+
+  constructor(props){
+    super(props);
+    this.imageHeader = require('../../assets/icons/folder-castle.png');
+  };
+
+  render() {
+    const { styles } = EmptyCard;
+    const animation = Platform.select({
+      ios    : 'fadeInUp',
+      android: 'zoomIn'  ,
+    });
+
+    return(
+      <Card>
+        <Animatable.View
+          style={styles.card}
+          duration={500}
+          easing={'ease-in-out'}
+          useNativeDriver={true}
+          {...{animation}}
+        >
+          <Animatable.Image
+            source={this.imageHeader}
+            style={styles.image}
+            animation={'pulse'}
+            easing={'ease-in-out'}
+            iterationCount={"infinite"}
+            duration={5000}
+            useNativeDriver={true}
+          />
+          <View style={styles.headerTextContainer}>
+            <Text style={styles.headerTitle   }>No Items Yet</Text>
+            <Text style={styles.headerSubtitle}>You haven't created any custom quiz yet. Press the "Create Custom Quiz" button to create your first quiz.</Text>
+          </View>
+        </Animatable.View>
+      </Card>
+    );
+  };
+};
+
 class ExamHeader extends React.PureComponent {
   static propTypes = {
     onPress: PropTypes.func,
@@ -169,6 +245,186 @@ class ExamHeader extends React.PureComponent {
         <Divider/>
         {this._renderButton()}
       </Animatable.View>
+    );
+  };
+};
+
+class CustomQuizItem extends React.PureComponent {
+  static propTypes = {
+    quiz: PropTypes.object,
+    onPressQuiz: PropTypes.func,
+  }; 
+
+  static styles = StyleSheet.create({
+    container: {
+      padding: 10,
+      marginTop: 5,
+    },
+    title: {
+      fontSize: 20,
+      fontWeight: '600',
+    },
+    description: {
+      fontSize: 18,
+    },
+    time: {
+      fontSize: 16,
+      fontWeight: '100',
+    },
+  });
+
+  _handleOnPressQuiz = () => {
+    const { onPressQuiz, quiz } = this.props;
+    onPressQuiz && onPressQuiz(quiz);
+  };
+
+  render(){
+    const { styles } = CustomQuizItem;
+
+    const {quiz: {
+      title            = "Uknown Title", 
+      description      = "Uknown Description", 
+      timestampCreated = 0, 
+      questions        = [],
+    }} = this.props;
+
+    const time = timestampCreated * 1000;
+    const questionCount = questions.length;
+
+    const prefix = (global.usePlaceholder
+      ? 'Ultricies'
+      : 'Subject'
+    );
+
+    return(
+      <Card style={styles.container}>
+        <TouchableOpacity onPress={this._handleOnPressQuiz}>
+          <Text style={styles.title}>{title}</Text>
+          <Text style={styles.time} >
+            {`${questionCount} ${plural(prefix, questionCount)} — `}
+            <TimeAgo {...{time}}/>
+          </Text>
+          <Divider style={{margin: 5}}/>
+          <Text style={styles.description}>{description}</Text>
+        </TouchableOpacity>
+      </Card>
+    );
+  };
+};
+
+class CustomQuizList extends React.PureComponent {
+  static propTypes = {
+    quizes: PropTypes.array,
+  };
+
+  static defaultProps = {
+    quizes: [],
+  };
+
+  static styles = StyleSheet.create({
+    headerContainer: {
+      flexDirection: 'row',
+      marginLeft: 12,
+      marginTop: 20,
+    },
+    indicatorText: {
+      fontSize: 26,
+      fontWeight: '500',
+      marginLeft: 8,
+    },
+  });
+
+  _handleOnPressQuiz = (quiz) => {
+    //navigate to custom quiz exam screen
+    NavigationService.navigateApp(ROUTES.CustomQuizExamScreen, {quiz});
+  };
+
+  _keyExtractor(item, index){
+    return `${item.indexID_quiz}-${item.title}`;
+  };
+
+  _renderItem = ({item, index}) => {
+    const animation = Platform.select({
+      ios    : 'fadeInUp',
+      android: 'zoomIn'  ,
+    });
+
+    return(
+      <AnimatedListItem
+        duration={300}
+        last={5}
+        {...{index, animation}}
+      >
+        <CustomQuizItem 
+          onPressQuiz={this._handleOnPressQuiz}
+          quiz={item}  
+        />
+      </AnimatedListItem>
+    );
+  };
+
+  _renderHeader = () => {
+    const { styles } = CustomQuizList;
+    
+    const { quizes } = this.props;
+    
+    if(!quizes) return null;
+    if(quizes.length == 0) return null;
+
+    const prefix = (global.usePlaceholder
+      ? 'Ullamcorper' : 'Quiz'
+    );
+
+    const animation = Platform.select({
+      ios: 'fadeInUp', 
+      android: 'zoomIn'
+    });
+
+    return(
+      <Animatable.View
+        style={styles.headerContainer}
+        duration={300}
+        easing={'ease-in-out'}
+        useNativeDriver={true}
+        {...{animation}}
+      >
+        <Icon
+          name={'clipboard-pencil'}
+          type={'foundation'}
+          size={28}
+          color={'rgb(125, 125, 125)'}
+        />
+        <Text style={styles.indicatorText}>
+          {`${quizes.length} ${plural(prefix, quizes.length, 'es')}`}
+        </Text>
+      </Animatable.View>
+    );
+  };
+
+  _renderFooter(){
+    return(
+      <IconFooter hide={false}/>
+    );
+  };
+
+  _renderEmpty(){
+    return(
+      <EmptyCard/>
+    );
+  };
+
+  render(){
+    const {quizes, ...otherProps} = this.props;
+    return(
+      <FlatList
+        data={quizes}
+        renderItem={this._renderItem}
+        keyExtractor={this._keyExtractor}
+        ListHeaderComponent={this._renderHeader}
+        ListFooterComponent={this._renderFooter}
+        ListEmptyComponent={this._renderEmpty}
+        {...otherProps}
+      />
     );
   };
 };
