@@ -6,7 +6,7 @@ import { STYLES } from '../Constants';
 import { withNavigation } from 'react-navigation';
 import { Icon     } from 'react-native-elements';
 import { Header   } from 'react-navigation';
-import Expo, { BlurView } from 'expo';
+import { BlurView } from 'expo';
 import * as Animatable from 'react-native-animatable';
 import { LinearGradient } from 'expo';
 

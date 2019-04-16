@@ -1,6 +1,6 @@
 import PropTypes from 'prop-types';
 import React, { Fragment } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, Keyboard, ScrollView, TextInput, UIManager, LayoutAnimation, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, Keyboard, ScrollView, TextInput, UIManager, LayoutAnimation, ActivityIndicator, KeyboardAvoidingView, Platform, NetInfo } from 'react-native';
 
 import { AnimatedGradient } from '../components/AnimatedGradient';
 import { IconButton       } from '../components/Buttons';
@@ -33,46 +33,136 @@ const MODES = {
   succesful: 'succesful',
   invalid  : 'invalid'  ,
   error    : 'error'    ,
-}
+};
 
-export class InputForm extends React.PureComponent {
+export class Login {
+  static URL = 'https://linkpad-pharmacy-reviewer.firebaseapp.com/login';
+
+  static async login({email, pass}, onError) {
+    try {
+      //fetch request options
+      const options = {
+        method: 'POST',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({email, pass}),
+      };
+
+      //check for internet connectivity
+      const isConnected = await NetInfo.isConnected.fetch();
+      if(isConnected){
+        //post email/pass and wait for response
+        const response = await fetch(Login.URL, options);
+        //show error when response not okay
+        if(!response.ok) {
+          onError && onError({
+            type   : 'RESPONSE_NOT_OKAY',
+            message: 'There seems to be a problem with the server. Try again later.',
+          });
+        };
+        //parse response as json
+        const result = await response.json();
+
+        //resolve results
+        return {
+          success: result.success || false, // whether or not if the user exists
+          message: result.message || null , // ex: "Successfully logged in", "Wrong Password", "User not found"
+          user   : result.user    || null , // obj: user inf, ex: email, firstname, isPremium etc.
+          uid    : result.uid     || null , // unique user identifier
+        };
+
+      } else {
+        onError && onError({
+          type   : 'NO_INTERNET',
+          message: 'Unable to connect to server. Please check your internet connection',
+        });
+      };
+      
+    } catch(error) {
+      console.log("Error: Unale to login.");
+      console.log(error);
+      onError && onError({
+        type   : 'ERROR',
+        message: 'Unable to login, an error has occured.',
+      });
+    };
+  };
+};
+
+class InputForm extends React.PureComponent {
   static propType = {
-    //for styling
-    iconName : PropTypes.string,
-    iconType : PropTypes.string,
-    iconSize : PropTypes.number,
-    iconColor: PropTypes.string,
-    isEnabled: PropTypes.bool  ,
-  }
+    Icon      : PropTypes.element,
+    isEnabled : PropTypes.bool   ,
+  };
 
   static defaultProps = {
     iconColor: Platform.select({
-      ios: 'white',
+      ios    : 'white',
       android: 'grey',
     }),
-  }
+  };
+
+  static styles = StyleSheet.create({
+    container: {
+      paddingHorizontal: 15,
+      paddingVertical: 10,
+      borderRadius: 10,
+      flexDirection: 'row', 
+      marginTop: 25,
+    },
+    iconContainer: {
+      width: 30,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    textinput: {
+      flex: 1, 
+      alignSelf: 'center', 
+      fontSize: 22, 
+      marginLeft: 15, 
+      height: 35, 
+      borderColor: 'transparent', 
+      borderWidth: 1,
+      paddingHorizontal: 5,
+      ...Platform.select({
+        ios: {
+          borderBottomColor: 'rgba(255, 255, 255, 0.25)', 
+          color: 'white', 
+        },
+        android: {
+          color: 'black'
+        },
+      }),
+    }
+  });
 
   render(){
+    const { styles } = InputForm;
     const { iconName, iconType, iconSize, iconColor, isEnabled, ...textInputProps } = this.props;
-    const backgroundColor = Platform.select({
-      ios: {
-        backgroundColor: 'rgba(0, 0, 0, 0.25)',
-      },
-      android: {
-        backgroundColor: isEnabled? 'rgba(0, 0, 0, 0.15)' : 'rgba(0, 0, 0, 0.08)',
-      },
-    });
+
+    const containerStyle = {
+      backgroundColor: Platform.select({
+        ios    : 'rgba(0, 0, 0, 0.25)',
+        android: isEnabled? 'rgba(0, 0, 0, 0.15)' : 'rgba(0, 0, 0, 0.08)',
+      }),
+    };
+
     return(
       <Animatable.View 
-        style={[styles.textinputContainer, {...backgroundColor}]}
+        style={[styles.container, containerStyle]}
+        useNativeDriver={true}
       >
-        <Icon
-          containerStyle={styles.textInputIcon}
-          name={iconName}
-          type={iconType}
-          size={iconSize}
-          color={iconColor}
-        />
+        <View style={styles.iconContainer}>
+          <Icon
+            containerStyle={styles.textInputIcon}
+            name={iconName}
+            type={iconType}
+            size={iconSize}
+            color={iconColor}
+          />
+        </View>
         <TextInput
           style={styles.textinput}
           maxLength={50}
@@ -83,106 +173,13 @@ export class InputForm extends React.PureComponent {
         />
       </Animatable.View>
     );
-  }
-};
-
-//smart cont: handles all the login logic
-export class LoginContainer extends React.Component {
-  constructor(props){
-    super(props);
-  }
-
-  login = ({email, pass}) => {
-    return new Promise(async (resolve, reject) => {
-      try {
-        let response = await fetch('https://linkpad-pharmacy-reviewer.firebaseapp.com/login', {
-          method: 'POST',
-          headers: {
-            Accept: 'application/json',
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            email: email,
-            pass : pass ,
-          }),
-        });
-        let json = await response.json();
-        resolve(json);
-      } catch(error) {
-        reject();
-      }
-    });
-  }
-
-  _login = async (login_credentials, callbacks) => {
-    const {
-      onLoginLoading , //while logging in
-      onLoginInvalid , //invalid email/password
-      onLoginError   , //something went wrong
-      onLoginFetching,
-      onLoginFinished, //finish logging in
-    } = callbacks;
-
-    const { navigation } = this.props;
-
-    
-    try {
-      //wait for animation while login
-      let resolve_results = await Promise.all([
-        this.login(login_credentials),
-        onLoginLoading && await onLoginLoading(),
-      ]);
-      //extract login json from Promise Array
-      let login_response = resolve_results[0];
-
-      //stop if login invalid
-      if(!login_response.success){
-        onLoginInvalid && await onLoginInvalid(login_response);
-        return;
-      }
-
-      //wait for animation and fetch to finish
-      await Promise.all([
-        TipsStore.get(),
-        ModuleStore.get(),
-        ResourcesStore.get(),
-        onLoginFetching(),
-      ]);
-
-      //set update timestamps
-      await Promise.all([
-        ModulesLastUpdated.setTimestamp(),
-        ResourcesLastUpdated.setTimestamp(),
-        TipsLastUpdated.setTimestamp()
-      ]);
-
-      //save user data to storage
-      UserStore.setUserData(login_response);
-      //login finished
-      onLoginFinished && await onLoginFinished(login_response);
-      navigation.navigate(ROUTES.AppRoute);
-
-    } catch(error){
-      console.log(error);
-      await onLoginError();
-    }
-  }
-
-  render(){
-    const childProps = {
-      login: this._login,
-    };
-
-    return(
-      React.cloneElement(this.props.children, childProps)
-    );
-  }
+  };
 };
 
 //dumb cont: presents the UI for iOS
-export class LoginUI_iOS extends React.Component {
+class LoginUI_iOS extends React.Component {
   static propType = {
-    login: PropTypes.func,
+    onPressLogin: PropTypes.func,
   }
 
   constructor(props){
@@ -214,6 +211,36 @@ export class LoginUI_iOS extends React.Component {
 
   componentDidFocus = async () => {
     await this.ref_rootView.fadeInLeft(300);
+  };
+  
+  //----- functions -----
+  /** transtion in/out title and subtitle */
+  transitionHeader = async (callback, animateTitle = true, animateSubtitle = true) => {
+    //animate in
+    await Promise.all([
+      animateTitle    && this.headerTitle   .fadeOutLeft(250),
+      animateSubtitle && this.headerSubtitle.fadeOut(100),
+    ]);
+    //call callback function
+    callback && await callback();
+    //animate out
+    await Promise.all([
+      animateTitle    && this.headerTitle.fadeInRight(250),
+      animateSubtitle && this.headerSubtitle.fadeInRight(400),
+    ]);
+  };
+
+  /** transtion in/out subtitle */
+  transitionSubtitle = (callback) => {
+    return new Promise(async resolve => {
+      //animate in
+      await this.headerSubtitle.fadeOut(100);
+      //call callback function
+      if(callback) await callback();
+      //animate out
+      await this.headerSubtitle.fadeInRight(400);
+      resolve();
+    });
   }
 
   //returns the corresponding state for the mode
@@ -227,7 +254,7 @@ export class LoginUI_iOS extends React.Component {
         passwordValue  : '',
         isEmailValid   : true,
         isPasswordValid: true,
-       ...{mode},
+        ...{mode},
       };
       case MODES.loading: return {
         titleText   : 'LOGGING IN',
@@ -268,44 +295,26 @@ export class LoginUI_iOS extends React.Component {
         ...{mode}
       };
     }
-  }
+  };
 
-  _handleOnPressLogin = async () => {
-    const { emailValue, passwordValue } = this.state;
-    this.props.login({email: emailValue, pass: passwordValue}, {
-      //pass the callback functions
-      onLoginLoading : this.toggleLoading        ,
-      onLoginFetching: this.toggleLoginFetching  ,
-      onLoginInvalid : this.toggleLoginInvalid   ,
-      onLoginError   : this.toggleLoginError     ,
-      onLoginFinished: this.toggleLoginSuccessful,
+  //----- event callbacks ----
+  /** called while attempting to log in */
+  toggleLoading = async () => {
+    //collapse container: hide body
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    await setStateAsync(this, {isCollapsed: true});
+
+    //then replace title and subtitle
+    await this.transitionHeader(() => {
+      let loadingState = this.getState('loading');
+      return setStateAsync(this, loadingState);
     });
-  }
 
-  _handleOnPressSignUp = async () => {
-    const { onPressSignUp } = this.props;
-    await this.ref_rootView.fadeOutLeft(300);
-    onPressSignUp && onPressSignUp();
-  }
+    //delay to reduce stutter
+    await timeout(100);
+  };
 
-  //called when attempting to log in
-  toggleLoading = () => {
-    return new Promise(async (resolve) => {
-      //collapse container: hide body
-      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-      await setStateAsync(this, {isCollapsed: true});
-      //then replace title and subtitle
-      await this.transitionHeader(() => {
-        let loadingState = this.getState('loading');
-        return setStateAsync(this, loadingState);
-      });
-      //delay to reduce stutter
-      await timeout(100);
-      resolve();
-    });
-  }
-
-  //called when login has failed
+  /** called when login has failed */
   toggleLoginError = () => {
     return new Promise(async (resolve) => {
       //first expand container: show body
@@ -320,9 +329,9 @@ export class LoginUI_iOS extends React.Component {
       await timeout(100);
       resolve();
     });
-  }
+  };
 
-  //called when data is being fetched and stored
+  /** called when data is being fetched and stored */
   toggleLoginFetching = () => {
     return new Promise(async (resolve) => {
       //replace title and subtitle
@@ -334,9 +343,9 @@ export class LoginUI_iOS extends React.Component {
       await timeout(100);
       resolve();
     });
-  }
+  };
 
-  //called after login is finish
+  /** called after login is finish */
   toggleLoginSuccessful = () => {
     return new Promise(async (resolve) => {
       //replace title and subtitle
@@ -348,9 +357,9 @@ export class LoginUI_iOS extends React.Component {
       await timeout(100);
       resolve();
     });
-  }
+  };
 
-  //called when login pass and email is invalid
+  /** called when login pass and email is invalid */
   toggleLoginInvalid = () => {
     return new Promise(async (resolve) => {
       //first expand container: show body
@@ -365,37 +374,37 @@ export class LoginUI_iOS extends React.Component {
       await timeout(100);
       resolve();
     });
-  }
+  };
 
-  //transtion in/out title and subtitle
-  transitionHeader = async (callback, animateTitle = true, animateSubtitle = true) => {
-    //animate in
-    await Promise.all([
-      animateTitle    && this.headerTitle   .fadeOutLeft(250),
-      animateSubtitle && this.headerSubtitle.fadeOut(100),
-    ]);
-    //call callback function
-    callback && await callback();
-    //animate out
-    await Promise.all([
-      animateTitle    && this.headerTitle.fadeInRight(250),
-      animateSubtitle && this.headerSubtitle.fadeInRight(400),
-    ]);
-  }
+  //---- event handlers ----
+  _handleOnPressLogin = async () => {
+    const { onPressLogin } = this.props;
+    const { emailValue, passwordValue } = this.state;
 
-  //transtion in/out subtitle
-  transitionSubtitle = (callback) => {
-    return new Promise(async resolve => {
-      //animate in
-      await this.headerSubtitle.fadeOut(100);
-      //call callback function
-      if(callback) await callback();
-      //animate out
-      await this.headerSubtitle.fadeInRight(400);
-      resolve();
-    });
-  }
+    const login_credentials = {
+      email: emailValue   , 
+      pass : passwordValue,
+    };
 
+    //pass the callbacks for each corresponding state
+    const callbacks = {
+      onLoginLoading : this.toggleLoading        ,
+      onLoginFetching: this.toggleLoginFetching  ,
+      onLoginInvalid : this.toggleLoginInvalid   ,
+      onLoginError   : this.toggleLoginError     ,
+      onLoginFinished: this.toggleLoginSuccessful,
+    };
+
+    onPressLogin && onPressLogin(login_credentials, callbacks);
+  };
+
+  _handleOnPressSignUp = async () => {
+    const { onPressSignUp } = this.props;
+    await this.ref_rootView.fadeOutLeft(300);
+    onPressSignUp && onPressSignUp();
+  };
+
+  //----- render -----
   //title and subtitle 
   _renderHeader = () => {
     const { isLoading, titleText, subtitleText, } = this.state;
@@ -421,24 +430,38 @@ export class LoginUI_iOS extends React.Component {
         </Animatable.Text>
       </View>
     );
-  }
+  };
 
-  _renderSignInForm(){
+  _renderLogInButton(){
+    return(
+      <IconButton 
+        containerStyle={{padding: 15, marginTop: 25, backgroundColor: 'rgba(0, 0, 0, 0.4)', borderRadius: 10}}
+        textStyle={{color: 'white', fontSize: 20, fontWeight: 'bold', marginLeft: 20}}
+        iconName={'login'}
+        iconType={'simple-line-icon'}
+        iconColor={'white'}
+        iconSize={22}
+        text={'Log In'}
+        onPress={this._handleOnPressLogin}
+      >
+        <Icon
+          name ={'chevron-right'}
+          color={'rgba(255, 255, 255, 0.5)'}
+          type ={'feather'}
+          size ={25}
+        /> 
+      </IconButton>
+    );
+  };
 
+  _renderForms(){
     const textInputProps = {
       underlineColorAndroid: 'rgba(0,0,0,0)',
       selectionColor: 'rgba(255, 255, 255, 0.7)',
-    }
+    };
 
     return(
-      <Animatable.View 
-        collapsable={true}
-        animation={'fadeInRight'}
-        easing={'ease-in-out'}
-        delay={100}
-        duration={750}
-        useNativeDriver={true}
-      >
+      <Fragment>
         <InputForm
           placeholder='E-mail address'
           placeholderTextColor='rgba(255, 255, 255, 0.7)'
@@ -462,37 +485,40 @@ export class LoginUI_iOS extends React.Component {
           iconSize={30}
           {...textInputProps}
         />
-        
-        <IconButton 
-          containerStyle={{padding: 15, marginTop: 25, backgroundColor: 'rgba(0, 0, 0, 0.4)', borderRadius: 10}}
-          textStyle={{color: 'white', fontSize: 20, fontWeight: 'bold', marginLeft: 20}}
-          iconName={'login'}
-          iconType={'simple-line-icon'}
-          iconColor={'white'}
-          iconSize={22}
-          text={'Log In'}
-          onPress={this._handleOnPressLogin}
-        >
-          <Icon
-            name ={'chevron-right'}
-            color={'rgba(255, 255, 255, 0.5)'}
-            type ={'feather'}
-            size ={25}
-          /> 
-        </IconButton>
+      </Fragment>
+    );
+  };
 
-        <TouchableOpacity onPress={this._handleOnPressSignUp}>
-          <Text 
-            style={{fontSize: 16, fontWeight: '100', color: 'white', textAlign: 'center', textDecorationLine: 'underline', marginTop: 7, marginBottom: 10}}
-            numberOfLines={1}
-            ellipsizeMode='tail'
-          >
-            Don't have an acoount? Sign Up
-          </Text>
-        </TouchableOpacity>
+  _renderSignUpButton(){
+    return(
+      <TouchableOpacity onPress={this._handleOnPressSignUp}>
+        <Text 
+          style={{fontSize: 16, fontWeight: '100', color: 'white', textAlign: 'center', textDecorationLine: 'underline', marginTop: 7, marginBottom: 10}}
+          numberOfLines={1}
+          ellipsizeMode='tail'
+        >
+          Don't have an acoount? Sign Up
+        </Text>
+      </TouchableOpacity>
+    );
+  };
+
+  _renderSignInForm(){
+    return(
+      <Animatable.View 
+        collapsable={true}
+        animation={'fadeInRight'}
+        easing={'ease-in-out'}
+        delay={100}
+        duration={750}
+        useNativeDriver={true}
+      >
+        {this._renderForms       ()}
+        {this._renderLogInButton ()}
+        {this._renderSignUpButton()}
       </Animatable.View>
     );
-  }
+  };
 
   _renderSigninSuccessful(){
     return(
@@ -513,7 +539,7 @@ export class LoginUI_iOS extends React.Component {
         />
       </Animatable.View>
     );
-  }
+  };
 
   _renderContainer(){
     const { isLoading, mode, isCollapsed } = this.state;
@@ -537,7 +563,7 @@ export class LoginUI_iOS extends React.Component {
         </BlurView>
       </Animatable.View>
     );
-  }
+  };
 
   render(){
     return(
@@ -566,14 +592,14 @@ export class LoginUI_iOS extends React.Component {
         </Animatable.View>
       </View>
     );
-  }
+  };
 };
 
 //dumb cont: presents the UI for Android
-export class LoginUI_android extends React.Component {
+class LoginUI_android extends React.Component {
   static propType = {
-    login: PropTypes.func,
-  }
+    onPressLogin: PropTypes.func,
+  };
 
   constructor(props){
     super(props);
@@ -601,7 +627,7 @@ export class LoginUI_android extends React.Component {
     //prevent multiple presses
     this._handleOnPressLogin  = _.throttle(this._handleOnPressLogin , 1000, {leading:true, trailing:false});
     this._handleOnPressSignUp = _.throttle(this._handleOnPressSignUp, 1000, {leading:true, trailing:false});
-  }
+  };
 
   componentDidFocus = async () => {
     //dont animate on first mount
@@ -610,7 +636,7 @@ export class LoginUI_android extends React.Component {
       return;
     }
     await this.ref_rootView.fadeInLeft(300);
-  }
+  };
 
   //returns the corresponding state for the mode
   getState = (mode) => {
@@ -667,7 +693,7 @@ export class LoginUI_android extends React.Component {
         ...{mode}
       };
     }
-  }
+  };
 
   //transtion in/out title and subtitle
   transitionHeader = (callback, animateTitle = true, animateSubtitle = true) => {
@@ -687,7 +713,7 @@ export class LoginUI_android extends React.Component {
       //finish animation
       resolve();
     });
-  }
+  };
 
   //helper function to animate changes based on mode
   setMode = async (mode) => {
@@ -703,27 +729,27 @@ export class LoginUI_android extends React.Component {
     }, animateTitle, animateSubtitle);
     //reduce stutter
     await timeout(150);
-  }
+  };
 
   toggleLoading = async () => {
     await this.setMode(MODES.loading);
-  }
+  };
 
   toggleLoginFetching = async () => {
     await this.setMode(MODES.fetching);
-  }
+  };
 
   toggleLoginInvalid = async () => {
     await this.setMode(MODES.invalid);    
-  }
+  };
 
   toggleLoginError = async () => {
     await this.setMode(MODES.error);
-  }
+  };
 
   toggleLoginSuccessful = async () => {
     await this.setMode(MODES.succesful);
-  }
+  };
 
   _handleOnPressLogin = async () => {
     const { emailValue, passwordValue, isLoading } = this.state;
@@ -740,13 +766,13 @@ export class LoginUI_android extends React.Component {
       onLoginError   : this.toggleLoginError     ,
       onLoginFinished: this.toggleLoginSuccessful,
     });
-  }
+  };
 
   _handleOnPressSignUp = async () => {
     const { onPressSignUp } = this.props;
     await this.ref_rootView.fadeOutLeft(300);
     onPressSignUp && onPressSignUp();
-  }
+  };
 
   //the logo on top of sign in container
   _renderLogo(){
@@ -763,7 +789,7 @@ export class LoginUI_android extends React.Component {
         </View>
       </Animatable.View>
     );
-  }
+  };
 
   _renderLogInButton(){
     const { isLoading } = this.state;
@@ -807,7 +833,7 @@ export class LoginUI_android extends React.Component {
       </TouchableOpacity>
       </Fragment>
     );
-  }
+  };
 
   //login inputs
   _renderForm(){
@@ -927,41 +953,103 @@ export class LoginUI_android extends React.Component {
 
 export default class LoginScreen extends React.Component { 
   static navigationOptions = {
-  }
+  };
+
+  _handleOnPressLogin = async (login_credentials, callbacks) => {
+    //destruct callbacks
+    const {
+      onLoginLoading , //while logging in
+      onLoginInvalid , //invalid email/password
+      onLoginError   , //something went wrong
+      onLoginFetching, //
+      onLoginFinished, //finish logging in
+    } = callbacks;
+
+    try {
+      //wait for animation while login
+      const resolve_results = await Promise.all([
+        //wait for login, otherwise call onLoginError when error occurs
+        Login.login(login_credentials, onLoginError),
+        //wait for transition to finish
+        onLoginLoading && onLoginLoading(),
+      ]);
+
+      //extract login json from Promise Array
+      const login_response = resolve_results[0];
+
+      //stop if login is invalid
+      if(!login_response.success){
+        onLoginInvalid && await onLoginInvalid(login_response);
+        return;
+      };
+
+      //wait for animation and fetch to finish
+      await Promise.all([
+        TipsStore     .get(),
+        ModuleStore   .get(),
+        ResourcesStore.get(),
+        onLoginFetching(),
+      ]);
+
+      //set update timestamps
+      await Promise.all([
+        ModulesLastUpdated  .setTimestamp(),
+        ResourcesLastUpdated.setTimestamp(),
+        TipsLastUpdated     .setTimestamp()
+      ]);
+
+      //save user data to storage
+      UserStore.setUserData(login_response);
+      //login finished
+      onLoginFinished && await onLoginFinished(login_response);
+      
+      //navigate to app screens
+      const { navigation } = this.props;
+      navigation.navigate(ROUTES.AppRoute);
+
+    } catch(error){
+      console.log("Error: Unable to login.");
+      console.log(error);
+      await onLoginError();
+    };
+  };
 
   _handleOnPressSignUp = () => {
     const { navigation } = this.props;
     navigation.navigate('SignUpRoute');
-  }
+  };
 
   componentWillBlur = () => {
     const { getAuthBGGradientRef } = this.props.screenProps;
     //stop the BG Gradient animation
     getAuthBGGradientRef && getAuthBGGradientRef().stop();
-  }
+  };
 
   componentDidFocus = () => {
     const { getAuthBGGradientRef } = this.props.screenProps;
     //start the BG Gradient animation
     getAuthBGGradientRef && getAuthBGGradientRef().start();
-  }
+  };
 
   render(){
+    const sharedProps = {
+      onPressLogin : this._handleOnPressLogin ,
+      onPressSignUp: this._handleOnPressSignUp,
+    };
+
     return(
       <View collapsable={true}>
         <NavigationEvents 
           onWillBlur={this.componentWillBlur}
           onDidFocus={this.componentDidFocus}
         />
-        <LoginContainer navigation={this.props.navigation}>
-          {Platform.select({
-            ios    : <LoginUI_iOS     onPressSignUp={this._handleOnPressSignUp}/>,
-            android: <LoginUI_android onPressSignUp={this._handleOnPressSignUp}/>,
-          })}
-        </LoginContainer>
+        {Platform.select({
+          ios    : <LoginUI_iOS     {...sharedProps}/>,
+          android: <LoginUI_android {...sharedProps}/>,
+        })}
       </View>
     );
-  }
+  };
 };
 
 const styles = StyleSheet.create({
@@ -986,33 +1074,4 @@ const styles = StyleSheet.create({
       },
     })
   },
-  textinputContainer: {
-    paddingHorizontal: 15,
-    paddingVertical: 10,
-    borderRadius: 10,
-    flexDirection: 'row', 
-    marginTop: 25,
-  },
-  textInputIcon: {
-    width: 30
-  },
-  textinput: {
-    flex: 1, 
-    alignSelf: 'center', 
-    fontSize: 22, 
-    marginLeft: 15, 
-    height: 35, 
-    borderColor: 'transparent', 
-    borderWidth: 1,
-    paddingHorizontal: 5,
-    ...Platform.select({
-      ios: {
-        borderBottomColor: 'rgba(255, 255, 255, 0.25)', 
-        color: 'white', 
-      },
-      android: {
-        color: 'black'
-      },
-    }),
-  }
 });

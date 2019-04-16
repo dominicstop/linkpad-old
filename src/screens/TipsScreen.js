@@ -1,15 +1,16 @@
 import React from 'react';
-import { StyleSheet, RefreshControl, Alert, View, Text, Platform, ToastAndroid } from 'react-native';
+import { StyleSheet, RefreshControl, Alert, View, Text, Platform, ToastAndroid, TouchableOpacity, FlatList } from 'react-native';
 import PropTypes from 'prop-types';
 
 import { ROUTES , HEADER_HEIGHT} from '../Constants';
-import { TipList } from '../components/Tips';
+import { BLUE, PURPLE } from '../Colors';
 
 import { timeout, setStateAsync, plural } from '../functions/Utils';
 import { TipsStore } from '../functions/TipsStore';
 import { TipsLastUpdated } from '../functions/MiscStore';
+import { TipModel } from '../models/TipModel';
 
-import { ViewWithBlurredHeader, IconFooter, Card } from '../components/Views';
+import { ViewWithBlurredHeader, IconFooter, Card, AnimatedListItem } from '../components/Views';
 
 import _ from 'lodash';
 import * as Animatable from 'react-native-animatable';
@@ -167,6 +168,210 @@ class HeaderCard extends React.PureComponent {
   };
 };
 
+// shown when no exams have been created yet
+class EmptyCard extends React.PureComponent {
+  static styles = StyleSheet.create({
+    card: {
+      flexDirection: 'row',
+      paddingVertical: 10,
+    },  
+    image: {
+      width: 75, 
+      height: 75,
+      marginRight: 10,
+      marginVertical: 12,
+    },
+    headerTextContainer: {
+      flex: 1, 
+      alignItems: 'center', 
+      justifyContent: 'center', 
+    },
+    headerTitle: {
+      color: '#512DA8',
+      fontSize: 20, 
+      fontWeight: '800'
+    },
+    headerSubtitle: {
+      fontSize: 16, 
+      ...Platform.select({
+        ios: {
+          fontWeight: '200'
+        },
+        android: {
+          fontWeight: '100',
+          color: '#424242'
+        },
+      })
+    },
+  });
+
+  constructor(props){
+    super(props);
+    this.imageHeader = require('../../assets/icons/folder-castle.png');
+  };
+
+  render() {
+    const { styles } = EmptyCard;
+    const animation = Platform.select({
+      ios    : 'fadeInUp',
+      android: 'zoomIn'  ,
+    });
+
+    return(
+      <Animatable.View
+        duration={500}
+        delay={300}
+        easing={'ease-in-out'}
+        useNativeDriver={true}
+        {...{animation}}
+      >
+        <Card style={styles.card}>
+          <Animatable.Image
+            source={this.imageHeader}
+            style={styles.image}
+            animation={'pulse'}
+            easing={'ease-in-out'}
+            iterationCount={"infinite"}
+            duration={5000}
+            useNativeDriver={true}
+          />
+          <View style={styles.headerTextContainer}>
+            <Text style={styles.headerTitle   }>No Items to Show</Text>
+            <Text style={styles.headerSubtitle}>You can swipe down to refresh and download the tips from the server.</Text>
+          </View>
+        </Card>
+      </Animatable.View>
+  );
+  };
+};
+
+class TipItem extends React.PureComponent { 
+  static propTypes = {
+    tip: PropTypes.object,
+    onPress: PropTypes.func,
+    index: PropTypes.number,
+  };
+
+  static styles = StyleSheet.create({
+    divider: {
+      marginVertical: 10,
+      marginHorizontal: 15,
+    },
+    textTitle: {
+      fontSize: 24, 
+      fontWeight: 'bold',
+      color: PURPLE[1100]
+    },
+    textSubtitle: {
+      fontSize: 16, 
+      fontWeight: '100', 
+      color: 'grey',
+    },
+    textBody: {
+      fontSize: 18, 
+      fontWeight: '300', 
+      textAlign: 'justify'
+    },
+    textLink: {
+      fontSize: 18, 
+      color: BLUE[800], 
+      textDecorationLine: 'underline', 
+      marginTop: 5
+    },
+  });
+
+  constructor(props){
+    super(props);
+  };
+
+  _handleOnPress = () => {
+    const { onPress, tip, index } = this.props;
+    onPress && onPress({tip, index});
+  };
+
+  render(){
+    const { styles } = TipItem;
+    const { tip } = this.props;
+
+    //wrap inside model
+    const model = new TipModel(tip);
+
+    return(
+      <Card>      
+        <TouchableOpacity onPress={this._handleOnPress}>
+          <Text style={styles.textTitle}>
+            {model.title}
+          </Text>
+          <Text style={styles.textSubtitle}>
+            {`Last updated on ${model.dateposted}`}
+          </Text>
+          <Divider style={styles.divider}/>
+          <Text style={styles.textBody} numberOfLines={4}>
+            {model.tip}
+          </Text>
+        </TouchableOpacity>
+      </Card>
+    );
+  };
+};
+
+class TipList extends React.PureComponent {
+  static propTypes = {
+    tips: PropTypes.array,
+    onPressTip:PropTypes.func,
+  };
+
+  _handleKeyExtractor = (item) => {
+    return `tipno:${item.tipnumber}-indexid:${item.indexid}`;
+  };
+
+  _handleOnPressTip = ({tip, index}) => {
+    const { tips, onPressTip } = this.props;
+    onPressTip && onPressTip({tip, tips, index});
+  };
+
+  _renderItemTip = ({item, index}) => {
+
+    const animation = Platform.select({ios: 'fadeInUp', android: 'zoomIn'});
+
+    return(
+      <AnimatedListItem
+        index={index}
+        duration={500}
+        multiplier={100}
+        last={6}
+        {...{animation}}
+      >
+        <TipItem 
+          tip={item}
+          onPress={this._handleOnPressTip}
+          {...{index}}
+        />
+      </AnimatedListItem>
+    );
+  };
+
+  _renderEmpty = () => {
+    return(
+      <EmptyCard/>
+    );
+  };
+
+  render(){
+    const { tips, ...flatListProps } = this.props;
+    const data = _.compact(tips || []);
+    return(
+      <FlatList
+        ref={r => this.flatlist = r}
+        keyExtractor={this._handleKeyExtractor}
+        renderItem={this._renderItemTip}
+        ListEmptyComponent={this._renderEmpty}
+        {...{data, ...flatListProps}}
+      />
+    );
+  };
+};
+
 //show the setting screen
 export class TipsScreen extends React.Component {
   static styles = StyleSheet.create({
@@ -311,6 +516,6 @@ export class TipsScreen extends React.Component {
         />}
       </ViewWithBlurredHeader>
     );
-  }
+  };
 };
 

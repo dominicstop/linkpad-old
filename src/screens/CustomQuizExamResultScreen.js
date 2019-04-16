@@ -710,6 +710,7 @@ class StatsCard extends React.PureComponent {
   };
 };
 
+//score progress - wraps chart inside a scrollview
 class ProgressChartWrapper extends React.PureComponent {
   render(){
     const { showRecent, children } = this.props;

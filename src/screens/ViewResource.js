@@ -8,7 +8,7 @@ import { CustomHeader } from '../components/Header' ;
 
 import _ from 'lodash';
 import * as Animatable from 'react-native-animatable';
-import Expo from 'expo';
+import { FileSystem } from 'expo';
 import { Header, NavigationEvents  } from 'react-navigation';
 
 import {plural, isEmpty, timeout} from '../functions/Utils';
@@ -87,7 +87,7 @@ class ImageCard extends React.PureComponent {
     await timeout(1250);
     
     try {
-      const uri = await Expo.FileSystem.readAsStringAsync(fileURI);
+      const uri = await FileSystem.readAsStringAsync(fileURI);
       this.setState({uri, loading: false});
 
     } catch(error){

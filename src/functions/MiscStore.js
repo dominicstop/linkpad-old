@@ -1,7 +1,8 @@
 import store from 'react-native-simple-store';
 import { getTimestamp } from './Utils';
 
-const _modulesLastUpdated = null;
+let _modulesLastUpdated = null;
+
 export class ModulesLastUpdated {
   static get KEY() {
     return 'modulesLastUpdated';
@@ -30,7 +31,7 @@ export class ModulesLastUpdated {
   };
 };
 
-const _resourcesLastUpdated = null;
+let _resourcesLastUpdated = null;
 export class ResourcesLastUpdated {
   static get KEY() {
     return 'resourcesLastUpdated';
@@ -59,7 +60,7 @@ export class ResourcesLastUpdated {
   };
 };
 
-const _tipsLastUpdated = null;
+let _tipsLastUpdated = null;
 export class TipsLastUpdated {
   static get KEY() {
     return 'tipsLastUpdated';

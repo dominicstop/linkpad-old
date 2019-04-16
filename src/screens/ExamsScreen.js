@@ -417,7 +417,7 @@ class CustomQuizList extends React.PureComponent {
     const {quizes, ...otherProps} = this.props;
     return(
       <FlatList
-        data={quizes}
+        data={quizes || []}
         renderItem={this._renderItem}
         keyExtractor={this._keyExtractor}
         ListHeaderComponent={this._renderHeader}

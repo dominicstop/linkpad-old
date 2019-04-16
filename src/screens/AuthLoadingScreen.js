@@ -1,5 +1,5 @@
 import React from 'react';
-import Expo from 'expo';
+import { Font } from 'expo';
 import { StyleSheet, Text, View, ActivityIndicator, AsyncStorage, Dimensions, Alert, Image } from 'react-native';
 import PropTypes from 'prop-types';
 
@@ -38,6 +38,7 @@ export default class AuthLoadingScreen extends React.Component {
   componentDidMount = async () => {
     const { navigation } = this.props;
     try {
+      await this._loadFonts();
       //animate in and authenticate
       const userData = await this._authenticate();
 
@@ -95,6 +96,19 @@ export default class AuthLoadingScreen extends React.Component {
       console.log('Error: Unable to load data.');
       throw "Unable to load data from store";      
     };
+  };
+
+  async _loadFonts(){
+    await Font.loadAsync({
+      'Material Design Icons': require("@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/MaterialCommunityIcons.ttf" ),
+      'Material Icons'       : require("@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/MaterialIcons.ttf"  ),
+      'FontAwesome'          : require('@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/FontAwesome.ttf'    ),
+      'SimpleLineIcons'      : require('@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/SimpleLineIcons.ttf'),
+      'simple-line-icons'    : require('@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/SimpleLineIcons.ttf'),
+      'Feather'              : require('@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/Feather.ttf'        ),
+      'Ionicons'             : require('@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/Ionicons.ttf'       ),
+      'Entypo'               : require('@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/Entypo.ttf'         ),
+    });
   };
 
   async animateOut(){

@@ -210,6 +210,13 @@ export class ModuleListScreen extends React.Component {
   componentDidMount = async () => {
     //delay rendering
     setTimeout(() => { this.setState({mount: true}) }, 500);
+
+    //get modules from storage
+    let modules = await ModuleStore.get();
+    //get lastupdated from store
+    const lastUpdated = ModulesLastUpdated.get();
+
+    this.setState({modules, lastUpdated});
   };
 
   _onRefresh = async () => {
@@ -227,15 +234,6 @@ export class ModuleListScreen extends React.Component {
       modules    : result[0],
       lastUpdated: result[1],
     });
-  };
-  
-  componentWillMount = async () => {
-    //get modules from storage
-    let modules = await ModuleStore.get();
-    //get lastupdated from store
-    const lastUpdated = await ModulesLastUpdated.get();
-
-    this.setState({modules, lastUpdated});
   };
 
   _navigateToModule = (modules, moduleData) => {
@@ -304,13 +302,14 @@ export class ModuleListScreen extends React.Component {
       <ViewWithBlurredHeader hasTabBar={true}>
         <NavigationEvents onDidFocus={this.componentDidFocus}/>
         {modules && <ModuleList
+          modules={modules || []}
           onPressModule ={this._navigateToModule}
           onPressSubject={this._onPressSubject}
           onEndReached={this._handleOnEndReached}
           refreshControl={this._renderRefreshCotrol()}
           ListHeaderComponent={this._renderHeader}
           ListFooterComponent={this._renderFooter}
-          {...{modules, ...flatListProps}}
+          {...flatListProps}
         />}
       </ViewWithBlurredHeader>
     );

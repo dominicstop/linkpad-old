@@ -1,24 +1,21 @@
 import React from 'react';
-import { StyleSheet, RefreshControl, Alert, View, Text, Platform, AsyncStorage, FlatList, ScrollView, ToastAndroid } from 'react-native';
+import { StyleSheet, RefreshControl, Alert, View, Text, Platform, FlatList, TouchableOpacity, ToastAndroid } from 'react-native';
 import PropTypes from 'prop-types';
 
-import   NavigationService       from '../NavigationService'   ;
-import { HEADER_PROPS          , HEADER_HEIGHT} from '../Constants'           ;
-import { CustomHeader          } from '../components/Header'   ;
-import { DrawerButton          } from '../components/Buttons'  ;
-import { ResourceList          } from '../components/Resources';
+import { HEADER_HEIGHT } from '../Constants';
+import { BLUE, PURPLE } from '../Colors';
 
-import { ViewWithBlurredHeader, IconFooter, Card } from '../components/Views';
+import { ViewWithBlurredHeader, IconFooter, Card, AnimatedListItem } from '../components/Views';
 
 import { timeout, setStateAsync , plural} from '../functions/Utils';
-import { ResourcesStore         } from '../functions/ResourcesStore';
-import { ResourcesLastUpdated   } from '../functions/MiscStore';
+import { ResourcesStore       } from '../functions/ResourcesStore';
+import { ResourcesLastUpdated } from '../functions/MiscStore';
+import { ResourceModel } from '../models/ResourceModel';
 
-
-import * as Animatable from 'react-native-animatable';
-import { Header, createStackNavigator, NavigationEvents } from 'react-navigation';
-import { Icon, Divider } from 'react-native-elements';
 import _ from 'lodash';
+import * as Animatable from 'react-native-animatable';
+import { NavigationEvents } from 'react-navigation';
+import { Divider } from 'react-native-elements';
 import TimeAgo from 'react-native-timeago';
 
 class HeaderCard extends React.PureComponent {
@@ -171,14 +168,219 @@ class HeaderCard extends React.PureComponent {
   };
 };
 
+// shown when no exams have been created yet
+class EmptyCard extends React.PureComponent {
+  static styles = StyleSheet.create({
+    card: {
+      flexDirection: 'row',
+      paddingVertical: 10,
+    },  
+    image: {
+      width: 75, 
+      height: 75,
+      marginRight: 10,
+      marginVertical: 12,
+    },
+    headerTextContainer: {
+      flex: 1, 
+      alignItems: 'center', 
+      justifyContent: 'center', 
+    },
+    headerTitle: {
+      color: '#512DA8',
+      fontSize: 20, 
+      fontWeight: '800'
+    },
+    headerSubtitle: {
+      fontSize: 16, 
+      ...Platform.select({
+        ios: {
+          fontWeight: '200'
+        },
+        android: {
+          fontWeight: '100',
+          color: '#424242'
+        },
+      })
+    },
+  });
+
+  constructor(props){
+    super(props);
+    this.imageHeader = require('../../assets/icons/folder-castle.png');
+  };
+
+  render() {
+    const { styles } = EmptyCard;
+    const animation = Platform.select({
+      ios    : 'fadeInUp',
+      android: 'zoomIn'  ,
+    });
+
+    return(
+      <Animatable.View
+        duration={500}
+        delay={300}
+        easing={'ease-in-out'}
+        useNativeDriver={true}
+        {...{animation}}
+      >
+        <Card style={styles.card}>
+          <Animatable.Image
+            source={this.imageHeader}
+            style={styles.image}
+            animation={'pulse'}
+            easing={'ease-in-out'}
+            iterationCount={"infinite"}
+            duration={5000}
+            useNativeDriver={true}
+          />
+          <View style={styles.headerTextContainer}>
+            <Text style={styles.headerTitle   }>No Items to Show</Text>
+            <Text style={styles.headerSubtitle}>You can swipe down to refresh and download the resources from the server.</Text>
+          </View>
+        </Card>
+      </Animatable.View>
+  );
+  };
+};
+
+class ResourceItem extends React.PureComponent { 
+  static propTypes = {
+    resource: PropTypes.object,
+    onPress : PropTypes.func,
+  };
+
+  static styles = StyleSheet.create({
+    divider: {
+      marginVertical: 10,
+      marginHorizontal: 15,
+    },
+    textTitle: {
+      fontSize: 24, 
+      fontWeight: 'bold',
+      color: PURPLE[1100]
+    },
+    textSubtitle: {
+      fontSize: 16, 
+      fontWeight: '100', 
+      color: 'grey',
+    },
+    textBody: {
+      fontSize: 18, 
+      fontWeight: '300', 
+      textAlign: 'justify'
+    },
+    textLink: {
+      fontSize: 18, 
+      color: BLUE[800], 
+      textDecorationLine: 'underline', 
+      marginTop: 5
+    },
+  });
+
+  constructor(props){
+    super(props);
+  };
+
+  _handleOnPress = () => {
+    const { onPress, resource } = this.props;
+    onPress && onPress(resource);
+  };
+
+  render(){
+    const { styles } = ResourceItem;
+    const { resource } = this.props;
+
+    //wrap inside model
+    const model = new ResourceModel(resource);
+
+    return(
+      <Card>      
+        <TouchableOpacity onPress={this._handleOnPress}>
+          <Text style={styles.textTitle}>
+            {model.title}
+          </Text>
+          <Text style={styles.textSubtitle}>
+            {`Last updated on ${model.dateposted}`}
+          </Text>
+          <Divider style={styles.divider}/>
+          <Text style={styles.textBody} numberOfLines={4}>
+            {model.description}
+          </Text>
+          <Text style={styles.textLink}>
+            {resource.link}
+          </Text>
+        </TouchableOpacity>
+      </Card>
+    );
+  };
+};
+
+export class ResourceList extends React.PureComponent {
+  static propTypes = {
+    onPress  : PropTypes.func,
+    resources: PropTypes.array,
+  };
+
+  constructor(props){
+    super(props);
+    this.DEBUG = false;
+  };
+
+  _handleOnPress = (resource) => {
+    const { onPress, resources } = this.props;
+    onPress && onPress(resource, resources);
+  };
+
+  _renderItemResources = ({item, index}) => {
+    const animation = Platform.select({
+      ios    : 'fadeInUp',
+      android: 'zoomIn'  ,
+    });
+
+    return(
+      <AnimatedListItem
+        duration={500}
+        multiplier={100}
+        last={6}
+        {...{index, animation}}
+      >
+        <ResourceItem 
+          resource={item}
+          onPress={this._handleOnPress}
+        />
+      </AnimatedListItem>
+    );
+  };
+
+  _renderEmpty = () => {
+    return(
+      <EmptyCard/>
+    );
+  };
+
+  render(){
+    const { resources, ...flatListProps } = this.props;
+    return(
+      <FlatList
+        ref={r => this.flatlist = r}
+        data={resources || []}
+        keyExtractor={item => item.indexid + ''}
+        renderItem={this._renderItemResources}
+        ListEmptyComponent={this._renderEmpty}
+        {...flatListProps}
+      />
+    );
+  };
+};
+
 //show the setting screen
 export class ResourcesScreen extends React.Component {
   constructor(props){
     super(props);
 
     const lastUpdated = ResourcesLastUpdated.get();
-    console.log(lastUpdated);
-
     this.state = {
       resources: [],
       refreshing: false,
@@ -302,7 +504,7 @@ export class ResourcesScreen extends React.Component {
 
   render(){
     const { resources, mount, showContent } = this.state;
-
+    
     return(
       <ViewWithBlurredHeader hasTabBar={true}>
         <NavigationEvents onDidFocus={this.componentDidFocus}/>

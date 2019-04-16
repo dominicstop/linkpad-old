@@ -7,7 +7,7 @@ import { STYLES } from '../Constants';
 import { getStatusBarHeight, getBottomSpace, isIphoneX } from 'react-native-iphone-x-helper';
 import { Icon } from 'react-native-elements';
 import { Header } from 'react-navigation';
-import Expo, { BlurView } from 'expo';
+import { BlurView } from 'expo';
 import * as Animatable from 'react-native-animatable';
 import { LinearGradient } from 'expo';
 import {timeout} from '../functions/Utils';

@@ -134,14 +134,14 @@ export class CustomQuizStore {
       //read from store
       const raw_quizes = await store.get(CustomQuizStore.KEY);
       //wrap each quiz items
-      const quizes = CustomQuiz.wrapArray(raw_quizes);
+      const quizes = CustomQuiz.wrapArray(raw_quizes || []);
       //update cache variable
       _quizes = quizes;
 
       return (quizes);
 
     } catch(error){
-      console.error('Failed to read quizes from store.');
+      console.error('Failed to read custom quizes from store.');
       throw error;
     };
   };

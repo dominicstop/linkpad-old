@@ -36,31 +36,28 @@ const routeConfig = {
   [ROUTES.TabModuleListRoute]: {
     screen: ModuleListScreen,
     navigationOptions: {
-      title: global.usePlaceholder? 'Lorum Ipsum' : 'Modules',
+      title: 'Modules',
       tabBarLabel: 'Modules',
       tabBarIcon: ({ focused, tintColor }) => {
-        const iconName = focused? 'ios-albums' : 'ios-albums-outline';
-        return <Icon name={iconName} size={25} color={tintColor} type='ionicon' containerStyle={focused? STYLES.glow : null}/>;
+        return <Icon name={'ios-albums'} size={25} color={tintColor} type='ionicon' containerStyle={focused? STYLES.glow : null}/>;
       }
     }
   },
   [ROUTES.TabExamsRoute]: {
     screen: ExamsScreen,
     navigationOptions: {
-      tabBarLabel: global.usePlaceholder? 'Sit Amit' : 'Quiz',
+      tabBarLabel: 'Quiz',
       tabBarIcon: ({ focused, tintColor }) => {
-        const iconName = focused? 'ios-bookmarks' : 'ios-bookmarks-outline';
-        return <Icon name={iconName} size={25} color={tintColor} type='ionicon' containerStyle={focused? STYLES.glow : null}/>;
+        return <Icon name={'ios-bookmarks'} size={25} color={tintColor} type='ionicon' containerStyle={focused? STYLES.glow : null}/>;
       }
     }
   },
   [ROUTES.TabResourcesRoute]: {
     screen: ResourcesScreen,
     navigationOptions: {
-      tabBarLabel: global.usePlaceholder? 'Dolor' : 'Resources',
+      tabBarLabel: 'Resources',
       tabBarIcon: ({ focused, tintColor }) => {
-        const iconName = focused? 'ios-information-circle' : 'ios-information-circle-outline';
-        return <Icon name={iconName} size={25} color={tintColor} type='ionicon' containerStyle={focused? STYLES.glow : null}/>;
+        return <Icon name={'ios-information-circle'} size={25} color={tintColor} type='ionicon' containerStyle={focused? STYLES.glow : null}/>;
       }
     }
   },
@@ -69,12 +66,11 @@ const routeConfig = {
     navigationOptions: {
       tabBarLabel: global.usePlaceholder? 'Justo' : 'Tips',
       tabBarIcon: ({ focused, tintColor }) => {
-        const iconName = focused? 'ios-star' : 'ios-star-outline';
-        return <Icon name={iconName} size={25} color={tintColor} type='ionicon' containerStyle={focused? STYLES.glow : null}/>;
+        return <Icon name={'ios-star'} size={25} color={tintColor} type='ionicon' containerStyle={focused? STYLES.glow : null}/>;
       }
     }
   },
-}
+};
 
 const TabNavigation_ios = createBottomTabNavigator(routeConfig, {
     initialRouteName: ROUTES.TabModuleListRoute,

@@ -21,6 +21,7 @@ import { PURPLE, RED } from '../Colors';
 import { createStackNavigator } from 'react-navigation';
 import * as Animatable from 'react-native-animatable';
 import { Icon } from 'react-native-elements';
+import {CustomQuiz} from '../functions/CustomQuizStore';
 
 //custom header left component
 class CancelButton extends React.PureComponent {
@@ -418,9 +419,11 @@ class CustomQuizExamScreen extends React.Component {
     const { styles } = CustomQuizExamScreen;
     const { navigation } = this.props;
     
-    //get data from previous screen: ExamScreen
-    const quiz = navigation.getParam('quiz' , null);
-    Clipboard.setString(JSON.stringify(quiz));
+    //wrap quiz to make sure all properties exists
+    const quiz = CustomQuiz.wrap(
+      //get data from previous screen: ExamScreen
+      navigation.getParam('quiz' , {})
+    );
     
     return (
       <ViewWithBlurredHeader hasTabBar={false}>

@@ -1,6 +1,4 @@
-import { FileSystem, Clipboard } from 'react-native';
-import Expo from 'expo';
-
+import { FileSystem } from 'expo';
 import store from 'react-native-simple-store';
 import _ from 'lodash';
 
@@ -10,7 +8,7 @@ import { ModuleItemModel, SubjectItem, QuestionItem } from '../models/ModuleMode
 //save a copy of modules
 let _modules = null;
 
-const BASE_DIR   = Expo.FileSystem.documentDirectory;
+const BASE_DIR   = FileSystem.documentDirectory;
 const FOLDER_KEY = 'module_images';
 
 /** makes sure all the properties exists and removes invalid items */
@@ -88,7 +86,7 @@ async function _saveBase64ToStorage(_modules = [ModuleItemModel.structure]){
           try {
             if(isImage){
               //save the base64 image to the fs
-              await Expo.FileSystem.writeAsStringAsync(img_uri, photouri);
+              await FileSystem.writeAsStringAsync(img_uri, photouri);
               //update module uri
               question.photouri = img_uri;
 

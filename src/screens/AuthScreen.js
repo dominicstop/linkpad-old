@@ -1,5 +1,5 @@
-import React, { Fragment } from 'react';
-import { StyleSheet } from 'react-native';
+import React from 'react';
+import { StyleSheet, View, Platform } from 'react-native';
 
 import { createStackNavigator } from 'react-navigation';
 import * as Animatable from 'react-native-animatable';
@@ -53,6 +53,11 @@ export default class AuthScreen extends React.Component {
       height: '100%',
       opacity: 0.7
     },
+    backgroundWrapper: {
+      position: 'absolute',
+      width: '100%',
+      height: '100%'
+    },
   });
 
   constructor(props){
@@ -91,18 +96,17 @@ export default class AuthScreen extends React.Component {
     //gradient colors
     const colorsTop    = ['#7F00FF', '#654ea3', '#642B73', '#c0392b', '#ff00cc',  '#FC466B' ];
     const colorsBottom = ['#F100FF', '#eaafc8', '#C6426E', '#8e44ad', '#333399',  '#3F5EFB' ];
+    const speed = Platform.select({ios: 100, android: 200});
 
     return(
-      <Fragment>
+      <View style={styles.backgroundWrapper}>
         {this._renderBGImage()}
         <AnimatedGradient
           ref={r => this.animatedGradientRef = r}
           style={styles.gradientBG}
-          speed={100} 
-          numOfInterps={1000}
           {...{colorsTop, colorsBottom}}
         />
-      </Fragment>
+      </View>
     );
   };
 

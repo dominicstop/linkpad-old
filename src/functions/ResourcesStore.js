@@ -1,5 +1,4 @@
-import { FileSystem } from 'react-native';
-import Expo from 'expo';
+import { FileSystem } from 'expo';
 
 import store from 'react-native-simple-store';
 import _ from 'lodash';
@@ -11,7 +10,7 @@ import { ResourceModel } from '../models/ResourceModel';
 let _resourcesData = null;
 const DEBUG = false;
 
-const BASE_DIR   = Expo.FileSystem.documentDirectory;
+const BASE_DIR   = FileSystem.documentDirectory;
 const FOLDER_KEY = 'resource_images';
 
 /** store Base64 images to storage and replace with URI */
@@ -35,7 +34,7 @@ async function _saveBase64ToStorage(_resources = [ResourceModel.structure]){
       try {
         if(isImage){
           //save the base64 image to the fs
-          await Expo.FileSystem.writeAsStringAsync(img_uri, photouri);
+          await FileSystem.writeAsStringAsync(img_uri, photouri);
           //update resource uri
           resource.photouri = img_uri;
 
