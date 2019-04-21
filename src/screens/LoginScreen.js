@@ -1,6 +1,6 @@
 import PropTypes from 'prop-types';
 import React, { Fragment } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, Keyboard, ScrollView, TextInput, UIManager, LayoutAnimation, ActivityIndicator, KeyboardAvoidingView, Platform, NetInfo, InteractionManager } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, Keyboard, ScrollView, TextInput, UIManager, LayoutAnimation, ActivityIndicator, KeyboardAvoidingView, Platform, NetInfo, InteractionManager, } from 'react-native';
 
 import { AnimatedGradient } from '../components/AnimatedGradient';
 import { IconButton       } from '../components/Buttons';
@@ -9,11 +9,6 @@ import { IconText         } from '../components/Views';
 import { ROUTES } from '../Constants';
 import {setStateAsync, timeout} from '../functions/Utils';
 
-import UserStore from '../functions/UserStore';
-import { TipsStore } from '../functions/TipsStore';
-import { ModuleStore } from '../functions/ModuleStore';
-import { ResourcesStore } from '../functions/ResourcesStore';
-import { ModulesLastUpdated, ResourcesLastUpdated, TipsLastUpdated } from '../functions/MiscStore';
 
 import _ from 'lodash';
 import { BlurView, LinearGradient } from 'expo';
@@ -26,7 +21,7 @@ import Animated, { Easing } from 'react-native-reanimated';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import {RED, PURPLE} from '../Colors';
 import {validateEmail, validateNotEmpty} from '../functions/Validation';
-const { set, cond, startClock, stopClock, clockRunning, block, add, Value, Clock, timing, concat, interpolate, defined, debug, and, or, onChange, eq, call } = Animated;
+const { set, cond, event, block, add, Value, timing, interpolate, defined, debug, and, or, onChange, eq, call } = Animated;
 
 //enable layout animation
 UIManager.setLayoutAnimationEnabledExperimental && UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -351,17 +346,18 @@ class Expander extends React.PureComponent {
 
   constructor(props){
     super(props);
-    const { initiallyCollapsed, collapsedHeight, expandedHeight } = props;
-
+    const { initiallyCollapsed, collapsedHeight } = props;
+    
+    this.expandedHeight = new Value(-1);
     //animation values
     this.progress = new Value(initiallyCollapsed? 0 : 100);
     this.status   = new Value(0);
 
     //interpolated values
-    this.height = interpolate(this.progress, {
+    this.height = cond(eq(this.expandedHeight, -1), null, interpolate(this.progress, {
       inputRange : [0, 100],
-      outputRange: [collapsedHeight, expandedHeight],
-    });
+      outputRange: [collapsedHeight, this.expandedHeight],
+    }));
     this.opacity = interpolate(this.progress, {
       inputRange : [0, 100],
       outputRange: [0, 1],
@@ -371,6 +367,7 @@ class Expander extends React.PureComponent {
       outputRange: [0.8, 1],
     });
 
+    this.isHeightSet = false;
     this.onAnimationFinished = null;
     this.state = {
       enableOverflow: false,
@@ -400,6 +397,15 @@ class Expander extends React.PureComponent {
     callback && callback();
   };
 
+  _handleOnLayout = ({nativeEvent}) => {
+    const { x, y, width, height } = nativeEvent.layout;
+    if(height != 0 && !this.isHeightSet){
+      this.expandedHeight.setValue(height);
+      this.isHeightSet = true;
+      console.log(`height: ${height}`);
+    };
+  };
+
   render(){
     const { progress, status } = this;
     const { enableOverflow } = this.state;
@@ -424,7 +430,9 @@ class Expander extends React.PureComponent {
             call([this.status], this._handleAnimationFinished),
           ]),
         ])}/>
-        {this.props.children}
+        <View onLayout={this._handleOnLayout}>
+          {this.props.children}
+        </View>
       </Animated.View>
     );
   };
@@ -435,29 +443,16 @@ class SigninForm extends React.PureComponent {
     onPressLogin: PropTypes.func,
   };
 
-  static CONSTANTS = {
-    spacer: 10,
-    formPadding: 32,
-    //sign in button
-    signinLabel: 20,
-    signinButtonPadding: 17,
-    //sign up button
-    signupLabel: 17,
-    signupLabelMargin: 10,
-  };
-
   static styles = StyleSheet.create({
     container: {
       justifyContent: 'center',
       overflow: 'hidden',
     },
     spacer: {
-      marginVertical: SigninForm.CONSTANTS.spacer
+      marginVertical: 10,
     },
     signInButtonContainer: {
-      //padding + fontsize
-      height: (SigninForm.CONSTANTS.signinButtonPadding * 2) + SigninForm.CONSTANTS.signinLabel,
-      paddingHorizontal: 15,
+      padding: 15,
       backgroundColor: 'rgba(0, 0, 0, 0.4)', 
       borderRadius: 10,
       alignItems: 'center',
@@ -465,17 +460,17 @@ class SigninForm extends React.PureComponent {
     },
     sigInButtonLabel: {
       color: 'white', 
-      fontSize: SigninForm.CONSTANTS.signinLabel, 
+      fontSize: 20, 
       fontWeight: 'bold', 
       marginLeft: 20
     },
     signupButtonLabel: {
-      fontSize: SigninForm.CONSTANTS.signupLabel, 
+      fontSize: 17, 
       fontWeight: '100', 
       color: 'white', 
       textAlign: 'center', 
       textDecorationLine: 'underline', 
-      marginTop: SigninForm.CONSTANTS.signupLabelMargin, 
+      marginTop: 10, 
     },
   });
 
@@ -487,23 +482,6 @@ class SigninForm extends React.PureComponent {
   };
 
   //----- functions ------
-  /** compute the expanded height of the signin form */
-  getExpandedHeight(){
-    const { CONSTANTS } = SigninForm;
-    
-    const spacer    = CONSTANTS.spacer;
-    const padding   = CONSTANTS.formPadding;
-    const signinBtn = (CONSTANTS.signinButtonPadding * 2) + CONSTANTS.signinLabel;
-    const signupBtn = (CONSTANTS.signupLabelMargin   * 2) + CONSTANTS.signupLabel;
-    const buttons   = signinBtn + signupBtn;
-
-    const inputform = (({CONSTANTS} = InputForm) => 
-      CONSTANTS.inputFontSize + CONSTANTS.inputHeight
-    )();
-
-    return (inputform * 2) + (spacer * 3) + padding + buttons;
-  };
-
   validateFields(){
     const { validate } = this.state;
     //check if fields are valid
@@ -615,7 +593,6 @@ class SigninForm extends React.PureComponent {
     const { styles } = SigninForm;
     const { validate } = this.state;
 
-    const expandedHeight = this.getExpandedHeight();
     const textInputProps = {
       underlineColorAndroid: 'rgba(0,0,0,0)',
       selectionColor: 'rgba(255, 255, 255, 0.7)',
@@ -628,7 +605,6 @@ class SigninForm extends React.PureComponent {
         style={styles.container}
         ref={r => this.expander = r}
         initiallyCollapsed={false}
-        {...{expandedHeight}}
       >
         <View style={styles.spacer}/>
         <InputForm
@@ -672,21 +648,12 @@ class WelcomeUser extends React.PureComponent {
     user: PropTypes.object,
   };
 
-  static CONSTANTS = {
-    nextButtonPadding   : 15,
-    nextButtonLabel     : 18,
-    nextButtonSubtitle  : 17,
-    userDetailsPadding  : 10,
-    profileContainerSize: 75,
-    spacers             : 10,
-  };
-
   static styles = StyleSheet.create({
     container: {
       justifyContent: 'center',
     },
     spacer: {
-      margin: WelcomeUser.CONSTANTS.spacers,
+      margin: 10,
     },
     //user details style
     userDetailsContainer: {
@@ -696,12 +663,12 @@ class WelcomeUser extends React.PureComponent {
       borderRadius   : 10,
     },
     profileContainer: {
-      width       : WelcomeUser.CONSTANTS.profileContainerSize,
-      height      : WelcomeUser.CONSTANTS.profileContainerSize,
-      borderRadius: WelcomeUser.CONSTANTS.profileContainerSize / 2,
+      width       : 75,
+      height      : 75,
+      borderRadius: 75/2,
       alignItems     : 'center'   ,
       justifyContent : 'center'   ,
-      backgroundColor: 'rgba(0,0,0,0.4)',
+      backgroundColor: 'rgba(0,0,0,0.3)',
     },
     profileText: {
       fontSize  : 24     ,
@@ -715,7 +682,7 @@ class WelcomeUser extends React.PureComponent {
       alignSelf: 'stretch',
       marginLeft: 10,
       borderRadius: 10,
-      backgroundColor: 'rgba(0,0,0,0.4)',
+      backgroundColor: 'rgba(0,0,0,0.3)',
       justifyContent: 'center',
     },
     //user details text styles
@@ -737,21 +704,21 @@ class WelcomeUser extends React.PureComponent {
     //next button styles
     nextButtonContainer: {
       //padding + fontsize
-      height: (WelcomeUser.CONSTANTS.nextButtonPadding * 2) + WelcomeUser.CONSTANTS.nextButtonLabel + WelcomeUser.CONSTANTS.nextButtonSubtitle,
+      padding: 15,
       paddingHorizontal: 15,
-      backgroundColor: 'rgba(0,0,0,0.4)', 
+      backgroundColor: 'rgba(0,0,0,0.3)', 
       borderRadius: 10,
       alignItems: 'center',
       justifyContent: 'center',
     },
     nextButtonLabel: {
       flex: 0,
-      fontSize: WelcomeUser.CONSTANTS.nextButtonLabel, 
+      fontSize: 18, 
       color: 'white', 
       fontWeight: 'bold', 
     },
     nextButtonSubtitle: {
-      fontSize: WelcomeUser.CONSTANTS.nextButtonSubtitle, 
+      fontSize: 17, 
       flex: 0,
       color: 'white', 
       fontWeight: '200', 
@@ -761,17 +728,6 @@ class WelcomeUser extends React.PureComponent {
   constructor(props){
     super(props);
     
-  };
-
-  getExpandedHeight(){
-    const { CONSTANTS } = WelcomeUser;
-
-    const padding     = 30;
-    const userDetails = CONSTANTS.profileContainerSize;
-    const spacer      = (CONSTANTS.spacers * 2);
-    const button      = (CONSTANTS.nextButtonPadding * 2) + CONSTANTS.nextButtonLabel + CONSTANTS.nextButtonSubtitle;
-
-    return (button + padding + userDetails + spacer);
   };
 
   _handleOnPressNext = () => {
@@ -843,13 +799,11 @@ class WelcomeUser extends React.PureComponent {
 
   render(){
     const { styles } = WelcomeUser;    
-    const expandedHeight = this.getExpandedHeight();
     return(
       <Expander
         style={styles.container}
         ref={r => this.expander = r}
         initiallyCollapsed={true}
-        {...{expandedHeight}}
       >
         <View style={styles.spacer}/>
         {this._renderUserDetails()}
@@ -1192,361 +1146,6 @@ class FormContainer extends React.Component {
       </View>
     );
   };
-};
-
-//dumb cont: presents the UI for Android
-class LoginAndroid extends React.Component {
-  static propType = {
-    onPressLogin: PropTypes.func,
-  };
-
-  constructor(props){
-    super(props);
-    this.state = {
-      mode: 'initial',
-      //shows hide the loading indicator
-      isLoading: false,
-      //shows or hide the body content
-      isCollapsed: false,
-      //textinput values
-      emailValue: '',
-      passwordValue: '',
-      //validation
-      isEmailValid: true,
-      isPasswordValid: true,
-      //UI error message
-      errorText: '',
-      //UI Header title and subtitle
-      titleText: '',
-      subtitleText: '',
-      firstRender: true,
-    };
-    //set initial state
-    this.state = this.getState('initial');
-    //prevent multiple presses
-    this._handleOnPressLogin  = _.throttle(this._handleOnPressLogin , 1000, {leading:true, trailing:false});
-    this._handleOnPressSignUp = _.throttle(this._handleOnPressSignUp, 1000, {leading:true, trailing:false});
-  };
-
-  componentDidFocus = async () => {
-    //dont animate on first mount
-    if(this.state.firstRender){
-      this.setState({firstRender: false});
-      return;
-    }
-    await this.ref_rootView.fadeInLeft(300);
-  };
-
-  //returns the corresponding state for the mode
-  getState = (mode) => {
-    switch(mode) {
-      case MODES.initial: return {
-        titleText      : 'Log in...',
-        subtitleText   : 'Please sign in to continue',
-        isLoading      : false,
-        emailValue     : '',
-        passwordValue  : '',
-        isEmailValid   : true,
-        isPasswordValid: true,
-        firstRender    : true,
-       ...{mode},
-      };
-      case MODES.loading: return {
-        titleText      : 'Logging in...',
-        subtitleText   : 'Please wait for a second...',
-        isLoading      : true,
-        isEmailValid   : true,
-        isPasswordValid: true,
-        ...{mode}
-      };
-      case MODES.fetching: return {
-        titleText   : 'Logging in...',
-        subtitleText: 'Fetching data from server...',
-        isLoading   : true,
-        ...{mode}
-      };
-      case MODES.succesful: return {
-        titleText      : 'Welcome...',
-        subtitleText   : 'Login succesful, please wait.',
-        isLoading      : false,
-        isEmailValid   : true,
-        isPasswordValid: true,
-        ...{mode}
-      };
-      case MODES.invalid: return {
-        titleText      : 'Log in...',
-        subtitleText   : 'Your email or password is invalid (please try again.)',
-        isLoading      : false,
-        emailValue     : '',
-        passwordValue  : '',
-        isEmailValid   : false,
-        isPasswordValid: false,
-        ...{mode}
-      };
-      case MODES.error: return {
-        titleText      : 'Log In...',
-        subtitleText   : 'Something went wrong (please try again)',
-        isLoading      : false,
-        isEmailValid   : true,
-        isPasswordValid: true,
-        ...{mode}
-      };
-    }
-  };
-
-  //transtion in/out title and subtitle
-  transitionHeader = (callback, animateTitle = true, animateSubtitle = true) => {
-    return new Promise(async resolve => {
-      //animate in
-      await Promise.all([
-        animateTitle    && this.headerTitle   .fadeOutLeft(250),
-        animateSubtitle && this.headerSubtitle.fadeOut(100),
-      ]);
-      //call callback function
-      callback && await callback();
-      //animate out
-      await Promise.all([
-        animateTitle    && this.headerTitle   .fadeInRight(250),
-        animateSubtitle && this.headerSubtitle.fadeInRight(400),
-      ]);
-      //finish animation
-      resolve();
-    });
-  };
-
-  //helper function to animate changes based on mode
-  setMode = async (mode) => {
-    const nextState = this.getState(mode);
-    const { titleText, subtitleText } = this.state;
-    //if there are changes, animate title/sub
-    const animateTitle    = titleText    !== nextState.titleText;
-    const animateSubtitle = subtitleText !== nextState.subtitleText;
-    //animate header
-    await this.transitionHeader(() => {
-      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-      return setStateAsync(this, nextState);
-    }, animateTitle, animateSubtitle);
-    //reduce stutter
-    await timeout(150);
-  };
-
-  toggleLoading = async () => {
-    await this.setMode(MODES.loading);
-  };
-
-  toggleLoginFetching = async () => {
-    await this.setMode(MODES.fetching);
-  };
-
-  toggleLoginInvalid = async () => {
-    await this.setMode(MODES.invalid);    
-  };
-
-  toggleLoginError = async () => {
-    await this.setMode(MODES.error);
-  };
-
-  toggleLoginSuccessful = async () => {
-    await this.setMode(MODES.succesful);
-  };
-
-  _handleOnPressLogin = async () => {
-    const { emailValue, passwordValue, isLoading } = this.state;
-    //dont invoke when loading
-    if(isLoading) return;
-    //dismiss keyboard
-    Keyboard.dismiss();
-    //call login from props
-    this.props.login({email: emailValue, pass: passwordValue}, {
-      //pass the callback functions
-      onLoginLoading : this.toggleLoading        ,
-      onLoginFetching: this.toggleLoginFetching  ,
-      onLoginInvalid : this.toggleLoginInvalid   ,
-      onLoginError   : this.toggleLoginError     ,
-      onLoginFinished: this.toggleLoginSuccessful,
-    });
-  };
-
-  _handleOnPressSignUp = async () => {
-    const { onPressSignUp } = this.props;
-    await this.ref_rootView.fadeOutLeft(300);
-    onPressSignUp && onPressSignUp();
-  };
-
-  //the logo on top of sign in container
-  _renderLogo(){
-    return(
-      <Animatable.View
-        style={{marginBottom: -45, elevation: 20}}
-        animation={'fadeInUp'}
-        duration={400}
-        easing={'ease-in-out'}
-        useNativeDriver={true}
-      >
-        <View style={{width: 100, height: 100, backgroundColor: 'white', borderRadius: 50, borderColor: 'rgba(255, 255, 255, 0.4)', borderWidth: 6}}>
-
-        </View>
-      </Animatable.View>
-    );
-  };
-
-  _renderLogInButton(){
-    const { isLoading } = this.state;
-    //Button text
-    const text = isLoading? 'Logging in...' : 'Log In';
-    //Button right component
-    const chevron = (<Icon
-      name ={'chevron-right'}
-      color={'rgba(255, 255, 255, 0.5)'}
-      type ={'feather'}
-      size ={25}
-    />);
-    const loading = (<ActivityIndicator
-      color={'white'}
-      size={25}
-    />);
-
-    return(
-      <Fragment>
-        <IconButton 
-          containerStyle={{padding: 15}}
-          wrapperStyle={{marginTop: 25, backgroundColor: '#5E35B1', borderRadius: 20}}
-          textStyle={{color: 'white', fontSize: 20, fontWeight: 'bold', marginLeft: 20}}
-          iconName={'login'}
-          iconType={'simple-line-icon'}
-          iconColor={'white'}
-          iconSize={22}
-          onPress={this._handleOnPressLogin}
-          {...{text}}
-        >
-          {isLoading? loading : chevron}
-        </IconButton>
-        <TouchableOpacity onPress={this._handleOnPressSignUp}>
-          <Text 
-            style={{fontSize: 16, fontWeight: '100', color: 'grey', textAlign: 'center', textDecorationLine: 'underline', marginTop: 7, marginBottom: 10}}
-            numberOfLines={1}
-            ellipsizeMode='tail'
-          >
-            Don't have an acoount? Sign Up
-          </Text>
-      </TouchableOpacity>
-      </Fragment>
-    );
-  };
-
-  //login inputs
-  _renderForm(){
-    const { emailValue, passwordValue, isEmailValid, isPasswordValid, isLoading } = this.state;
-    const textInputProps = {
-      underlineColorAndroid: 'rgba(0,0,0,0)',
-      selectionColor: 'rgba(255, 255, 255, 0.7)',
-      placeholderTextColor: 'rgba(0, 0, 0, 0.35)',
-      isEnabled: !isLoading
-    }
-    //placeholder text color
-    if(!isEmailValid || !isPasswordValid ){
-      textInputProps.placeholderTextColor = 'darkred';
-    }
-    //icon colors idle/active
-    let emailIconColor    = emailValue    == ''? 'grey' : 'black' ;
-    let passwordIconColor = passwordValue == ''? 'grey' : 'black' ;
-    //icon colors when invalid
-    if(!isEmailValid   ) emailIconColor    = 'red';
-    if(!isPasswordValid) passwordIconColor = 'red';
-    
-
-    return(
-      <Animatable.View 
-        collapsable={true}
-        animation={'fadeInUp'}
-        easing={'ease-in-out'}
-        duration={750}
-        useNativeDriver={true}
-      >
-        <InputForm
-          placeholder='E-mail address'
-          keyboardType='email-address'
-          onChangeText={(text) => this.setState({emailValue: text, isEmailValid: true})}
-          textContentType='username'
-          returnKeyType='next'
-          iconName='ios-mail-outline'
-          iconType='ionicon'
-          iconSize={30}
-          iconColor={emailIconColor}
-          {...textInputProps}
-        />
-        <InputForm
-          placeholder='Password'
-          onChangeText={(text) => this.setState({passwordValue: text, isPasswordValid: true})}
-          placeholderTextColor='rgba(255, 255, 255, 0.7)'
-          textContentType='password'
-          secureTextEntry={true}
-          iconName='ios-lock-outline'
-          iconType='ionicon'
-          iconSize={30}
-          iconColor={passwordIconColor}
-          {...textInputProps}
-        />
-        {this._renderLogInButton()}
-      </Animatable.View>
-    );
-  }
-  
-  //sign in form container
-  _renderSignIn(){
-    const { titleText, subtitleText } = this.state;
-    return(
-      <Animatable.View 
-        style={[styles.signInContainer, {overflow: 'hidden'}]}
-        animation={'fadeInUp'}
-        duration={600}
-        easing={'ease-in-out'}
-        useNativeDriver={true}
-      >
-        <Animatable.Text 
-          ref={r => this.headerTitle = r}
-          style={{fontSize: 32, fontWeight: '900'}}
-          useNativeDriver={true}
-        >
-          {titleText}
-        </Animatable.Text>
-        <Animatable.Text 
-          ref={r => this.headerSubtitle = r}
-          style={{fontSize: 18, fontWeight: '100', color: 'grey'}}
-          useNativeDriver={true}
-        >
-          {subtitleText}
-        </Animatable.Text>
-        {this._renderForm()}
-      </Animatable.View>
-    );
-  }
-
-  
-  render(){
-    const { login } = this.props;
-    const { isLoading, mode, isCollapsed } = this.state;
-    return(
-      <View collapsable={true}>
-        <NavigationEvents onDidFocus={this.componentDidFocus}/>
-        <Animatable.View
-          ref={r => this.ref_rootView = r}
-          style={styles.rootContainer}
-          duration={500}
-          easing={'ease-in-out'}
-          useNativeDriver={true}
-        >
-          <KeyboardAvoidingView
-            style={{flex: 1, width: '100%', alignItems: 'center', justifyContent: 'center'}}
-            behavior='padding'
-          >
-            {this._renderLogo  ()}
-            {this._renderSignIn()}
-          </KeyboardAvoidingView>
-        </Animatable.View>
-      </View>
-    );
-  }
 };
 
 export default class LoginScreen extends React.Component { 

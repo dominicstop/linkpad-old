@@ -31,6 +31,7 @@ class BackButton extends React.PureComponent {
         <TouchableNativeFeedback
           background={TouchableNativeFeedback.Ripple('white', true)}
           onPress={this._handleOnPress}
+          hitSlop={{top: 40, bottom: 40, left: 40, right: 40}}
         >
           <Icon
             name={'arrow-left'}
