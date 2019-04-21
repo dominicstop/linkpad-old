@@ -188,3 +188,18 @@ export function replacePropertiesWithNull(obj = {}){
   return(new_obj);
 };
 
+export function nextFrame() {
+  return new Promise(resolve => {
+    requestAnimationFrame(resolve)
+  });
+};
+
+export async function randomDelay(min, max) {
+  const delay = Math.random() * (max - min) + min
+  const startTime = performance.now()
+
+  while (performance.now() - startTime < delay) {
+    await nextFrame()
+  };
+}
+

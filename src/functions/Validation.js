@@ -7,9 +7,8 @@ export function validatePassword(pass = '', includeMessage = false){
   return pass.length > 6;
 }
 
+/** returns false when password is empty */
 export function validateNotEmpty(text, includeMessage = false){
   const re = /^[a-zA-Z]+(([',. -][a-zA-Z ])?[a-zA-Z]*)*$/;
-  console.log(text);
-  console.log(re.test(text));
   return re.test(text); 
 }

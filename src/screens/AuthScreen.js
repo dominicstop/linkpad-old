@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, View, Platform } from 'react-native';
+import { StyleSheet, View, Platform, InteractionManager } from 'react-native';
 
 import { createStackNavigator } from 'react-navigation';
 import * as Animatable from 'react-native-animatable';
@@ -17,6 +17,7 @@ const AuthStack = createStackNavigator({
     [ROUTES.LoginRoute  ]: LoginScreen  ,
     [ROUTES.SignUpRoute ]: SignUpScreen ,
   }, {
+    initialRouteName: ROUTES.LoginRoute,
     headerMode: 'hidden',
     cardStyle: {
       backgroundColor: 'transparent',
@@ -84,6 +85,8 @@ export default class AuthScreen extends React.Component {
           iterationCount={"infinite"}
           delay={2000}
           duration={13000}
+          shouldRasterizeIOS={true}
+          renderToHardwareTextureAndroid={true}
           useNativeDriver={true}
         />
       </Animatable.View>
@@ -94,9 +97,9 @@ export default class AuthScreen extends React.Component {
     const { styles } = AuthScreen;
 
     //gradient colors
-    const colorsTop    = ['#7F00FF', '#654ea3', '#642B73', '#c0392b', '#ff00cc',  '#FC466B' ];
-    const colorsBottom = ['#F100FF', '#eaafc8', '#C6426E', '#8e44ad', '#333399',  '#3F5EFB' ];
-    const speed = Platform.select({ios: 100, android: 200});
+    const colorsTop    = ['#7F00FF', '#8e44ad', '#fc4a1a', '#FC466B', '#3f2b96', '#0575E6', '#8A2387', '#C33764'];
+    const colorsBottom = ['#F100FF', '#c0392b', '#f7b733', '#3F5EFB', '#a8c0ff', '#00F260', '#f27121', '#1D2671'];
+    const speed = Platform.select({ios: 200, android: 300});
 
     return(
       <View style={styles.backgroundWrapper}>
@@ -104,7 +107,7 @@ export default class AuthScreen extends React.Component {
         <AnimatedGradient
           ref={r => this.animatedGradientRef = r}
           style={styles.gradientBG}
-          {...{colorsTop, colorsBottom}}
+          {...{colorsTop, colorsBottom, speed}}
         />
       </View>
     );

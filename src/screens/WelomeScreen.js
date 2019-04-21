@@ -352,8 +352,8 @@ export default class WelcomeScreen extends React.Component {
     await this.rootView.fadeInLeft(500);
     if(this.state.currentSlideIndex == 4){
       this.continueSlide.lottie.play();
-    }
-  }
+    };
+  };
 
   _handleOnIndexChanged = (index) => {
     this.setState({currentSlideIndex: index});
@@ -364,7 +364,7 @@ export default class WelcomeScreen extends React.Component {
     const { navigation } = this.props;
     await this.rootView.fadeOutLeft(500);
     navigation.navigate('LoginRoute');
-  }
+  };
 
   _handleOnPressMore = () => {
     this._modal.showModal();

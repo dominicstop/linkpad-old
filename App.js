@@ -26,7 +26,7 @@ const AppStack = createStackNavigator({
     [ROUTES.CustomQuizExamScreen]: CustomQuizExamStackContainer,
   },{
     headerMode: 'hidden',
-    initialRouteName: 'HomeRoute',
+    initialRouteName: ROUTES.HomeRoute,
     navigationOptions: {
       gesturesEnabled: false,
     },

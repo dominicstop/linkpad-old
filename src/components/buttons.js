@@ -21,6 +21,10 @@ export class IconButton extends React.PureComponent {
       PropTypes.string,
       PropTypes.number,
     ]),
+    subtitle: PropTypes.oneOfType([
+      PropTypes.string,
+      PropTypes.number,
+    ]),
     onPress: PropTypes.func,
     //icon props
     iconName : PropTypes.string,
@@ -28,59 +32,121 @@ export class IconButton extends React.PureComponent {
     iconType : PropTypes.string,
     iconSize : PropTypes.number,
     iconProps: PropTypes.object,
-    //style
-    containerStyle: ViewPropTypes.style ,
-    wrapperStyle  : ViewPropTypes.style ,
-    textStyle     : Text.propTypes.style,
-  }
+    //style props
+    containerStyle    : PropTypes.object,
+    wrapperStyle      : PropTypes.object,
+    textStyle         : PropTypes.object,
+    subtitleStyle     : PropTypes.object,
+    textContainerStyle: PropTypes.object,
+  };
+
+  static styles = StyleSheet.create({
+    wrapper: {
+      overflow: 'hidden',
+    },
+    container: {
+      flexDirection: 'row', 
+      alignItems: 'center',
+    },
+    textContainer: {
+      flex: 1,
+      justifyContent: 'center',
+    },
+    textTitle: {
+      flex: 1,
+    },
+    textSubtitle: {
+      flex: 1,
+    },
+    iconContainer: {
+      marginRight: 20,
+    },
+  });
+
+  getProps(){
+    const { text, subtitle, iconName, iconColor, iconType, iconSize, containerStyle, wrapperStyle, textStyle, children, iconProps, subtitleStyle, textContainerStyle, ...otherProps} = this.props;
+    return{
+      iconProps: {
+        name : iconName , 
+        color: iconColor, 
+        type : iconType ,
+        size : iconSize ,
+        ...iconProps
+      },
+      styleProps: {
+        containerStyle    , 
+        wrapperStyle      , 
+        textStyle         ,
+        subtitleStyle     ,
+        textContainerStyle,
+      },
+      touchableProps: otherProps,
+      text, subtitle
+    };
+  };
 
   _renderContent(){
-    const {text, iconName, iconColor, iconType, iconSize, textStyle, iconProps} = this.props;
-    return(
-      <Fragment>
-        <Icon
-          name ={iconName }
-          color={iconColor}
-          type ={iconType }
-          size ={iconSize }
-          {...iconProps}
-        />
-        <Text style={[{marginLeft: 8, flex: 1}, textStyle]}>
+    const { styles } = IconButton;
+    const { iconProps, styleProps, text, subtitle } = this.getProps();
+
+    const TitleSubtitle = (subtitle
+      ?(
+        <View style={[styles.textContainer, styleProps.textContainerStyle]}>
+          <Text style={[styles.textTitle, styleProps.textStyle]}>
+            {text}
+          </Text>
+          <Text style={[styles.textSubtitle, styleProps.subtitleStyle]}>
+            {subtitle}
+          </Text>
+        </View>
+      ):(
+        <Text style={[styles.textTitle, styleProps.textStyle]}>
           {text}
         </Text>
+      )
+    );
+
+    return(
+      <Fragment>
+        <Icon 
+          containerStyle={styles.iconContainer} 
+          {...iconProps}  
+        />
+        {TitleSubtitle}
         {this.props.children}  
       </Fragment>
     );
-  }
+  };
 
   render(){
-    const {text, iconName, iconColor, iconType, iconSize, containerStyle, wrapperStyle, textStyle, children, iconProps, ...otherProps} = this.props;
+    const { styles } = IconButton;
+    const { styleProps, touchableProps } = this.getProps();
     
-    return(Platform.select({
+    return Platform.select({
       ios: (
         <TouchableOpacity
-          style={[{flexDirection: 'row', alignItems: 'center'}, containerStyle]}
-          {...otherProps}
+          style={[styles.container, styleProps.containerStyle]}
+          {...touchableProps}
         >
           {this._renderContent()}
         </TouchableOpacity>
       ),
       android: (
-        <View style={[{overflow: 'hidden'}, wrapperStyle]}>
+        <View style={[styles.wrapper, styleProps.wrapperStyle]}>
           <TouchableNativeFeedback
             background={TouchableNativeFeedback.Ripple('rgba(255, 255, 255, 0.5)')}
             useForeground={true}
-            {...otherProps}
+            {...touchableProps}
           >
-            <View style={[{flexDirection: 'row', alignItems: 'center'}, containerStyle]}>
+            <View style={[styles.container, styleProps.containerStyle]}>
               {this._renderContent()}
             </View>
           </TouchableNativeFeedback>
         </View>
       ),
-    }));
-  }
-}
+    });
+  };
+};
 
 
 export class PlatformTouchableIconButton extends React.PureComponent {

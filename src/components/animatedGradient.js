@@ -1,12 +1,14 @@
 import PropTypes from 'prop-types';
 import React from 'react';
-import { Dimensions, Platform } from 'react-native';
+import { Dimensions, Platform, InteractionManager } from 'react-native';
 
+import {timeout} from '../functions/Utils';
+
+import _ from 'lodash';
 import Chroma from 'chroma-js'
 import { LinearGradient } from 'expo';
 import Animated, { Easing } from 'react-native-reanimated';
 const { set, cond, startClock, stopClock, clockRunning, block, add, Value, Clock, timing, concat, interpolate } = Animated;
-
 const {height, width} = Dimensions.get('window');
 
 function runTiming(clock, value, dest) {
@@ -18,7 +20,7 @@ function runTiming(clock, value, dest) {
   };
 
   const config = {
-    duration: 1000 * 15,
+    duration: 1000 * 10,
     toValue : new Value(0),
     easing  : Easing.linear,
   };
@@ -50,6 +52,29 @@ function runTiming(clock, value, dest) {
   ]);
 };
 
+function duplicateColors([mainA, mainB], [scaledA, scaledB]){
+  const A = [], B = [];
+  scaledA.forEach((colorA, indexA) => {
+    const colorB = scaledB[indexA];
+    const isMainColorA = mainA.includes(colorA);
+    const isMainColorB = mainB.includes(colorB);
+
+    if(isMainColorA && isMainColorB){
+      _.range(90).forEach(() => {
+        A.push(colorA);
+        B.push(colorB);  
+      });
+    } else {
+      A.push(colorA);
+      B.push(colorB);
+    };
+  });
+
+  console.log(A.length);
+  console.log(B.length);
+  return [A, B];
+};
+
 export class AnimatedGradient extends React.PureComponent {
   static propTypes = {
     speed       : PropTypes.number,
@@ -75,41 +100,42 @@ export class AnimatedGradient extends React.PureComponent {
 
     //unwrap props
     const {colorsTop, colorsBottom} = props;
-    
     //interpolate colors
-    this.colorsTop    = Chroma.scale(colorsTop   ).colors(colorsTop   .length * 60);
-    this.colorsBottom = Chroma.scale(colorsBottom).colors(colorsBottom.length * 60);
+    const scaledTop    = Chroma.scale(colorsTop   ).colors(colorsTop   .length * 60);
+    const scaledBottom = Chroma.scale(colorsBottom).colors(colorsBottom.length * 60);
+    //duplicate main colors
+    const [duplicateTop, duplicateBottom] = duplicateColors([colorsTop, colorsBottom], [scaledTop, scaledBottom]);
+    //assign duplicated to color queue
+    this.colorsTop    = duplicateTop;
+    this.colorsBottom = duplicateBottom;
 
-    const min = Platform.select({ios: 1, android: 1.1});
-    const max = Platform.select({ios: 2, android: 2.1});
+    const min = 1.1;
+    const max = 2.1;
+    const mid = 2;
     const offset = height/2 - width/2;
-
-    //const divisor = Platform.select({ios: 4, android: 2});
-
 
     //rotation animation
     const clock = new Clock();
     this.rotation = runTiming(clock, 0, 360);
     this.scale = interpolate(this.rotation, {
       inputRange : [0  , 45 , 90 , 135, 180, 225, 270, 315, 360],
-      outputRange: [min, max, min, max, min, max, min, max, min],
+      outputRange: [min, max, mid, max, min, max, mid, max, min],
     });
-    this.height = interpolate(this.rotation, {
-      inputRange : [0     , 90   , 180   , 270  , 360   ],
-      outputRange: [height, width, height, width, height],
-    });
-    this.width = interpolate(this.rotation, {
-      inputRange : [0    , 90    , 180  , 270   , 360  ],
-      outputRange: [width, height, width, height, width],
-    });
-    this.translateX = interpolate(this.rotation, {
-      inputRange : [0, 90     , 180, 270    , 360],
-      outputRange: [0, -offset, 0  , -offset, 0  ],
-    });
-    this.translateY = interpolate(this.rotation, {
-      inputRange : [0, 90    , 180, 270    , 360],
-      outputRange: [0, offset, 0  , offset , 0  ],
-    });
+
+    this.animating = false;
+
+    /*
+
+    this.stop = false
+
+    a = (timestamp) => {
+      console.log(timestamp);
+      if(!this.stop){
+        requestAnimationFrame(a)
+      };
+    };
+    requestAnimationFrame(a)
+    */
 
     this.state = {
       colors: [colorsTop[0], colorsBottom[0]],
@@ -127,12 +153,12 @@ export class AnimatedGradient extends React.PureComponent {
     return [colorsTop[colorIndex], colorsBottom[colorIndex]];
   };
 
-  start(){
+  start = async () => {
     const { speed } = this.props;
 
-    //stop if there's already a timer
     if(this.gradientInterval) return;
-    this.gradientInterval = setInterval( () => {
+
+    this.gradientInterval = setInterval(() => {
       //get prev. gradient colors
       const { colors } = this.state;
       //get new gradient colors
@@ -141,12 +167,33 @@ export class AnimatedGradient extends React.PureComponent {
       //check if the colors changed
       const didChangeTop    = colors[0] != newColors[0];
       const didChangeBottom = colors[1] != newColors[1];
-      const didChangeColors = didChangeTop && didChangeBottom;
-      
-      if(didChangeColors){
-        this.setState({colors: newColors});
-      };
+      const didChangeColors = (didChangeTop && didChangeBottom);
+
+      didChangeColors && this.setState({colors: newColors});
     }, speed);
+
+    return;
+
+    await Promise.all([
+      timeout(speed),
+      InteractionManager.runAfterInteractions(() => {
+        //get prev. gradient colors
+        const { colors } = this.state;
+        //get new gradient colors
+        const newColors = this.nextColors();
+
+        //check if the colors changed
+        const didChangeTop    = colors[0] != newColors[0];
+        const didChangeBottom = colors[1] != newColors[1];
+        const didChangeColors = (didChangeTop && didChangeBottom);
+
+        didChangeColors && this.setState({colors: newColors});
+      })
+    ]);
+
+    if(!this.animating){
+      await InteractionManager.runAfterInteractions(this.start);
+    };
   };
 
   stop(){
@@ -166,24 +213,27 @@ export class AnimatedGradient extends React.PureComponent {
 
   render(){
     const { colors } = this.state;
+    const style = {
+      height: height,
+      width : width ,
+      transform: [
+        { rotate: concat(this.rotation, 'deg') },
+        { scale : this.scale },
+      ]
+    };
+
     return(
-      <Animated.View style={{transform: [
-        { scale     : this.scale      },
-        { translateX: this.translateX },
-        { translateY: this.translateY },
-      ]}}>
-        <Animated.View style={{
-          height: this.height,
-          width : this.width,
-          transform: [{rotate: concat(this.rotation, 'deg')}]
-        }}>
-          <LinearGradient
-            ref={ref => this.linearGradientRef = ref}
-            {...{colors, ...this.props}}
-          >
-            {this.props.children}
-          </LinearGradient>
-      </Animated.View>
+      <Animated.View 
+        shouldRasterizeIOS={true}
+        renderToHardwareTextureAndroid={true}
+        {...{style}}
+      >
+        <LinearGradient
+          ref={ref => this.linearGradientRef = ref}
+          {...{colors, ...this.props}}
+        >
+          {this.props.children}
+        </LinearGradient>
       </Animated.View>
     );
   };

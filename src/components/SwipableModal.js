@@ -172,11 +172,7 @@ export class SwipableModal extends React.PureComponent {
       //hidden
       { y: Screen.height * 1 },
     ],
-    ...Platform.select({
-      android: {
-        hitSlop: { bottom: -(Screen.height + MODAL_EXTRA_HEIGHT - 60) }
-      }
-    })
+    hitSlop: { bottom: -(Screen.height + MODAL_EXTRA_HEIGHT - 60) }
   };
 
   constructor(props) {
