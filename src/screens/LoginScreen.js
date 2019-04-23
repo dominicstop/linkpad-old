@@ -134,13 +134,13 @@ class InputForm extends React.PureComponent {
     container: {
       borderRadius: 10,
       flexDirection: 'row',
-      paddingVertical: 12,
+      paddingVertical: 10,
       overflow: 'hidden',
     },
     background: {
       position: 'absolute',
       width: '100%',
-      height: '100%',
+      height: '200%',
       backgroundColor: 'rgba(0, 0, 0, 0.1)',
     },
     iconContainer: {
@@ -161,10 +161,11 @@ class InputForm extends React.PureComponent {
       marginRight: 15,
       borderColor: 'transparent', 
       borderWidth: 1,
-      paddingHorizontal: 5,
+      paddingTop: 3,
+      paddingBottom: 7,
       ...Platform.select({
         ios: {
-          borderBottomColor: 'rgba(255, 255, 255, 0.25)', 
+          borderBottomColor: 'rgba(255, 255, 255, 0.15)', 
           color: 'white', 
         },
         android: {
@@ -319,6 +320,7 @@ class InputForm extends React.PureComponent {
           editable={isEnabled}
           keyboardAppearance={'dark'}
           multiline={false}
+          underlineColorAndroid={'transparent'}
           onBlur={this._handleOnBlur}
           onFocus={this._handleOnFocus}
           onEndEditing={this._handleOnEndEditing}
@@ -367,7 +369,7 @@ class Expander extends React.PureComponent {
     this.isHeightSet = false;
     this.onAnimationFinished = null;
     this.state = {
-      enableOverflow: false,
+      enableOverflow: true,
     };
   };
 
@@ -640,9 +642,9 @@ class ProgressBar extends React.PureComponent {
     const shouldUpdate = (mode != nextMode);
     
     if(shouldUpdate){
-      await this.leftContainer.fadeOutLeft(500);
+      await this.leftContainer.fadeOutLeft(300);
       this.setState({mode: nextMode, ...nextState});
-      await this.leftContainer.fadeInLeft(500);
+      await this.leftContainer.fadeInLeft(600);
     };
   };
 
@@ -753,12 +755,14 @@ class SigninForm extends React.PureComponent {
       marginLeft: 20
     },
     signupButtonLabel: {
-      fontSize: 17, 
+      fontSize: 18, 
       fontWeight: '100', 
-      color: 'white', 
+      color: 'rgba(255,255,255,0.75)', 
       textAlign: 'center', 
       textDecorationLine: 'underline', 
-      marginTop: 10, 
+      textDecorationColor: 'rgba(255,255,255,0.25)',
+      marginTop: 10,
+      marginBottom: 5,
     },
   });
 
@@ -948,7 +952,7 @@ class WelcomeUser extends React.PureComponent {
       flexDirection  : 'row'   ,
       alignItems     : 'center',
       justifyContent : 'center',
-      borderRadius   : 10,
+      borderRadius   : 12,
     },
     profileContainer: {
       width       : 75,
@@ -995,7 +999,7 @@ class WelcomeUser extends React.PureComponent {
       padding: 15,
       paddingHorizontal: 15,
       backgroundColor: 'rgba(0,0,0,0.3)', 
-      borderRadius: 10,
+      borderRadius: 15,
       alignItems: 'center',
       justifyContent: 'center',
     },
@@ -1105,6 +1109,16 @@ class WelcomeUser extends React.PureComponent {
 };
 
 class Downloading extends React.PureComponent {
+  static propTypes = {
+    onDownloadFinished: PropTypes.func,
+  };
+
+  static DOWNLOAD_TYPES = {
+    'MODULES'  : 'MODULES'  ,
+    'RESOURCES': 'RESOURCES',
+    'TIPS'     : 'TIPS'     ,
+  };
+
   static styles = StyleSheet.create({
     container: {
       justifyContent: 'center',
@@ -1124,10 +1138,18 @@ class Downloading extends React.PureComponent {
     },
   });
 
+  constructor(props){
+    super(props);
+    this.state = {
+      mountProgress: false
+    };
+  };
+
   async componentDidMount(){
     const { MODES } = ProgressBar;
 
     await this.loadModules();
+    this.setState({mountProgress: true});
     await this.loadResources();
     await this.loadTips();
 
@@ -1135,14 +1157,20 @@ class Downloading extends React.PureComponent {
 
   async loadModules(){
     const { MODES } = ProgressBar;
+    const { DOWNLOAD_TYPES } = Downloading;
+    const { onDownloadFinished } = this.props;
+
     try {
+      //wait for animations to finish
       await runAfterInteractions();
+      
       this.progressModules.setMode(MODES.DOWNLOADING);
       await ModuleStore.fetchAndSaveWithProgress((percent) => {
         //stop updating progressbar when at 97%
         (percent <= 97) && this.progressModules.setProgress(percent, 2, false);
       });
       await this.progressModules.setProgress(100, 0, true);
+      onDownloadFinished && await onDownloadFinished(DOWNLOAD_TYPES.MODULES);
       
     } catch(error){
       this.progressModules.setMode(MODES.ERROR);
@@ -1151,51 +1179,65 @@ class Downloading extends React.PureComponent {
 
   async loadResources(){
     const { MODES } = ProgressBar;
+    const { DOWNLOAD_TYPES } = Downloading;
+    const { onDownloadFinished } = this.props;
+
     try {
+      //wait for animations to finish
       await runAfterInteractions();
+      //show resources progress bar
+      await this.expanderResources.expand(true);
+
       this.progressResource.setMode(MODES.DOWNLOADING); 
       await ResourcesStore.fetchAndSaveWithProgress((percent) => {
         //stop updating progressbar when at 97%
         (percent <= 97) && this.progressResource.setProgress(percent, 2, false);
       });
+      //animate progress bar to 100%
       await this.progressResource.setProgress(100, 0, true);
+      onDownloadFinished && await onDownloadFinished(DOWNLOAD_TYPES.RESOURCES);
 
     } catch(error){
+      console.log('error: loadResources');
+      console.log(error);
       this.progressResource.setMode(MODES.ERROR);
     };
   };
 
   async loadTips(){
     const { MODES } = ProgressBar;
+    const { DOWNLOAD_TYPES } = Downloading;
+    const { onDownloadFinished } = this.props;
+
     try {
+      //wait for animations to finish      
       await runAfterInteractions();
+      //show tips progress bar
+      await this.expanderTips.expand(true);
       this.progressTips.setMode(MODES.DOWNLOADING); 
+
       await TipsStore.fetchAndSaveWithProgress((percent) => {
         //stop updating progressbar when at 97%
         (percent <= 97) && this.progressTips.setProgress(percent, 2, false);
       });
-      await this.progressTips.setProgress(100, 0, true);
+      await Promise.all([
+        this.progressTips.setProgress(100, 0, true),
+        onDownloadFinished && onDownloadFinished(DOWNLOAD_TYPES.TIPS),
+      ]);
 
     } catch(error){
       this.progressTips.setMode(MODES.ERROR);
     };
   };
 
-  render(){
-    const { styles } = Downloading;    
+  _renderProgressResources(){
+    const { styles } = Downloading; 
+       
     return(
-      <Expander
-        style={styles.container}
-        ref={r => this.expander = r}
-        initiallyCollapsed={false}
+      <Expander 
+        ref={r => this.expanderResources = r}
+        initiallyCollapsed={true}
       >
-        <View style={styles.spacer}/>
-        <ProgressBar
-          percentageStyle={styles.percentageStyle}
-          ref={r => this.progressModules = r}
-        >
-          <Text style={styles.progressText}>Modules</Text>
-        </ProgressBar>
         <View style={styles.spacer}/>
         <ProgressBar
           percentageStyle={styles.percentageStyle}
@@ -1203,6 +1245,17 @@ class Downloading extends React.PureComponent {
         >
           <Text style={styles.progressText}>Resources</Text>
         </ProgressBar>
+      </Expander>
+    );
+  };
+
+  _renderProgressTips(){
+    const { styles } = Downloading;
+    return(
+      <Expander 
+        ref={r => this.expanderTips = r}
+        initiallyCollapsed={true}
+      >
         <View style={styles.spacer}/>
         <ProgressBar
           percentageStyle={styles.percentageStyle}
@@ -1211,6 +1264,31 @@ class Downloading extends React.PureComponent {
           <Text style={styles.progressText}>Tips</Text>
         </ProgressBar>
       </Expander>
+    );
+  };
+
+  render(){
+    const { styles } = Downloading;
+    const { mountProgress } = this.state;
+
+    return(
+      <Fragment>
+        <Expander
+          style={styles.container}
+          ref={r => this.expander = r}
+          initiallyCollapsed={true}
+        >
+          <View style={styles.spacer}/>
+          <ProgressBar
+            percentageStyle={styles.percentageStyle}
+            ref={r => this.progressModules = r}
+          >
+            <Text style={styles.progressText}>Modules</Text>
+          </ProgressBar>
+        </Expander>
+        {mountProgress && this._renderProgressResources()}
+        {mountProgress && this._renderProgressTips()}
+      </Fragment>
     );
   };
 };
@@ -1305,6 +1383,15 @@ class FormHeader extends React.PureComponent {
         didChangeSubtitle && this.headerSubtitle.fadeInRight(600),
       ]);
     };
+  };
+
+  async changeSubtitle(newSubtitle){
+    //hide title and subtitle first
+    await this.headerSubtitle.fadeOutLeft(300);
+    //then update title and subtitle
+    this.setState({subtitleText: newSubtitle});
+    //finally, animate in title and subtitle
+    await this.headerSubtitle.fadeInRight(500);
   };
 
   async changeMode(mode){
@@ -1462,6 +1549,7 @@ class FormContainer extends React.Component {
     };
   };
 
+  /** signinForm: handle when signin button is pressed */
   _handleOnPressSignin = async () => {
     const { MODES } = LoginScreen;
     const { login } = this.props;
@@ -1482,15 +1570,36 @@ class FormContainer extends React.Component {
     };
   };
 
+  /** WelcomeUser: handle when next button is pressed */
   _handleOnPressNext = () => {
     this.onPressNextCallback && this.onPressNextCallback();
+  };
+
+  /** Downloading: handle when a download finishes */
+  _handleOnDownloadFinished = async (type) => {
+    try {
+      const { DOWNLOAD_TYPES } = Downloading; 
+      await Promise.all([
+        this.signInContainer.pulse(1000),
+        this.formHeader.changeSubtitle((() => {
+          switch (type) {
+            case DOWNLOAD_TYPES.MODULES  : return ('Downloading 2 of 3...');
+            case DOWNLOAD_TYPES.RESOURCES: return ('Downloading 3 of 3...');
+            case DOWNLOAD_TYPES.TIPS     : return ('Downloads Finished.');
+          };
+        })()),
+      ]);
+
+    } catch(error){
+      console.log('_handleOnDownloadFinished: error');
+      console.log(error);
+    };
   };
 
   _renderContents(){
     const { MODES } = LoginScreen;
     const { mode, user } = this.props;
 
-    
     switch (mode) {
       case MODES.LOGIN: return(
         <SigninForm
@@ -1508,6 +1617,7 @@ class FormContainer extends React.Component {
       case MODES.DOWNLOADING: return(
         <Downloading
           ref={r => this.downloading = r}
+          onDownloadFinished={this._handleOnDownloadFinished}
         />
       );
     };
@@ -1575,7 +1685,7 @@ export default class LoginScreen extends React.Component {
     const { MODES } = LoginScreen;
 
     this.state = {
-      mode: MODES.DOWNLOADING,
+      mode: MODES.LOGIN,
       user: null,
     };
   };

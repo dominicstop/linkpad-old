@@ -206,20 +206,26 @@ export async function randomDelay(min, max) {
 };
 
 export async function fetchWithProgress(url, callback){
-  let previousPercentage = 0;
-  const config = {
-    onDownloadProgress: (progressEvent) => {
-      const { loaded, total } = progressEvent;
-      const percentage = Math.round((loaded * 100) / total);
+  try {
+    let previousPercentage = 0;
+    const config = {
+      onDownloadProgress: (progressEvent) => {
+        const { loaded, total } = progressEvent;
+        const percentage = Math.round((loaded * 100) / total);
 
-      const didChange = (previousPercentage != percentage);
-      previousPercentage = percentage;
-      //call callback and pass percentage progress
-      didChange && callback && callback(percentage);
-    },
+        const didChange = (previousPercentage != percentage);
+        previousPercentage = percentage;
+        //call callback and pass percentage progress
+        didChange && callback && callback(percentage);
+      },
+    };
+    const response = await axios.get(url, config);
+    return (response);
+  } catch(error){
+    console.log('fetchWithProgress: unable to fetch');
+    console.log(error);
+    throw error;
   };
-  const response = await axios.get(url, config);
-  return (response);
 };
 
 export function runAfterInteractions(){
