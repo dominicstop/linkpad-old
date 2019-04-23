@@ -2,7 +2,8 @@ import { FileSystem } from 'expo';
 import store from 'react-native-simple-store';
 import _ from 'lodash';
 
-import { createFolderIfDoesntExist, isBase64Image } from './Utils';
+
+import { createFolderIfDoesntExist, isBase64Image , fetchWithProgress} from './Utils';
 import { ModuleItemModel, SubjectItem, QuestionItem } from '../models/ModuleModels';
 
 //save a copy of modules
@@ -148,19 +149,57 @@ export class ModuleStore {
     };
   };
 
+  static async fetchAndSaveWithProgress(callback){
+    try {
+      const { STATUS } = ModuleStore;
+      const progressCallback = (loaded) => {
+        //subtract 5% from the total percentage
+        const percent = Math.round((loaded/105) * 100);
+        callback && callback(percent, STATUS.FETCHING);
+      };
+
+      //fetch data from server
+      const response = await fetchWithProgress(ModuleStore.URL, progressCallback);
+      const json = response.data;
+
+      //makes sure all of the properties exists and has a default value
+      const modules_filtered = _filterModules(json);
+
+      callback && callback(95, STATUS.SAVING_IMAGES);
+      //process base64 images and store      
+      const modules = await _saveBase64ToStorage(modules_filtered);
+      
+      callback && callback(97, STATUS.WRITING);
+      //write modules to storage
+      await store.save(ModuleStore.KEY, modules);
+
+      callback && callback(100, STATUS.FINISHED);    
+      return modules;
+
+    } catch(error){
+      console.log('fetchAndSaveWithProgress: unable to save/fetch modules');
+      console.log(error);
+      throw error;
+    };
+  };
+
   /** read modules from store */
   static async read(){
     try {
       //read from store
       let data = await store.get(ModuleStore.KEY);
       _modules = data;
-
       return (data);
 
     } catch(error){
       console.error('Failed to read modules from store.');
       throw error;
     };
+  };
+
+  static async set(modules){
+    await store.save(ModuleStore.KEY, modules);    
+    _modules = data;
   };
 
   /** read/fetch modules */

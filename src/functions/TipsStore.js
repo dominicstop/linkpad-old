@@ -3,7 +3,7 @@ import { FileSystem } from 'expo';
 import store from 'react-native-simple-store';
 import _ from 'lodash';
 
-import { createFolderIfDoesntExist, isBase64Image } from './Utils';
+import { createFolderIfDoesntExist, isBase64Image, fetchWithProgress } from './Utils';
 import { TipModel } from '../models/TipModel';
 
 //temp store tips for caching
@@ -95,6 +95,40 @@ export class TipsStore {
 
     } catch(error) {
       console.log('Failed to fetch tips from server.');
+      console.log(error);
+      throw error;
+    };
+  };
+
+  static async fetchAndSaveWithProgress(callback){
+    try {
+      const { STATUS } = TipsStore;
+      const progressCallback = (loaded) => {
+        //subtract 5% from the total percentage
+        const percent = Math.round((loaded/105) * 100);
+        callback && callback(percent, STATUS.FETCHING);
+      };
+
+      //fetch data from server
+      const response = await fetchWithProgress(TipsStore.URL, progressCallback);
+      const json = response.data;
+
+      //makes sure all of the properties exists and has a default value
+      //const tips_filtered = _filterModules(json);
+
+      callback && callback(95, STATUS.SAVING_IMAGES);
+      //process base64 images and store      
+      const tips = await _saveBase64ToStorage(json);
+      
+      callback && callback(97, STATUS.WRITING);
+      //write modules to storage
+      await store.save(TipsStore.KEY, tips);
+
+      callback && callback(100, STATUS.FINISHED);    
+      return tips;
+
+    } catch(error){
+      console.log('fetchAndSaveWithProgress: unable to save/fetch tips');
       console.log(error);
       throw error;
     };

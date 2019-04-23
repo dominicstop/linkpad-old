@@ -1,5 +1,7 @@
+import { InteractionManager } from 'react-native';
 import chroma from 'chroma-js';
 import _ from 'lodash';
+import axios from 'axios';
 
 //wrapper func for setstate that returns a promise
 export function setStateAsync(that, newState) {
@@ -201,5 +203,30 @@ export async function randomDelay(min, max) {
   while (performance.now() - startTime < delay) {
     await nextFrame()
   };
-}
+};
+
+export async function fetchWithProgress(url, callback){
+  let previousPercentage = 0;
+  const config = {
+    onDownloadProgress: (progressEvent) => {
+      const { loaded, total } = progressEvent;
+      const percentage = Math.round((loaded * 100) / total);
+
+      const didChange = (previousPercentage != percentage);
+      previousPercentage = percentage;
+      //call callback and pass percentage progress
+      didChange && callback && callback(percentage);
+    },
+  };
+  const response = await axios.get(url, config);
+  return (response);
+};
+
+export function runAfterInteractions(){
+  return new Promise(resolve => {
+    InteractionManager.runAfterInteractions(() => {
+      resolve();
+    });
+  });
+};
 

@@ -3,7 +3,7 @@ import { FileSystem } from 'expo';
 import store from 'react-native-simple-store';
 import _ from 'lodash';
 
-import { createFolderIfDoesntExist, isBase64Image } from './Utils';
+import { createFolderIfDoesntExist, isBase64Image, fetchWithProgress } from './Utils';
 import { ResourceModel } from '../models/ResourceModel';
 
 //temp store resources for caching
@@ -90,6 +90,37 @@ export class ResourcesStore {
     } catch(error) {
       console.log(error);
       console.log('Failed to fetch resources.');
+      throw error;
+    };
+  };
+
+  static async fetchAndSaveWithProgress(callback){
+    try {
+      const { STATUS } = ResourcesStore;
+      const progressCallback = (loaded) => {
+        //subtract 5% from the total percentage
+        const percent = Math.round((loaded/105) * 100);
+        callback && callback(percent, STATUS.FETCHING);
+      };
+
+      //fetch data from server
+      const response = await fetchWithProgress(ResourcesStore.URL, progressCallback);
+      const json = response.data;
+
+      callback && callback(95, STATUS.SAVING_IMAGES);
+      //process base64 images and store      
+      const resources = await _saveBase64ToStorage(json);
+      
+      callback && callback(97, STATUS.WRITING);
+      //write modules to storage
+      await store.save(ResourcesStore.KEY, resources);
+
+      callback && callback(100, STATUS.FINISHED);    
+      return resources;
+
+    } catch(error){
+      console.log('fetchAndSaveWithProgress: unable to save/fetch resources');
+      console.log(error);
       throw error;
     };
   };

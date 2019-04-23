@@ -7,7 +7,7 @@ import { IconButton       } from '../components/Buttons';
 import { IconText         } from '../components/Views';
 
 import { ROUTES } from '../Constants';
-import {setStateAsync, timeout} from '../functions/Utils';
+import { setStateAsync, timeout, ifTrue , runAfterInteractions} from '../functions/Utils';
 
 
 import _ from 'lodash';
@@ -21,7 +21,10 @@ import Animated, { Easing } from 'react-native-reanimated';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import {RED, PURPLE} from '../Colors';
 import {validateEmail, validateNotEmpty} from '../functions/Validation';
-const { set, cond, event, block, add, Value, timing, interpolate, defined, debug, and, or, onChange, eq, call } = Animated;
+import {ModuleStore} from '../functions/ModuleStore';
+import {ResourcesStore} from '../functions/ResourcesStore';
+import {TipsStore} from '../functions/TipsStore';
+const { set, cond, block, add, Value, timing, interpolate, and, or, onChange, eq, call, Clock, clockRunning, startClock, stopClock, concat, color, divide, multiply, sub, lessThan, abs, modulo, round, debug } = Animated;
 
 //enable layout animation
 UIManager.setLayoutAnimationEnabledExperimental && UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -127,16 +130,11 @@ class InputForm extends React.PureComponent {
     }),
   };
 
-  static CONSTANTS = {
-    inputHeight: 35,
-    inputFontSize: 22,
-  }
-
   static styles = StyleSheet.create({
     container: {
       borderRadius: 10,
       flexDirection: 'row',
-      height: InputForm.CONSTANTS.inputHeight + InputForm.CONSTANTS.inputFontSize,
+      paddingVertical: 12,
       overflow: 'hidden',
     },
     background: {
@@ -158,10 +156,9 @@ class InputForm extends React.PureComponent {
     textinput: {
       flex: 1, 
       alignSelf: 'center', 
-      fontSize: InputForm.CONSTANTS.inputFontSize, 
+      fontSize: 22, 
       marginLeft: 15,
       marginRight: 15,
-      height: InputForm.CONSTANTS.inputHeight, 
       borderColor: 'transparent', 
       borderWidth: 1,
       paddingHorizontal: 5,
@@ -354,10 +351,10 @@ class Expander extends React.PureComponent {
     this.status   = new Value(0);
 
     //interpolated values
-    this.height = cond(eq(this.expandedHeight, -1), null, interpolate(this.progress, {
+    this.height = interpolate(this.progress, {
       inputRange : [0, 100],
       outputRange: [collapsedHeight, this.expandedHeight],
-    }));
+    });
     this.opacity = interpolate(this.progress, {
       inputRange : [0, 100],
       outputRange: [0, 1],
@@ -434,6 +431,297 @@ class Expander extends React.PureComponent {
           {this.props.children}
         </View>
       </Animated.View>
+    );
+  };
+};
+
+class ProgressBar extends React.PureComponent {
+  static propTypes = {
+    opacityInitial: PropTypes.number,
+    opacityFinal  : PropTypes.number,
+    height        : PropTypes.number,
+  };
+
+  static MODES = {
+    INITIAL    : 'INITIAL'    ,
+    DOWNLOADING: 'DOWNLOADING',
+    FINISHED   : 'FINISHED'   ,
+    ERROR      : 'ERROR'      ,
+  };
+
+  static styles = StyleSheet.create({
+    container: {
+      height: 50,
+      flexDirection: 'row',
+      alignItems: 'center',
+      borderRadius: 12,
+      overflow: 'hidden',
+      backgroundColor: 'rgba(0,0,0,0.2)',
+    },
+    progressbar: {
+      position: 'absolute',
+      height: '110%',
+      backgroundColor: 'red',
+      overflow: 'hidden',
+      backgroundColor: 'black',
+    },
+    leftContainer: {
+      marginLeft: 12,
+      width: 25,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    contentContainer: {
+      flex: 1,
+      marginLeft: 10,
+    },
+    percentageContainer: {
+      marginRight: 12,
+    },
+  });
+
+  static runTiming(clock, value, dest, callback) {
+    const state = {
+      finished : new Value(0), // will be set to 1 when the position reaches the final value or when frameTime exceeds duration
+      position : new Value(0), // gets updated on every frame (value depends on duration and toValue)
+      time     : new Value(0), // indicates the last clock time the animation node has been evaluated
+      frameTime: new Value(0), // represents the progress of animation in ms (how long the animation has lasted so far)
+    };
+  
+    const config = {
+      duration: 900,
+      toValue : new Value(0),
+      easing  : Easing.inOut(Easing.ease),
+    };
+      
+    return block([
+      cond(clockRunning(clock), [,
+        // if the clock is already running we update the toValue, in case a new dest has been passed in
+        set(config.toValue, dest),
+        set(value, state.position),
+      ], [
+        // if the clock isn't running we reset all the animation params and start the clock
+        set(state.finished , 0),
+        set(state.time     , 0),
+        set(state.frameTime, 0),
+        set(state.position , value),
+        set(config.toValue , dest ),
+        startClock(clock),
+      ]),
+      // we run the step here that is going to update position
+      timing(clock, state, config),
+      // if the animation is over, reset
+      cond(state.finished, [
+        set(state.finished , 0),
+        set(state.time     , 0),
+        set(state.frameTime, 0),
+        set(state.position , value),
+        set(config.toValue , dest ),
+        stopClock(clock),
+        call([state.position], callback),        
+      ]),
+      // we made the block return the updated position
+      state.position,    
+    ]);
+  };
+
+  static match(condsAndResPairs, offset = 0) {
+    if (condsAndResPairs.length - offset === 1) {
+      return condsAndResPairs[offset];
+    } else if (condsAndResPairs.length - offset === 0) {
+      return undefined;
+    };
+
+    return cond(
+      condsAndResPairs[offset],
+      condsAndResPairs[offset + 1],
+      ProgressBar.match(condsAndResPairs, offset + 2)
+    );
+  };
+
+  static colorHSV(h /* 0 - 360 */, s /* 0 - 1 */, v /* 0 - 1 */) {
+    // Converts color from HSV format into RGB
+    const c = multiply(v, s);
+    const hh = divide(h, 60);
+    const x = multiply(c, sub(1, abs(sub(modulo(hh, 2), 1))));
+  
+    const m = sub(v, c);
+  
+    const colorRGB = (r, g, b) =>
+      color(
+        round(multiply(255, add(r, m))),
+        round(multiply(255, add(g, m))),
+        round(multiply(255, add(b, m)))
+      );
+  
+    return ProgressBar.match([
+      lessThan(h, 60),
+      colorRGB(c, x, 0),
+      lessThan(h, 120),
+      colorRGB(x, c, 0),
+      lessThan(h, 180),
+      colorRGB(0, c, x),
+      lessThan(h, 240),
+      colorRGB(0, x, c),
+      lessThan(h, 300),
+      colorRGB(x, 0, c),
+      colorRGB(c, 0, x) /* else */,
+    ]);
+  };
+
+  constructor(props){
+    super(props);
+    const { MODES } = ProgressBar;
+
+    this.progressFinal   = new Value(0);
+    this.progressCurrent = new Value(0);
+
+    const clock = new Clock();
+    this.progress = ProgressBar.runTiming(clock, 
+      this.progressCurrent, 
+      this.progressFinal, 
+      this._handleAnimationFinished
+    );
+
+    this.opacity = interpolate(this.progress, {
+      inputRange : [0, 100],
+      outputRange: [0.1, 0.3],
+      extrapolate: 'clamp',
+    });
+    this.borderRadius = interpolate(this.progress, {
+      inputRange : [0 , 50, 100],
+      outputRange: [12, 25, 12],
+      extrapolate: 'clamp',
+    });
+    
+    //prevent multiple/redundant updates
+    this.progressAnimateTo = _.throttle(this.progressAnimateTo, 1000, {
+      leading: false, trailing: true 
+    });
+    
+    this.state = {
+      percentage: 0,
+      mode: MODES.INITIAL,
+    };
+  };
+
+  async progressAnimateTo(percentage){
+    this.progressFinal.setValue(percentage);
+    await new Promise(resolve => this.onAnimationFinished = resolve);
+  };
+
+  async setProgress(nextPercentage, threshold, shouldWait){
+    const { MODES } = ProgressBar;
+    const { percentage, mode } = this.state;
+
+    const isDone = (nextPercentage == 100);
+    const shouldUpdate = ((nextPercentage - percentage) >= threshold);
+    (mode == MODES.INITIAL) && this.setState({mode: MODES.DOWNLOADING});
+
+    if(shouldUpdate && shouldWait){
+      await this.progressAnimateTo(nextPercentage);
+      if(isDone){
+        await this.setMode(MODES.FINISHED, {
+          percentage: nextPercentage
+        });
+
+      } else {
+        this.setState({percentage: nextPercentage});        
+      };
+
+    } else if(shouldUpdate){
+      this.progressAnimateTo(nextPercentage);
+      this.setState({percentage: nextPercentage});
+    };
+  };
+
+  async setMode(nextMode, nextState = {}){
+    const { mode } = this.state;
+    const shouldUpdate = (mode != nextMode);
+    
+    if(shouldUpdate){
+      await this.leftContainer.fadeOutLeft(500);
+      this.setState({mode: nextMode, ...nextState});
+      await this.leftContainer.fadeInLeft(500);
+    };
+  };
+
+  _handleAnimationFinished = () => {
+    const callback = this.onAnimationFinished;
+    callback && callback();
+  };
+
+  _renderLeft(){
+    const { MODES, styles } = ProgressBar;
+    const { percentage, mode } = this.state;
+
+    switch (mode) {
+      case MODES.INITIAL: return (
+        <Icon
+          name={'ios-radio-button-off'}
+          type={'ionicon'}
+          color={'rgba(255,255,255,0.5)'}
+          size={22}
+        />
+      );
+      case MODES.DOWNLOADING: return (
+        <ActivityIndicator
+          size={'small'}
+          color={'white'}
+        />
+      );
+      case MODES.FINISHED: return (
+        <Icon
+          name={'ios-checkmark-circle'}
+          type={'ionicon'}
+          color={'white'}
+          size={22}
+        />
+      );
+      case MODES.ERROR: return (
+        <Icon
+          name={'ios-close-circle'}
+          type={'ionicon'}
+          color={'white'}
+          size={22}
+        />
+      );
+    };
+  };
+
+  render(){
+    const { styles } = ProgressBar;
+    const { percentageStyle } = this.props;
+    const { percentage } = this.state;
+
+    const progressbarStyle = {
+      width: concat(this.progress, "%"),
+      opacity: this.opacity,
+      borderBottomRightRadius: this.borderRadius,
+      borderTopRightRadius: this.borderRadius,
+    };
+
+    return(
+      <View style={styles.container}>
+        <Animatable.View 
+          ref={r => this.leftContainer = r}
+          style={styles.leftContainer}
+          animation={'fadeInLeft'}
+          duration={750}
+          useNativeDriver={true}
+        >
+          {this._renderLeft()}
+        </Animatable.View>
+        <Animated.View style={[styles.progressbar, progressbarStyle]}/>
+        <View style={styles.contentContainer}>
+          {this.props.children}
+        </View>
+        <View style={styles.percentageContainer}>
+          <Text style={percentageStyle}>
+            {`${percentage}%`}
+          </Text>
+        </View>
+      </View>
     );
   };
 };
@@ -739,9 +1027,11 @@ class WelcomeUser extends React.PureComponent {
     const { styles } = WelcomeUser;
     const { user } = this.props;
 
-    const { firstname = '', lastname = '', email = '', ispremium } = user;
-    const initials = firstname.charAt(0) + lastname.charAt(0);
-    const name = firstname + lastname; 
+    //return null;
+
+    const { firstname, lastname, email, ispremium } = user;
+    const initials = (firstname || 'N').charAt(0) + (lastname || 'A').charAt(0);
+    const name = firstname || 'Not' + lastname || 'Available'; 
 
     return(
       <View style={styles.userDetailsContainer}>
@@ -809,6 +1099,117 @@ class WelcomeUser extends React.PureComponent {
         {this._renderUserDetails()}
         <View style={styles.spacer}/>
         {this._renderNextButton()}
+      </Expander>
+    );
+  };
+};
+
+class Downloading extends React.PureComponent {
+  static styles = StyleSheet.create({
+    container: {
+      justifyContent: 'center',
+    },
+    spacer: {
+      margin: 8,
+    },
+    progressText: {
+      fontSize: 18,
+      fontWeight: 'bold',
+      color: 'white'
+    },
+    percentageStyle: {
+      fontSize: 16,
+      fontWeight: '200',
+      color: 'white',
+    },
+  });
+
+  async componentDidMount(){
+    const { MODES } = ProgressBar;
+
+    await this.loadModules();
+    await this.loadResources();
+    await this.loadTips();
+
+  };
+
+  async loadModules(){
+    const { MODES } = ProgressBar;
+    try {
+      await runAfterInteractions();
+      this.progressModules.setMode(MODES.DOWNLOADING);
+      await ModuleStore.fetchAndSaveWithProgress((percent) => {
+        //stop updating progressbar when at 97%
+        (percent <= 97) && this.progressModules.setProgress(percent, 2, false);
+      });
+      await this.progressModules.setProgress(100, 0, true);
+      
+    } catch(error){
+      this.progressModules.setMode(MODES.ERROR);
+    };
+  };
+
+  async loadResources(){
+    const { MODES } = ProgressBar;
+    try {
+      await runAfterInteractions();
+      this.progressResource.setMode(MODES.DOWNLOADING); 
+      await ResourcesStore.fetchAndSaveWithProgress((percent) => {
+        //stop updating progressbar when at 97%
+        (percent <= 97) && this.progressResource.setProgress(percent, 2, false);
+      });
+      await this.progressResource.setProgress(100, 0, true);
+
+    } catch(error){
+      this.progressResource.setMode(MODES.ERROR);
+    };
+  };
+
+  async loadTips(){
+    const { MODES } = ProgressBar;
+    try {
+      await runAfterInteractions();
+      this.progressTips.setMode(MODES.DOWNLOADING); 
+      await TipsStore.fetchAndSaveWithProgress((percent) => {
+        //stop updating progressbar when at 97%
+        (percent <= 97) && this.progressTips.setProgress(percent, 2, false);
+      });
+      await this.progressTips.setProgress(100, 0, true);
+
+    } catch(error){
+      this.progressTips.setMode(MODES.ERROR);
+    };
+  };
+
+  render(){
+    const { styles } = Downloading;    
+    return(
+      <Expander
+        style={styles.container}
+        ref={r => this.expander = r}
+        initiallyCollapsed={false}
+      >
+        <View style={styles.spacer}/>
+        <ProgressBar
+          percentageStyle={styles.percentageStyle}
+          ref={r => this.progressModules = r}
+        >
+          <Text style={styles.progressText}>Modules</Text>
+        </ProgressBar>
+        <View style={styles.spacer}/>
+        <ProgressBar
+          percentageStyle={styles.percentageStyle}
+          ref={r => this.progressResource = r}
+        >
+          <Text style={styles.progressText}>Resources</Text>
+        </ProgressBar>
+        <View style={styles.spacer}/>
+        <ProgressBar
+          percentageStyle={styles.percentageStyle}
+          ref={r => this.progressTips = r}
+        >
+          <Text style={styles.progressText}>Tips</Text>
+        </ProgressBar>
       </Expander>
     );
   };
@@ -1053,6 +1454,9 @@ class FormContainer extends React.Component {
           this.formHeader.changeMode(MODES.DOWNLOADING),
           this.signInContainer.pulse(1250),
         ]);
+        const expander = this.downloading.expander;
+        await expander.expand(true);
+
         InteractionManager.clearInteractionHandle(handle);
       });
     };
@@ -1086,6 +1490,7 @@ class FormContainer extends React.Component {
     const { MODES } = LoginScreen;
     const { mode, user } = this.props;
 
+    
     switch (mode) {
       case MODES.LOGIN: return(
         <SigninForm
@@ -1098,6 +1503,11 @@ class FormContainer extends React.Component {
           ref={r => this.welcomeUser = r}
           onPressNext={this._handleOnPressNext}
           {...{user}}
+        />
+      );
+      case MODES.DOWNLOADING: return(
+        <Downloading
+          ref={r => this.downloading = r}
         />
       );
     };
@@ -1165,7 +1575,7 @@ export default class LoginScreen extends React.Component {
     const { MODES } = LoginScreen;
 
     this.state = {
-      mode: MODES.LOGIN,
+      mode: MODES.DOWNLOADING,
       user: null,
     };
   };
@@ -1219,27 +1629,3 @@ export default class LoginScreen extends React.Component {
     );
   };
 };
-
-const styles = StyleSheet.create({
-  rootContainer: {
-    width: '100%', 
-    height: '100%', 
-  },
-  signInContainer: {
-    alignSelf: 'stretch', 
-    alignItems: 'stretch', 
-    margin: 15, 
-    padding: 18,
-    borderRadius: 20,
-    ...Platform.select({
-      ios: {
-        backgroundColor: 'rgba(0, 0, 0, 0.1)'
-      },
-      android: {
-        backgroundColor: 'rgba(255, 255, 255, 1)',
-        paddingTop: 25,
-        elevation: 15,
-      },
-    })
-  },
-});
