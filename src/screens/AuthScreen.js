@@ -84,7 +84,7 @@ export default class AuthScreen extends React.Component {
           easing={"ease-in-out"} 
           iterationCount={"infinite"}
           delay={2000}
-          duration={13000}
+          duration={1000 * 30}
           shouldRasterizeIOS={true}
           renderToHardwareTextureAndroid={true}
           useNativeDriver={true}
@@ -99,7 +99,7 @@ export default class AuthScreen extends React.Component {
     //gradient colors
     const colorsTop    = ['#7F00FF', '#8e44ad', '#fc4a1a', '#FC466B', '#3f2b96', '#0575E6', '#8A2387', '#C33764'];
     const colorsBottom = ['#F100FF', '#c0392b', '#f7b733', '#3F5EFB', '#a8c0ff', '#00F260', '#f27121', '#1D2671'];
-    const speed = Platform.select({ios: 200, android: 300});
+    const speed = Platform.select({ios: 300, android: 400});
 
     return(
       <View style={styles.backgroundWrapper}>

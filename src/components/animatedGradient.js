@@ -20,7 +20,7 @@ function runTiming(clock, value, dest) {
   };
 
   const config = {
-    duration: 1000 * 10,
+    duration: 1000 * 15,
     toValue : new Value(0),
     easing  : Easing.linear,
   };
@@ -60,7 +60,7 @@ function duplicateColors([mainA, mainB], [scaledA, scaledB]){
     const isMainColorB = mainB.includes(colorB);
 
     if(isMainColorA && isMainColorB){
-      _.range(90).forEach(() => {
+      _.range(60).forEach(() => {
         A.push(colorA);
         B.push(colorB);  
       });
@@ -101,14 +101,10 @@ export class AnimatedGradient extends React.PureComponent {
     //unwrap props
     const {colorsTop, colorsBottom} = props;
     //interpolate colors
-    const scaledTop    = Chroma.scale(colorsTop   ).colors(colorsTop   .length * 60);
-    const scaledBottom = Chroma.scale(colorsBottom).colors(colorsBottom.length * 60);
+    this.colorsTop    = Chroma.scale(colorsTop   ).colors(colorsTop   .length * 90);
+    this.colorsBottom = Chroma.scale(colorsBottom).colors(colorsBottom.length * 90);
     //duplicate main colors
-    const [duplicateTop, duplicateBottom] = duplicateColors([colorsTop, colorsBottom], [scaledTop, scaledBottom]);
-    //assign duplicated to color queue
-    this.colorsTop    = duplicateTop;
-    this.colorsBottom = duplicateBottom;
-
+    
     const min = 1.1;
     const max = 2.1;
     const mid = 2;

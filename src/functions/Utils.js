@@ -236,3 +236,11 @@ export function runAfterInteractions(){
   });
 };
 
+export async function parseIfJSON(text){
+  try {
+    return({isJson: true, json: await JSON.parse(text)});
+  } catch(error){
+    return({isJson: false, json: null});
+  };
+};
+

@@ -7,7 +7,7 @@ import { IconButton       } from '../components/Buttons';
 import { IconText         } from '../components/Views';
 
 import { ROUTES } from '../Constants';
-import { setStateAsync, timeout, ifTrue , runAfterInteractions} from '../functions/Utils';
+import { setStateAsync, timeout, ifTrue , runAfterInteractions, parseIfJSON} from '../functions/Utils';
 
 
 import _ from 'lodash';
@@ -24,73 +24,86 @@ import {validateEmail, validateNotEmpty} from '../functions/Validation';
 import {ModuleStore} from '../functions/ModuleStore';
 import {ResourcesStore} from '../functions/ResourcesStore';
 import {TipsStore} from '../functions/TipsStore';
-const { set, cond, block, add, Value, timing, interpolate, and, or, onChange, eq, call, Clock, clockRunning, startClock, stopClock, concat, color, divide, multiply, sub, lessThan, abs, modulo, round, debug } = Animated;
+const { set, cond, block, add, Value, timing, interpolate, and, or, onChange, eq, call, Clock, clockRunning, startClock, stopClock, concat, color, divide, multiply, sub, lessThan, abs, modulo, round, debug, clock } = Animated;
 
 //enable layout animation
 UIManager.setLayoutAnimationEnabledExperimental && UIManager.setLayoutAnimationEnabledExperimental(true);
 
-//Enum for each login state
-const MODES = {
-  initial  : 'initial'  ,
-  loading  : 'loading'  ,
-  fetching : 'fetching' ,
-  succesful: 'succesful',
-  invalid  : 'invalid'  ,
-  error    : 'error'    ,
-};
-
 export class Login {
   static URL = 'https://linkpad-pharmacy-reviewer.firebaseapp.com/login';
 
-  static async login({email, pass}, onError) {
+  static ERROR_TYPE = {
+    RESPONSE_NOT_OKAY: 'RESPONSE_NOT_OKAY',
+    RESPONSE_NOT_JSON: 'RESPONSE_NOT_JSON',
+    NO_INTERNET      : 'NO_INTERNET'      ,
+    USER_NOT_FOUND   : 'USER_NOT_FOUND'   ,
+    WRONG_PASSWORD   : 'WRONG_PASSWORD'   , 
+  };
+
+  static ERROR_MSG = {
+    RESPONSE_NOT_OKAY: 'There seems to be a problem with the server. Try again later.',
+    RESPONSE_NOT_JSON: 'Looks like the server is having some issues. Try again later.',
+    NO_INTERNET      : 'Unable to connect to server. Please check your internet connection',
+    USER_NOT_FOUND   : 'Invalid Email: User does not exist.',
+    WRONG_PASSWORD   : 'Sorry, the password is invalid.',
+    UKNOWN_ERROR     : 'Something went wrong, unable to login.',
+  };
+
+  /** corresponds to the response.message string from server */
+  static RESPONSE_MESSAGE = {
+    USER_NOT_FOUND: 'User not found',
+    WRONG_PASSWORD: 'Wrong Password',
+    SUCCESS       : 'Successfully logged in',
+  };
+
+  static MESSAGE_TYPE = {
+    USER_NOT_FOUND: 'USER_NOT_FOUND',
+    WRONG_PASSWORD: 'WRONG_PASSWORD',
+    SUCCESS       : 'SUCCESS',
+  };
+
+  static async login({email, pass}, throwErrorIfLoginInvalid = false) {
+    const { ERROR_TYPE } = Login;
     try {
-      //fetch request options
-      const options = {
+      //check for internet connectivity
+      const isConnected = await NetInfo.isConnected.fetch();
+      if(!isConnected) throw ERROR_TYPE.NO_INTERNET;
+    
+      //post email/pass and wait for response
+      const response = await fetch(Login.URL, {
         method: 'POST',
         headers: {
           Accept: 'application/json',
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({email, pass}),
-      };
-
-      //check for internet connectivity
-      const isConnected = await NetInfo.isConnected.fetch();
-      if(isConnected){
-        //post email/pass and wait for response
-        const response = await fetch(Login.URL, options);
-        //show error when response not okay
-        if(!response.ok) {
-          onError && onError({
-            type   : 'RESPONSE_NOT_OKAY',
-            message: 'There seems to be a problem with the server. Try again later.',
-          });
-        };
-        //parse response as json
-        const result = await response.json();
-
-        //resolve results
-        return {
-          success: result.success || false, // whether or not if the user exists
-          message: result.message || null , // ex: "Successfully logged in", "Wrong Password", "User not found"
-          user   : result.user    || null , // obj: user inf, ex: email, firstname, isPremium etc.
-          uid    : result.uid     || null , // unique user identifier
-        };
-
-      } else {
-        onError && onError({
-          type   : 'NO_INTERNET',
-          message: 'Unable to connect to server. Please check your internet connection',
-        });
-      };
-      
-    } catch(error) {
-      console.log("Error: Unale to login.");
-      console.log(error);
-      onError && onError({
-        type   : 'ERROR',
-        message: 'Unable to login, an error has occured.',
       });
+
+      //show error when response not okay
+      if(!response.ok) throw ERROR_TYPE.RESPONSE_NOT_OKAY;
+
+      //parse response as text
+      const text = await response.text();
+      //parse and check if the response is json
+      const { isJson, json } = await parseIfJSON(text);
+
+      //throw an error if response is not a json
+      if(!isJson) throw ERROR_TYPE.RESPONSE_NOT_JSON;
+      //throw an error if login is not successful
+      if(throwErrorIfLoginInvalid && !json.success) throw Login.getResponseMessageType(json.message);  
+      
+      //resolve results
+      return {
+        success: json.success || false, // whether or not if the login is successful
+        message: json.message || null , // ex: "Successfully logged in", "Wrong Password", "User not found"
+        user   : json.user    || null , // obj: user inf, ex: email, firstname, isPremium etc.
+        uid    : json.uid     || null , // unique user identifier
+      };
+
+    } catch(error) {
+      console.log("login: Unable to login.");
+      console.log(error);
+      throw error;
     };
   };
 
@@ -109,6 +122,55 @@ export class Login {
       },
       "uid": "X7CYGDXvPuRCzV0Kyq9i180BUj12"
     });
+  };
+
+  static async mockDownload(callback){
+    for (let index = 0; index <  100; index++) {
+      await timeout(100);
+      callback && callback(index);
+    };
+  };
+
+  static getErrorMessage(type){
+    const { ERROR_TYPE, ERROR_MSG } = Login;
+    switch (type) {
+      case ERROR_TYPE.RESPONSE_NOT_OKAY: return (ERROR_MSG.RESPONSE_NOT_OKAY);
+      case ERROR_TYPE.RESPONSE_NOT_JSON: return (ERROR_MSG.RESPONSE_NOT_JSON);
+      case ERROR_TYPE.NO_INTERNET      : return (ERROR_MSG.NO_INTERNET      );
+      case ERROR_TYPE.USER_NOT_FOUND   : return (ERROR_MSG.USER_NOT_FOUND   );
+      case ERROR_TYPE.WRONG_PASSWORD   : return (ERROR_MSG.WRONG_PASSWORD   );
+      default: return (ERROR_MSG.UKNOWN_ERROR);
+    };
+  };
+
+  static getResponseMessageType(message){
+    const { RESPONSE_MESSAGE, MESSAGE_TYPE } = Login;
+    switch (message) {
+      case RESPONSE_MESSAGE.USER_NOT_FOUND: return (MESSAGE_TYPE.USER_NOT_FOUND);
+      case RESPONSE_MESSAGE.WRONG_PASSWORD: return (MESSAGE_TYPE.WRONG_PASSWORD);
+      case RESPONSE_MESSAGE.SUCCESS       : return (MESSAGE_TYPE.SUCCESS       );
+      default: return ('');
+    };
+  };
+};
+
+export class LoginResponse {
+  static structure = {
+    success: true,
+    message: '',
+    uid: '',
+    user: {
+      email: '',
+      firstname: '',
+      ispremium: false,
+      lastlogin: '',
+      lastname: '',
+      userid: ''
+    },
+  };
+
+  static wrap(response = LoginResponse.structure){
+    return {...LoginResponse.structure, ...response || {}};
   };
 };
 
@@ -343,52 +405,89 @@ class Expander extends React.PureComponent {
     initiallyCollapsed: true,
   };
 
+  static runTiming(clock, value, dest) {
+    const state = {
+      finished: new Value(0),
+      position: value,
+      time: new Value(0),
+      frameTime: new Value(0),
+    };
+  
+    const config = {
+      duration: 450,
+      toValue: dest,
+      easing: Easing.inOut(Easing.ease),
+    };
+  
+    return block([
+      cond(clockRunning(clock), 0, [
+        // If the clock isn't running we reset all the animation params and start the clock
+        set(state.finished , 0),
+        set(state.time     , 0),
+        set(state.frameTime, 0),
+        set(state.position , value),
+        set(config.toValue , dest ),
+        startClock(clock),
+      ]),
+      // we run the step here that is going to update position
+      timing(clock, state, config),
+      // if the animation is over we stop the clock
+      cond(state.finished, [
+        //debug('positon: ', state.position),
+        debug('stop clock', stopClock(clock)),
+      ]),
+      // we made the block return the updated position
+      state.position,
+    ]);
+  };
+
   constructor(props){
     super(props);
     const { initiallyCollapsed, collapsedHeight } = props;
-    
-    this.expandedHeight = new Value(-1);
+
+    const initalValue = initiallyCollapsed? 0 : 100;
     //animation values
-    this.progress = new Value(initiallyCollapsed? 0 : 100);
-    this.status   = new Value(0);
+    this.progressInitial = new Value(initalValue);
+    this.progressFinal   = new Value(initalValue);
+    this.expandedHeight  = new Value(-1);
+    this.overflow        = new Value(0);
+    this.status          = new Value(0);
+
+    const clock = new Clock();
+    this.progress = Expander.runTiming(clock, this.progressInitial, this.progressFinal);
 
     //interpolated values
-    this.height = interpolate(this.progress, {
+    this.height = cond(eq(this.expandedHeight, -1), 0, interpolate(this.progress, {
       inputRange : [0, 100],
       outputRange: [collapsedHeight, this.expandedHeight],
-    });
+      extrapolate: 'clamp',
+    }));
     this.opacity = interpolate(this.progress, {
       inputRange : [0, 100],
       outputRange: [0, 1],
+      extrapolate: 'clamp',
     });
     this.scale = interpolate(this.progress, {
       inputRange : [0, 100],
-      outputRange: [0.8, 1],
+      outputRange: [0.9, 1],
+      extrapolate: 'clamp',
     });
 
     this.isHeightSet = false;
     this.onAnimationFinished = null;
-    this.state = {
-      enableOverflow: true,
-    };
+    this.isExpanded = !initiallyCollapsed;
   };
 
   /** expand or collapse the forms */
   async expand(expand){
-    const { enableOverflow } = this.state;
-    (enableOverflow != expand) && await setStateAsync(this, {enableOverflow: expand});
-
-    const config = {
-      duration: 350,
-      toValue : expand? 100 : 0,
-      easing  : Easing.inOut(Easing.ease),
+    if(this.isExpanded != expand){
+      this.progressFinal.setValue(expand? 100 : 0);
+      await Promise.all([
+        new Promise(resolve => this.onAnimationFinished = resolve),
+        timeout(500),
+      ]);
+      this.isExpanded = expand;
     };
-
-    const animation = timing(this.progress, config);
-    animation.start();
-
-    (enableOverflow != true) && await setStateAsync(this, {enableOverflow: true});
-    await new Promise(resolve => this.onAnimationFinished = resolve);
   };
 
   _handleAnimationFinished = () => {
@@ -407,13 +506,11 @@ class Expander extends React.PureComponent {
 
   render(){
     const { progress, status } = this;
-    const { enableOverflow } = this.state;
-
     const containerStyle = {
       height : this.height,
       opacity: this.opacity,
       transform: [{ scale : this.scale }],
-      overflow: enableOverflow? 'visible' : 'hidden',
+      overflow: cond((eq, this.overflow, 1), 'visible', 'hidden'),
     };
     
     return(
@@ -421,7 +518,11 @@ class Expander extends React.PureComponent {
         <Animated.Code exec={block([
           //animation started
           onChange(progress, cond(eq(status, 0), [
-            set(status, add(this.status, 1)),
+            set(status, 1),
+            cond(eq(this.progressFinal, 1),
+              set(this.overflow, 1),
+              set(this.overflow, 0)
+            ),
           ])),
           //animation finished
           cond(and(eq(status, 1), or(eq(progress, 0), eq(progress, 100))), [ 
@@ -439,9 +540,15 @@ class Expander extends React.PureComponent {
 
 class ProgressBar extends React.PureComponent {
   static propTypes = {
-    opacityInitial: PropTypes.number,
-    opacityFinal  : PropTypes.number,
-    height        : PropTypes.number,
+    opacityInitial    : PropTypes.number,
+    opacityFinal      : PropTypes.number,
+    height            : PropTypes.number,
+    textTitle         : PropTypes.string,
+    textSubtitle      : PropTypes.string,
+    textSubtitleError : PropTypes.string,
+    styleTitle        : PropTypes.object,
+    styleSubtitle     : PropTypes.object,
+    styleSubtitleError: PropTypes.object,
   };
 
   static MODES = {
@@ -453,12 +560,13 @@ class ProgressBar extends React.PureComponent {
 
   static styles = StyleSheet.create({
     container: {
-      height: 50,
+      height: 60,
       flexDirection: 'row',
       alignItems: 'center',
       borderRadius: 12,
       overflow: 'hidden',
       backgroundColor: 'rgba(0,0,0,0.2)',
+      padding: 1,
     },
     progressbar: {
       position: 'absolute',
@@ -479,6 +587,21 @@ class ProgressBar extends React.PureComponent {
     },
     percentageContainer: {
       marginRight: 12,
+    },
+    progressTitle: {
+      fontSize: 18,
+      fontWeight: 'bold',
+      color: 'white'
+    },
+    percentageStyle: {
+      fontSize: 16,
+      fontWeight: '200',
+      color: 'white',
+    },
+    progressSubtitle: {
+      fontSize: 16,
+      fontWeight: '200',
+      color: 'white',
     },
   });
 
@@ -595,6 +718,11 @@ class ProgressBar extends React.PureComponent {
       outputRange: [12, 25, 12],
       extrapolate: 'clamp',
     });
+    this.color = ProgressBar.colorHSV(251, 0, interpolate(this.progress, {
+      inputRange : [0, 100],
+      outputRange: [1, 0],  
+      extrapolate: 'clamp',
+    }));
     
     //prevent multiple/redundant updates
     this.progressAnimateTo = _.throttle(this.progressAnimateTo, 1000, {
@@ -691,9 +819,28 @@ class ProgressBar extends React.PureComponent {
     };
   };
 
+  _renderSubtitle(){
+    const { styles, MODES } = ProgressBar;
+    const { textSubtitle, textSubtitleError } = this.props;
+    const { mode } = this.state;
+
+    switch (mode) {
+      case MODES.ERROR: return(
+        <Text style={styles.progressSubtitleError}>
+          {textSubtitleError}
+        </Text>
+      );
+      default: return(
+        <Text style={styles.progressSubtitle}>
+          {textSubtitle}
+        </Text>
+      );
+    };
+  };
+
   render(){
     const { styles } = ProgressBar;
-    const { percentageStyle } = this.props;
+    const { textTitle } = this.props;
     const { percentage } = this.state;
 
     const progressbarStyle = {
@@ -701,6 +848,7 @@ class ProgressBar extends React.PureComponent {
       opacity: this.opacity,
       borderBottomRightRadius: this.borderRadius,
       borderTopRightRadius: this.borderRadius,
+      backgroundColor: this.color,
     };
 
     return(
@@ -716,10 +864,13 @@ class ProgressBar extends React.PureComponent {
         </Animatable.View>
         <Animated.View style={[styles.progressbar, progressbarStyle]}/>
         <View style={styles.contentContainer}>
-          {this.props.children}
+          <Text style={styles.progressTitle}>
+            {textTitle}
+          </Text>
+          {this._renderSubtitle()}
         </View>
         <View style={styles.percentageContainer}>
-          <Text style={percentageStyle}>
+          <Text style={styles.percentageStyle}>
             {`${percentage}%`}
           </Text>
         </View>
@@ -730,7 +881,8 @@ class ProgressBar extends React.PureComponent {
 
 class SigninForm extends React.PureComponent {
   static propTypes = {
-    onPressLogin: PropTypes.func,
+    onPressLogin: PropTypes.func  ,
+    results     : PropTypes.object,
   };
 
   static styles = StyleSheet.create({
@@ -937,7 +1089,7 @@ class SigninForm extends React.PureComponent {
 class WelcomeUser extends React.PureComponent {
   static propTypes = {
     onPressNext: PropTypes.func,
-    user: PropTypes.object,
+    results    : PropTypes.object,
   };
 
   static styles = StyleSheet.create({
@@ -1019,7 +1171,6 @@ class WelcomeUser extends React.PureComponent {
 
   constructor(props){
     super(props);
-    
   };
 
   _handleOnPressNext = () => {
@@ -1029,11 +1180,9 @@ class WelcomeUser extends React.PureComponent {
 
   _renderUserDetails(){
     const { styles } = WelcomeUser;
-    const { user } = this.props;
+    const results = LoginResponse.wrap(this.props.results);
 
-    //return null;
-
-    const { firstname, lastname, email, ispremium } = user;
+    const { firstname, lastname, email, ispremium } = results.user;
     const initials = (firstname || 'N').charAt(0) + (lastname || 'A').charAt(0);
     const name = firstname || 'Not' + lastname || 'Available'; 
 
@@ -1110,7 +1259,10 @@ class WelcomeUser extends React.PureComponent {
 
 class Downloading extends React.PureComponent {
   static propTypes = {
-    onDownloadFinished: PropTypes.func,
+    onDownloadsFinished: PropTypes.func,
+    onDownloadFinished : PropTypes.func,
+    onDownloadFailed   : PropTypes.func,
+    onPressNext        : PropTypes.func,
   };
 
   static DOWNLOAD_TYPES = {
@@ -1126,39 +1278,48 @@ class Downloading extends React.PureComponent {
     spacer: {
       margin: 8,
     },
-    progressText: {
-      fontSize: 18,
-      fontWeight: 'bold',
-      color: 'white'
+    //next button styles
+    nextButtonContainer: {
+      marginTop: 15,
+      padding: 15,
+      paddingHorizontal: 15,
+      backgroundColor: 'rgba(0,0,0,0.3)', 
+      borderRadius: 15,
+      alignItems: 'center',
+      justifyContent: 'center',
     },
-    percentageStyle: {
-      fontSize: 16,
-      fontWeight: '200',
-      color: 'white',
+    nextButtonLabel: {
+      flex: 0,
+      fontSize: 18, 
+      color: 'white', 
+      fontWeight: 'bold', 
+    },
+    nextButtonSubtitle: {
+      fontSize: 17, 
+      flex: 0,
+      color: 'white', 
+      fontWeight: '200', 
     },
   });
 
   constructor(props){
     super(props);
-    this.state = {
-      mountProgress: false
-    };
   };
 
-  async componentDidMount(){
-    const { MODES } = ProgressBar;
-
+  async load(){
+    const { onDownloadsFinished } = this.props;
     await this.loadModules();
-    this.setState({mountProgress: true});
     await this.loadResources();
     await this.loadTips();
 
+    onDownloadsFinished && onDownloadsFinished();
+    await this.expanderNextButton.expand(true);
   };
 
   async loadModules(){
     const { MODES } = ProgressBar;
     const { DOWNLOAD_TYPES } = Downloading;
-    const { onDownloadFinished } = this.props;
+    const { onDownloadFinished, onDownloadFailed } = this.props;
 
     try {
       //wait for animations to finish
@@ -1173,14 +1334,19 @@ class Downloading extends React.PureComponent {
       onDownloadFinished && await onDownloadFinished(DOWNLOAD_TYPES.MODULES);
       
     } catch(error){
+      console.log('loadModules: error');
+      console.log(error);
+      //set progressBar mode to error
       this.progressModules.setMode(MODES.ERROR);
+      //call download failed callback
+      onDownloadFailed && onDownloadFailed(DOWNLOAD_TYPES.MODULES);
     };
   };
 
   async loadResources(){
     const { MODES } = ProgressBar;
     const { DOWNLOAD_TYPES } = Downloading;
-    const { onDownloadFinished } = this.props;
+    const { onDownloadFinished, onDownloadFailed } = this.props;
 
     try {
       //wait for animations to finish
@@ -1200,14 +1366,17 @@ class Downloading extends React.PureComponent {
     } catch(error){
       console.log('error: loadResources');
       console.log(error);
-      this.progressResource.setMode(MODES.ERROR);
+      //set progressBar mode to error
+      this.progressResource.setMode(MODES.ERROR);      
+      //call download failed callback
+      onDownloadFinished && await onDownloadFinished(DOWNLOAD_TYPES.RESOURCES);
     };
   };
 
   async loadTips(){
     const { MODES } = ProgressBar;
     const { DOWNLOAD_TYPES } = Downloading;
-    const { onDownloadFinished } = this.props;
+    const { onDownloadFinished, onDownloadFailed } = this.props;
 
     try {
       //wait for animations to finish      
@@ -1226,12 +1395,34 @@ class Downloading extends React.PureComponent {
       ]);
 
     } catch(error){
+      console.log('loadTips: error');      
+      console.log(error);      
+      //set progressBar mode to error
       this.progressTips.setMode(MODES.ERROR);
+      //call download failed callback
+      onDownloadFailed && onDownloadFailed(DOWNLOAD_TYPES.TIPS);
     };
   };
 
+  _handleOnPressNext(){
+    const { onPressNext } = this.props;
+    onPressNext && onPressNext();
+  };
+
+  _renderProgressModules(){
+    const { styles } = Downloading;
+    return(
+      <ProgressBar
+        ref={r => this.progressModules = r}
+        textTitle={'Modules'}
+        textSubtitle={'Subjects and questions'}
+        textSubtitleError={'Download failed'}         
+      />
+    );
+  };
+
   _renderProgressResources(){
-    const { styles } = Downloading; 
+    const { styles } = Downloading;
        
     return(
       <Expander 
@@ -1240,11 +1431,11 @@ class Downloading extends React.PureComponent {
       >
         <View style={styles.spacer}/>
         <ProgressBar
-          percentageStyle={styles.percentageStyle}
           ref={r => this.progressResource = r}
-        >
-          <Text style={styles.progressText}>Resources</Text>
-        </ProgressBar>
+          textTitle={'Resources'}
+          textSubtitle={'Information and notes'}
+          textSubtitleError={'Download failed'}
+        />
       </Expander>
     );
   };
@@ -1258,18 +1449,54 @@ class Downloading extends React.PureComponent {
       >
         <View style={styles.spacer}/>
         <ProgressBar
-          percentageStyle={styles.percentageStyle}
           ref={r => this.progressTips = r}
+          textTitle={'Tips'}
+          textSubtitle={'Study tips and trick'}
+          textSubtitleError={'Download failed'}
+        />
+      </Expander>
+    );
+  };
+
+  _renderNextButton(){
+    const { styles } = Downloading;
+    return(
+      <Expander
+        ref={r => this.expanderNextButton = r}
+        initiallyCollapsed={true}
+      >
+        <Animatable.View
+          animation={'pulse'}
+          duration={1000}
+          delay={2000}
+          useNativeDriver={true}
         >
-          <Text style={styles.progressText}>Tips</Text>
-        </ProgressBar>
+          <IconButton 
+            containerStyle={styles.nextButtonContainer}
+            textStyle={styles.nextButtonLabel}
+            subtitleStyle={styles.nextButtonSubtitle}
+            text={'Next'}
+            subtitle={'download data'}
+            iconName={'login'}
+            iconType={'simple-line-icon'}
+            iconColor={'white'}
+            iconSize={22}
+            onPress={this._handleOnPressNext}
+          >
+            <Icon
+              name ={'chevron-right'}
+              color={'rgba(255, 255, 255, 0.5)'}
+              type ={'feather'}
+              size ={25}
+            /> 
+          </IconButton>
+        </Animatable.View>
       </Expander>
     );
   };
 
   render(){
     const { styles } = Downloading;
-    const { mountProgress } = this.state;
 
     return(
       <Fragment>
@@ -1279,15 +1506,11 @@ class Downloading extends React.PureComponent {
           initiallyCollapsed={true}
         >
           <View style={styles.spacer}/>
-          <ProgressBar
-            percentageStyle={styles.percentageStyle}
-            ref={r => this.progressModules = r}
-          >
-            <Text style={styles.progressText}>Modules</Text>
-          </ProgressBar>
+          {this._renderProgressModules()}
         </Expander>
-        {mountProgress && this._renderProgressResources()}
-        {mountProgress && this._renderProgressTips()}
+        {this._renderProgressResources()}
+        {this._renderProgressTips()}
+        {this._renderNextButton()}
       </Fragment>
     );
   };
@@ -1353,6 +1576,11 @@ class FormHeader extends React.PureComponent {
       case MODES.DOWNLOADING: return {
         titleText   : 'DOWNLOADING', 
         subtitleText: 'Fetching data from server...',
+        showLoading : false,
+      };
+      case MODES.LOGINFAILED: return {
+        titleText   : 'SIGN IN', 
+        subtitleText: 'Something went wrong...',
         showLoading : false,
       };
     };
@@ -1452,9 +1680,9 @@ class FormHeader extends React.PureComponent {
 
 class FormContainer extends React.Component {
   static propTypes = {
-    onPressLogin: PropTypes.func,
-    login: PropTypes.func,
-    user: PropTypes.object,
+    onPressLogin: PropTypes.func  ,
+    login       : PropTypes.func  ,
+    results     : PropTypes.object,
   };
 
   static styles = StyleSheet.create({
@@ -1491,14 +1719,16 @@ class FormContainer extends React.Component {
     const { MODES } = LoginScreen;
 
     //prevent multiple presses
-    this._handleOnPressSignin = _.throttle(this._handleOnPressSignin, 1000, {leading:true, trailing:false});
-    this._handleOnPressNext   = _.throttle(this._handleOnPressNext  , 1000, {leading:true, trailing:false});
+    this._handleOnPressSignin       = _.throttle(this._handleOnPressSignin      , 1000, {leading:true, trailing:false});
+    this._handleOnPressNextWelcome  = _.throttle(this._handleOnPressNextWelcome , 1000, {leading:true, trailing:false});
+    this._handleOnPressNextDownload = _.throttle(this._handleOnPressNextDownload, 1000, {leading:true, trailing:false});
 
-    this.onPressNextCallback = null;
+    this.onPressNextWelcome  = null;
+    this.onPressNextDownload = null;   
   };
 
   //----- event handlers -----
-  _handleOnModeChange = (mode) => {
+  _handleOnModeChange = (mode, message) => {
     const { MODES } = LoginScreen;
     const handle = InteractionManager.createInteractionHandle();
     
@@ -1524,14 +1754,14 @@ class FormContainer extends React.Component {
           this.signInContainer.pulse(1250),
         ]);
 
-        //collapse welcomeUser
+        //expand welcomeUser
         const expander = this.welcomeUser.expander;
         await expander.expand(true);
         //end of animation
         InteractionManager.clearInteractionHandle(handle);
 
-        //wait until onPressNextCallback is called
-        await new Promise(resolve => this.onPressNextCallback = resolve);
+        //wait until onPressNextWelcome is called
+        await new Promise(resolve => this.onPressNextWelcome = resolve);
         //collapse welcomeUser
         await expander.expand(false);
       });
@@ -1541,11 +1771,25 @@ class FormContainer extends React.Component {
           this.formHeader.changeMode(MODES.DOWNLOADING),
           this.signInContainer.pulse(1250),
         ]);
-        const expander = this.downloading.expander;
+        
+        await this.downloading.expander.expand(true);
+        InteractionManager.clearInteractionHandle(handle);
+        await this.downloading.load();
+        //wait until next button is pressed
+        await new Promise(resolve => this.onPressNextDownload = resolve);
+      });
+
+      case MODES.LOGINFAILED: return (async () => {
+        await Promise.all([
+          this.formHeader.changeTitleDescription('SIGN IN', message, {mode}),
+          this.signInContainer.pulse(1250),
+        ]);
+        //collapse signin form
+        const expander = this.signinForm.expander;
         await expander.expand(true);
 
         InteractionManager.clearInteractionHandle(handle);
-      });
+      })
     };
   };
 
@@ -1559,7 +1803,7 @@ class FormContainer extends React.Component {
     //validate fields and trigger animations if not valid
     const { isValidEmail, isValidPassword } = this.signinForm.validateFields();
     //check if both password/email is valid    
-    const isAllFieldsValid = true;//(isValidEmail && isValidPassword);
+    const isAllFieldsValid = (isValidEmail && isValidPassword);
 
     if(isAllFieldsValid){
       const { email, password } = this.signinForm.getValues();
@@ -1571,8 +1815,14 @@ class FormContainer extends React.Component {
   };
 
   /** WelcomeUser: handle when next button is pressed */
-  _handleOnPressNext = () => {
-    this.onPressNextCallback && this.onPressNextCallback();
+  _handleOnPressNextWelcome = () => {
+    const callback = this.onPressNextWelcome;
+    callback && callback();    
+  };
+
+  _handleOnPressNextDownload = () => {
+    const callback = this.onPressNextDownload;
+    callback && callback();
   };
 
   /** Downloading: handle when a download finishes */
@@ -1583,9 +1833,9 @@ class FormContainer extends React.Component {
         this.signInContainer.pulse(1000),
         this.formHeader.changeSubtitle((() => {
           switch (type) {
-            case DOWNLOAD_TYPES.MODULES  : return ('Downloading 2 of 3...');
-            case DOWNLOAD_TYPES.RESOURCES: return ('Downloading 3 of 3...');
-            case DOWNLOAD_TYPES.TIPS     : return ('Downloads Finished.');
+            case DOWNLOAD_TYPES.MODULES  : return ('Downloading: 2 of 3 Items...');
+            case DOWNLOAD_TYPES.RESOURCES: return ('Downloading: 3 of 3 Items...');
+            case DOWNLOAD_TYPES.TIPS     : return ('Downloads Finished: Please wait...');
           };
         })()),
       ]);
@@ -1596,31 +1846,34 @@ class FormContainer extends React.Component {
     };
   };
 
+  _hadleOnDownloadFailed = (type) => {
+    alert(type);
+  };
+
   _renderContents(){
     const { MODES } = LoginScreen;
-    const { mode, user } = this.props;
+    const { mode, results } = this.props;
 
-    switch (mode) {
-      case MODES.LOGIN: return(
+    return(
+      <Fragment>
         <SigninForm
           ref={r => this.signinForm = r}
           onPressLogin={this._handleOnPressSignin}
+          {...{results}}
         />
-      );
-      case MODES.LOGGEDIN: return(
         <WelcomeUser
           ref={r => this.welcomeUser = r}
-          onPressNext={this._handleOnPressNext}
-          {...{user}}
+          onPressNext={this._handleOnPressNextWelcome}
+          {...{results}}
         />
-      );
-      case MODES.DOWNLOADING: return(
         <Downloading
           ref={r => this.downloading = r}
           onDownloadFinished={this._handleOnDownloadFinished}
+          onDownloadFailed={this._hadleOnDownloadFailed}
+          onPressNext={this._handleOnPressNextDownload}
         />
-      );
-    };
+      </Fragment>
+    );
   };
 
   _renderContainer(){
@@ -1685,8 +1938,8 @@ export default class LoginScreen extends React.Component {
     const { MODES } = LoginScreen;
 
     this.state = {
-      mode: MODES.LOGIN,
-      user: null,
+      mode   : MODES.LOGIN,
+      results: null,
     };
   };
 
@@ -1702,23 +1955,31 @@ export default class LoginScreen extends React.Component {
   login = async (loginCredentials, onModeChange) => {
     const { MODES } = LoginScreen;
 
-    const [results] = await Promise.all([
-      Login.mockLogin(loginCredentials),
-      onModeChange && onModeChange(MODES.LOGGINGIN)(),
-      timeout(2000),
-    ]);
+    try {
+      //wait for transition to loggiing in to finish
+      onModeChange && await onModeChange(MODES.LOGGINGIN)();
+      //try to login, else throw an error
+      const results = await Login.login(loginCredentials, true);
+  
+      //logged in: show user information
+      this.changeMode(MODES.LOGGEDIN, {results});
+      await Promise.all([
+        onModeChange && onModeChange(MODES.LOGGEDIN)(),
+        timeout(2000),
+      ]);
 
-    this.changeMode(MODES.LOGGEDIN, {user: results.user});
-    await Promise.all([
-      onModeChange && onModeChange(MODES.LOGGEDIN)(),
-      timeout(2000),
-    ]);
-
-    this.changeMode(MODES.DOWNLOADING);
-    await Promise.all([
-      onModeChange && onModeChange(MODES.DOWNLOADING)(),
-      timeout(2000),
-    ]);
+      //download data
+      this.changeMode(MODES.DOWNLOADING);
+      await Promise.all([
+        onModeChange && onModeChange(MODES.DOWNLOADING)(),
+        timeout(2000),
+      ]);
+  
+    } catch(error){
+      console.log(`login error: ${error}`);
+      const message = Login.getErrorMessage(error);
+      onModeChange && await onModeChange(MODES.LOGINFAILED, message)();
+    };
   };
 
   _handleOnPressSignUp = () => {
@@ -1727,13 +1988,13 @@ export default class LoginScreen extends React.Component {
   };
 
   render(){
-    const { mode, user } = this.state;
+    const { mode, results } = this.state;
     return(
       <View collapsable={true}>
         <FormContainer
           onPressSignUp={this._handleOnPressSignUp}
           login={this.login}
-          {...{mode, user}}
+          {...{mode, results}}
         />
       </View>
     );
