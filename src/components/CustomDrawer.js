@@ -10,7 +10,7 @@ import { ModuleStore    } from '../functions/ModuleStore';
 import { TipsStore      } from '../functions/TipsStore';
 import { ResourcesStore } from '../functions/ResourcesStore';
 
-import UserStore from '../functions/UserStore';
+import { UserStore, UserModel } from '../functions/UserStore';
 
 import { DrawerItems, NavigationActions } from 'react-navigation';
 import { BlurView, LinearGradient } from 'expo';
@@ -27,10 +27,11 @@ export class CustomDrawer extends React.PureComponent {
     }
   }
 
-  async componentWillMount(){
-    let user_data = await UserStore.getUserData();
-    await setStateAsync(this, {user: user_data.user});
-  }
+  componentWillMount(){
+    const user_raw     = UserStore.get();
+    const user_wrapped = UserModel.wrap(user_raw);
+    this.setState({user: user_wrapped});
+  };
 
   _signOutAsync = async () => {
     //clear variables

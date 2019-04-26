@@ -1,41 +1,58 @@
 import store from 'react-native-simple-store';
 import _ from 'lodash';
 
-const KEY = 'user';
-
 let _userData = null;
 
+export class UserModel {
+  static structure = {
+    email    : '',
+    firstname: '',
+    lastlogin: '',
+    lastname : '',
+    userid   : '',
+    uid      : '',
+    ispremium: false,
+  };
 
-getUserData = () => {
-  return new Promise(async (resolve, reject) => {
-    //has not been set, init with storage
-    if(_userData == null){
-      //get modules from storage
-      _userData = await store.get(KEY);
-    }
-    //resolve tips data
-    resolve(_userData);
-  });
-}
+  static wrap(user = UserModel.structure){
+    return {...UserModel.structure, ...user || {}};
+  };
+};
 
-setUserData = (userData) => {
-  return new Promise(async (resolve, reject) => {
+export class UserStore {
+  static get KEY(){
+    return 'user';
+  };
+
+  /** read user data from store */
+  static async read(){
     try {
-      //update user data
-      await store.update(KEY, userData);
-      _userData = userData;
+      //read from store
+      const data = await store.get(UserStore.KEY);
+      //update cahched value
+      _userData = data;
+      return (data);
+
     } catch(error){
-      reject(error);
-    }
-    //resolve tips data
-    resolve(_userData);
-  }); 
-}
+      console.error('Failed to read user data from store.');
+      throw error;
+    };
+  };
 
-clear = () => _userData = null;
+  static get(){
+    return _userData;
+  };
 
-export default {
-  getUserData,
-  setUserData,
-  clear,
-}
+  static async set(user){
+    await store.save(UserStore.KEY, user);    
+    _userData = user;
+  };
+
+  static clear(){
+    _userData = null;
+  };
+
+  static async delete(){
+    await store.delete(UserStore.KEY);
+  };
+};

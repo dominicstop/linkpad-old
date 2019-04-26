@@ -1,178 +1,32 @@
 import PropTypes from 'prop-types';
 import React, { Fragment } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, Keyboard, ScrollView, TextInput, UIManager, LayoutAnimation, ActivityIndicator, KeyboardAvoidingView, Platform, NetInfo, InteractionManager, } from 'react-native';
-
-import { AnimatedGradient } from '../components/AnimatedGradient';
-import { IconButton       } from '../components/Buttons';
-import { IconText         } from '../components/Views';
+import { StyleSheet, Text, View, TouchableOpacity, Keyboard, ScrollView, TextInput, UIManager, ActivityIndicator, Platform, InteractionManager, Clipboard } from 'react-native';
 
 import { ROUTES } from '../Constants';
-import { setStateAsync, timeout, ifTrue , runAfterInteractions, parseIfJSON} from '../functions/Utils';
+import { RED } from '../Colors';
 
+import { TipsStore } from '../functions/TipsStore';
+import { ModuleStore } from '../functions/ModuleStore';
+import { ResourcesStore } from '../functions/ResourcesStore';
+import { validateEmail } from '../functions/Validation';
+import { Login, LoginResponseModel } from '../functions/Login';
+import { setStateAsync, timeout, runAfterInteractions } from '../functions/Utils';
+
+import { IconButton       } from '../components/Buttons';
 
 import _ from 'lodash';
-import { BlurView, LinearGradient } from 'expo';
-import {  NavigationEvents } from 'react-navigation';
 import * as Animatable from 'react-native-animatable';
-import { Icon } from 'react-native-elements';
 import KeyboardSpacer from 'react-native-keyboard-spacer';
+import { Icon } from 'react-native-elements';
+import {  NavigationEvents } from 'react-navigation';
+import { BlurView, LinearGradient } from 'expo';
 
 import Animated, { Easing } from 'react-native-reanimated';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
-import {RED, PURPLE} from '../Colors';
-import {validateEmail, validateNotEmpty} from '../functions/Validation';
-import {ModuleStore} from '../functions/ModuleStore';
-import {ResourcesStore} from '../functions/ResourcesStore';
-import {TipsStore} from '../functions/TipsStore';
+import {UserStore} from '../functions/UserStore';
 const { set, cond, block, add, Value, timing, interpolate, and, or, onChange, eq, call, Clock, clockRunning, startClock, stopClock, concat, color, divide, multiply, sub, lessThan, abs, modulo, round, debug, clock } = Animated;
 
 //enable layout animation
 UIManager.setLayoutAnimationEnabledExperimental && UIManager.setLayoutAnimationEnabledExperimental(true);
-
-export class Login {
-  static URL = 'https://linkpad-pharmacy-reviewer.firebaseapp.com/login';
-
-  static ERROR_TYPE = {
-    RESPONSE_NOT_OKAY: 'RESPONSE_NOT_OKAY',
-    RESPONSE_NOT_JSON: 'RESPONSE_NOT_JSON',
-    NO_INTERNET      : 'NO_INTERNET'      ,
-    USER_NOT_FOUND   : 'USER_NOT_FOUND'   ,
-    WRONG_PASSWORD   : 'WRONG_PASSWORD'   , 
-  };
-
-  static ERROR_MSG = {
-    RESPONSE_NOT_OKAY: 'There seems to be a problem with the server. Try again later.',
-    RESPONSE_NOT_JSON: 'Looks like the server is having some issues. Try again later.',
-    NO_INTERNET      : 'Unable to connect to server. Please check your internet connection',
-    USER_NOT_FOUND   : 'Invalid Email: User does not exist.',
-    WRONG_PASSWORD   : 'Sorry, the password is invalid.',
-    UKNOWN_ERROR     : 'Something went wrong, unable to login.',
-  };
-
-  /** corresponds to the response.message string from server */
-  static RESPONSE_MESSAGE = {
-    USER_NOT_FOUND: 'User not found',
-    WRONG_PASSWORD: 'Wrong Password',
-    SUCCESS       : 'Successfully logged in',
-  };
-
-  static MESSAGE_TYPE = {
-    USER_NOT_FOUND: 'USER_NOT_FOUND',
-    WRONG_PASSWORD: 'WRONG_PASSWORD',
-    SUCCESS       : 'SUCCESS',
-  };
-
-  static async login({email, pass}, throwErrorIfLoginInvalid = false) {
-    const { ERROR_TYPE } = Login;
-    try {
-      //check for internet connectivity
-      const isConnected = await NetInfo.isConnected.fetch();
-      if(!isConnected) throw ERROR_TYPE.NO_INTERNET;
-    
-      //post email/pass and wait for response
-      const response = await fetch(Login.URL, {
-        method: 'POST',
-        headers: {
-          Accept: 'application/json',
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({email, pass}),
-      });
-
-      //show error when response not okay
-      if(!response.ok) throw ERROR_TYPE.RESPONSE_NOT_OKAY;
-
-      //parse response as text
-      const text = await response.text();
-      //parse and check if the response is json
-      const { isJson, json } = await parseIfJSON(text);
-
-      //throw an error if response is not a json
-      if(!isJson) throw ERROR_TYPE.RESPONSE_NOT_JSON;
-      //throw an error if login is not successful
-      if(throwErrorIfLoginInvalid && !json.success) throw Login.getResponseMessageType(json.message);  
-      
-      //resolve results
-      return {
-        success: json.success || false, // whether or not if the login is successful
-        message: json.message || null , // ex: "Successfully logged in", "Wrong Password", "User not found"
-        user   : json.user    || null , // obj: user inf, ex: email, firstname, isPremium etc.
-        uid    : json.uid     || null , // unique user identifier
-      };
-
-    } catch(error) {
-      console.log("login: Unable to login.");
-      console.log(error);
-      throw error;
-    };
-  };
-
-  static async mockLogin({email, pass}, onError){
-    await timeout(2000);
-    return({
-      "success": true,
-      "message": "Successfully logged in",
-      "user": {
-        "email": "testaccount6@gmail.com",
-        "firstname": "test",
-        "ispremium": "False",
-        "lastlogin": "",
-        "lastname": "account",
-        "userid": "testaccount6"
-      },
-      "uid": "X7CYGDXvPuRCzV0Kyq9i180BUj12"
-    });
-  };
-
-  static async mockDownload(callback){
-    for (let index = 0; index <  100; index++) {
-      await timeout(100);
-      callback && callback(index);
-    };
-  };
-
-  static getErrorMessage(type){
-    const { ERROR_TYPE, ERROR_MSG } = Login;
-    switch (type) {
-      case ERROR_TYPE.RESPONSE_NOT_OKAY: return (ERROR_MSG.RESPONSE_NOT_OKAY);
-      case ERROR_TYPE.RESPONSE_NOT_JSON: return (ERROR_MSG.RESPONSE_NOT_JSON);
-      case ERROR_TYPE.NO_INTERNET      : return (ERROR_MSG.NO_INTERNET      );
-      case ERROR_TYPE.USER_NOT_FOUND   : return (ERROR_MSG.USER_NOT_FOUND   );
-      case ERROR_TYPE.WRONG_PASSWORD   : return (ERROR_MSG.WRONG_PASSWORD   );
-      default: return (ERROR_MSG.UKNOWN_ERROR);
-    };
-  };
-
-  static getResponseMessageType(message){
-    const { RESPONSE_MESSAGE, MESSAGE_TYPE } = Login;
-    switch (message) {
-      case RESPONSE_MESSAGE.USER_NOT_FOUND: return (MESSAGE_TYPE.USER_NOT_FOUND);
-      case RESPONSE_MESSAGE.WRONG_PASSWORD: return (MESSAGE_TYPE.WRONG_PASSWORD);
-      case RESPONSE_MESSAGE.SUCCESS       : return (MESSAGE_TYPE.SUCCESS       );
-      default: return ('');
-    };
-  };
-};
-
-export class LoginResponse {
-  static structure = {
-    success: true,
-    message: '',
-    uid: '',
-    user: {
-      email: '',
-      firstname: '',
-      ispremium: false,
-      lastlogin: '',
-      lastname: '',
-      userid: ''
-    },
-  };
-
-  static wrap(response = LoginResponse.structure){
-    return {...LoginResponse.structure, ...response || {}};
-  };
-};
 
 class InputForm extends React.PureComponent {
   static propTypes = {
@@ -312,11 +166,11 @@ class InputForm extends React.PureComponent {
     };
   };
 
-  _handleOnEndEditing = (event) => {
-    const { onEndEditing } = this.props;
-    this.setState({textValue: event.nativeEvent.text})
-    //pass down evemt
-    onEndEditing && onEndEditing(event);
+  _handleOnChangeText = (text) => {
+    const { onChangeText } = this.props;
+    this.setState({textValue: text})
+    //pass down to callback
+    onChangeText && onChangeText(text);
   };
 
   _renderOverlayIcon(){
@@ -345,7 +199,7 @@ class InputForm extends React.PureComponent {
 
   render(){
     const { styles } = InputForm;
-    const { iconName, iconType, iconSize, iconColor, isEnabled, onEndEditing, ...textInputProps } = this.props;
+    const { iconName, iconType, iconSize, iconColor, isEnabled, onChangeText, ...textInputProps } = this.props;
     const { isFocused } = this.state;
 
     const containerStyle = {
@@ -385,7 +239,7 @@ class InputForm extends React.PureComponent {
           underlineColorAndroid={'transparent'}
           onBlur={this._handleOnBlur}
           onFocus={this._handleOnFocus}
-          onEndEditing={this._handleOnEndEditing}
+          onChangeText={this._handleOnChangeText}
           {...{placeholderTextColor, ...textInputProps}}
         />
       </Animatable.View>
@@ -602,6 +456,11 @@ class ProgressBar extends React.PureComponent {
       fontSize: 16,
       fontWeight: '200',
       color: 'white',
+    },
+    progressSubtitleError: {
+      fontSize: 16,
+      fontWeight: '300',
+      color: 'red',
     },
   });
 
@@ -826,12 +685,12 @@ class ProgressBar extends React.PureComponent {
 
     switch (mode) {
       case MODES.ERROR: return(
-        <Text style={styles.progressSubtitleError}>
+        <Text style={styles.progressSubtitleError} numberOfLines={1}>
           {textSubtitleError}
         </Text>
       );
       default: return(
-        <Text style={styles.progressSubtitle}>
+        <Text style={styles.progressSubtitle} numberOfLines={1}>
           {textSubtitle}
         </Text>
       );
@@ -881,8 +740,9 @@ class ProgressBar extends React.PureComponent {
 
 class SigninForm extends React.PureComponent {
   static propTypes = {
-    onPressLogin: PropTypes.func  ,
-    results     : PropTypes.object,
+    onPressLogin : PropTypes.func  ,
+    onPressSignUp: PropTypes.func  ,
+    results      : PropTypes.object,
   };
 
   static styles = StyleSheet.create({
@@ -1021,7 +881,7 @@ class SigninForm extends React.PureComponent {
   _renderSignUpButton(){
     const { styles } = SigninForm;
     return(
-      <TouchableOpacity onPress={this._handleOnPressSignUp}>
+      <TouchableOpacity onPress={this.props.onPressSignUp}>
         <Text 
           style={styles.signupButtonLabel}
           numberOfLines={1}
@@ -1180,7 +1040,7 @@ class WelcomeUser extends React.PureComponent {
 
   _renderUserDetails(){
     const { styles } = WelcomeUser;
-    const results = LoginResponse.wrap(this.props.results);
+    const results = LoginResponseModel.wrap(this.props.results);
 
     const { firstname, lastname, email, ispremium } = results.user;
     const initials = (firstname || 'N').charAt(0) + (lastname || 'A').charAt(0);
@@ -1404,7 +1264,7 @@ class Downloading extends React.PureComponent {
     };
   };
 
-  _handleOnPressNext(){
+  _handleOnPressNext = () => {
     const { onPressNext } = this.props;
     onPressNext && onPressNext();
   };
@@ -1476,7 +1336,7 @@ class Downloading extends React.PureComponent {
             textStyle={styles.nextButtonLabel}
             subtitleStyle={styles.nextButtonSubtitle}
             text={'Next'}
-            subtitle={'download data'}
+            subtitle={'Navigate to Home'}
             iconName={'login'}
             iconType={'simple-line-icon'}
             iconColor={'white'}
@@ -1678,7 +1538,10 @@ class FormHeader extends React.PureComponent {
   };
 };
 
-class FormContainer extends React.Component {
+export default class LoginScreen extends React.Component {
+  static navigationOptions = {
+  };
+  
   static propTypes = {
     onPressLogin: PropTypes.func  ,
     login       : PropTypes.func  ,
@@ -1714,9 +1577,22 @@ class FormContainer extends React.Component {
     },
   });
 
+  static MODES = {
+    'LOGIN'      : 'LOGIN'      ,
+    'LOGGINGIN'  : 'LOGGINGIN'  ,
+    'LOGGEDIN'   : 'LOGGEDIN'   ,
+    'LOGINFAILED': 'LOGINFAILED',
+    'DOWNLOADING': 'DOWNLOADING',
+  };
+
   constructor(props){
     super(props);
     const { MODES } = LoginScreen;
+
+    this.state = {
+      mode   : MODES.LOGIN,
+      results: null,
+    };
 
     //prevent multiple presses
     this._handleOnPressSignin       = _.throttle(this._handleOnPressSignin      , 1000, {leading:true, trailing:false});
@@ -1724,10 +1600,71 @@ class FormContainer extends React.Component {
     this._handleOnPressNextDownload = _.throttle(this._handleOnPressNextDownload, 1000, {leading:true, trailing:false});
 
     this.onPressNextWelcome  = null;
-    this.onPressNextDownload = null;   
+    this.onPressNextDownload = null; 
+  };
+
+  changeMode(nextMode, otherState = {}){
+    const { mode } = this.state;
+    //update mode if the mode has changed
+    (mode != nextMode) && this.setState({
+      mode: nextMode, 
+      ...otherState
+    });
+  };
+
+  login = async (loginCredentials, onModeChange) => {
+    const { MODES } = LoginScreen;
+
+    try {
+      //wait for transition to loggiing in to finish
+      await onModeChange && onModeChange(MODES.LOGGINGIN)();
+      //try to login, else throw an error
+      const results = await Login.login(loginCredentials, true);
+      
+      //wrap results and destruct
+      const { user, uid } = LoginResponseModel.wrap(results);
+      //combine uid and user then save user data to store
+      await UserStore.set({ uid, ...user });
+  
+      //logged in: show user information
+      this.changeMode(MODES.LOGGEDIN, {results});
+      await Promise.all([
+        onModeChange && onModeChange(MODES.LOGGEDIN)(),
+        timeout(2000),
+      ]);
+
+      //download data
+      this.changeMode(MODES.DOWNLOADING);
+      await Promise.all([
+        onModeChange && onModeChange(MODES.DOWNLOADING)(),
+        timeout(2000),
+      ]);
+  
+    } catch(error){
+      console.log(`login error: ${error}`);
+      const message = Login.getErrorMessage(error);
+      onModeChange && await onModeChange(MODES.LOGINFAILED, message)();
+    };
   };
 
   //----- event handlers -----
+  _handleOnDidFocus = async (payload) => {
+    const { type } = payload.action;
+    if(type === 'Navigation/BACK'){
+      await this.signInContainer.fadeInLeft(300);
+    };
+
+    //start the BG Gradient animation
+    const { getAuthBGGradientRef } = this.props.screenProps;
+    getAuthBGGradientRef && getAuthBGGradientRef().start();
+  };
+
+  _handleOnWillBlur = () => {
+    const { getAuthBGGradientRef } = this.props.screenProps;
+    //stop the BG Gradient animation
+    getAuthBGGradientRef && getAuthBGGradientRef().stop();
+  };
+
   _handleOnModeChange = (mode, message) => {
     const { MODES } = LoginScreen;
     const handle = InteractionManager.createInteractionHandle();
@@ -1794,12 +1731,10 @@ class FormContainer extends React.Component {
   };
 
   /** signinForm: handle when signin button is pressed */
-  _handleOnPressSignin = async () => {
-    const { MODES } = LoginScreen;
-    const { login } = this.props;
-
+  _handleOnPressSignin = () => {
     //hide keyboard/blur
     Keyboard.dismiss();
+
     //validate fields and trigger animations if not valid
     const { isValidEmail, isValidPassword } = this.signinForm.validateFields();
     //check if both password/email is valid    
@@ -1807,11 +1742,17 @@ class FormContainer extends React.Component {
 
     if(isAllFieldsValid){
       const { email, password } = this.signinForm.getValues();
-      login && await login({email, pass: password}, this._handleOnModeChange);
+      this.login({email, pass: password}, this._handleOnModeChange);
 
     } else {
-      await this.signInContainer.shake(750);
+      this.signInContainer.shake(750);
     };
+  };
+
+  _handleOnPressSignUp = async () => {
+    const { navigation } = this.props;
+    await this.signInContainer.fadeOutLeft(300);
+    navigation.navigate(ROUTES.SignUpRoute);
   };
 
   /** WelcomeUser: handle when next button is pressed */
@@ -1820,9 +1761,15 @@ class FormContainer extends React.Component {
     callback && callback();    
   };
 
-  _handleOnPressNextDownload = () => {
+  /** Downloading: handle when a next button is pressed */
+  _handleOnPressNextDownload = async () => {
+    const { navigation } = this.props;
+
     const callback = this.onPressNextDownload;
     callback && callback();
+
+    await this.signInContainer.fadeOutLeft(500);
+    navigation && navigation.navigate(ROUTES.HomeRoute);
   };
 
   /** Downloading: handle when a download finishes */
@@ -1846,19 +1793,21 @@ class FormContainer extends React.Component {
     };
   };
 
+  /** Downloading: handle when a download fails */
   _hadleOnDownloadFailed = (type) => {
-    alert(type);
   };
 
+  /** render different sections */
   _renderContents(){
     const { MODES } = LoginScreen;
-    const { mode, results } = this.props;
+    const { mode, results } = this.state;
 
     return(
       <Fragment>
         <SigninForm
           ref={r => this.signinForm = r}
           onPressLogin={this._handleOnPressSignin}
+          onPressSignUp={this._handleOnPressSignUp}
           {...{results}}
         />
         <WelcomeUser
@@ -1877,11 +1826,11 @@ class FormContainer extends React.Component {
   };
 
   _renderContainer(){
-    const { styles } = FormContainer;
+    const { styles } = LoginScreen;
     return(
       <Animatable.View 
-        style={styles.signInContainer}
         ref={r => this.signInContainer = r}
+        style={styles.signInContainer}
         animation={'bounceInUp'}
         duration={1000}
         easing={'ease-in-out'}
@@ -1905,9 +1854,13 @@ class FormContainer extends React.Component {
   };
 
   render(){
-    const { styles } = FormContainer;
+    const { styles } = LoginScreen;
     return(
       <View style={styles.rootContainer}> 
+        <NavigationEvents 
+          onWillBlur={this._handleOnWillBlur}
+          onDidFocus={this._handleOnDidFocus}
+        />
         <ScrollView
           contentContainerStyle={styles.scrollview}
           keyboardShouldPersistTaps={'always'} 
@@ -1916,86 +1869,6 @@ class FormContainer extends React.Component {
           {this._renderContainer()}   
         </ScrollView>
         <KeyboardSpacer/>
-      </View>
-    );
-  };
-};
-
-export default class LoginScreen extends React.Component { 
-  static navigationOptions = {
-  };
-
-  static MODES = {
-    'LOGIN'      : 'LOGIN'      ,
-    'LOGGINGIN'  : 'LOGGINGIN'  ,
-    'LOGGEDIN'   : 'LOGGEDIN'   ,
-    'LOGINFAILED': 'LOGINFAILED',
-    'DOWNLOADING': 'DOWNLOADING',
-  };
-
-  constructor(props){
-    super(props);
-    const { MODES } = LoginScreen;
-
-    this.state = {
-      mode   : MODES.LOGIN,
-      results: null,
-    };
-  };
-
-  changeMode(nextMode, otherState = {}){
-    const { mode } = this.state;
-    //update mode if the mode has changed
-    (mode != nextMode) && this.setState({
-      mode: nextMode, 
-      ...otherState
-    });
-  };
-
-  login = async (loginCredentials, onModeChange) => {
-    const { MODES } = LoginScreen;
-
-    try {
-      //wait for transition to loggiing in to finish
-      onModeChange && await onModeChange(MODES.LOGGINGIN)();
-      //try to login, else throw an error
-      const results = await Login.login(loginCredentials, true);
-  
-      //logged in: show user information
-      this.changeMode(MODES.LOGGEDIN, {results});
-      await Promise.all([
-        onModeChange && onModeChange(MODES.LOGGEDIN)(),
-        timeout(2000),
-      ]);
-
-      //download data
-      this.changeMode(MODES.DOWNLOADING);
-      await Promise.all([
-        onModeChange && onModeChange(MODES.DOWNLOADING)(),
-        timeout(2000),
-      ]);
-  
-    } catch(error){
-      console.log(`login error: ${error}`);
-      const message = Login.getErrorMessage(error);
-      onModeChange && await onModeChange(MODES.LOGINFAILED, message)();
-    };
-  };
-
-  _handleOnPressSignUp = () => {
-    const { navigation } = this.props;
-    navigation.navigate('SignUpRoute');
-  };
-
-  render(){
-    const { mode, results } = this.state;
-    return(
-      <View collapsable={true}>
-        <FormContainer
-          onPressSignUp={this._handleOnPressSignUp}
-          login={this.login}
-          {...{mode, results}}
-        />
       </View>
     );
   };

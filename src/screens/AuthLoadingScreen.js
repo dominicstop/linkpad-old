@@ -5,20 +5,19 @@ import PropTypes from 'prop-types';
 
 import * as Animatable from 'react-native-animatable';
 import { BarIndicator } from 'react-native-indicators';
-import store from 'react-native-simple-store';
 
 import { ImageFromStorage } from '../components/Views';
 
-import { ModuleStore    } from '../functions/ModuleStore'   ;
-import { TipsStore      } from '../functions/TipsStore'     ;
+import { ModuleStore } from '../functions/ModuleStore'   ;
+import { TipsStore } from '../functions/TipsStore'     ;
 import { ResourcesStore } from '../functions/ResourcesStore';
+import { UserStore, UserModel } from '../functions/UserStore'        ;
 
 import { ROUTES } from '../Constants';
 
-import UserStore         from '../functions/UserStore'        ;
 import PreboardExamStore from '../functions/PreboardExamStore';
-import { ModulesLastUpdated, ResourcesLastUpdated , TipsLastUpdated} from '../functions/MiscStore';
 import { FlatList } from 'react-native-gesture-handler';
+import { ModulesLastUpdated, ResourcesLastUpdated , TipsLastUpdated} from '../functions/MiscStore';
 
 Animatable.initializeRegistryWithDefinitions({
   zoomInTransition: {
@@ -38,17 +37,17 @@ export default class AuthLoadingScreen extends React.Component {
   componentDidMount = async () => {
     const { navigation } = this.props;
     try {
-      await this._loadFonts();
       //animate in and authenticate
-      const userData = await this._authenticate();
+      const [user] = await Promise.all([
+        this._authenticate(),
+        this._loadFonts   (),
+      ]);
 
-      const isLoggedIn = userData != null;
+      const isLoggedIn = user.email != '';
       const route = isLoggedIn? ROUTES.AppRoute : ROUTES.AuthRoute;
 
       //load modules and tips if logged in
-      if(isLoggedIn){
-        await this._loadData();
-      };
+      if(isLoggedIn) await this._loadData();
 
       this.animateOut();
       navigation.navigate(route);
@@ -64,13 +63,15 @@ export default class AuthLoadingScreen extends React.Component {
 
   async _authenticate(){
     try {
-      const results = await Promise.all([
-        UserStore.getUserData(),
-        this.animatedRoot.fadeIn(250),
+      const [user] = await Promise.all([
+        UserStore.read(),
+        //start animations
+        this.animatedRoot   .fadeIn(250 ),
         this.animatedLoading.zoomIn(1250),
       ]);
-      //return UserData from promise
-      return results[0];
+
+      const user_wrapped = UserModel.wrap(user);
+      return (user_wrapped);
 
     } catch(error){
       console.log("Error: Could not Authenticate.");

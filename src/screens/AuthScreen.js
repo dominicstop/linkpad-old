@@ -17,7 +17,7 @@ const AuthStack = createStackNavigator({
     [ROUTES.LoginRoute  ]: LoginScreen  ,
     [ROUTES.SignUpRoute ]: SignUpScreen ,
   }, {
-    initialRouteName: ROUTES.LoginRoute,
+    initialRouteName: ROUTES.WelcomeRoute,
     headerMode: 'hidden',
     cardStyle: {
       backgroundColor: 'transparent',
@@ -27,10 +27,14 @@ const AuthStack = createStackNavigator({
       containerStyle: {
         backgroundColor: 'transparent',
       },
-      transitionSpec: {
-        duration: 0,
-      },
-    }),
+      ...Platform.select({
+        ios: {
+          transitionSpec: {
+            duration: 0,
+          },
+        }
+      })
+    })
   }
 );
 
