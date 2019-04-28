@@ -1,7 +1,7 @@
 import _ from 'lodash';
 
 import { IncompletePracticeExamModel, AnswerModel } from '../functions/IncompletePracticeExamStore';
-import { getTimestamp } from '../functions/Utils';
+import { getTimestamp , replacePropertiesWithNull} from '../functions/Utils';
 
 //structure of single question item in module subject.questions array
 export class QuestionItem {
@@ -119,15 +119,25 @@ export class SubjectItem {
     indexID_module: -1,
   };
 
-  /** makes sure all of subjects's properties exists and assigns default values */
-  static wrap(subject = SubjectItem.structure){
-    return {
-      //assign missing properties
-      ...SubjectItem.structure, ...subject,
-      //if questions is null, assign empty array as it's default value
-      questions: subject.questions || []
-    };
+  /** wrap object with SubjectItem.structure to prevent missing properties and enable VSCODE type intellesense */
+  static wrap(data = SubjectItem.structure){
+    return ({
+      //assign default properties w/ default values
+      ...SubjectItem.structure,
+      //remove all default values and replace w/ null
+      ...replacePropertiesWithNull(SubjectItem.structure),
+      //combine with obj from param
+      ...data || {},
+    });
   };
+
+  /** wraps each element in an array to make sure */
+  static wrapArray(items = [SubjectItem.structure]){
+    return items.map((item) => 
+      SubjectItem.wrap(item)
+    );
+  };
+
 
   constructor(subject = SubjectItem.structure){
     this.data = {...SubjectItem.structure, ...subject};

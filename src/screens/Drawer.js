@@ -23,7 +23,7 @@ const drawerBackgroundColor = Platform.select({
   android: 'rgb(255, 255, 255)',
 });
 
-export class DrawerIcon extends React.PureComponent {
+class DrawerIcon extends React.PureComponent {
   render(){
     const { color } = this.props;
     const shouldGlow = color == 'white';
@@ -37,7 +37,7 @@ export class DrawerIcon extends React.PureComponent {
 }
 
 //side drawer navigation
-export const DrawerStack = createDrawerNavigator({
+const DrawerStack = createDrawerNavigator({
     DrawerHomeRoute: {
       screen: Homescreen,
       navigationOptions: {

@@ -1,21 +1,23 @@
 import React, { Fragment } from 'react';
-import { StyleSheet, View, Text, TouchableOpacity, Platform, Animated, TextInput, TouchableWithoutFeedback, Keyboard, Alert, Dimensions } from 'react-native';
+import { StyleSheet, View, Text, TouchableOpacity, Platform, Animated, TextInput, TouchableWithoutFeedback, Keyboard, Alert, Dimensions, ScrollView, Switch } from 'react-native';
 import PropTypes from 'prop-types';
 
 import { STYLES } from '../Constants';
 import { PURPLE } from '../Colors';
 
-import { setStateAsync, isEmpty } from '../functions/Utils';
+import { setStateAsync, isEmpty , hexToRgbA, spreadIfTrue} from '../functions/Utils';
 
 import { MODAL_DISTANCE_FROM_TOP, MODAL_EXTRA_HEIGHT, SwipableModal, ModalBackground, ModalTopIndicator } from '../components/SwipableModal';
 import { IconText, AnimateInView } from '../components/Views';
 import { PlatformTouchableIconButton } from '../components/Buttons';
 
 import { LinearGradient, DangerZone } from 'expo';
-import { Icon } from 'react-native-elements';
+import { Icon, Divider } from 'react-native-elements';
 
 import * as _Reanimated from 'react-native-reanimated';
 import * as Animatable from 'react-native-animatable';
+import KeyboardSpacer from 'react-native-keyboard-spacer';
+
 import {CustomQuizStore} from '../functions/CustomQuizStore';
 import { isIphoneX, ifIphoneX } from 'react-native-iphone-x-helper';
 
@@ -90,7 +92,7 @@ class FormTitle extends React.PureComponent {
       borderRadius: 10,
       ...Platform.select({
         ios: {
-          backgroundColor: 'rgba(255, 255, 255, 0.2)',
+          backgroundColor: 'rgba(255, 255, 255, 0.3)',
         },
         android: {
           backgroundColor: 'rgba(255, 255, 255, 0.75)',          
@@ -271,13 +273,12 @@ class FormDescription extends React.PureComponent {
       position: 'absolute',
       height: '100%',
       width: '100%',
-      backgroundColor: 'rgba(255, 255, 255, 0.3)',
       borderColor: PURPLE[300],
       borderWidth: 1,
       borderRadius: 10,
       ...Platform.select({
         ios: {
-          backgroundColor: 'rgba(255, 255, 255, 0.2)',
+          backgroundColor: 'rgba(255, 255, 255, 0.3)',
         },
         android: {
           backgroundColor: 'rgba(255, 255, 255, 0.75)',          
@@ -459,14 +460,338 @@ class FormDescription extends React.PureComponent {
   };
 };
 
+class Stepper extends React.PureComponent {
+  static propTypes = {
+    value     : PropTypes.number,
+    valueMin  : PropTypes.number,
+    valueMax  : PropTypes.number,
+    valueSteps: PropTypes.number,
+    shouldDistributeEqually: PropTypes.bool,
+  };
+
+  static defaultProps = {
+    valueMin    : 10 ,
+    valueMax    : 100,
+    valueDefault: 50 ,
+    valueSteps  : 10 ,
+  };
+
+  static MODES = {
+    MAX     : 'MAX'     ,
+    MIN     : 'MIN'     ,
+    NORMAL  : 'NORMAL'  ,
+    DISABLED: 'DISABLED',
+  };
+
+  static styles = StyleSheet.create({
+    container: {
+      marginHorizontal: 12,
+      marginBottom: 10,
+      ...Platform.select({
+        android: {
+          backgroundColor: 'rgb(240,240,240)',
+          padding: 12,
+          paddingVertical: 15,
+          borderRadius: 15,
+          elevation: 10,
+        }
+      }),
+    },
+    title: {
+      fontSize: 22,
+      fontWeight: '500',
+      color: PURPLE[900],
+      opacity: 0.9,
+    },
+    subtitle: {
+      fontSize: 17,
+      marginTop: 1,
+      fontWeight: '200',
+    },
+    //stepper styles
+    stepperContainer: {
+      flexDirection: 'row',
+      borderRadius: 12,
+      overflow: 'hidden',
+      borderColor: PURPLE[500],
+      borderWidth: 1.25,
+      marginTop: 15,
+    },
+    //stepper button style
+    stepperButton: {
+      backgroundColor: PURPLE[500],
+      paddingVertical: 7,
+      paddingHorizontal: 20,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    //stepper textinput styles
+    textinputButtonContainer: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: 'rgba(255,255,255,0.3)',
+    },
+    textinputContainer: {
+      flexDirection: 'row',
+    },
+    textinputLabel: {
+      marginLeft: 5,
+      fontSize: 19,
+      fontWeight: '400',
+      color: PURPLE[900],
+    },
+    textinput: {
+      textAlign: 'center',
+      textAlignVertical: 'center',
+      fontSize: 19,
+      fontWeight: '700',
+      color: PURPLE[900],
+    },
+    //switch styles
+    switchContainer: {
+      flexDirection: 'row',
+      marginBottom: 15,
+      marginTop: 15,
+      alignItems: 'center',
+    },
+    switchLabelContainer: {
+      flex: 1,
+      marginRight: 20,
+    },
+    switchLabelTitle: {
+      fontSize: 18,
+      fontWeight: '500',
+      color: PURPLE[1000]
+    },
+    switchLabelSubtitle: {
+      fontSize: 17,
+      fontWeight: '200',
+      marginTop: 1,
+    },
+  });
+
+  constructor(props){
+    super(props);
+    const { MODES } = Stepper;
+
+    this.state = {
+      mode: MODES.NORMAL,
+      value: props.value,
+      shouldDistributeEqually: props.shouldDistributeEqually,
+    };
+  };
+
+  getValues(){
+    const { value, shouldDistributeEqually } = this.state;
+    return({ value, shouldDistributeEqually });
+  };
+
+  _handleOnValueChangeSwitch = (value) => {
+    this.setState({shouldDistributeEqually: value}); 
+  };
+
+  _handleOnChangeText = (text) => {
+    const value = parseInt(isEmpty(text)? 0 : text);
+    this.setState({value});
+  };
+
+  _handleOnPressTextInputContainer = () => {
+    this.textinput.focus();
+  };
+
+  _handleOnBlur = () => {
+    const { MODES } = Stepper;
+    const { valueMin, valueMax } = this.props;
+    const { value } = this.state;
+
+    if(value < valueMin){
+      this.setState({value: valueMin});
+      this.setState({
+        value: valueMax,
+        mode : MODES.MIN,
+      });
+
+    } else if(value > valueMax){
+      this.setState({
+        value: valueMax,
+        mode : MODES.MAX,
+      });
+
+    } else {
+      this.setState({mode : MODES.NORMAL});
+    };
+  };
+
+  _handleOnPressStepperLeft = () => {
+    const { MODES } = Stepper;
+    const { valueMin, valueSteps } = this.props;
+    const { value } = this.state;
+
+    const nextValue = (value - valueSteps);
+    if( nextValue >= valueMin){
+      this.textinputContainer.pulse(300);
+      this.setState({
+        value: nextValue,
+        mode : MODES.NORMAL,
+      });
+
+    } else if(nextValue < valueMin ){
+      this.textinputContainer.shake(500);
+      this.setState({
+        value: valueMin,
+        mode : MODES.MIN,
+      });
+    };
+  };
+
+  _handleOnPressStepperRight = () => {
+    const { MODES } = Stepper;
+    const { valueMax, valueSteps } = this.props;
+    const { value } = this.state;
+    
+    const nextValue = (value + valueSteps);
+    if( nextValue <= valueMax){
+      this.setState({
+        value: nextValue,
+        mode : MODES.NORMAL,
+      });
+      this.textinputContainer.pulse(300);
+
+    } else if(nextValue > valueMax){
+      this.textinputContainer.shake(500);
+      this.setState({
+        value: valueMax,
+        mode : MODES.MAX,
+      });
+    };
+  };
+
+  _renderSwitch(){
+    const { styles } = Stepper;
+    return(
+      <View style={styles.switchContainer}>
+        <View style={styles.switchLabelContainer}>
+          <Text style={styles.switchLabelTitle}>{'Equal Items'}</Text>
+          <Text style={styles.switchLabelSubtitle}>{'Distribute items equally: same number of questions per subject.'}</Text>
+        </View>
+        <Switch
+          value={this.state.shouldDistributeEqually}
+          trackColor={{true: PURPLE.A700}}
+          onValueChange={this._handleOnValueChangeSwitch}
+        />
+      </View>
+    );
+  };
+
+  _renderTextInput(){
+    const { styles } = Stepper;
+    return(
+      <TouchableOpacity
+        style={styles.textinputButtonContainer}        
+        activeOpacity={0.5}
+        onPress={this._handleOnPressTextInputContainer}
+      >
+        <Animatable.View
+          ref={r => this.textinputContainer = r}
+          style={styles.textinputContainer}        
+          useNativeDriver={true}
+        >
+          <TextInput
+            style={styles.textinput}
+            ref={r => this.textinput = r}
+            keyboardType={'numeric'}
+            numberOfLines={1}
+            multiline={false}
+            onChangeText={this._handleOnChangeText}
+            onBlur={this._handleOnBlur}
+            value={`${this.state.value}`}
+            selectTextOnFocus={false}
+            contextMenuHidden={true}
+          />
+          <Text style={styles.textinputLabel}>Items</Text>
+        </Animatable.View>
+      </TouchableOpacity>
+    );
+  };
+
+  _renderStepper(){
+    const { styles, MODES } = Stepper;
+    const { mode } = this.state;
+    
+    const leftStepperStyle = {
+      ...(mode === MODES.MIN
+        ? {backgroundColor: PURPLE[300]} 
+        : {backgroundColor: PURPLE[500]} 
+      ),
+    };
+    const rightStepperStyle = {
+      ...(mode === MODES.MAX
+        ? {backgroundColor: PURPLE[300]} 
+        : {backgroundColor: PURPLE[500]} 
+      ),
+    };
+
+    return(
+      <View style={styles.stepperContainer}>
+        <TouchableOpacity
+          style={[styles.stepperButton, leftStepperStyle]}
+          onPress={this._handleOnPressStepperLeft}
+          activeOpacity={0.5}
+        >
+          <Icon
+            name={'ios-remove'}
+            type={'ionicon'}
+            color={'white'}
+            size={26}
+          />
+        </TouchableOpacity>
+        {this._renderTextInput()}
+        <TouchableOpacity
+          onPress={this._handleOnPressStepperRight}
+          style={[styles.stepperButton, rightStepperStyle]}
+          activeOpacity={0.5}
+        >
+          <Icon
+            name={'ios-add'}
+            type={'ionicon'}
+            color={'white'}
+            size={26}
+          />
+        </TouchableOpacity>
+      </View>
+    );
+  }; 
+
+  render(){
+    const { styles } = Stepper;
+    return(
+      <View style={styles.container}>
+        <Text style={styles.title}>{'Question Limit'}</Text>
+        <Text style={styles.subtitle}>{'Set a limit for the max number of questions that you want in your custom quiz.'}</Text>
+        {this._renderStepper()}
+        {this._renderSwitch()}
+      </View>
+    );
+  };
+};
+
 class ModalContents extends React.PureComponent {
   static propTypes = {
     title: PropTypes.string,
     description: PropTypes.string,
+    value: PropTypes.number,
+    shouldDistributeEqually: PropTypes.bool,
     onPressSaveChanges: PropTypes.func,
   };
 
   static styles = StyleSheet.create({
+    divider: {
+      height: 1,
+      margin: 17,
+      backgroundColor: PURPLE[900],
+      opacity: 0.4,
+    },
     title: {
       color: '#160656',
       ...Platform.select({
@@ -481,9 +806,11 @@ class ModalContents extends React.PureComponent {
       })
     },
     titleContainer: {
-      marginLeft: 7, 
-      marginRight: 25, 
-      marginBottom: 10,
+      paddingLeft: 7, 
+      paddingRight: 25, 
+      paddingBottom: 10,
+      borderBottomColor: 'rgba(0, 0, 0, 0.25)',
+      borderBottomWidth: 1,
     },
     subtitle: {
       fontWeight: '200',
@@ -505,7 +832,7 @@ class ModalContents extends React.PureComponent {
       alignItems: 'center',
       justifyContent: 'center',
       backgroundColor: PURPLE[700], 
-      borderRadius: 12,
+      borderRadius: 15,
       padding: 15,
       ...ifIphoneX({
         marginBottom: 10,
@@ -523,14 +850,12 @@ class ModalContents extends React.PureComponent {
     },
   });
 
-  _handleOnPressWrapper(){
-    Keyboard.dismiss();
-  };
-
   _handleOnPress = async () => {
     //get text from forms
     const title = this.inputTitle.getText();
     const description = this.inputDescription.getText();
+    //get stepper values
+    const {value, shouldDistributeEqually} = this.stepper.getValues();
 
     //check if the text is empty
     const isTitleEmpty       = isEmpty(title);
@@ -560,7 +885,7 @@ class ModalContents extends React.PureComponent {
     } else {
       Keyboard.dismiss();
       const { onPressSaveChanges } = this.props;
-      onPressSaveChanges && onPressSaveChanges({title, description});
+      onPressSaveChanges && onPressSaveChanges({title, description, value, shouldDistributeEqually});
     };
   };
 
@@ -593,15 +918,15 @@ class ModalContents extends React.PureComponent {
 
   _renderForms(){
     const { styles } = ModalContents;
-    const {title, description} = this.props;
+    const { title, description, value, shouldDistributeEqually } = this.props;
 
     return(
-      <View style={styles.body}>
+      <AnimateInView
+        duration={300}
+        difference={100}
+      >
         <Animatable.View
           ref={r => this.formTitleContainer = r}
-          animation={'fadeInUp'}
-          duration={300}
-          delay={200}
           useNativeDriver={true}
         >
           <FormTitle 
@@ -611,9 +936,6 @@ class ModalContents extends React.PureComponent {
         </Animatable.View>
         <Animatable.View
           ref={r => this.formDescriptionContainer = r}
-          animation={'fadeInUp'}
-          duration={300}
-          delay={300}
           useNativeDriver={true}
         >
           <FormDescription 
@@ -621,7 +943,12 @@ class ModalContents extends React.PureComponent {
             {...{description}}
           />
         </Animatable.View>
-      </View>
+        <Divider style={styles.divider}/>
+        <Stepper
+          ref={r => this.stepper = r}
+          {...{value, shouldDistributeEqually}}
+        />
+      </AnimateInView>
     );
   };
 
@@ -648,10 +975,10 @@ class ModalContents extends React.PureComponent {
             start={[0, 1]} end={[1, 0]}
           >
             <Icon
-              name={'ios-checkmark-circle-outline'}
+              name={'ios-checkmark-circle'}
               type={'ionicon'}
-              color={'white'}
-              size={24}
+              color={'rgba(255,255,255,0.95)'}
+              size={26}
             />
             <Text style={styles.buttonText}>{buttonText}</Text>
             <Icon
@@ -668,19 +995,18 @@ class ModalContents extends React.PureComponent {
 
   render(){
     return(
-      <TouchableWithoutFeedback 
-        style={{flex: 1}}
-        onPress={this._handleOnPressWrapper}
-        accessible={false}
-      >
-        <View style={{flex: 1}}>
-          <View style={{flex: 1}}>
-            {this._renderTitle()}
-            {this._renderForms()}
-          </View>
-          {this._renderFinishButton()}
-        </View>
-      </TouchableWithoutFeedback>
+      <View style={{flex: 1}}>
+        {this._renderTitle()}
+        <ScrollView
+          keyboardShouldPersistTaps={'never'}
+          keyboardDismissMode={'on-drag'}
+        >
+          {this._renderForms()}
+            <View style={{marginVertical: 100}}/>
+        </ScrollView>
+        {this._renderFinishButton()}
+        <KeyboardSpacer/>
+      </View>
     );
   };
 };
@@ -716,6 +1042,8 @@ export class QuizDetailsModal extends React.PureComponent {
       mountContent: false,
       title: '',
       description: '',
+      value: 50, 
+      shouldDistributeEqually: true,
     };
 
     this._deltaY = null;
@@ -727,8 +1055,8 @@ export class QuizDetailsModal extends React.PureComponent {
     this._deltaY = this._modal._deltaY
   };
 
-  openModal = async ({title, description}) => {
-    this.setState({mountContent: true, title, description});
+  openModal = async ({title, description, value, shouldDistributeEqually}) => {
+    this.setState({mountContent: true, title, description, value, shouldDistributeEqually});
     this._modal.showModal();
   };
 
@@ -739,12 +1067,13 @@ export class QuizDetailsModal extends React.PureComponent {
     this.setState({mountContent: false});
   };
 
-  _handleOnPressSaveChanges = async ({title, description}) => {
+  _handleOnPressSaveChanges = async ({title, description, value, shouldDistributeEqually}) => {
+    const callback = this.onPressSaveChanges;
     const overlayOpacity = Platform.select({
       ios: 0.4, android: 0.7,
     });
 
-    if(this.onPressSaveChanges != null){
+    if(callback != null){
       //wait to finish
       await Promise.all([
         //show overlay
@@ -752,9 +1081,8 @@ export class QuizDetailsModal extends React.PureComponent {
         //show check animation
         this.animatedCheck.start(),
       ]);
-
       await this._modal.hideModal();
-      this.onPressSaveChanges({title, description});
+      callback && callback({title, description, value, shouldDistributeEqually});
     };
   };
 
@@ -778,7 +1106,7 @@ export class QuizDetailsModal extends React.PureComponent {
   };
 
   _renderContent(){
-    const {title, description} = this.state;
+    const {title, description, value, shouldDistributeEqually} = this.state;
 
     const style = {
       flex: 1,
@@ -793,7 +1121,7 @@ export class QuizDetailsModal extends React.PureComponent {
       <Reanimated.View {...{style}}>
         <ModalContents 
           onPressSaveChanges={this._handleOnPressSaveChanges}
-          {...{title, description}}
+          {...{title, description, value, shouldDistributeEqually}}
         />
       </Reanimated.View>
     );

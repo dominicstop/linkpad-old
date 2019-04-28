@@ -162,22 +162,6 @@ export function formatPercent(percent){
   return(`${formatted}%`);
 };
 
-/** return null if false otherwise returns value */
-export function ifTrue(condition, value){
-  return condition? value : null
-};
-
-/** returns returnValue if value is null, otherwise will return value */
-export function replaceIfNull(value, returnValue){
-  return value == null? returnValue : value;
-};
-
-
-/** will call the function if true */
-export function callIfTrue(callback){
-  return callback && callback();
-};
-
 export function replacePropertiesWithNull(obj = {}){
   //make a copy of the object
   let new_obj = _.cloneDeep(obj);
@@ -242,5 +226,9 @@ export async function parseIfJSON(text){
   } catch(error){
     return({isJson: false, json: null});
   };
+};
+
+export function spreadIfTrue(condition, value = {}){
+  return condition? value : {};
 };
 

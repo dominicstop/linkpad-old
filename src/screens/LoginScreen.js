@@ -6,23 +6,23 @@ import { ROUTES } from '../Constants';
 import { RED } from '../Colors';
 
 import { TipsStore } from '../functions/TipsStore';
+import { UserStore } from '../functions/UserStore';
 import { ModuleStore } from '../functions/ModuleStore';
-import { ResourcesStore } from '../functions/ResourcesStore';
 import { validateEmail } from '../functions/Validation';
+import { ResourcesStore } from '../functions/ResourcesStore';
 import { Login, LoginResponseModel } from '../functions/Login';
 import { setStateAsync, timeout, runAfterInteractions } from '../functions/Utils';
 
-import { IconButton       } from '../components/Buttons';
+import { IconButton } from '../components/Buttons';
 
 import _ from 'lodash';
 import * as Animatable from 'react-native-animatable';
 import KeyboardSpacer from 'react-native-keyboard-spacer';
 import { Icon } from 'react-native-elements';
-import {  NavigationEvents } from 'react-navigation';
+import { NavigationEvents } from 'react-navigation';
 import { BlurView, LinearGradient } from 'expo';
 
 import Animated, { Easing } from 'react-native-reanimated';
-import {UserStore} from '../functions/UserStore';
 const { set, cond, block, add, Value, timing, interpolate, and, or, onChange, eq, call, Clock, clockRunning, startClock, stopClock, concat, color, divide, multiply, sub, lessThan, abs, modulo, round, debug, clock } = Animated;
 
 //enable layout animation
@@ -268,7 +268,7 @@ class Expander extends React.PureComponent {
     };
   
     const config = {
-      duration: 450,
+      duration: 350,
       toValue: dest,
       easing: Easing.inOut(Easing.ease),
     };
@@ -354,7 +354,6 @@ class Expander extends React.PureComponent {
     if(height != 0 && !this.isHeightSet){
       this.expandedHeight.setValue(height);
       this.isHeightSet = true;
-      console.log(`height: ${height}`);
     };
   };
 
@@ -373,9 +372,9 @@ class Expander extends React.PureComponent {
           //animation started
           onChange(progress, cond(eq(status, 0), [
             set(status, 1),
-            cond(eq(this.progressFinal, 1),
-              set(this.overflow, 1),
-              set(this.overflow, 0)
+            cond(eq(this.progressFinal, 0),
+              set(this.overflow, 0),
+              set(this.overflow, 1)
             ),
           ])),
           //animation finished
@@ -1311,7 +1310,7 @@ class Downloading extends React.PureComponent {
         <ProgressBar
           ref={r => this.progressTips = r}
           textTitle={'Tips'}
-          textSubtitle={'Study tips and trick'}
+          textSubtitle={'Study tips and tricks'}
           textSubtitleError={'Download failed'}
         />
       </Expander>
@@ -1407,7 +1406,7 @@ class FormHeader extends React.PureComponent {
     const initialState = this.getStateFromMode(MODES.LOGIN);
 
     this.state = {
-      mode: MODES.LOGIN,
+      mode        : MODES.LOGIN,
       titleText   : initialState.titleText  ,
       subtitleText: initialState.subtitleText,
     };
@@ -1446,21 +1445,21 @@ class FormHeader extends React.PureComponent {
     };
   };
 
-  async changeTitleDescription(newTitle, newSubtitle, nextState = {}){
+  async changeTitleDescription(newTitle, newSubtitle, nextState = {}, forceChange = false){
     const { titleText, subtitleText } = this.state;
 
     //check if the title/subtitle changed
     const didChangeTitle    = (titleText    != newTitle   );
     const didChangeSubtitle = (subtitleText != newSubtitle);
 
-    if(didChangeTitle || didChangeSubtitle){
+    if(didChangeTitle || didChangeSubtitle || forceChange){
       //hide title and subtitle first
       await Promise.all([
         didChangeTitle    && this.headerTitle   .fadeOutLeft(200),
         didChangeSubtitle && this.headerSubtitle.fadeOutLeft(300),
       ]);
       //then update title and subtitle
-      this.setState({
+      await setStateAsync(this, {
         titleText   : newTitle,
         subtitleText: newSubtitle,
         ...nextState
@@ -1617,9 +1616,12 @@ export default class LoginScreen extends React.Component {
 
     try {
       //wait for transition to loggiing in to finish
-      await onModeChange && onModeChange(MODES.LOGGINGIN)();
+      onModeChange && await onModeChange(MODES.LOGGINGIN)();
       //try to login, else throw an error
-      const results = await Login.login(loginCredentials, true);
+      const [results] = await Promise.all([
+        Login.login(loginCredentials, true),
+        timeout(1000),
+      ]);
       
       //wrap results and destruct
       const { user, uid } = LoginResponseModel.wrap(results);
@@ -1641,7 +1643,6 @@ export default class LoginScreen extends React.Component {
       ]);
   
     } catch(error){
-      console.log(`login error: ${error}`);
       const message = Login.getErrorMessage(error);
       onModeChange && await onModeChange(MODES.LOGINFAILED, message)();
     };
@@ -1717,8 +1718,9 @@ export default class LoginScreen extends React.Component {
       });
 
       case MODES.LOGINFAILED: return (async () => {
+        console.log('FAILED\n\n');
         await Promise.all([
-          this.formHeader.changeTitleDescription('SIGN IN', message, {mode}),
+          this.formHeader.changeTitleDescription('SIGN IN', message, {mode}, true),
           this.signInContainer.pulse(1250),
         ]);
         //collapse signin form
@@ -1780,9 +1782,9 @@ export default class LoginScreen extends React.Component {
         this.signInContainer.pulse(1000),
         this.formHeader.changeSubtitle((() => {
           switch (type) {
-            case DOWNLOAD_TYPES.MODULES  : return ('Downloading: 2 of 3 Items...');
-            case DOWNLOAD_TYPES.RESOURCES: return ('Downloading: 3 of 3 Items...');
-            case DOWNLOAD_TYPES.TIPS     : return ('Downloads Finished: Please wait...');
+            case DOWNLOAD_TYPES.MODULES  : return ('(Downloading: 2 of 3 Items...)');
+            case DOWNLOAD_TYPES.RESOURCES: return ('(Downloading: 3 of 3 Items...)');
+            case DOWNLOAD_TYPES.TIPS     : return ('Done! Press next to continue...');
           };
         })()),
       ]);

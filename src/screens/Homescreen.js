@@ -207,32 +207,35 @@ const TabNavigation = Platform.select({
 });
 
 //shared header for each stack
-export const TabNavigationStack = createStackNavigator({
+const TabNavigationStack = createStackNavigator({
     [ROUTES.HomeTabRoute     ]: TabNavigation,
     [ROUTES.SubjectListRoute ]: SubjectListScreen,
     [ROUTES.CreateQuizRoute  ]: CreateQuizScreen,
     [ROUTES.ViewResourceRoute]: ViewResourceScreen,
     [ROUTES.ViewImageRoute   ]: ViewImageScreen,
     [ROUTES.ViewTipRoute     ]: ViewTipScreen, 
-  }, Platform.select({
-    ios: {
-      navigationOptions: Constants.HEADER_PROPS, 
-      headerMode: 'float',
-      headerTransitionPreset: 'uikit',
-      headerTransparent: true,
-    },
-    android: {
-      //overriden in tabnav
-      navigationOptions: {
-        headerTransparent: false,
-        headerTintColor: 'white',
-        headerTitleStyle: {
-          fontWeight: 'bold',
-          color: 'white'
-        },
+  }, {
+    initialRouteName: ROUTES.HomeTabRoute,
+    ...Platform.select({
+      ios: {
+        navigationOptions: Constants.HEADER_PROPS, 
+        headerMode: 'float',
+        headerTransitionPreset: 'uikit',
+        headerTransparent: true,
       },
-    }
-  })
+      android: {
+        //overriden in tabnav
+        navigationOptions: {
+          headerTransparent: false,
+          headerTintColor: 'white',
+          headerTitleStyle: {
+            fontWeight: 'bold',
+            color: 'white'
+          },
+        },
+      }
+    })
+  }
 );
 
 //container for tab navigation

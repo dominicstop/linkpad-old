@@ -1,5 +1,5 @@
 import React, { Fragment } from 'react';
-import { StyleSheet, View, Text, TouchableOpacity, Platform, SectionList, Animated, Dimensions } from 'react-native';
+import { StyleSheet, View, Text, TouchableOpacity, Platform, SectionList, Animated as NativeAnimated, Dimensions } from 'react-native';
 import PropTypes from 'prop-types';
 
 import { STYLES } from '../Constants';
@@ -16,12 +16,12 @@ import { BlurView, LinearGradient, DangerZone } from 'expo';
 import { Icon, Divider } from 'react-native-elements';
 
 import * as Animatable  from 'react-native-animatable';
-import * as _Reanimated from 'react-native-reanimated';
 import { isIphoneX, ifIphoneX } from 'react-native-iphone-x-helper';
+import Animated, { Easing } from 'react-native-reanimated';
 
 const { Lottie } = DangerZone;
-const { Easing } = _Reanimated;
-const Reanimated = _Reanimated.default;
+const { Value, timing, interpolate } = Animated;
+
 
 const Screen = {
   width : Dimensions.get('window').width ,
@@ -37,14 +37,14 @@ class CheckAnimation extends React.PureComponent {
     };
 
     this._source = require('../animations/checked_done_2.json');
-    this._value = new Animated.Value(0.5);
+    this._value = new NativeAnimated.Value(0.5);
     this._config = { 
       toValue: 1,
       duration: 500,
       useNativeDriver: true 
     };
 
-    this._animated = Animated.timing(this._value, this._config);
+    this._animated = NativeAnimated.timing(this._value, this._config);
   };
 
   //start animation
@@ -293,7 +293,7 @@ class ModalAddButton extends React.PureComponent {
       justifyContent: 'center',
       backgroundColor: PURPLE[700], 
       margin: 12,
-      borderRadius: 10,
+      borderRadius: 15,
       paddingHorizontal: 15,
       ...ifIphoneX({
         marginBottom: 20,
@@ -307,38 +307,52 @@ class ModalAddButton extends React.PureComponent {
       color: 'white',
       textAlign: 'left',
       textAlignVertical: 'center',
-      marginLeft: 10,
+      marginLeft: 15,
     },
   });
   
   constructor(props){
     super(props);
 
-    this._height = new Reanimated.Value(0);
-    this._showConfig = {
+    const finalHeight = isIphoneX? 90 : 80;
+    this.progress = new Value(0);
+
+    this.height = interpolate(this.progress, {
+      inputRange : [0, 100],
+      outputRange: [0, finalHeight],
+    });
+    this.opacity = interpolate(this.progress, {
+      inputRange : [0, 100],
+      outputRange: [0, 1],
+    });
+    this.scale = interpolate(this.progress, {
+      inputRange : [0, 100],
+      outputRange: [0.8, 1],
+    });
+    this.translateY = interpolate(this.progress, {
+      inputRange : [0, 100],
+      outputRange: [40, 0],
+    });
+  };
+
+  show = () => {
+    const config = {
       duration: 300,
-      toValue : isIphoneX? 90 : 80,
+      toValue : 100,
       easing  : Easing.inOut(Easing.ease),
     };
+    const animation = timing(this.progress, config);
+    animation.start();
+  };
 
-    this._hideConfig = {
+  hide = () => {
+    const config = {
       duration: 300,
       toValue : 0,
       easing  : Easing.inOut(Easing.ease),
     };
-
-    this._animatedShow = Reanimated.timing(this._height, this._showConfig);
-    this._animatedHide = Reanimated.timing(this._height, this._hideConfig);
-  };
-
-  show = () => {
-    this._animatedShow.start();
-    this._animatedShow = Reanimated.timing(this._height, this._showConfig);
-  };
-
-  hide = () => {
-    this._animatedHide.start();
-    this._animatedHide = Reanimated.timing(this._height, this._hideConfig);
+    const animation = timing(this.progress, config);
+    animation.start();
   };
 
   _handleOnPress = () => {
@@ -361,10 +375,10 @@ class ModalAddButton extends React.PureComponent {
         start={[0, 1]} end={[1, 0]}
       >
         <Icon
-          name={'ios-add-circle-outline'}
+          name={'ios-add-circle'}
           type={'ionicon'}
           color={'white'}
-          size={24}
+          size={26}
         />
         <Text style={styles.buttonText}>{buttonText}</Text>
         <Icon
@@ -379,12 +393,21 @@ class ModalAddButton extends React.PureComponent {
 
   render(){
     const { styles } = ModalAddButton;
+    const containerStyle = {
+      height : this.height,
+      opacity: this.opacity,
+      transform: [
+        {scale: this.scale},
+        {translateY: this.translateY}
+      ],
+    };
+
     return (
-      <Reanimated.View style={[{height: this._height}, styles.container]}>
+      <Animated.View style={[styles.container, containerStyle]}>
         <TouchableOpacity style={{flex: 1}} onPress={this._handleOnPress}>
           {this._renderContents()}
         </TouchableOpacity>
-      </Reanimated.View>
+      </Animated.View>
     );
   };
 };
@@ -893,14 +916,14 @@ export class CreateQuizModal extends React.PureComponent {
     };
 
     return(
-      <Reanimated.View {...{style}}>
+      <Animated.View {...{style}}>
         <ModalContents
           ref={r => this.modalContents = r}
           onPressAddItems={this._handleOnPressAddSubjects}
           //pass down props
           {...{modules, selected}}
         />
-      </Reanimated.View>
+      </Animated.View>
     );
   };
 
@@ -918,10 +941,7 @@ export class CreateQuizModal extends React.PureComponent {
         onModalHide={this._handleOnModalHide}
       >
         <Fragment>
-          <ModalBackground 
-            style={{paddingBottom}} 
-            showBG={true}
-          >
+          <ModalBackground style={{paddingBottom}}>
             <ModalTopIndicator/>
             {mountContent && this._renderContent()}
           </ModalBackground>
