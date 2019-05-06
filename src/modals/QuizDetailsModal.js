@@ -22,8 +22,10 @@ import {CustomQuizStore} from '../functions/CustomQuizStore';
 import { isIphoneX, ifIphoneX } from 'react-native-iphone-x-helper';
 
 const { Lottie } = DangerZone;
+
 const { Easing } = _Reanimated;
 const Reanimated = _Reanimated.default;
+const { interpolate, defined, cond, eq } = Reanimated;
 
 const Screen = {
   width : Dimensions.get('window').width ,
@@ -792,30 +794,6 @@ class ModalContents extends React.PureComponent {
       backgroundColor: PURPLE[900],
       opacity: 0.4,
     },
-    title: {
-      color: '#160656',
-      ...Platform.select({
-        ios: {
-          fontSize: 24, 
-          fontWeight: '800'
-        },
-        android: {
-          fontSize: 26, 
-          fontWeight: '900'
-        }
-      })
-    },
-    titleContainer: {
-      paddingLeft: 7, 
-      paddingRight: 25, 
-      paddingBottom: 10,
-      borderBottomColor: 'rgba(0, 0, 0, 0.25)',
-      borderBottomWidth: 1,
-    },
-    subtitle: {
-      fontWeight: '200',
-      fontSize: 16,
-    },
     body: {
       borderTopColor: 'rgb(200, 200, 200)', 
       borderTopWidth: 1
@@ -887,33 +865,6 @@ class ModalContents extends React.PureComponent {
       const { onPressSaveChanges } = this.props;
       onPressSaveChanges && onPressSaveChanges({title, description, value, shouldDistributeEqually});
     };
-  };
-
-  _renderTitle(){
-    const { styles } = ModalContents;
-
-    const text = (global.usePlaceholder
-      ? 'Tristique Dolor Aenean'
-      : 'Custom Quiz Details'
-    );
-
-    const subtitle = (global.usePlaceholder
-      ? 'Tortor Inceptos Cursus Etiam Vestibulum.'
-      : 'Give your quiz a title and description.'
-    );
-
-    return(
-      <IconText
-        containerStyle={styles.titleContainer}
-        textStyle={styles.title}
-        subtitleStyle={styles.subtitle}
-        iconName={'notebook'}
-        iconType={'simple-line-icon'}
-        iconColor={'#512DA8'}
-        iconSize={26}
-        {...{text, subtitle}}
-      />
-    );
   };
 
   _renderForms(){
@@ -996,7 +947,6 @@ class ModalContents extends React.PureComponent {
   render(){
     return(
       <View style={{flex: 1}}>
-        {this._renderTitle()}
         <ScrollView
           keyboardShouldPersistTaps={'never'}
           keyboardDismissMode={'on-drag'}
@@ -1032,7 +982,35 @@ export class QuizDetailsModal extends React.PureComponent {
       width: '50%', 
       height: '50%', 
       marginBottom: 325
-    }
+    },
+    //header styles
+    headerContainer: {
+      backgroundColor: 'rgba(255,255,255,0.2)'
+    },
+    title: {
+      color: '#160656',
+      ...Platform.select({
+        ios: {
+          fontSize: 24, 
+          fontWeight: '800'
+        },
+        android: {
+          fontSize: 26, 
+          fontWeight: '900'
+        }
+      })
+    },
+    titleContainer: {
+      paddingLeft: 7, 
+      paddingRight: 25, 
+      paddingBottom: 10,
+      borderBottomColor: 'rgba(0, 0, 0, 0.25)',
+      borderBottomWidth: 1,
+    },
+    subtitle: {
+      fontWeight: '200',
+      fontSize: 16,
+    },
   });
 
   constructor(props){
@@ -1052,7 +1030,7 @@ export class QuizDetailsModal extends React.PureComponent {
   };
 
   componentDidMount(){
-    this._deltaY = this._modal._deltaY
+    this._deltaY = this._modal._deltaY;
   };
 
   openModal = async ({title, description, value, shouldDistributeEqually}) => {
@@ -1106,23 +1084,93 @@ export class QuizDetailsModal extends React.PureComponent {
   };
 
   _renderContent(){
+    const { styles } = QuizDetailsModal;
     const {title, description, value, shouldDistributeEqually} = this.state;
-
-    const style = {
+    
+    const expandedHeight = (Screen.height - MODAL_DISTANCE_FROM_TOP);
+    const headerStyle = {
+      opacity: interpolate(this._deltaY, {
+        inputRange : [0, expandedHeight],
+        outputRange: [1, 0.5],
+        extrapolateRight: 'clamp',
+      }),
+      transform:[
+        {
+          translateY: interpolate(this._deltaY, {
+            inputRange : [0, expandedHeight],
+            outputRange: [1, 15],
+            extrapolateRight: 'clamp',
+          })
+        }, {
+          translateX: interpolate(this._deltaY, {
+            inputRange : [0, expandedHeight],
+            outputRange: [1, 30],
+            extrapolateRight: 'clamp',
+          })
+        },
+      ],
+    };
+    const contentStyle = {
       flex: 1,
-      opacity: this._deltaY.interpolate({
-        inputRange: [0, Screen.height - MODAL_DISTANCE_FROM_TOP],
+      opacity: interpolate(this._deltaY, {
+        inputRange : [0, expandedHeight],
         outputRange: [1, 0.25],
         extrapolateRight: 'clamp',
       }),
+      transform:[
+        {
+          scale: interpolate(this._deltaY, {
+            inputRange : [0, expandedHeight],
+            outputRange: [1, 0.95],
+            extrapolateRight: 'clamp',
+          })
+        }, {
+          translateY: interpolate(this._deltaY, {
+            inputRange : [0, expandedHeight],
+            outputRange: [1, 25],
+            extrapolateRight: 'clamp',
+          })
+        },
+      ],
     };
+
+    //header title and subtitle
+    const text     = 'Custom Quiz Details';
+    const subtitle = 'Give your quiz a title and description.';
+
+
+    return(
+      <Fragment>
+        <View style={styles.headerContainer}>
+          <ModalTopIndicator/>
+          <Reanimated.View style={headerStyle}>
+            <IconText
+              containerStyle={styles.titleContainer}
+              textStyle={styles.title}
+              subtitleStyle={styles.subtitle}
+              iconName={'notebook'}
+              iconType={'simple-line-icon'}
+              iconColor={'#512DA8'}
+              iconSize={26}
+              {...{text, subtitle}}
+            />
+          </Reanimated.View>
+        </View>
+        <Reanimated.View style={[contentStyle]}>
+          <ModalContents 
+            onPressSaveChanges={this._handleOnPressSaveChanges}
+            {...{title, description, value, shouldDistributeEqually}}
+          />
+        </Reanimated.View>
+      </Fragment>
+    );
 
     return(
       <Reanimated.View {...{style}}>
-        <ModalContents 
-          onPressSaveChanges={this._handleOnPressSaveChanges}
-          {...{title, description, value, shouldDistributeEqually}}
-        />
+        <View >
+          
+        </View>
+        
       </Reanimated.View>
     );
   };
@@ -1141,7 +1189,6 @@ export class QuizDetailsModal extends React.PureComponent {
       >
         <Fragment>
           <ModalBackground style={{paddingBottom}}>
-            <ModalTopIndicator/>
             {mountContent && this._renderContent()}
           </ModalBackground>
           {this._renderOverlay()}

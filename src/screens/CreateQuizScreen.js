@@ -1,10 +1,11 @@
 import React, { Fragment } from 'react';
 import { View, ScrollView, Text, StyleSheet, FlatList, Platform, Alert, TouchableOpacity, TextInput, Switch, Clipboard } from 'react-native';
 import PropTypes from 'prop-types';
+import EventEmitter from 'events';
 
 import { plural, isEmpty, setStateAsync, timeout } from '../functions/Utils';
 import { STYLES, HEADER_HEIGHT } from '../Constants';
-import { PURPLE, RED } from '../Colors';
+import { PURPLE, RED, GREY } from '../Colors';
 import { SubjectItem, } from '../models/ModuleModels';
 
 import { AndroidHeader } from '../components/AndroidHeader';
@@ -12,6 +13,7 @@ import { ViewWithBlurredHeader, AnimatedListItem, Card , IconFooter} from '../co
 import { PlatformTouchableIconButton, RippleBorderButton } from '../components/Buttons';
 
 import * as Animatable from 'react-native-animatable';
+import KeyboardSpacer from 'react-native-keyboard-spacer';
 import { BlurView } from 'expo';
 import { NavigationEvents  } from 'react-navigation';
 import { Divider, Icon } from 'react-native-elements';
@@ -27,6 +29,7 @@ const titleStyle = {
   position: 'absolute',
   color: 'white',
 };
+
 
 class NextButton extends React.PureComponent {
   static styles = StyleSheet.create({
@@ -425,12 +428,12 @@ class AddSubjectsCard extends React.PureComponent {
   };
 };
 
-class TopInidcator extends React.PureComponent {
+class TopInidcator extends React.Component {
   static propTypes = {
     collapsedHeight: PropTypes.number,
     initiallyCollapsed: PropTypes.bool,
-    value: PropTypes.number,
-    valueMax: PropTypes.number,
+    questionsTotal: PropTypes.number, 
+    maxItemsQuiz: PropTypes.number,
   };
 
   static defaultProps = {
@@ -440,7 +443,13 @@ class TopInidcator extends React.PureComponent {
 
   static styles = StyleSheet.create({
     container: {
+      flex: 1,
       width: '100%',
+      ...Platform.select({
+        ios: {
+          backgroundColor: 'rgba(255,255,255,0.2)'
+        },
+      }),
     },
     indicatorContainer: {
       flex: 1,
@@ -449,14 +458,22 @@ class TopInidcator extends React.PureComponent {
       paddingVertical: 10,
       alignItems: 'center',
     },
-    label: {
+    textContainer: {
       flex: 1,
       marginLeft: 7,
-      fontSize: 18,
+    },
+    label: {
+      fontSize: 17,
+      fontWeight: '500'
+    },
+    subtitle: {
+      fontSize: 16,
+      fontWeight: '300',
+      color: GREY[900]
     },
     indicatorCountContainer: {
       paddingHorizontal: 13,
-      paddingVertical: 4,
+      paddingVertical: 7,
       backgroundColor: PURPLE.A700,
       borderRadius: 15,
     },
@@ -471,7 +488,7 @@ class TopInidcator extends React.PureComponent {
     const { initiallyCollapsed } = props;
 
     //animation values
-    this.expandedHeight = new Value(-1);
+    this.expandedHeight = new Value(55);
     this.progress = new Value(initiallyCollapsed? 0 : 100);
 
     //interpolated values
@@ -500,6 +517,30 @@ class TopInidcator extends React.PureComponent {
     this.isExpanded = !initiallyCollapsed;
   };
 
+  componentWillMount() {
+    const { events } = CreateQuizScreen;
+    const { emitter } = this.props;
+
+    if(emitter){
+      emitter.addListener(
+        events.onChangeRemainingQuizItems,
+        this._handleOnChangeRemainingQuizItems
+      );
+      emitter.addListener(
+        events.onQuestionTotalMaxed,
+        this._handleOnQuestionTotalMaxed
+      );
+    };
+  };
+
+  _handleOnChangeRemainingQuizItems = () => {
+    this.indicator.pulse(750);
+  };
+
+  _handleOnQuestionTotalMaxed = () => {
+    this.indicator.shake(750);
+  };
+
   /** expand or collapse the forms */
   expand(expand){
     const config = {
@@ -516,17 +557,9 @@ class TopInidcator extends React.PureComponent {
     };
   };
 
-  _handleOnLayout = ({nativeEvent}) => {
-    const { x, y, width, height } = nativeEvent.layout;
-    if(height != 0 && !this.isHeightSet){
-      this.expandedHeight.setValue(height);
-      this.isHeightSet = true;
-    };
-  };
-
   _renderContent(){
     const { styles } = TopInidcator;
-    const { value, valueMax } = this.props;
+    const { questionsTotal, maxItemsQuiz } = this.props;
 
     return(
       <Fragment>
@@ -536,12 +569,23 @@ class TopInidcator extends React.PureComponent {
           size={26}
           color={PURPLE.A700}
         />
-        <Text style={styles.label}>Remaining Items</Text>
-        <View style={styles.indicatorCountContainer}>
-          <Text style={styles.indicatorCountText}>
-            {`${value || '?'}/${valueMax || '?'}`}
+        <View style={styles.textContainer}>
+          <Text style={styles.label}>
+            {'Remaining Items'}
+          </Text>
+          <Text style={styles.subtitle}>
+            {`${maxItemsQuiz - questionsTotal} questions remaining`}
           </Text>
         </View>
+        <Animatable.View 
+          ref={r => this.indicator = r}
+          style={styles.indicatorCountContainer}
+          useNativeDriver={true}
+        >
+          <Text style={styles.indicatorCountText}>
+            {`${questionsTotal || '?'}/${maxItemsQuiz || '?'}`}
+          </Text>
+        </Animatable.View>
       </Fragment>
     );
   };
@@ -578,10 +622,8 @@ class TopInidcator extends React.PureComponent {
     };
     
     return(
-      <Animated.View style={[this.props.style, containerStyle]}>
-        <View style={styles.container} onLayout={this._handleOnLayout}>
-          {this._renderContainer()}
-        </View>
+      <Animated.View style={[styles.container, containerStyle]}>
+        {this._renderContainer()}
       </Animated.View>
     );
   };
@@ -589,12 +631,11 @@ class TopInidcator extends React.PureComponent {
 
 class Stepper extends React.PureComponent {
   static propTypes = {
-    value     : PropTypes.number,
-    valueMin  : PropTypes.number,
-    valueMax  : PropTypes.number,
-    valueSteps: PropTypes.number,
-    shouldDistributeEqually: PropTypes.bool,
-    onChangeValue: PropTypes.func,
+    value        : PropTypes.number,
+    valueMin     : PropTypes.number,
+    valueMax     : PropTypes.number,
+    valueSteps   : PropTypes.number,
+    onChangeValue: PropTypes.func  ,
   };
 
   static defaultProps = {
@@ -614,11 +655,21 @@ class Stepper extends React.PureComponent {
   static styles = StyleSheet.create({
     container: {
       marginBottom: 10,
+      ...Platform.select({
+        android: {
+          backgroundColor: 'rgb(240,240,240)',
+          padding: 12,
+          paddingVertical: 15,
+          borderRadius: 15,
+          elevation: 10,
+        }
+      }),
     },
     title: {
-      fontSize: 20,
-      fontWeight: '600',
-      color: PURPLE[700],
+      fontSize: 22,
+      fontWeight: '500',
+      color: PURPLE[900],
+      opacity: 0.9,
     },
     subtitle: {
       fontSize: 17,
@@ -637,7 +688,7 @@ class Stepper extends React.PureComponent {
     //stepper button style
     stepperButton: {
       backgroundColor: PURPLE[500],
-      paddingVertical: 5,
+      paddingVertical: 7,
       paddingHorizontal: 20,
       alignItems: 'center',
       justifyContent: 'center',
@@ -651,21 +702,17 @@ class Stepper extends React.PureComponent {
     },
     textinputContainer: {
       flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
     },
     textinputLabel: {
       marginLeft: 5,
       fontSize: 19,
-      textAlign: 'center',
-      textAlignVertical: 'center',
       fontWeight: '400',
       color: PURPLE[900],
     },
     textinput: {
       textAlign: 'center',
       textAlignVertical: 'center',
-      fontSize: 19.25,
+      fontSize: 19,
       fontWeight: '700',
       color: PURPLE[900],
     },
@@ -696,9 +743,47 @@ class Stepper extends React.PureComponent {
     super(props);
     const { MODES } = Stepper;
 
+    //animation values
+    this.expandedHeight = new Value(110);
+    this.progress       = new Value(0);
+
+    //interpolated values
+    this.height = interpolate(this.progress, {
+      inputRange : [0, 100],
+      outputRange: [0, this.expandedHeight],
+      extrapolate: 'clamp',
+    });
+    this.opacity = interpolate(this.progress, {
+      inputRange : [0, 100],
+      outputRange: [0, 1],
+      extrapolate: 'clamp',
+    });
+    this.scale = interpolate(this.progress, {
+      inputRange : [0, 100],
+      outputRange: [0.9, 1],
+      extrapolate: 'clamp',
+    });
+
+    this.isExpanded = false;
     this.state = {
       mode: MODES.NORMAL,
       value: props.value,
+      shouldDistributeEqually: props.shouldDistributeEqually,
+    };
+  };
+
+  expand = (expand) => {
+    const config = {
+      duration: 350,
+      toValue : expand? 100 : 0,
+      easing  : Easing.inOut(Easing.ease),
+    };
+
+    if(this.isExpanded != expand){
+      //start animation
+      const animation = timing(this.progress, config);
+      animation.start();
+      this.isExpanded = expand;
     };
   };
 
@@ -707,6 +792,11 @@ class Stepper extends React.PureComponent {
     return({ value, shouldDistributeEqually });
   };
 
+  _handleOnLayout = (event) => {
+    const {x, y, width, height} = event.nativeEvent.layout;
+    console.log('Stepper: ' + height);
+  };
+  
   _handleOnChangeText = (text) => {
     const value = parseInt(isEmpty(text)? 0 : text);
     this.setState({value});
@@ -723,7 +813,6 @@ class Stepper extends React.PureComponent {
 
     if(value < valueMin){
       onChangeValue && onChangeValue(valueMin);
-      this.textinputContainer.shake(500);
       this.setState({
         value: valueMin,
         mode : MODES.MIN,
@@ -731,7 +820,6 @@ class Stepper extends React.PureComponent {
 
     } else if(value > valueMax){
       onChangeValue && onChangeValue(valueMax);
-      this.textinputContainer.shake(500);
       this.setState({
         value: valueMax,
         mode : MODES.MAX,
@@ -739,7 +827,7 @@ class Stepper extends React.PureComponent {
 
     } else {
       onChangeValue && onChangeValue(value);
-      this.setState({mode: MODES.NORMAL});
+      this.setState({mode : MODES.NORMAL});
     };
   };
 
@@ -747,19 +835,20 @@ class Stepper extends React.PureComponent {
     const { MODES } = Stepper;
     const { valueMin, valueSteps, onChangeValue } = this.props;
     const { value } = this.state;
-
+    
     const nextValue = (value - valueSteps);
-    if( nextValue >= valueMin){
-      onChangeValue && onChangeValue(nextValue);
+    const didChange = nextValue != value;
+    if(nextValue >= valueMin){
       this.textinputContainer.pulse(300);
+      onChangeValue && onChangeValue(value);
       this.setState({
         value: nextValue,
         mode : MODES.NORMAL,
       });
 
     } else if(nextValue < valueMin ){
-      onChangeValue && onChangeValue(valueMin);
       this.textinputContainer.shake(500);
+      onChangeValue && onChangeValue(valueMin);
       this.setState({
         value: valueMin,
         mode : MODES.MIN,
@@ -773,17 +862,17 @@ class Stepper extends React.PureComponent {
     const { value } = this.state;
     
     const nextValue = (value + valueSteps);
-    if( nextValue <= valueMax){
-      onChangeValue && onChangeValue(nextValue);
+    if(nextValue <= valueMax){
       this.textinputContainer.pulse(300);
+      onChangeValue && onChangeValue(value);
       this.setState({
         value: nextValue,
         mode : MODES.NORMAL,
       });
 
     } else if(nextValue > valueMax){
-      onChangeValue && onChangeValue(valueMax);
       this.textinputContainer.shake(500);
+      onChangeValue && onChangeValue(valueMax);      
       this.setState({
         value: valueMax,
         mode : MODES.MAX,
@@ -876,44 +965,57 @@ class Stepper extends React.PureComponent {
 
   render(){
     const { styles } = Stepper;
+    const style = {
+      height: this.height,
+      opacity: this.opacity,
+      transform: [{scale: this.scale}]
+    };
+
     return(
-      <View style={styles.container}>
-        <Text style={styles.title}>{'Number of Items'}</Text>
-        <Text style={styles.subtitle}>{'Number of questions to add.'}</Text>
-        {this._renderStepper()}
-      </View>
+      <Animated.View {...{style}}>
+        <View 
+          style={styles.container}
+          onLayout={this._handleOnLayout}
+        >
+          <Text style={styles.title}>{'Number of Items'}</Text>
+          <Text style={styles.subtitle}>{'Number of questions to add.'}</Text>
+          {this._renderStepper()}
+        </View>
+      </Animated.View>
     );
   };
 };
 
 class QuizItem extends React.PureComponent {
   static propTypes = {
-    subjectData            : PropTypes.object,  
-    onPressDelete          : PropTypes.func  ,
-    maxItems               : PropTypes.number,
-    shouldDistributeEqually: PropTypes.bool  ,
-    onChangeValueStepper   : PropTypes.func  ,
+    emitter: PropTypes.object,
+    subjectData: PropTypes.object,  
+    onPressDelete: PropTypes.func,
+    maxItemsQuiz: PropTypes.number,
+    questionsTotal: PropTypes.number,
+    onChangeValueStepper: PropTypes.func,
+    shouldDistributeEqually: PropTypes.bool,
   };
 
   static styles = StyleSheet.create({
     card: {
-      //animated styles
-      opacity: 1,
-      transform: [
-        { scaleX : 1      }, 
-        { scaleY : 1      },
-        { rotateX: '0deg' }
-      ],
       //layout styles
       marginBottom: 12, 
       marginTop: 5, 
       overflow: 'visible', 
       marginHorizontal: 12, 
       paddingHorizontal: 15, 
-      paddingVertical: 10, 
+      paddingVertical: 12, 
       borderRadius: 10,
       backgroundColor: 'white', 
       elevation: 7,
+      //animated styles
+      opacity: 1,
+      transform: [
+        { scaleX    : 1 }, 
+        { scaleY    : 1 },
+        { translateY: 1 },
+      ],
     },
     image: {
       width: 75, 
@@ -960,11 +1062,11 @@ class QuizItem extends React.PureComponent {
       marginVertical: 10,
     },
     buttonWrapper: {
-      marginTop: 5,
+      marginTop: 10,
       backgroundColor: RED[800],
     },
     buttonContainer: {
-      padding: 10,
+      padding: 12,
     },
     buttonText: {
       color: 'white',
@@ -975,20 +1077,65 @@ class QuizItem extends React.PureComponent {
 
   constructor(props){
     super(props);
-
     this.state = {
-      width : null,
-      height: null,
+      height: null
     };
   };
 
+  componentWillMount = () => {
+    const { events } = CreateQuizScreen;
+    const { emitter } = this.props;
+
+    //register events
+    emitter && emitter.addListener(
+      events.onEqualItemsToggled,
+      this._handleOnEqualItemsToggled
+    );
+  };
+
+  componentWillUnmount(){
+    const { events } = CreateQuizScreen;
+    const { emitter } = this.props;
+
+    //unregister event
+    false && emitter && emitter.removeEventListener(
+      events.onEqualItemsToggled, 
+      this._handleOnEqualItemsToggled
+    );
+  };
+
+  //----- event handlers -----
+  /** emiiter: handle when shouldDistributeEqually switch changes */
+  _handleOnEqualItemsToggled = ({shouldDistributeEqually}) => {
+    const stepper = this.stepper;
+    if(shouldDistributeEqually){
+      //hide stepper
+      stepper && stepper.expand(false);
+
+    } else {
+      //show stepper
+      stepper && this.stepper.expand(true);
+    };
+  };
+
+  /** called whenever the stepper value changes */
   _handleOnChangeValueStepper = (value) => {
     const { onChangeValueStepper, subjectData } = this.props;
     onChangeValueStepper && onChangeValueStepper(value, subjectData);
   };
 
+  /** delete button: when delete button is pressed */
   _handleOnPressDeleteButton = async () => {
-    const { onPressDelete } = this.props;
+    const { onPressDelete, subjectData } = this.props;
+
+    //get current height
+    const height = await new Promise(resolve => {
+      this.container.measure((x, y, width, height) => {
+        resolve(height);
+      });
+    });
+    //set height
+    await setStateAsync(this, {height});
 
     const exitStyle = {
       opacity: 0, 
@@ -997,21 +1144,21 @@ class QuizItem extends React.PureComponent {
       marginBottom: 0, 
       paddingVertical: 0,
       transform: [
-        { scaleX : 0.75    },
-        { scaleY : 0.50    },
-        { rotateX: '-45deg'},
+        { scaleX: 0.75 },
+        { scaleY: 0.50 },
+        { translateY: -(height/2) }
       ]
     };
 
-    await this._rootContainer.transitionTo(exitStyle, 300, 'ease-in-out');
-    onPressDelete && onPressDelete();
+    this.rootContainer.transitionTo(exitStyle, 400, 'ease-in-out');
+    await timeout(450);
+
+    //call callback and pass subjectdata
+    onPressDelete && onPressDelete(subjectData);
   };
 
-  _handleOnLayout = (event) => {
-    const {x, y, width, height} = event.nativeEvent.layout;
-    this.setState({width, height});
-  };
-
+  //------ render ------
+  /** show details: title, desc., etc. */
   _renderDescription(){
     const { styles } = QuizItem;
     const { subjectData } = this.props;
@@ -1046,6 +1193,7 @@ class QuizItem extends React.PureComponent {
     );
   };
 
+  /** delete button */
   _renderDeleteButton(){
     const { styles } = QuizItem;
 
@@ -1064,52 +1212,67 @@ class QuizItem extends React.PureComponent {
     );
   };
 
+  /** question +/- stepper */
   _renderStepper(){
-    const { subjectData, shouldDistributeEqually } = this.props;
-    if(shouldDistributeEqually) return null;
+    const { questionsTotal, maxItemsQuiz, subjectData, shouldDistributeEqually } = this.props;
+    //if(shouldDistributeEqually) return null;
 
     const { questions, itemsPerSubject, allocatedItems } = SubjectItem.wrap(subjectData);
-    const valueMax = (questions || []).length;
-    console.log(itemsPerSubject)
+
+    //max value should not exceed the number of questions in a subject
+    const valueMaxSubject = questions.length;
+    //max value should not exceed the quiz's remaining items 
+    const valueMaxQuiz = (maxItemsQuiz - questionsTotal);
+    //should not exceed max subject or max quiz
+    const valueMax = Math.min(valueMaxSubject, valueMaxQuiz);
 
     return(
       <Stepper
-        valueMin={0}
+        ref={r => this.stepper = r}
         value={allocatedItems}
+        valueMin={1}
         valueSteps={5}
         onChangeValue={this._handleOnChangeValueStepper}
-        {...{valueMax}}
+        {...{valueMax, subjectData}}       
       />
     );
   };
 
   render(){
     const { styles } = QuizItem;
-    const { width, height } = this.state;
+    const { height } = this.state;
 
     return(
       <Animatable.View
-        style={[{width, height}, STYLES.mediumShadow,  styles.card]}
+        ref={r => this.rootContainer = r}
+        style={{height}}
         easing={'ease-in-out'}
-        ref={r => this._rootContainer = r}
-        onLayout={this._handleOnLayout}
         useNativeDriver={false}
       >
-        {this._renderDescription()}
-        <Divider style={styles.divider}/>
-        {this._renderStepper()}
-        {this._renderDeleteButton()}
+        <View 
+          ref={r => this.container = r}
+          style={[STYLES.mediumShadow, styles.card]}
+        >
+          {this._renderDescription()}
+          <Divider style={styles.divider}/>
+          {this._renderStepper()}
+          {this._renderDeleteButton()}
+        </View>
       </Animatable.View>
     );
   };
 };
 
-class CreateCustomQuizList extends React.PureComponent {
+class CreateCustomQuizList extends React.Component {
   static propTypes = {
-    quizItems: PropTypes.array ,
-    maxItems : PropTypes.number,
+    emitter: PropTypes.object,
+    quizItems: PropTypes.array,
+    maxItemsQuiz: PropTypes.number,
+    questionsTotal: PropTypes.number,
     shouldDistributeEqually: PropTypes.bool,
-    onChangeValueStepper   : PropTypes.func,
+    //event callbacks
+    onPressDelete: PropTypes.func,
+    onChangeValueStepper: PropTypes.func,
   };
 
   static styles = StyleSheet.create({
@@ -1126,7 +1289,9 @@ class CreateCustomQuizList extends React.PureComponent {
     super(props);
   };
 
-  _handleOnPressDelete = () => {
+  _handleOnPressDelete = (subjectData) => {
+    const { onPressDelete } = this.props;
+    onPressDelete && onPressDelete(subjectData);
   };
   
   _keyExtractor(item, index){
@@ -1134,7 +1299,7 @@ class CreateCustomQuizList extends React.PureComponent {
   };
 
   _renderItem = ({item, index}) => {
-    const { maxItems, shouldDistributeEqually, onChangeValueStepper } = this.props;
+    const { emitter, maxItemsQuiz, shouldDistributeEqually, onChangeValueStepper, questionsTotal } = this.props;
     return(
       <AnimatedListItem
         duration={500}
@@ -1144,7 +1309,7 @@ class CreateCustomQuizList extends React.PureComponent {
         <QuizItem 
           subjectData={item} 
           onPressDelete={this._handleOnPressDelete}
-          {...{maxItems, shouldDistributeEqually, onChangeValueStepper}}
+          {...{emitter, maxItemsQuiz, shouldDistributeEqually, onChangeValueStepper, questionsTotal}}
         />
       </AnimatedListItem>
     );
@@ -1184,9 +1349,9 @@ class CreateCustomQuizList extends React.PureComponent {
   };
 
   render(){
-    const {quizItems, maxItems, shouldDistributeEqually, ...otherProps} = this.props;
+    const {quizItems, maxItemsQuiz, shouldDistributeEqually, ...otherProps} = this.props;
     //re-render flatlist when these items changes
-    const extraData = { maxItems, shouldDistributeEqually };
+    //const extraData = { maxItemsQuiz, shouldDistributeEqually };
 
     return(
       <FlatList
@@ -1195,7 +1360,7 @@ class CreateCustomQuizList extends React.PureComponent {
         keyExtractor={this._keyExtractor}
         ListHeaderComponent={this._renderHeader}
         ListFooterComponent={this._renderFooter}
-        {...{extraData, ...otherProps}}
+        {...otherProps}
       />
     );
   };
@@ -1240,17 +1405,34 @@ export class CreateQuizScreen extends React.Component {
     }
   });
 
-  static computeDistributions({maxItems, subjects}){
+  static events = {
+    /** when a stepper value has been changed */
+    onChangeRemainingQuizItems: 'onChangeRemainingQuizItems',
+    /** when the max amount of quiz items is reached */
+    onQuestionTotalMaxed: 'onQuestionTotalMaxed',
+    /** when equal items switch has changed */
+    onEqualItemsToggled: 'onEqualItemsToggled',
+  };
+
+  static computeDistributions({maxItemsQuiz, subjects}){
     const items = SubjectItem.wrapArray(subjects);
 
-    const itemsPerSubject = Math.round(maxItems / subjects.length);
-    let remainingItems = maxItems;
+    const itemsPerSubject = Math.round(maxItemsQuiz / subjects.length);
+    let remainingItems = maxItemsQuiz;
 
     return items.map((subject, index) => {
+      const { questions } = subject;
+      const questionsCount = questions.length;
       const isLast = (index == subjects.length - 1);
-      const allocatedItems = isLast? remainingItems : itemsPerSubject;
+
+      //max
+      const computedAllocation = isLast? remainingItems : itemsPerSubject;
+      const allocatedItems = (computedAllocation > questionsCount)? questionsCount : computedAllocation; 
+
+      console.log("allocatedItems: " + allocatedItems);
+
       //update remaining items
-      remainingItems -= itemsPerSubject;
+      remainingItems -= allocatedItems;
 
       return {
         ...subject,
@@ -1260,30 +1442,47 @@ export class CreateQuizScreen extends React.Component {
     });
   };
 
+  static computeTotalAllocated(subjects){
+    const items = SubjectItem.wrapArray(subjects);
+
+    const allocatedItems = items.map(subject => subject.allocatedItems || 0);
+    const totalAllocated = allocatedItems.reduce((acc, val) => (acc += val), 0);
+
+    return (totalAllocated);
+  };
+
   constructor(props){
     super(props);
+
+    this.setupReferences();
+    this.emitter = new EventEmitter();
 
     this.state = {
       mountList: true,
       //values for quizdetails modal
       title: '',
       description: '',
-      maxItems: 50, 
+      maxItemsQuiz: 50, 
       shouldDistributeEqually: true,
       //values for createquiz modal
       selected: [],
       selectedModules: [],
       //used for top inidcator
-      remainingItems: 0,
-    };
+      questionsTotal: 0,
+    };    
+  };
 
-    //get ref from screenprops
-    const { getRefCreateQuizModal, getRefQuizDetailsModal, getRefQuizFinishModal } = props.screenProps;
-    
+  componentWillUnmount() {
+    this.emitter.removeAllListeners();
+  };
+
+  setupReferences(){
+    //get refs from screenprops
+    const screenProps = this.props.screenProps;
     //get ref of modal from homescreen wrapper
-    this.quizModal    = getRefCreateQuizModal ();
-    this.finishModal  = getRefQuizFinishModal ();
-    this.detailsModal = getRefQuizDetailsModal();
+    this.quizModal    = screenProps.getRefCreateQuizModal ();
+    this.finishModal  = screenProps.getRefQuizFinishModal ();
+    this.detailsModal = screenProps.getRefQuizDetailsModal();
     
     _onPressNext = this._handleOnPressNext;
   };
@@ -1291,6 +1490,32 @@ export class CreateQuizScreen extends React.Component {
   componentDidFocus = () => {
     const { setDrawerSwipe } = this.props.screenProps;
     setDrawerSwipe(false);
+  };
+
+  _handleOnPressDelete = (subjectData) => {
+    const { events } = CreateQuizScreen;
+    const { selected } = this.state;
+
+    const deletedSubject = SubjectItem.wrap(subjectData);
+    const deletedSubjectID = `${deletedSubject.indexID_module}-${deletedSubject.indexid}`;
+
+    //make a copy without deleted subject
+    const newSelected = selected.filter(subject => {
+      //create id from the current subject's indexid's
+      const subjectID = `${subject.indexID_module}-${subject.indexid}`;
+      //dont include deleted
+      return (subjectID != deletedSubjectID);
+    });
+
+    //compute total questions allocated
+    const questionsTotal = CreateQuizScreen.computeTotalAllocated(newSelected);
+    this.emitter.emit(events.onChangeRemainingQuizItems);
+
+    //update selected items and questiontotal without deleted
+    this.setState({
+      selected: newSelected,
+      questionsTotal,
+    });
   };
 
   _onPressAlertOK = () => {
@@ -1331,7 +1556,7 @@ export class CreateQuizScreen extends React.Component {
   };
 
   _handleOnPressEditDetails = () => {
-    const {title, description, maxItems, shouldDistributeEqually} = this.state;
+    const {title, description, maxItemsQuiz, shouldDistributeEqually} = this.state;
 
     if(this.detailsModal != null){
       //assign callback to modal
@@ -1339,7 +1564,7 @@ export class CreateQuizScreen extends React.Component {
 
       //show modal
       this.detailsModal.openModal({
-        value: maxItems,
+        value: maxItemsQuiz,
         //pass down other state
         title, description, shouldDistributeEqually
       });
@@ -1358,59 +1583,96 @@ export class CreateQuizScreen extends React.Component {
   };
 
   _handleOnChangeValueStepper = (value, subjectData) => {
-    alert(value);
+    const { events } = CreateQuizScreen;
+    const { selected, questionsTotal, maxItemsQuiz } = this.state;
+
+    const subjects  = SubjectItem.wrapArray(selected);
+    const new_subject = SubjectItem.wrap(subjectData);
+    //create id from new_subject's index id's
+    const new_subjectID = `${new_subject.indexID_module}-${new_subject.indexid}`;
+
+    //make a copy and replace matching subject
+    const new_subjects = subjects.map(subject => {
+      //create id from the current subject's indexid's
+      const subjectID = `${subject.indexID_module}-${subject.indexid}`;
+      //return updated subject
+      return (subjectID != new_subjectID)? subject : {
+        ...new_subject,
+        allocatedItems: value,
+      };
+    });
+
+    //total questions allocated
+    const nextQuestionsTotal = CreateQuizScreen.computeTotalAllocated(new_subjects);
+    const didChange  = (questionsTotal != nextQuestionsTotal);
+    const isTotalMax = (questionsTotal >= maxItemsQuiz);
+    
+    if(isTotalMax){
+      this.emitter.emit(events.onQuestionTotalMaxed);      
+
+    } else if(didChange){
+      this.emitter.emit(events.onChangeRemainingQuizItems);
+    };
+
+    console.log('questionsTotal: ' + questionsTotal);
+    console.log('new_subject   : ' + new_subject.subjectname);
+
+    this.setState({
+      selected: new_subjects,
+      questionsTotal: nextQuestionsTotal,
+    });
   };
 
-  //callback from createquiz modal
+  /** createquiz modal: add subject has been pressed */
   _handleModalOnPressAddSubject = async ({selected, selectedModules}) => {
-    const { maxItems } = this.state;
+    const { maxItemsQuiz } = this.state;
     const prevCount = this.state.selected.length;
     const nextCount = selected.length;
 
-    const selectedWithAllocation = CreateQuizScreen.computeDistributions({maxItems, subjects: selected});
+    const selectedWithAllocation = CreateQuizScreen.computeDistributions({maxItemsQuiz, subjects: selected});
+    const questionsTotal = CreateQuizScreen.computeTotalAllocated(selectedWithAllocation);
 
     if(prevCount > nextCount){
       await this.listContainer.fadeOut(300);
       await setStateAsync(this, {
         selected: selectedWithAllocation, 
-        selectedModules
+        selectedModules, questionsTotal
       });
       await this.listContainer.fadeInUp(300);
 
     } else {
       this.setState({
         selected: selectedWithAllocation, 
-        selectedModules
+        selectedModules, questionsTotal
       });
+    };
+
+    if(selected.length > 0){
+      this.topInidcator.expand(true);
     };
   };
 
-  //callback from quizdetails modal
+  /** quizdetails modal: save changes button has been pressed */
   _handleModalOnPressSaveChanges = async ({title, description, value, shouldDistributeEqually}) => {
+    const { events } = CreateQuizScreen;
     const prevState = this.state;
 
     //check shouldDistributeEqually has changed
     const didChange = shouldDistributeEqually != prevState.shouldDistributeEqually;
 
     if(didChange){
-      //hide and umount list
-      await this.listContainer.fadeOut(300);
       await setStateAsync(this, {
-        mountList: false,
-        maxItems: value,
+        maxItemsQuiz: value,
         //pass down params to state
         title, description, shouldDistributeEqually
       });
-      //show and mount list
-      await Promise.all([
-        setStateAsync(this, {mountList: true}),
-        this.listContainer.fadeIn(300),      
-      ]);
-      await this.topInidcator.expand(!shouldDistributeEqually);
+      await timeout(500);
+      //emit event: shouldDistributeEqually switch has changed
+      this.emitter.emit(events.onEqualItemsToggled, {shouldDistributeEqually});            
 
     } else {
       this.setState({
-        maxItems: value,
+        maxItemsQuiz: value,
         //pass down params to state
         title, description, shouldDistributeEqually
       });
@@ -1437,7 +1699,7 @@ export class CreateQuizScreen extends React.Component {
 
   render(){
     const { styles } = CreateQuizScreen;
-    const { mountList, maxItems, shouldDistributeEqually } = this.state;
+    const { mountList, questionsTotal, maxItemsQuiz, shouldDistributeEqually } = this.state;
 
     return(
       <ViewWithBlurredHeader hasTabBar={false}>
@@ -1450,8 +1712,8 @@ export class CreateQuizScreen extends React.Component {
           <TopInidcator
             ref={r => this.topInidcator = r}
             initiallyCollapsed={true}
-            valueMax={maxItems}
-            value={10}
+            emitter={this.emitter}
+            {...{questionsTotal, maxItemsQuiz}}
           />
           {this._renderHeader()}
           <Animatable.View
@@ -1459,12 +1721,15 @@ export class CreateQuizScreen extends React.Component {
             useNativeDriver={true}
           >
             {mountList && <CreateCustomQuizList 
+              emitter={this.emitter}
               quizItems={this.state.selected}
               onChangeValueStepper={this._handleOnChangeValueStepper}
-              {...{maxItems, shouldDistributeEqually}}
+              onPressDelete={this._handleOnPressDelete}
+              {...{maxItemsQuiz, shouldDistributeEqually, questionsTotal}}
             />}
           </Animatable.View>
         </ScrollView>
+        <KeyboardSpacer/>
       </ViewWithBlurredHeader>
     );
   };
