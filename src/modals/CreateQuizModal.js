@@ -6,7 +6,6 @@ import { STYLES } from '../Constants';
 import { PURPLE } from '../Colors';
 
 import { plural , setStateAsync, timeout , isEmpty} from '../functions/Utils';
-import { ModuleStore } from '../functions/ModuleStore';
 import { ModuleItemModel } from '../models/ModuleModels';
 
 import { MODAL_DISTANCE_FROM_TOP, MODAL_EXTRA_HEIGHT, SwipableModal, ModalBackground, ModalTopIndicator } from '../components/SwipableModal';
@@ -643,31 +642,11 @@ class ModalContents extends React.PureComponent {
   };
 
   _handleOnPressAdd = () => {
-    const { modules } = this.props;
+    const { onPressAddItems } = this.props;
     //create a copy of selected
     const selected = [...this.selected];
-
-    const selectedModulesIndex = [...new Set(selected.map(
-      subject => subject.indexID_module
-    ))];
-
-    const selectedModules = selectedModulesIndex.map((indexID_module) => {
-      const match_module = modules.find((module) => 
-        module.indexid == indexID_module
-      );
-
-      const match_subjects = selected.filter(subject => 
-        subject.indexID_module == indexID_module
-      );
-
-      return {
-        ...match_module,
-        subjects: match_subjects,
-      };
-    });
-    
-    const { onPressAddItems } = this.props;
-    onPressAddItems && onPressAddItems({selected, selectedModules});
+    //call callback
+    onPressAddItems && onPressAddItems({selected});
   };
 
   _handleOnPressItem = ({isSelected, subjectData, moduleData}) => {
@@ -827,30 +806,22 @@ export class CreateQuizModal extends React.PureComponent {
     this._deltaY = this._modal._deltaY
   };
 
-  openModal = async ({selected}) => {
-    const modules = await this._getModules();
-    this.setState({modules, selected, mountContent: true});
-    this._modal.showModal();
-  };
-
-  async _getModules(){
-    const modules_raw = await ModuleStore.read();
-
-    const modules = modules_raw.map((module) => {
-      const { indexid } = module;
-      const new_subject = module.subjects.map(subject => {
-        return { indexID_module: indexid, ...subject };
-      });
-      return { ...module, subjects: new_subject };
-    });
-
+  openModal = async ({selected, modules}) => {
     //remap modules to work with sectionlist
-    return modules.map((module, index, array) => {
+    const modules_mapped = modules.map((module, index, array) => {
       //extract subjects from module
       const { subjects, ...other } = module;
       //rename subjects to data
       return { data: subjects, ...other };
     });
+
+    this.setState({
+      mountContent: true,
+      modules: modules_mapped,
+      //pass down to state
+      selected, 
+    });
+    this._modal.showModal();
   };
 
   _handleOnModalShow = () => {
@@ -860,7 +831,7 @@ export class CreateQuizModal extends React.PureComponent {
     this.setState({mountContent: false});
   };
 
-  _handleOnPressAddSubjects = async ({selected, selectedModules}) => {
+  _handleOnPressAddSubjects = async ({selected}) => {
     //only if callback is defined
     if(this.onPressAddSubject != null){
       //hide button
@@ -880,7 +851,7 @@ export class CreateQuizModal extends React.PureComponent {
       
       //wait for modal to close
       await this._modal.hideModal();
-      this.onPressAddSubject({selected, selectedModules});
+      this.onPressAddSubject({selected});
     };
   };
 

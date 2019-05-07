@@ -33,11 +33,11 @@ export class IconButton extends React.PureComponent {
     iconSize : PropTypes.number,
     iconProps: PropTypes.object,
     //style props
-    containerStyle    : PropTypes.object,
-    wrapperStyle      : PropTypes.object,
-    textStyle         : PropTypes.object,
-    subtitleStyle     : PropTypes.object,
-    textContainerStyle: PropTypes.object,
+    containerStyle    : PropTypes.any,
+    wrapperStyle      : PropTypes.any,
+    textStyle         : PropTypes.any,
+    subtitleStyle     : PropTypes.any,
+    textContainerStyle: PropTypes.any,
   };
 
   static styles = StyleSheet.create({
@@ -59,7 +59,7 @@ export class IconButton extends React.PureComponent {
       flex: 1,
     },
     iconContainer: {
-      marginRight: 20,
+      marginRight: 15,
     },
   });
 

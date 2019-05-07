@@ -259,11 +259,21 @@ export class ModuleItemModel {
 
   /** makes sure all of module's properties exists and assigns default values */
   static wrap(module = ModuleItemModel.structure){
-    return {
-      ...ModuleItemModel.structure, ...module,
-      //if subjects is null, assign empty array as it's default value
-      subjects: module.subjects || [],
-    };
+    return ({
+      //assign default properties w/ default values
+      ...ModuleItemModel.structure,
+      //remove all default values and replace w/ null
+      ...replacePropertiesWithNull(ModuleItemModel.structure),
+      //combine with obj from param
+      ...module || {},
+    });
+  };
+
+  /** wraps each element in an array to make sure */
+  static wrapArray(items = [SubjectItem.structure]){
+    return items.map((item) => 
+     ModuleItemModel.wrap(item)
+    );
   };
 
   constructor(module = ModuleItemModel.structure){

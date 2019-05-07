@@ -1,16 +1,19 @@
 import React, { Fragment } from 'react';
-import { View, ScrollView, Text, StyleSheet, FlatList, Platform, Alert, TouchableOpacity, TextInput, Switch, Clipboard } from 'react-native';
+import { View, ScrollView, Text, StyleSheet, FlatList, Platform, Alert, TouchableOpacity, TextInput, InteractionManager, Switch, Clipboard } from 'react-native';
 import PropTypes from 'prop-types';
 import EventEmitter from 'events';
 
-import { plural, isEmpty, setStateAsync, timeout } from '../functions/Utils';
 import { STYLES, HEADER_HEIGHT } from '../Constants';
 import { PURPLE, RED, GREY } from '../Colors';
-import { SubjectItem, } from '../models/ModuleModels';
+
+import { plural, isEmpty, setStateAsync, timeout } from '../functions/Utils';
+import { validateNotEmpty } from '../functions/Validation';
+import { ModuleStore } from '../functions/ModuleStore';
+import { SubjectItem, ModuleItemModel, } from '../models/ModuleModels';
 
 import { AndroidHeader } from '../components/AndroidHeader';
 import { ViewWithBlurredHeader, AnimatedListItem, Card , IconFooter} from '../components/Views' ;
-import { PlatformTouchableIconButton, RippleBorderButton } from '../components/Buttons';
+import { PlatformTouchableIconButton, RippleBorderButton, IconButton } from '../components/Buttons';
 
 import * as Animatable from 'react-native-animatable';
 import KeyboardSpacer from 'react-native-keyboard-spacer';
@@ -30,18 +33,21 @@ const titleStyle = {
   color: 'white',
 };
 
-
 class NextButton extends React.PureComponent {
   static styles = StyleSheet.create({
     button: {
-      marginRight: 5,
+      borderRadius: 15,
+      marginRight: 7,
+      backgroundColor: 'rgba(255,255,255,0.9)',
     },
     buttonLabel: {
-      color: 'white', 
+      color: PURPLE[900], 
+      marginHorizontal: 15,
+      marginVertical: 2,
       ...Platform.select({
         ios: {
-          fontSize: 18,
-          margin: 10,
+          fontSize: 17,
+          fontWeight: '400'
         },
         android: {
           fontSize: 19,          
@@ -51,18 +57,44 @@ class NextButton extends React.PureComponent {
       })
     },
   });
-  
-  
+
+  constructor(props){
+    super(props);
+    this.state = {
+      active: false,
+    };
+  };
+
+  setActive = (active) => {
+    this.setState({active});
+    InteractionManager.runAfterInteractions(async () => {
+      await this.container.pulse(750);
+      await this.container.pulse(750);
+    });
+  };
 
   render(){
     const { styles } = NextButton;
+    const { active } = this.state;
+    const buttonStyle = {
+      opacity: active? 1 : 0.75,      
+    };
+
     return(
-      <RippleBorderButton 
-        containerStyle={styles.button}
-        {...this.props}
+      <Animatable.View
+        ref={r => this.container = r}
+        animation={'zoomIn'}
+        duration={750}
+        delay={500}
+        useNativeDriver={true}
       >
-        <Text style={styles.buttonLabel}>Next</Text>
-      </RippleBorderButton>
+        <RippleBorderButton 
+          containerStyle={[styles.button, buttonStyle]}
+          {...this.props}
+        >
+          <Text style={styles.buttonLabel}>Next</Text>
+        </RippleBorderButton>
+      </Animatable.View>
     );
   };
 };
@@ -124,7 +156,7 @@ class TitleDescription extends React.PureComponent {
 
     const defaultTitle = (global.usePlaceholder
       ? 'Ridiculus Eges'
-      : 'Custom Quiz'
+      : 'Create Quiz'
     );
 
     const defaultDescription = (global.usePlaceholder
@@ -153,16 +185,26 @@ class TitleDescription extends React.PureComponent {
   };
 };
 
-class TitleDescriptionCard extends React.PureComponent {
+class HeaderCard extends React.PureComponent {
   static propTypes = {
     title: PropTypes.string,
     description: PropTypes.string,
+    selected: PropTypes.array,
+    //event callbacks
     onPressEditDetails: PropTypes.func,
+    onPressAddSubject : PropTypes.func,
   };
   
   static styles = StyleSheet.create({
     card: {
+      marginLeft: 0,
+      marginRight: 0,
+      marginTop: 0,
       marginBottom: 10,
+      paddingBottom: 15,
+    },
+    divider: {
+      margin: 5,
     },
     image: {
       width: 75, 
@@ -170,23 +212,29 @@ class TitleDescriptionCard extends React.PureComponent {
       marginRight: 12,
       marginVertical: 12,
     },
-    buttonWrapper: {
+    buttonContainer: {
       backgroundColor: PURPLE.A700,
       marginTop: 10,
-    },
-    buttonContainer: {
-      padding: 10,
+      paddingHorizontal: 15,
+      paddingVertical: 10,
+      borderRadius: 12,
     },
     buttonText: {
       color: 'white',
       fontSize: 17,
-      fontWeight: '600',
+      fontWeight: '800',
+    },
+    buttonSubtitle: {
+      color: 'white',
+      fontSize: 15,
+      fontWeight: '500',
     },
   });
 
   constructor(props){
     super(props);
-    this.imageHeader = require('../../assets/icons/clipboard-circle.png');
+    //this.imageHeader = require('../../assets/icons/clipboard-circle.png');
+    this.imageHeader = require('../../assets/icons/file-circle.png');
   };
 
   async componentDidUpdate(prevProps){
@@ -208,8 +256,13 @@ class TitleDescriptionCard extends React.PureComponent {
     onPressEditDetails && onPressEditDetails();
   };
 
+  _handleOnPressAddSubject = () => {
+    const { onPressAddSubject } = this.props;
+    onPressAddSubject && onPressAddSubject();
+  };
+
   _renderDescription(){
-    const { styles } = TitleDescriptionCard;
+    const { styles } = HeaderCard;
     const { title, description } = this.props;
 
     return(
@@ -231,178 +284,105 @@ class TitleDescriptionCard extends React.PureComponent {
     );
   };
 
-  _renderButton(){
-    const { styles } = AddSubjectsCard;
-
-    const text = (global.usePlaceholder
-      ? 'Pharetra Tellu'
-      : 'Edit Details'
+  _renderEditDetailsButton(){
+    const { styles } = HeaderCard;
+    const { title, description } = this.props;
+    
+    const showCheck = validateNotEmpty(title) && validateNotEmpty(description);
+    const Checkmark = showCheck?(
+      <Animatable.View
+        animation={'fadeInRight'}
+        delay={250}
+        duration={750}
+        useNativeDriver={true}
+      >
+        <Icon
+          name={'ios-checkmark-circle'}
+          type={'ionicon'}
+          color={'white'}
+          size={24}
+        />
+      </Animatable.View>
+    ):(
+      <Icon
+        name={'ios-radio-button-off'}
+        type={'ionicon'}
+        color={'white'}
+        size={24}
+      />
     );
+    
+    //title and subtitle
+    const text     = 'Edit Details';
+    const subtitle = 'Add a title and description';
 
     return(
-      <PlatformTouchableIconButton
-        onPress={this._handleOnPressEditDetails}
-        wrapperStyle={[styles.buttonWrapper, STYLES.lightShadow]}
-        containerStyle={styles.buttonContainer}
+      <IconButton 
+        onPress={this._handleOnPressEditDetails}        
+        containerStyle={[styles.buttonContainer, STYLES.lightShadow]}
         textStyle={styles.buttonText}
+        subtitleStyle={styles.buttonSubtitle}
         iconName={'edit'}
         iconType={'entypo'}
         iconColor={'white'}
         iconSize={24}
-        {...{text}}
+        {...{text, subtitle}}
+      >
+        {Checkmark}
+      </IconButton>
+    );
+  };
+
+  _renderAddSubjectButton(){
+    const { styles } = HeaderCard;
+    const { selected } = this.props;
+
+    const showCheck = (selected || []).length > 0;
+    const Checkmark = showCheck?(
+      <Animatable.View
+        animation={'fadeInRight'}
+        delay={250}
+        duration={750}
+        useNativeDriver={true}
+      >
+        <Icon
+          name={'ios-checkmark-circle'}
+          type={'ionicon'}
+          color={'white'}
+          size={24}
+        />
+      </Animatable.View>
+    ):(
+      <Icon
+        name={'ios-radio-button-off'}
+        type={'ionicon'}
+        color={'white'}
+        size={24}
       />
     );
-  };
-
-  render() {
-    const { styles } = TitleDescriptionCard;
-    
-    const animation = Platform.select({
-      ios    : 'fadeInUp',
-      android: 'fadeInRight',
-    });
+    //button title and subtitle
+    const text     = 'Add Subjects';
+    const subtitle = 'Select subjects to add';
 
     return(
-      <Animatable.View
-        ref={r => this._container = r}
-        duration={500}
-        easing={'ease-in-out'}
-        useNativeDriver={true}
-        {...{animation}}
-      >
-        <Card style={styles.card}>
-          {this._renderDescription()}
-          <Divider/>
-          {this._renderButton()}
-        </Card>
-      </Animatable.View>
-    );
-  };
-};
-
-class AddSubjectsCard extends React.PureComponent {
-  static propTypes = {
-    onPressAddSubject: PropTypes.func,
-  };
-
-  static styles = StyleSheet.create({
-    card: {
-      marginBottom: 10,
-    },
-    image: {
-      width: 75, 
-      height: 75,
-      marginRight: 12,
-      marginVertical: 12,
-    },
-    headerTextContainer: {
-      flex: 1, 
-      alignItems: 'center', 
-      justifyContent: 'center', 
-    },
-    headerTitle: {
-      color: '#512DA8',
-      fontSize: 20, 
-      fontWeight: '800'
-    },
-    headerSubtitle: {
-      fontSize: 16, 
-      ...Platform.select({
-        ios: {
-          fontWeight: '200'
-        },
-        android: {
-          fontWeight: '100',
-          color: '#424242'
-        },
-      })
-    },
-    buttonWrapper: {
-      backgroundColor: PURPLE.A700,
-      marginTop: 10,
-    },
-    buttonContainer: {
-      padding: 10,
-    },
-    buttonText: {
-      color: 'white',
-      fontSize: 17,
-      fontWeight: '600',
-    },
-  });
-
-  constructor(props){
-    super(props);
-
-    this.imageHeader = require('../../assets/icons/file-circle.png');
-  };
-
-  animatePulse(){
-    this._container.pulse(750);
-  };
-
-  _handleOnPressAddSubject = () => {
-    const { onPressAddSubject } = this.props;
-    onPressAddSubject && onPressAddSubject();
-  };
-
-  _renderDescription(){
-    const { styles } = AddSubjectsCard;
-
-    const title = (global.usePlaceholder
-      ? 'Purus Ligula Sem'
-      : 'Add an Quiz Item'
-    );
-
-    const description = (global.usePlaceholder
-      ? 'Sed posuere consectetur est at lobortis. Maecenas faucibus mollis interdum.'
-      : "100 questions in total will be selected across all the subjects you've selected."
-    );
-
-    return(
-      <View style={{flexDirection: 'row'}}>
-        <Animatable.Image
-          source={this.imageHeader}
-          style={styles.image}
-          animation={'pulse'}
-          easing={'ease-in-out'}
-          iterationCount={"infinite"}
-          duration={5000}
-          useNativeDriver={true}
-        />
-        <View style={styles.headerTextContainer}>
-          <Text style={styles.headerTitle   }>{title}</Text>
-          <Text style={styles.headerSubtitle}>{description}</Text>
-        </View>
-      </View>
-    );
-  };
-
-  _renderButtons(){
-    const { styles } = AddSubjectsCard;
-
-    const text = (global.usePlaceholder
-      ? 'Vehicula Commodo'
-      : 'Add Subjects'
-    );
-
-    return(
-      <PlatformTouchableIconButton
-        onPress={this._handleOnPressAddSubject}
-        wrapperStyle={[styles.buttonWrapper, STYLES.lightShadow]}
-        containerStyle={styles.buttonContainer}
+      <IconButton 
+        onPress={this._handleOnPressAddSubject}        
+        containerStyle={[styles.buttonContainer, STYLES.lightShadow]}
         textStyle={styles.buttonText}
+        subtitleStyle={styles.buttonSubtitle}
         iconName={'bookmark'}
         iconType={'entypo'}
         iconColor={'white'}
         iconSize={24}
-        {...{text}}
-      />
+        {...{text, subtitle}}
+      >
+        {Checkmark}
+      </IconButton>
     );
   };
 
   render() {
-    const { styles } = AddSubjectsCard;
+    const { styles } = HeaderCard;
     
     const animation = Platform.select({
       ios    : 'fadeInUp',
@@ -413,15 +393,15 @@ class AddSubjectsCard extends React.PureComponent {
       <Animatable.View
         ref={r => this._container = r}
         duration={500}
-        delay={100}
         easing={'ease-in-out'}
         useNativeDriver={true}
         {...{animation}}
       >
         <Card style={styles.card}>
           {this._renderDescription()}
-          <Divider/>
-          {this._renderButtons()}
+          <Divider style={styles.divider}/>
+          {this._renderEditDetailsButton()}
+          {this._renderAddSubjectButton ()}
         </Card>
       </Animatable.View>
     );
@@ -744,7 +724,7 @@ class Stepper extends React.PureComponent {
     const { MODES } = Stepper;
 
     //animation values
-    this.expandedHeight = new Value(110);
+    this.expandedHeight = new Value(120);
     this.progress       = new Value(0);
 
     //interpolated values
@@ -988,13 +968,15 @@ class Stepper extends React.PureComponent {
 
 class QuizItem extends React.PureComponent {
   static propTypes = {
-    emitter: PropTypes.object,
+    moduleData: PropTypes.object,
     subjectData: PropTypes.object,  
-    onPressDelete: PropTypes.func,
     maxItemsQuiz: PropTypes.number,
     questionsTotal: PropTypes.number,
-    onChangeValueStepper: PropTypes.func,
     shouldDistributeEqually: PropTypes.bool,
+    //event callbacks
+    emitter: PropTypes.object,
+    onPressDelete: PropTypes.func,
+    onChangeValueStepper: PropTypes.func,
   };
 
   static styles = StyleSheet.create({
@@ -1045,6 +1027,10 @@ class QuizItem extends React.PureComponent {
         },
       }),
     },
+    textSubtitleQuestions: {
+      opacity: 0.85,
+      fontWeight: '200'
+    },
     textBody: {
       fontSize: 18,
       marginTop: 3,
@@ -1062,7 +1048,6 @@ class QuizItem extends React.PureComponent {
       marginVertical: 10,
     },
     buttonWrapper: {
-      marginTop: 10,
       backgroundColor: RED[800],
     },
     buttonContainer: {
@@ -1161,9 +1146,10 @@ class QuizItem extends React.PureComponent {
   /** show details: title, desc., etc. */
   _renderDescription(){
     const { styles } = QuizItem;
-    const { subjectData } = this.props;
+    const { moduleData, subjectData, shouldDistributeEqually } = this.props;
 
-    const { subjectname, description, questions } = SubjectItem.wrap(subjectData);
+    const { modulename } = ModuleItemModel.wrap(moduleData);
+    const { subjectname, description, questions, lastupdated } = SubjectItem.wrap(subjectData);
     const questionCount = (questions || []).length;
 
     return(
@@ -1177,10 +1163,13 @@ class QuizItem extends React.PureComponent {
         </Text>
         <Text 
           style={styles.textSubtitle}
-          numberOfLines={3}
+          numberOfLines={1}
           ellipsizeMode={'tail'}
         >
-          {`${questionCount} questions`}
+          {`${modulename}`}
+          <Text style={styles.textSubtitleQuestions}>
+            {` • ${shouldDistributeEqually? `(${questionCount} questions)` : lastupdated}`}
+          </Text>
         </Text>
         <Text 
           style={styles.textBody}
@@ -1265,28 +1254,72 @@ class QuizItem extends React.PureComponent {
 
 class CreateCustomQuizList extends React.Component {
   static propTypes = {
-    emitter: PropTypes.object,
-    quizItems: PropTypes.array,
     maxItemsQuiz: PropTypes.number,
     questionsTotal: PropTypes.number,
     shouldDistributeEqually: PropTypes.bool,
+    //data source
+    modules: PropTypes.array,
+    quizItems: PropTypes.array,
+    selectedModules: PropTypes.array,
     //event callbacks
+    emitter: PropTypes.object,
     onPressDelete: PropTypes.func,
     onChangeValueStepper: PropTypes.func,
   };
 
   static styles = StyleSheet.create({
-    indicatorText: {
-      fontSize: 26,
-      fontWeight: '400',
+    container: {
       marginTop: 15,
       marginBottom: 5,
       marginLeft: 12,
+    },
+    indicatorText: {
+      fontSize: 26,
+      fontWeight: '700',
+      color: PURPLE[1100],
+    },
+    indicatorSubtitle: {
+      fontSize: 17,
+      fontWeight: '400',
+      color: PURPLE[1200],
+      opacity: 0.9
     },
   });
 
   constructor(props){
     super(props);
+    this.state = {
+      showHeader: false,
+    };
+  };
+
+  async componentDidUpdate(prevProps) {
+    const { modules, quizItems } = this.props;
+
+    //get previous values
+    const prevModules   = prevProps.modules;
+    const prevQuizItems = prevProps.quizItems;
+
+    const didChangeModules   = (prevModules   != modules  );
+    const didChangeQuizItems = (prevQuizItems != quizItems);
+    const didChange = (didChangeModules || didChangeQuizItems);
+
+    const isCurrentlyEmpty   = (quizItems    .length == 0);
+    const wasPreviouslyEmpty = (prevQuizItems.length == 0);
+ 
+    if(didChange && wasPreviouslyEmpty){
+      //show header
+      this.setState({showHeader: true});
+
+    }else if(didChange && !wasPreviouslyEmpty && !isCurrentlyEmpty){
+      //animate because of change
+      this.container && await this.container.pulse(500);
+
+    } else if(didChange && isCurrentlyEmpty){
+      //animate out and hide header
+      this.container && await this.container.fadeOut(300);
+      this.setState({showHeader: false});
+    };
   };
 
   _handleOnPressDelete = (subjectData) => {
@@ -1299,7 +1332,16 @@ class CreateCustomQuizList extends React.Component {
   };
 
   _renderItem = ({item, index}) => {
-    const { emitter, maxItemsQuiz, shouldDistributeEqually, onChangeValueStepper, questionsTotal } = this.props;
+    const { modules, emitter, maxItemsQuiz, shouldDistributeEqually, onChangeValueStepper, questionsTotal } = this.props;
+    
+    const wrappedSubject = SubjectItem.wrap(item);
+    const wrappedModules = ModuleItemModel.wrapArray(modules);
+    //find matching module
+    const moduleData = wrappedModules.find(module => 
+      //return if index id matches
+      module.indexid == wrappedSubject.indexID_module
+    );
+
     return(
       <AnimatedListItem
         duration={500}
@@ -1307,9 +1349,9 @@ class CreateCustomQuizList extends React.Component {
         {...{index}}
       >
         <QuizItem 
-          subjectData={item} 
+          subjectData={wrappedSubject} 
           onPressDelete={this._handleOnPressDelete}
-          {...{emitter, maxItemsQuiz, shouldDistributeEqually, onChangeValueStepper, questionsTotal}}
+          {...{moduleData, emitter, maxItemsQuiz, shouldDistributeEqually, onChangeValueStepper, questionsTotal}}
         />
       </AnimatedListItem>
     );
@@ -1317,9 +1359,12 @@ class CreateCustomQuizList extends React.Component {
 
   _renderHeader = () => {
     const { styles } = CreateCustomQuizList;
+    const { quizItems, selectedModules } = this.props;
+    const { showHeader } = this.state;
 
-    const { quizItems } = this.props;
-    if(quizItems.length == 0) return null;
+    const countModules = (selectedModules || []).length;
+    const countQuiz    = (quizItems       || []).length;
+    if(!showHeader) return null;
 
     const animation = Platform.select({
       ios: 'fadeInUp', 
@@ -1327,15 +1372,21 @@ class CreateCustomQuizList extends React.Component {
     });
 
     return(
-      <Animatable.Text
-        style={styles.indicatorText}
+      <Animatable.View
+        style={styles.container}
+        ref={r => this.container = r}
         duration={500}
         easing={'ease-in-out'}
         useNativeDriver={true}
         {...{animation}}
       >
-        {`${quizItems.length} ${plural('Subject', quizItems.length)}`}
-      </Animatable.Text>
+        <Text style={styles.indicatorText}>
+          {`${countQuiz} ${plural('Subject', countQuiz)}`}
+        </Text>
+        <Text style={styles.indicatorSubtitle}>
+          {`From ${countModules} ${plural('module', countModules)}`}
+        </Text>
+      </Animatable.View>
     );
   };
 
@@ -1350,8 +1401,6 @@ class CreateCustomQuizList extends React.Component {
 
   render(){
     const {quizItems, maxItemsQuiz, shouldDistributeEqually, ...otherProps} = this.props;
-    //re-render flatlist when these items changes
-    //const extraData = { maxItemsQuiz, shouldDistributeEqually };
 
     return(
       <FlatList
@@ -1366,26 +1415,23 @@ class CreateCustomQuizList extends React.Component {
   };
 };
 
-let _onPressNext;
-const headerRight = <NextButton onPress={() => _onPressNext && _onPressNext()}/>
+//nextButton references
+let _onPressNext   = null;
+let _nextButtonRef = null;
+//right header component: next button
+const headerRight = <NextButton 
+  ref={r => _nextButtonRef = r}
+  onPress={() => _onPressNext && _onPressNext()}  
+/>
 
 export class CreateQuizScreen extends React.Component {
   static navigationOptions = ({ navigation }) => {
     const { state } = navigation;
 
-    //set header title
-    let title = (global.usePlaceholder
-      ? 'Nibh Mattis'
-      : 'Custom Quiz'
-    );
-    
-    if(state.params) title = state.params.title;
-
     return ({
-      title, 
+      title: 'Custom Quiz', 
       headerRight,
       headerTitleStyle: STYLES.glow,
-
       //custom android header
       ...Platform.select({
         android: { header: props => 
@@ -1405,6 +1451,7 @@ export class CreateQuizScreen extends React.Component {
     }
   });
 
+  /** event emitter event types */
   static events = {
     /** when a stepper value has been changed */
     onChangeRemainingQuizItems: 'onChangeRemainingQuizItems',
@@ -1414,6 +1461,7 @@ export class CreateQuizScreen extends React.Component {
     onEqualItemsToggled: 'onEqualItemsToggled',
   };
 
+  //------ static methods ------
   static computeDistributions({maxItemsQuiz, subjects}){
     const items = SubjectItem.wrapArray(subjects);
 
@@ -1451,6 +1499,33 @@ export class CreateQuizScreen extends React.Component {
     return (totalAllocated);
   };
 
+  static combineModulesAndSubjects(modules, subjects){
+    //get all unique module id's
+    const uniqueModulesIndex = [...new Set(subjects.map(
+      subject => subject.indexID_module
+    ))];
+    
+    //array of modules with their corresponding subjects
+    return uniqueModulesIndex.map((indexID_module) => {
+      //find the matching module
+      const match_module = modules.find(module => 
+        module.indexid == indexID_module
+      );
+      //get all subjects that are from match_module
+      const match_subjects = subjects.filter(subject => 
+        subject.indexID_module == indexID_module
+      );
+      
+      //wrap objects
+      const module = ModuleItemModel.wrap(match_module);
+      const subjectsWrapped = SubjectItem.wrapArray(match_subjects);
+
+      //pass down module properties and overwrite subject property
+      return { ...module, subjects: subjectsWrapped };
+    });
+  };
+
+  //------ lifecycle events ------
   constructor(props){
     super(props);
 
@@ -1459,6 +1534,7 @@ export class CreateQuizScreen extends React.Component {
 
     this.state = {
       mountList: true,
+      modules: null,    
       //values for quizdetails modal
       title: '',
       description: '',
@@ -1472,10 +1548,52 @@ export class CreateQuizScreen extends React.Component {
     };    
   };
 
-  componentWillUnmount() {
+  async componentDidUpdate(prevProps, prevState) {
+    const { title, description, selected } = this.state;
+
+    //get previous values
+    const prevTitle    = prevState.title;
+    const prevDesc     = prevState.description;
+    const prevSelected = prevState.selected;
+
+    //check if details has changed
+    const didChangeTitle   = (prevTitle != title      );
+    const didChangeDesc    = (prevDesc  != description);
+
+    //check if subjects has changed
+    const didChangeSubject = (prevSelected.length != selected.length);
+    //check if either items has changed
+    const didChange = (didChangeTitle || didChangeDesc || didChangeSubject);
+
+    //check if subjects/selected was empty
+    const subjectsIsCurrentlyEmpty   = (selected    .length == 0);
+    const subjectsWasPreviouslyEmpty = (prevSelected.length == 0);
+
+    //check if details were previously empty
+    const detailsIsCurrentlyEmpty   = !(validateNotEmpty(title    ) || validateNotEmpty(description ));
+    const detailsWasPreviouslyEmpty = !(validateNotEmpty(prevTitle) || validateNotEmpty(prevSelected));
+    
+    //check if either subject/details empty
+    const isCurrentlyEmpty   = (subjectsIsCurrentlyEmpty  || detailsIsCurrentlyEmpty );
+    const wasPreviouslyEmpty = (subjectsWasPreviouslyEmpty|| detailsWasPreviouslyEmpty);
+
+    //when details and add subject has been added the first time
+    if(didChange && wasPreviouslyEmpty && !isCurrentlyEmpty){
+      //change header nextButton style to active
+      _nextButtonRef && _nextButtonRef.setActive(true);
+    };
+  };
+
+  async componentDidMount(){
+    const modules = await this.getModules();
+    this.setState({modules});
+  };
+
+  componentWillUnmount(){
     this.emitter.removeAllListeners();
   };
 
+  //------ functions ------
   setupReferences(){
     //get refs from screenprops
     const screenProps = this.props.screenProps;
@@ -1487,11 +1605,52 @@ export class CreateQuizScreen extends React.Component {
     _onPressNext = this._handleOnPressNext;
   };
 
+  async getModules(){
+    const modules_raw = await ModuleStore.read();
+    const modules = ModuleItemModel.wrapArray(modules_raw);
+
+    return modules.map((module) => {
+      const { indexid } = module;
+      const new_subject = module.subjects.map(subject => {
+        return { indexID_module: indexid, ...subject };
+      });
+      return { ...module, subjects: new_subject };
+    });
+  };
+
   componentDidFocus = () => {
     const { setDrawerSwipe } = this.props.screenProps;
     setDrawerSwipe(false);
   };
 
+  //------ event handlers -------
+  /** navbar: next button is pressed */
+  _handleOnPressNext = () => {
+    const {selected, selectedModules, title, description} = this.state;
+
+    const isValid = (isEmpty(title) || isEmpty(description));
+
+    if(selected <= 0){
+      Alert.alert(
+        'Not Enough Items',
+        "Please add at least one subject to continue.",
+        [{text: 'OK', onPress: this._onPressAlertOK}],
+        //{cancelable: false},
+      );
+    } else if(isValid){
+      Alert.alert(
+        'No Title/Description',
+        "Press 'Edit Deatils' to add a title and description.",
+        [{text: 'OK', onPress: this._onPressAlertOK}],
+      );
+    } else {
+      this.finishModal.openModal({
+        selected, selectedModules, title, description
+      });
+    };
+  };
+
+  /** flatlist render item: when remove item button is pressed */
   _handleOnPressDelete = (subjectData) => {
     const { events } = CreateQuizScreen;
     const { selected } = this.state;
@@ -1518,43 +1677,17 @@ export class CreateQuizScreen extends React.Component {
     });
   };
 
+  /** when alert ok button is pressed */
   _onPressAlertOK = () => {
     const {selected, title, description} = this.state;
     const isValid = (isEmpty(title) || isEmpty(description));
 
-    if(selected <= 0){
-      this._headerAddCard.animatePulse();
-
-    } else if(isValid){
-      this._headerTitleCard.animatePulse();      
+    if(selected <= 0 || isValid){
+      this.headerCard.animatePulse();
     };
   };
 
-  _handleOnPressNext = () => {
-    const {selected, selectedModules, title, description} = this.state;
-
-    const isValid = (isEmpty(title) || isEmpty(description));
-
-    if(selected <= 0){
-      Alert.alert(
-        'Not Enough Items',
-        "Please add at least one subject to continue.",
-        [{text: 'OK', onPress: this._onPressAlertOK}],
-        //{cancelable: false},
-      );
-    } else if(isValid){
-      Alert.alert(
-        'No Title/Description',
-        "Press 'Edit Deatils' to add a title and description.",
-        [{text: 'OK', onPress: this._onPressAlertOK}],
-      );
-    } else {
-      this.finishModal.openModal({
-        selected, selectedModules, title, description
-      });
-    };
-  };
-
+  /** header: Edit details button press */
   _handleOnPressEditDetails = () => {
     const {title, description, maxItemsQuiz, shouldDistributeEqually} = this.state;
 
@@ -1571,17 +1704,20 @@ export class CreateQuizScreen extends React.Component {
     };
   };
 
+  /** header: Add subjects button press */
   _handleOnPressAddSubject = () => {
+    const { modules } = this.state;
     if(this.quizModal != null){
       //assign callback to modal
       this.quizModal.onPressAddSubject = this._handleModalOnPressAddSubject;
 
       const {selected, selectedModules} = this.state;
       //show modal
-      this.quizModal.openModal({selected, selectedModules});
+      this.quizModal.openModal({modules, selected, selectedModules});
     };
   };
-
+  
+  /** flatlist render item: stepper value change */
   _handleOnChangeValueStepper = (value, subjectData) => {
     const { events } = CreateQuizScreen;
     const { selected, questionsTotal, maxItemsQuiz } = this.state;
@@ -1623,19 +1759,25 @@ export class CreateQuizScreen extends React.Component {
     });
   };
 
+  //------ modal event handlers ------
   /** createquiz modal: add subject has been pressed */
-  _handleModalOnPressAddSubject = async ({selected, selectedModules}) => {
-    const { maxItemsQuiz } = this.state;
+  _handleModalOnPressAddSubject = async ({selected}) => {
+    const { events } = CreateQuizScreen;
+    const { maxItemsQuiz, modules } = this.state;
+
     const prevCount = this.state.selected.length;
     const nextCount = selected.length;
+    const didChange = (prevCount != nextCount);
 
     const selectedWithAllocation = CreateQuizScreen.computeDistributions({maxItemsQuiz, subjects: selected});
-    const questionsTotal = CreateQuizScreen.computeTotalAllocated(selectedWithAllocation);
+    const questionsTotal         = CreateQuizScreen.computeTotalAllocated(selectedWithAllocation);
+    const selectedModules        = CreateQuizScreen.combineModulesAndSubjects(modules, selected);
 
     if(prevCount > nextCount){
       await this.listContainer.fadeOut(300);
       await setStateAsync(this, {
         selected: selectedWithAllocation, 
+        //pass down to state
         selectedModules, questionsTotal
       });
       await this.listContainer.fadeInUp(300);
@@ -1643,11 +1785,17 @@ export class CreateQuizScreen extends React.Component {
     } else {
       this.setState({
         selected: selectedWithAllocation, 
+        //pass down to state
         selectedModules, questionsTotal
       });
     };
 
+    if(didChange){
+      this.emitter.emit(events.onChangeRemainingQuizItems);            
+    };
+
     if(selected.length > 0){
+      //show top indicator
       this.topInidcator.expand(true);
     };
   };
@@ -1666,7 +1814,6 @@ export class CreateQuizScreen extends React.Component {
         //pass down params to state
         title, description, shouldDistributeEqually
       });
-      await timeout(500);
       //emit event: shouldDistributeEqually switch has changed
       this.emitter.emit(events.onEqualItemsToggled, {shouldDistributeEqually});            
 
@@ -1679,27 +1826,24 @@ export class CreateQuizScreen extends React.Component {
     };
   };
 
+  //------ render ------
+  /** create quiz header card */
   _renderHeader = () => {
-    const {title, description} = this.state;
+    const {title, description, selected} = this.state;
     
     return(
-      <View style={{marginTop: 12}}>
-        <TitleDescriptionCard
-          ref={r => this._headerTitleCard = r}
-          onPressEditDetails={this._handleOnPressEditDetails}
-          {...{title, description}} 
-        />
-        <AddSubjectsCard
-          ref={r => this._headerAddCard = r}
-          onPressAddSubject={this._handleOnPressAddSubject}
-        />
-      </View>
+      <HeaderCard
+        ref={r => this.headerCard = r}
+        onPressEditDetails={this._handleOnPressEditDetails}
+        onPressAddSubject={this._handleOnPressAddSubject}
+        {...{title, description, selected}} 
+      />
     );
   };
 
   render(){
     const { styles } = CreateQuizScreen;
-    const { mountList, questionsTotal, maxItemsQuiz, shouldDistributeEqually } = this.state;
+    const { mountList, modules, selectedModules, questionsTotal, maxItemsQuiz, shouldDistributeEqually } = this.state;
 
     return(
       <ViewWithBlurredHeader hasTabBar={false}>
@@ -1725,7 +1869,7 @@ export class CreateQuizScreen extends React.Component {
               quizItems={this.state.selected}
               onChangeValueStepper={this._handleOnChangeValueStepper}
               onPressDelete={this._handleOnPressDelete}
-              {...{maxItemsQuiz, shouldDistributeEqually, questionsTotal}}
+              {...{modules, selectedModules, maxItemsQuiz, shouldDistributeEqually, questionsTotal}}
             />}
           </Animatable.View>
         </ScrollView>
