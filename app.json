@@ -4,7 +4,7 @@
     "icon": "./assets/icon.png",
     "version": "1.0.0",
     "slug": "linkpad-review",
-    "sdkVersion": "31.0.0",
+    "sdkVersion": "32.0.0",
     "description": "This project is really great.",
     "privacy": "public",
     "platforms": ["ios", "android"],

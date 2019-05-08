@@ -183,30 +183,19 @@ export class SwipableModal extends React.PureComponent {
 
     this.state = {
       mountModal: false,
-      mount: false,
     };
   };
 
   showModal = async () => {
-    const { mountModal, mount } = this.state;
+    const { mountModal } = this.state;
     if(!mountModal){
-      await setStateAsync(this, {
-        mountModal: true,
-        ...(!mount && {
-          mount: true,
-        }) 
-      });
+      await setStateAsync(this, {mountModal: true});
 
-      //await this._rootView.bounceInUp(800);
-
-
-      let loop = true;
-      while(loop){
-        this._interactable.snapTo({index: 0});
-        this.stopCallback = () => loop = false;
-        await timeout(750);
-      };
-      this.stopCallback = null;
+      this._interactable.snapTo({index: 0});
+      //wait for modal to finish animation
+      await new Promise(resolve => this.stopCallback = resolve);
+      //reset stop callback
+      this.stopCallback = null;      
     };
   };
 
@@ -244,11 +233,7 @@ export class SwipableModal extends React.PureComponent {
     const isHidden = y >= Screen.height;
 
     if(isHidden){
-      //wait for modal to finish animation
-      await new Promise(resolve => this.stopCallback = resolve);
-      //reset stop callback
-      this.stopCallback = null;
-
+      await this.rootContainer.fadeOut(500);      
       //unmount modal when hidden
       await setStateAsync(this, {mountModal: false});
       this.onModalHide();
@@ -265,9 +250,6 @@ export class SwipableModal extends React.PureComponent {
 
   _renderShadow = () => {
     const { styles } = SwipableModal;
-    const { mountModal } = this.state;
-    if(!mountModal) return null;
-
     const shadowOpacity = Platform.select({
       ios: 0.5, android: 0.75,
     });
@@ -307,7 +289,6 @@ export class SwipableModal extends React.PureComponent {
   _renderInteractable(){
     const { styles } = SwipableModal;
     const { snapPoints, hitSlop } = this.props;
-    const { mountModal } = this.state;
 
     const modalHeight = Screen.height - MODAL_DISTANCE_FROM_TOP;
     const finalRadius = 22;
@@ -338,7 +319,7 @@ export class SwipableModal extends React.PureComponent {
       >
         <View style={styles.panelContainer}>
           <Animated.View style={[styles.panel, panelStyle]}>
-            {mountModal && this.props.children}
+            {this.props.children}
           </Animated.View>
         </View>
       </Interactable.View>
@@ -347,23 +328,19 @@ export class SwipableModal extends React.PureComponent {
 
   render(){
     const { styles } = SwipableModal;
-    const { mountModal, mount } = this.state;
-    if(!mount) return null;
-
-    const floatStyle = (mountModal? {
-        marginTop: 0,
-      }:{
-        marginTop: Screen.height + 100,
-      }
-    );
+    const { mountModal } = this.state;
+    if(!mountModal) return null;
 
     return (
-      <View 
-        style={[styles.float, floatStyle]}
-        pointerEvents={'box-none'}
-      >
-        {this._renderShadow()}
-        {this._renderInteractable()}
+      <View style={styles.float}>
+        <Animatable.View
+          ref={r => this.rootContainer = r}
+          useNativeDriver={true}
+          pointerEvents={'box-none'}
+        >
+          {this._renderShadow()}
+          {this._renderInteractable()}
+        </Animatable.View>
       </View>
     );
   };
