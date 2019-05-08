@@ -952,7 +952,7 @@ class ModalContents extends React.PureComponent {
           keyboardDismissMode={'on-drag'}
         >
           {this._renderForms()}
-            <View style={{marginVertical: 100}}/>
+          <View style={{marginVertical: 50}}/>
         </ScrollView>
         {this._renderFinishButton()}
         <KeyboardSpacer/>

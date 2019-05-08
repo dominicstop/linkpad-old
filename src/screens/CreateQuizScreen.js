@@ -202,6 +202,7 @@ class HeaderCard extends React.PureComponent {
       marginTop: 0,
       marginBottom: 10,
       paddingBottom: 15,
+      borderRadius: 0,
     },
     divider: {
       margin: 5,
@@ -233,18 +234,70 @@ class HeaderCard extends React.PureComponent {
 
   constructor(props){
     super(props);
-    //this.imageHeader = require('../../assets/icons/clipboard-circle.png');
     this.imageHeader = require('../../assets/icons/file-circle.png');
+    this.state = {
+      showCheckDetails: false,
+      showCheckSubject: false,
+    };
   };
 
   async componentDidUpdate(prevProps){
-    const {title, description} = this.props;
+    const { title, description, selected } = this.props;
 
-    const didTitleChange       = title       != prevProps.title;
-    const didDescriptionChange = description != prevProps.description;
+    //check if title or desc changed
+    const didChangeTitle       = title       != prevProps.title;
+    const didChangeDescription = description != prevProps.description;
 
-    const didChange = didTitleChange || didDescriptionChange;
-    didChange && this.titleDescription.changeText({title, description});
+    //check if either title/desc changed
+    const didChangeDetails = (didChangeTitle || didChangeDescription); 
+
+    //get prev and current selected count
+    const currSelected = (selected           || []).length;
+    const prevSelected = (prevProps.selected || []).length;
+    
+    //check if selected is currently and prev. emmpty
+    const prevEmptySelected = (prevSelected == 0);
+    const currEmptySelected = (currSelected == 0);
+
+    //check if didChangeDetails is currently and prev. emmpty
+    const currEmptyDetails = !(validateNotEmpty(title          ) || validateNotEmpty(description          ));
+    const prevEmptyDetails = !(validateNotEmpty(prevProps.title) || validateNotEmpty(prevProps.description));
+
+    //check if selected count has changed
+    const didChangeSelected = (prevSelected != currSelected);
+
+    //trans. and change title/desc
+    if(didChangeDetails){
+      this.titleDescription.changeText({title, description});
+    };
+
+    //handle edit details check transition
+    if(didChangeDetails && currEmptyDetails && !prevEmptyDetails){
+      //details trans. to unchecked
+      await this.checkDetailsContainer.fadeOutRight(500);
+      await setStateAsync(this, {showCheckDetails: false});
+      await this.checkDetailsContainer.fadeInRight(500);
+
+    } else if(didChangeDetails && !currEmptyDetails && prevEmptyDetails){
+      //details trans. to check
+      await this.checkDetailsContainer.fadeOutRight(500);
+      await setStateAsync(this, {showCheckDetails: true});
+      await this.checkDetailsContainer.fadeInRight(500);
+    };
+
+    //handle add subject check transition
+    if(didChangeSelected && !prevEmptySelected && currEmptySelected){
+      //selected trans. to unchecked
+      await this.checkSubjContainer.fadeOutRight(500);
+      await setStateAsync(this, {showCheckSubject: false});
+      await this.checkSubjContainer.fadeInRight(500);
+
+    } else if(didChangeSelected && prevEmptySelected && !currEmptySelected){
+      //selected trans. to check
+      await this.checkSubjContainer.fadeOutRight(500);
+      await setStateAsync(this, {showCheckSubject: true});
+      await this.checkSubjContainer.fadeInRight(500);
+    };
   };
 
   animatePulse(){
@@ -286,23 +339,15 @@ class HeaderCard extends React.PureComponent {
 
   _renderEditDetailsButton(){
     const { styles } = HeaderCard;
-    const { title, description } = this.props;
+    const { showCheckDetails } = this.state;
     
-    const showCheck = validateNotEmpty(title) && validateNotEmpty(description);
-    const Checkmark = showCheck?(
-      <Animatable.View
-        animation={'fadeInRight'}
-        delay={250}
-        duration={750}
-        useNativeDriver={true}
-      >
-        <Icon
-          name={'ios-checkmark-circle'}
-          type={'ionicon'}
-          color={'white'}
-          size={24}
-        />
-      </Animatable.View>
+    const Checkmark = showCheckDetails?(
+      <Icon
+        name={'ios-checkmark-circle'}
+        type={'ionicon'}
+        color={'white'}
+        size={24}
+      />
     ):(
       <Icon
         name={'ios-radio-button-off'}
@@ -328,30 +373,30 @@ class HeaderCard extends React.PureComponent {
         iconSize={24}
         {...{text, subtitle}}
       >
-        {Checkmark}
+        <Animatable.View
+          ref={r => this.checkDetailsContainer = r}
+          animation={'fadeIn'}
+          delay={500}
+          duration={1000}
+          useNativeDriver={true}
+        >
+          {Checkmark}        
+        </Animatable.View>
       </IconButton>
     );
   };
 
   _renderAddSubjectButton(){
     const { styles } = HeaderCard;
-    const { selected } = this.props;
+    const { showCheckSubject } = this.state;
 
-    const showCheck = (selected || []).length > 0;
-    const Checkmark = showCheck?(
-      <Animatable.View
-        animation={'fadeInRight'}
-        delay={250}
-        duration={750}
-        useNativeDriver={true}
-      >
-        <Icon
-          name={'ios-checkmark-circle'}
-          type={'ionicon'}
-          color={'white'}
-          size={24}
-        />
-      </Animatable.View>
+    const Checkmark = showCheckSubject?(
+      <Icon
+        name={'ios-checkmark-circle'}
+        type={'ionicon'}
+        color={'white'}
+        size={24}
+      />
     ):(
       <Icon
         name={'ios-radio-button-off'}
@@ -376,7 +421,15 @@ class HeaderCard extends React.PureComponent {
         iconSize={24}
         {...{text, subtitle}}
       >
-        {Checkmark}
+        <Animatable.View
+          ref={r => this.checkSubjContainer = r}        
+          animation={'fadeIn'}
+          delay={500}
+          duration={2000}
+          useNativeDriver={true}
+        >
+          {Checkmark}
+        </Animatable.View>
       </IconButton>
     );
   };
@@ -425,6 +478,7 @@ class TopInidcator extends React.Component {
     container: {
       flex: 1,
       width: '100%',
+      overflow: 'hidden',
       ...Platform.select({
         ios: {
           backgroundColor: 'rgba(255,255,255,0.2)'
@@ -432,14 +486,20 @@ class TopInidcator extends React.Component {
       }),
     },
     indicatorContainer: {
-      flex: 1,
+      position: 'absolute',
+      width: '100%',
+      height: 55,
       flexDirection: 'row',
       paddingHorizontal: 12,
       paddingVertical: 10,
       alignItems: 'center',
     },
-    textContainer: {
+    iconTextContainer: {
       flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    textContainer: {
       marginLeft: 7,
     },
     label: {
@@ -468,28 +528,23 @@ class TopInidcator extends React.Component {
     const { initiallyCollapsed } = props;
 
     //animation values
-    this.expandedHeight = new Value(55);
+    //this.expandedHeight = new Value(55);
     this.progress = new Value(initiallyCollapsed? 0 : 100);
 
     //interpolated values
-    this.height = cond(eq(this.expandedHeight, -1), 0, interpolate(this.progress, {
-      inputRange : [0, 100],
-      outputRange: [0, this.expandedHeight],
-      extrapolate: 'clamp',
-    }));
-    this.opacity = interpolate(this.progress, {
-      inputRange : [0, 100],
-      outputRange: [0, 1],
+    this.height = interpolate(this.progress, {
+      inputRange : [0, 1],
+      outputRange: [0, 55],
       extrapolate: 'clamp',
     });
     this.scale = interpolate(this.progress, {
-      inputRange : [0, 100],
+      inputRange : [0, 1],
       outputRange: [0.9, 1],
       extrapolate: 'clamp',
     });
     this.translateY = interpolate(this.progress, {
-      inputRange : [0, 100],
-      outputRange: [multiply(divide(this.expandedHeight, 2), -1), 0],
+      inputRange : [0, 1],
+      outputRange: [-27, 0],
       extrapolate: 'clamp',
     });
 
@@ -513,19 +568,30 @@ class TopInidcator extends React.Component {
     };
   };
 
+  //------ event handlers ------
+  /** emitter: animate when remaining items change */
   _handleOnChangeRemainingQuizItems = () => {
     this.indicator.pulse(750);
   };
-
+  
+  /** emitter: animate when remaining items maxed out */
   _handleOnQuestionTotalMaxed = () => {
     this.indicator.shake(750);
   };
 
+  /** indicator pressed: show alert dialog */
+  _handleOnPressIndicator = () => {
+    Alert.alert(
+      'Remaining Items',
+      'How many questions you can add to the quiz. Max amount can be adjusted in Edit Details.',
+    );
+  };
+
   /** expand or collapse the forms */
-  expand(expand){
+  async expand(expand){
     const config = {
-      duration: 350,
-      toValue : expand? 100 : 0,
+      duration: 300,
+      toValue : expand? 1 : 0,
       easing  : Easing.inOut(Easing.ease),
     };
 
@@ -533,6 +599,7 @@ class TopInidcator extends React.Component {
       this.isExpanded = expand;
       //start animation
       const animation = timing(this.progress, config);
+      await timeout(500);
       animation.start();
     };
   };
@@ -543,20 +610,26 @@ class TopInidcator extends React.Component {
 
     return(
       <Fragment>
-        <Icon
-          name={'ios-information-circle'}
-          type={'ionicon'}
-          size={26}
-          color={PURPLE.A700}
-        />
-        <View style={styles.textContainer}>
-          <Text style={styles.label}>
-            {'Remaining Items'}
-          </Text>
-          <Text style={styles.subtitle}>
-            {`${maxItemsQuiz - questionsTotal} questions remaining`}
-          </Text>
-        </View>
+        <TouchableOpacity
+          style={styles.iconTextContainer}
+          onPress={this._handleOnPressIndicator}
+          activeOpacity={0.7}
+        >
+          <Icon
+            name={'ios-information-circle'}
+            type={'ionicon'}
+            size={26}
+            color={PURPLE.A700}
+          />
+          <View style={styles.textContainer}>
+            <Text style={styles.label}>
+              {'Remaining Items'}
+            </Text>
+            <Text style={styles.subtitle}>
+              {`${maxItemsQuiz - questionsTotal} questions remaining`}
+            </Text>
+          </View>
+        </TouchableOpacity>
         <Animatable.View 
           ref={r => this.indicator = r}
           style={styles.indicatorCountContainer}
@@ -594,7 +667,7 @@ class TopInidcator extends React.Component {
     const { styles } = TopInidcator;
     const containerStyle = {
       height: this.height,
-      opacity: this.opacity,
+      opacity: this.progress,
       transform: [
         { scale: this.scale },
         { translateY: this.translateY, }
@@ -774,7 +847,7 @@ class Stepper extends React.PureComponent {
 
   _handleOnLayout = (event) => {
     const {x, y, width, height} = event.nativeEvent.layout;
-    console.log('Stepper: ' + height);
+    //console.log('Stepper: ' + height);
   };
   
   _handleOnChangeText = (text) => {
@@ -1273,6 +1346,7 @@ class CreateCustomQuizList extends React.Component {
       marginBottom: 5,
       marginLeft: 12,
     },
+    //header styles
     indicatorText: {
       fontSize: 26,
       fontWeight: '700',
@@ -1284,10 +1358,44 @@ class CreateCustomQuizList extends React.Component {
       color: PURPLE[1200],
       opacity: 0.9
     },
+    //empty card styles
+    card: {
+      flexDirection: 'row',
+      paddingVertical: 15,
+    },  
+    image: {
+      width: 75, 
+      height: 75,
+      marginRight: 12,
+      marginVertical: 12,
+    },
+    headerTextContainer: {
+      flex: 1, 
+      alignItems: 'center', 
+      justifyContent: 'center', 
+    },
+    headerTitle: {
+      color: '#512DA8',
+      fontSize: 20, 
+      fontWeight: '800'
+    },
+    headerSubtitle: {
+      fontSize: 16, 
+      ...Platform.select({
+        ios: {
+          fontWeight: '200'
+        },
+        android: {
+          fontWeight: '100',
+          color: '#424242'
+        },
+      })
+    },
   });
 
   constructor(props){
     super(props);
+    this.imageHeader = require('../../assets/icons/clipboard-circle.png');
     this.state = {
       showHeader: false,
     };
@@ -1300,8 +1408,8 @@ class CreateCustomQuizList extends React.Component {
     const prevModules   = prevProps.modules;
     const prevQuizItems = prevProps.quizItems;
 
-    const didChangeModules   = (prevModules   != modules  );
-    const didChangeQuizItems = (prevQuizItems != quizItems);
+    const didChangeModules   = ((prevModules   || []).length != (modules   || []).length);
+    const didChangeQuizItems = ((prevQuizItems || []).length != (quizItems || []).length);
     const didChange = (didChangeModules || didChangeQuizItems);
 
     const isCurrentlyEmpty   = (quizItems    .length == 0);
@@ -1361,10 +1469,10 @@ class CreateCustomQuizList extends React.Component {
     const { styles } = CreateCustomQuizList;
     const { quizItems, selectedModules } = this.props;
     const { showHeader } = this.state;
+    if(!showHeader) return null;
 
     const countModules = (selectedModules || []).length;
     const countQuiz    = (quizItems       || []).length;
-    if(!showHeader) return null;
 
     const animation = Platform.select({
       ios: 'fadeInUp', 
@@ -1390,12 +1498,45 @@ class CreateCustomQuizList extends React.Component {
     );
   };
 
-  _renderFooter(){
+  _renderFooter = () => {
     return(
       <IconFooter
         animateIn={false}
         hide={false}
       />
+    );
+  };
+
+  _renderEmpty = () => {
+    const { styles } = CreateCustomQuizList;
+    const animation = Platform.select({
+      ios    : 'fadeInUp',
+      android: 'zoomIn'  ,
+    });
+
+    return(
+      <Animatable.View
+        duration={750}
+        easing={'ease-in-out'}
+        useNativeDriver={true}
+        {...{animation}}
+      >
+        <Card style={styles.card}>
+          <Animatable.Image
+            source={this.imageHeader}
+            style={styles.image}
+            animation={'pulse'}
+            easing={'ease-in-out'}
+            iterationCount={"infinite"}
+            duration={5000}
+            useNativeDriver={true}
+          />
+          <View style={styles.headerTextContainer}>
+            <Text style={styles.headerTitle   }>No Items Yet</Text>
+            <Text style={styles.headerSubtitle}>Press the "Add Subjects" button to insert some items here Random questions will then be selected from those subjects.</Text>
+          </View>
+        </Card>
+      </Animatable.View>
     );
   };
 
@@ -1409,6 +1550,7 @@ class CreateCustomQuizList extends React.Component {
         keyExtractor={this._keyExtractor}
         ListHeaderComponent={this._renderHeader}
         ListFooterComponent={this._renderFooter}
+        ListEmptyComponent={this._renderEmpty}
         {...otherProps}
       />
     );
@@ -1477,7 +1619,7 @@ export class CreateQuizScreen extends React.Component {
       const computedAllocation = isLast? remainingItems : itemsPerSubject;
       const allocatedItems = (computedAllocation > questionsCount)? questionsCount : computedAllocation; 
 
-      console.log("allocatedItems: " + allocatedItems);
+      //console.log("allocatedItems: " + allocatedItems);
 
       //update remaining items
       remainingItems -= allocatedItems;
@@ -1651,7 +1793,7 @@ export class CreateQuizScreen extends React.Component {
   };
 
   /** flatlist render item: when remove item button is pressed */
-  _handleOnPressDelete = (subjectData) => {
+  _handleOnPressDelete = async (subjectData) => {
     const { events } = CreateQuizScreen;
     const { selected } = this.state;
 
@@ -1670,11 +1812,23 @@ export class CreateQuizScreen extends React.Component {
     const questionsTotal = CreateQuizScreen.computeTotalAllocated(newSelected);
     this.emitter.emit(events.onChangeRemainingQuizItems);
 
-    //update selected items and questiontotal without deleted
-    this.setState({
-      selected: newSelected,
-      questionsTotal,
-    });
+    if(newSelected.length == 0){
+      await this.listContainer.fadeOut(300);
+      await setStateAsync(this, {mountList: false});
+      await setStateAsync(this, {
+        mountList: true,
+        selected: newSelected,
+        questionsTotal,
+      });
+      await this.listContainer.fadeInUp(300);
+
+    } else {
+      //update selected items and questiontotal without deleted
+      this.setState({
+        selected: newSelected,
+        questionsTotal,
+      });
+    };
   };
 
   /** when alert ok button is pressed */
@@ -1750,8 +1904,8 @@ export class CreateQuizScreen extends React.Component {
       this.emitter.emit(events.onChangeRemainingQuizItems);
     };
 
-    console.log('questionsTotal: ' + questionsTotal);
-    console.log('new_subject   : ' + new_subject.subjectname);
+    //console.log('questionsTotal: ' + questionsTotal);
+    //console.log('new_subject   : ' + new_subject.subjectname);
 
     this.setState({
       selected: new_subjects,
@@ -1852,6 +2006,8 @@ export class CreateQuizScreen extends React.Component {
           contentInset ={{top: HEADER_HEIGHT}}
           contentOffset={{x: 0, y: -HEADER_HEIGHT}}
           stickyHeaderIndices={[0]}
+          keyboardDismissMode={'on-drag'}
+          keyboardShouldPersistTaps={'never'}
         >
           <TopInidcator
             ref={r => this.topInidcator = r}

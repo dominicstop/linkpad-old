@@ -202,10 +202,18 @@ export class SwipableModal extends React.PureComponent {
   hideModal = async () => {
     const { mountModal } = this.state;
     if(mountModal){
+      await Promise.all([
+        this.rootContainer.bounceOutDown(750),
+        this.modalShadow.fadeOut(750)
+      ]);
+
+      /**
       this._interactable.snapTo({index: 1});  
       await new Promise(resolve => {
         this.stopCallback = resolve;
       });
+      */
+      
       this.stopCallback = null;  
       await setStateAsync(this, {mountModal: false});
     };
@@ -266,7 +274,7 @@ export class SwipableModal extends React.PureComponent {
 
     return(
       <Animatable.View
-        ref={r => this._modalShadow = r}
+        ref={r => this.modalShadow = r}
         style={styles.float}
         animation={'fadeIn'}
         duration={750}
@@ -333,12 +341,13 @@ export class SwipableModal extends React.PureComponent {
 
     return (
       <View style={styles.float}>
+        {this._renderShadow()}
         <Animatable.View
           ref={r => this.rootContainer = r}
+          style={styles.wrapper}
           useNativeDriver={true}
           pointerEvents={'box-none'}
         >
-          {this._renderShadow()}
           {this._renderInteractable()}
         </Animatable.View>
       </View>
