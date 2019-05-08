@@ -66,11 +66,16 @@ class NextButton extends React.PureComponent {
   };
 
   setActive = (active) => {
-    this.setState({active});
-    InteractionManager.runAfterInteractions(async () => {
-      await this.container.pulse(750);
-      await this.container.pulse(750);
-    });
+    const prevActive = this.state.active;
+
+    //did change
+    if(prevActive != active){
+      InteractionManager.runAfterInteractions(async () => {
+        await this.container.fadeOutRight(300);
+        await setStateAsync(this, {active}); 
+        await this.container.fadeInRight(500);
+      });
+    };
   };
 
   render(){
@@ -287,6 +292,8 @@ class HeaderCard extends React.PureComponent {
 
     //handle add subject check transition
     if(didChangeSelected && !prevEmptySelected && currEmptySelected){
+      //set header next button to inactive
+      _nextButtonRef && _nextButtonRef.setActive(false);
       //selected trans. to unchecked
       await this.checkSubjContainer.fadeOutRight(500);
       await setStateAsync(this, {showCheckSubject: false});
