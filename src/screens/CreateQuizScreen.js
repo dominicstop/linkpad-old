@@ -66,9 +66,10 @@ class NextButton extends React.PureComponent {
   };
 
   setActive = (active) => {
+    //store prev active state
     const prevActive = this.state.active;
 
-    //did change
+    //did active change
     if(prevActive != active){
       InteractionManager.runAfterInteractions(async () => {
         await this.container.fadeOutRight(300);
@@ -530,6 +531,7 @@ class TopInidcator extends React.Component {
     },
   });
 
+  //------ life cyecle events ------
   constructor(props){
     super(props);
     const { initiallyCollapsed } = props;
@@ -575,6 +577,24 @@ class TopInidcator extends React.Component {
     };
   };
 
+  //------ functions ------
+  /** expand or collapse the forms */
+  async expand(expand){
+    const config = {
+      duration: 300,
+      toValue : expand? 1 : 0,
+      easing  : Easing.inOut(Easing.ease),
+    };
+
+    if(this.isExpanded != expand){
+      this.isExpanded = expand;
+      //start animation
+      const animation = timing(this.progress, config);
+      await timeout(500);
+      animation.start();
+    };
+  };
+
   //------ event handlers ------
   /** emitter: animate when remaining items change */
   _handleOnChangeRemainingQuizItems = () => {
@@ -594,23 +614,7 @@ class TopInidcator extends React.Component {
     );
   };
 
-  /** expand or collapse the forms */
-  async expand(expand){
-    const config = {
-      duration: 300,
-      toValue : expand? 1 : 0,
-      easing  : Easing.inOut(Easing.ease),
-    };
-
-    if(this.isExpanded != expand){
-      this.isExpanded = expand;
-      //start animation
-      const animation = timing(this.progress, config);
-      await timeout(500);
-      animation.start();
-    };
-  };
-
+  //------ render ------
   _renderContent(){
     const { styles } = TopInidcator;
     const { questionsTotal, maxItemsQuiz } = this.props;
@@ -1820,6 +1824,7 @@ export class CreateQuizScreen extends React.Component {
     this.emitter.emit(events.onChangeRemainingQuizItems);
 
     if(newSelected.length == 0){
+      this.topInidcator.expand(false);
       await this.listContainer.fadeOut(300);
       await setStateAsync(this, {mountList: false});
       await setStateAsync(this, {
