@@ -177,27 +177,48 @@ export class SwipableModal extends React.PureComponent {
 
   constructor(props) {
     super(props);
+
     this._deltaY = new Animated.Value(Screen.height - 100);
+    this.stopCallback = null;
+
     this.state = {
       mountModal: false,
+      mount: false,
     };
+  };
 
-
-  }
-
-  showModal = () => {
-    const { mountModal } = this.state;
+  showModal = async () => {
+    const { mountModal, mount } = this.state;
     if(!mountModal){
-      this.setState({mountModal: true});
-    }
+      await setStateAsync(this, {
+        mountModal: true,
+        ...(!mount && {
+          mount: true,
+        }) 
+      });
+
+      //await this._rootView.bounceInUp(800);
+
+
+      let loop = true;
+      while(loop){
+        this._interactable.snapTo({index: 0});
+        this.stopCallback = () => loop = false;
+        await timeout(750);
+      };
+      this.stopCallback = null;
+    };
   };
 
   hideModal = async () => {
     const { mountModal } = this.state;
     if(mountModal){
-      this._modalShadow.fadeOut(750);
-      await this._rootView.bounceOutDown(500);
-      this.setState({mountModal: false});
+      this._interactable.snapTo({index: 1});  
+      await new Promise(resolve => {
+        this.stopCallback = resolve;
+      });
+      this.stopCallback = null;  
+      await setStateAsync(this, {mountModal: false});
     };
   };
 
@@ -213,16 +234,25 @@ export class SwipableModal extends React.PureComponent {
     onModalHide && onModalHide();
   };
 
+  _handleOnStop = () => {
+    const callback = this.stopCallback;
+    callback && callback();
+  };
+
   _handleOnSnap = async ({nativeEvent}) => {
     const { index, x , y } = nativeEvent;
-    
     const isHidden = y >= Screen.height;
+
     if(isHidden){
+      //wait for modal to finish animation
+      await new Promise(resolve => this.stopCallback = resolve);
+      //reset stop callback
+      this.stopCallback = null;
+
       //unmount modal when hidden
-      await this._rootView.fadeOut(500);
-      this.setState({mountModal: false});
+      await setStateAsync(this, {mountModal: false});
       this.onModalHide();
-    }
+    };
 
     //call callback in props
     const { onSnap } = this.props;
@@ -235,6 +265,8 @@ export class SwipableModal extends React.PureComponent {
 
   _renderShadow = () => {
     const { styles } = SwipableModal;
+    const { mountModal } = this.state;
+    if(!mountModal) return null;
 
     const shadowOpacity = Platform.select({
       ios: 0.5, android: 0.75,
@@ -275,6 +307,7 @@ export class SwipableModal extends React.PureComponent {
   _renderInteractable(){
     const { styles } = SwipableModal;
     const { snapPoints, hitSlop } = this.props;
+    const { mountModal } = this.state;
 
     const modalHeight = Screen.height - MODAL_DISTANCE_FROM_TOP;
     const finalRadius = 22;
@@ -296,15 +329,16 @@ export class SwipableModal extends React.PureComponent {
       <Interactable.View
         verticalOnly={true}
         boundaries={{ top: -300 }}
-        initialPosition={snapPoints[0]}
+        initialPosition={snapPoints[1]}
         animatedValueY={this._deltaY}
         ref={r => this._interactable = r}
         onSnap={this._handleOnSnap}
+        onStop={this._handleOnStop}
         {...{snapPoints, hitSlop}}
       >
         <View style={styles.panelContainer}>
           <Animated.View style={[styles.panel, panelStyle]}>
-            {this.props.children}
+            {mountModal && this.props.children}
           </Animated.View>
         </View>
       </Interactable.View>
@@ -313,21 +347,23 @@ export class SwipableModal extends React.PureComponent {
 
   render(){
     const { styles } = SwipableModal;
-    if(!this.state.mountModal) return null;
+    const { mountModal, mount } = this.state;
+    if(!mount) return null;
+
+    const floatStyle = (mountModal? {
+        marginTop: 0,
+      }:{
+        marginTop: Screen.height + 100,
+      }
+    );
 
     return (
-      <View style={styles.float}>
+      <View 
+        style={[styles.float, floatStyle]}
+        pointerEvents={'box-none'}
+      >
         {this._renderShadow()}
-        <Animatable.View
-          ref={r => this._rootView = r}
-          style={styles.wrapper}
-          animation={'bounceInUp'}
-          duration={800}
-          pointerEvents={'box-none'}
-          useNativeDriver={true}
-        >
-          {this._renderInteractable()}
-        </Animatable.View>
+        {this._renderInteractable()}
       </View>
     );
   };
@@ -751,6 +787,10 @@ export class SubjectModal extends React.PureComponent {
 
     this.modalClosedCallback = null;
     this.modalOpenedCallback = null;
+  };
+
+  componentWillUnmount(){
+    alert('unmounted');
   };
 
   initModels(moduleData, subjectData){
