@@ -18,7 +18,7 @@ import { PlatformTouchableIconButton, RippleBorderButton, IconButton } from '../
 import * as Animatable from 'react-native-animatable';
 import KeyboardSpacer from 'react-native-keyboard-spacer';
 import { BlurView } from 'expo';
-import { NavigationEvents  } from 'react-navigation';
+import { NavigationEvents, Header } from 'react-navigation';
 import { Divider, Icon } from 'react-native-elements';
 
 import Animated, { Easing } from 'react-native-reanimated';
@@ -471,22 +471,17 @@ class HeaderCard extends React.PureComponent {
 
 class TopInidcator extends React.Component {
   static propTypes = {
-    collapsedHeight: PropTypes.number,
-    initiallyCollapsed: PropTypes.bool,
     questionsTotal: PropTypes.number, 
     maxItemsQuiz: PropTypes.number,
   };
 
   static defaultProps = {
-    collapsedHeight: 0,
-    initiallyCollapsed: true,
   };
 
   static styles = StyleSheet.create({
     container: {
       flex: 1,
       width: '100%',
-      overflow: 'hidden',
       ...Platform.select({
         ios: {
           backgroundColor: 'rgba(255,255,255,0.2)'
@@ -494,7 +489,6 @@ class TopInidcator extends React.Component {
       }),
     },
     indicatorContainer: {
-      position: 'absolute',
       width: '100%',
       height: 55,
       flexDirection: 'row',
@@ -531,34 +525,8 @@ class TopInidcator extends React.Component {
     },
   });
 
-  //------ life cyecle events ------
   constructor(props){
     super(props);
-    const { initiallyCollapsed } = props;
-
-    //animation values
-    //this.expandedHeight = new Value(55);
-    this.progress = new Value(initiallyCollapsed? 0 : 100);
-
-    //interpolated values
-    this.height = interpolate(this.progress, {
-      inputRange : [0, 1],
-      outputRange: [0, 55],
-      extrapolate: 'clamp',
-    });
-    this.scale = interpolate(this.progress, {
-      inputRange : [0, 1],
-      outputRange: [0.9, 1],
-      extrapolate: 'clamp',
-    });
-    this.translateY = interpolate(this.progress, {
-      inputRange : [0, 1],
-      outputRange: [-27, 0],
-      extrapolate: 'clamp',
-    });
-
-    this.isHeightSet = false;
-    this.isExpanded = !initiallyCollapsed;
   };
 
   componentWillMount() {
@@ -574,24 +542,6 @@ class TopInidcator extends React.Component {
         events.onQuestionTotalMaxed,
         this._handleOnQuestionTotalMaxed
       );
-    };
-  };
-
-  //------ functions ------
-  /** expand or collapse the forms */
-  async expand(expand){
-    const config = {
-      duration: 300,
-      toValue : expand? 1 : 0,
-      easing  : Easing.inOut(Easing.ease),
-    };
-
-    if(this.isExpanded != expand){
-      this.isExpanded = expand;
-      //start animation
-      const animation = timing(this.progress, config);
-      await timeout(500);
-      animation.start();
     };
   };
 
@@ -654,7 +604,7 @@ class TopInidcator extends React.Component {
     );
   };
 
-  _renderContainer(){
+  render(){
     const { styles } = TopInidcator;
     return Platform.select({
       ios: (
@@ -673,33 +623,18 @@ class TopInidcator extends React.Component {
       ),
     });
   };
-
-  render(){
-    const { styles } = TopInidcator;
-    const containerStyle = {
-      height: this.height,
-      opacity: this.progress,
-      transform: [
-        { scale: this.scale },
-        { translateY: this.translateY, }
-      ],
-    };
-    
-    return(
-      <Animated.View style={[styles.container, containerStyle]}>
-        {this._renderContainer()}
-      </Animated.View>
-    );
-  };
 };
 
 class Stepper extends React.PureComponent {
   static propTypes = {
-    value        : PropTypes.number,
-    valueMin     : PropTypes.number,
-    valueMax     : PropTypes.number,
-    valueSteps   : PropTypes.number,
-    onChangeValue: PropTypes.func  ,
+    value     : PropTypes.number,
+    valueMin  : PropTypes.number,
+    valueMax  : PropTypes.number,
+    valueSteps: PropTypes.number,
+    //callback events
+    onChangeValue: PropTypes.func,
+    //for animation
+    initiallyCollapsed: PropTypes.bool,
   };
 
   static defaultProps = {
@@ -809,7 +744,7 @@ class Stepper extends React.PureComponent {
 
     //animation values
     this.expandedHeight = new Value(120);
-    this.progress       = new Value(0);
+    this.progress       = new Value(props.initiallyCollapsed? 0 : 100);
 
     //interpolated values
     this.height = interpolate(this.progress, {
@@ -1306,6 +1241,7 @@ class QuizItem extends React.PureComponent {
         valueMin={1}
         valueSteps={5}
         onChangeValue={this._handleOnChangeValueStepper}
+        initiallyCollapsed={shouldDistributeEqually}
         {...{valueMax, subjectData}}       
       />
     );
@@ -1601,7 +1537,12 @@ export class CreateQuizScreen extends React.Component {
       fontSize: 18,
       fontWeight: 'bold',
       marginLeft: 10,
-    }
+    },
+    topIndicatorContainer: {
+      position: 'absolute', 
+      width: '100%', 
+      marginTop: Header.HEIGHT,
+    },
   });
 
   /** event emitter event types */
@@ -1683,6 +1624,7 @@ export class CreateQuizScreen extends React.Component {
     super(props);
 
     this.setupReferences();
+    this.setupAnimations();
     this.emitter = new EventEmitter();
 
     this.state = {
@@ -1758,6 +1700,59 @@ export class CreateQuizScreen extends React.Component {
     _onPressNext = this._handleOnPressNext;
   };
 
+  setupAnimations(){
+    //----- animated values ------
+    /** height of the top indicator */
+    this.expandedHeight = new Value(75);
+    this.progress = new Value(0);
+
+    //interpolated values
+    this.height = interpolate(this.progress, {
+      inputRange : [0, 1],
+      outputRange: [0, this.expandedHeight],
+      extrapolate: 'clamp',
+    });
+    this.scale = interpolate(this.progress, {
+      inputRange : [0, 1],
+      outputRange: [0.85, 1],
+      extrapolate: 'clamp',
+    });
+    this.translateY = interpolate(this.progress, {
+      inputRange : [0, 1],
+      outputRange: [multiply(this.expandedHeight, -1), 0],
+      extrapolate: 'clamp',
+    });
+
+    this.isHeightMeasured = false;
+    this.isExpanded = false;
+  };
+
+  async expandTopIndicator(expand){
+    //set height if not measured yet
+    if(!this.isHeightMeasured){
+      //get indicator height
+      const height = await new Promise(resolve => 
+        this.indicatorContainer.measure((x, y, w, h) => resolve(h))
+      );
+      //set indicator height
+      this.expandedHeight.setValue(height);
+    };
+
+    const config = {
+      duration: 300,
+      toValue : expand? 1 : 0,
+      easing  : Easing.inOut(Easing.ease),
+    };
+
+    if(this.isExpanded != expand){
+      this.isExpanded = expand;
+      //start animation
+      const animation = timing(this.progress, config);
+      await timeout(500);
+      animation.start();
+    };
+  };
+
   async getModules(){
     const modules_raw = await ModuleStore.read();
     const modules = ModuleItemModel.wrapArray(modules_raw);
@@ -1824,7 +1819,7 @@ export class CreateQuizScreen extends React.Component {
     this.emitter.emit(events.onChangeRemainingQuizItems);
 
     if(newSelected.length == 0){
-      this.topInidcator.expand(false);
+      this.expandTopIndicator(false);
       await this.listContainer.fadeOut(300);
       await setStateAsync(this, {mountList: false});
       await setStateAsync(this, {
@@ -1962,7 +1957,7 @@ export class CreateQuizScreen extends React.Component {
 
     if(selected.length > 0){
       //show top indicator
-      this.topInidcator.expand(true);
+      this.expandTopIndicator(true);
     };
   };
 
@@ -1993,23 +1988,45 @@ export class CreateQuizScreen extends React.Component {
   };
 
   //------ render ------
-  /** create quiz header card */
-  _renderHeader = () => {
-    const {title, description, selected} = this.state;
-    
+  /** create quiz header and items list */
+  _renderContents = () => {
+    const { title, description, selected, mountList, modules, selectedModules, questionsTotal, maxItemsQuiz, shouldDistributeEqually } = this.state;
+
     return(
-      <HeaderCard
-        ref={r => this.headerCard = r}
-        onPressEditDetails={this._handleOnPressEditDetails}
-        onPressAddSubject={this._handleOnPressAddSubject}
-        {...{title, description, selected}} 
-      />
+      <Fragment>
+        <HeaderCard
+          ref={r => this.headerCard = r}
+          onPressEditDetails={this._handleOnPressEditDetails}
+          onPressAddSubject={this._handleOnPressAddSubject}
+          {...{title, description, selected}} 
+        />
+        <Animatable.View
+          ref={r => this.listContainer = r}
+          useNativeDriver={true}
+        >
+          {mountList && <CreateCustomQuizList 
+            emitter={this.emitter}
+            quizItems={selected}
+            onChangeValueStepper={this._handleOnChangeValueStepper}
+            onPressDelete={this._handleOnPressDelete}
+            {...{modules, selectedModules, maxItemsQuiz, shouldDistributeEqually, questionsTotal}}
+          />}
+        </Animatable.View>
+      </Fragment>
     );
   };
 
   render(){
     const { styles } = CreateQuizScreen;
-    const { mountList, modules, selectedModules, questionsTotal, maxItemsQuiz, shouldDistributeEqually } = this.state;
+    const { questionsTotal, maxItemsQuiz } = this.state;
+
+    const topIndicatorContainerStyle = {
+      opacity: this.progress,
+      transform: [
+        { scale: this.scale },
+        { translateY: this.translateY },
+      ],
+    };
 
     return(
       <ViewWithBlurredHeader hasTabBar={false}>
@@ -2017,31 +2034,22 @@ export class CreateQuizScreen extends React.Component {
         <ScrollView
           contentInset ={{top: HEADER_HEIGHT}}
           contentOffset={{x: 0, y: -HEADER_HEIGHT}}
-          stickyHeaderIndices={[0]}
           keyboardDismissMode={'on-drag'}
           keyboardShouldPersistTaps={'never'}
-        >
-          <TopInidcator
-            ref={r => this.topInidcator = r}
-            initiallyCollapsed={true}
-            emitter={this.emitter}
-            {...{questionsTotal, maxItemsQuiz}}
-          />
-          {this._renderHeader()}
-          <Animatable.View
-            ref={r => this.listContainer = r}
-            useNativeDriver={true}
-          >
-            {mountList && <CreateCustomQuizList 
-              emitter={this.emitter}
-              quizItems={this.state.selected}
-              onChangeValueStepper={this._handleOnChangeValueStepper}
-              onPressDelete={this._handleOnPressDelete}
-              {...{modules, selectedModules, maxItemsQuiz, shouldDistributeEqually, questionsTotal}}
-            />}
-          </Animatable.View>
+        > 
+          <Animated.View style={{height: this.height}}/>
+          {this._renderContents()}     
         </ScrollView>
-        <KeyboardSpacer/>
+        <Animated.View style={[styles.topIndicatorContainer, topIndicatorContainerStyle]}>
+          <View ref={r => this.indicatorContainer = r}>
+            <TopInidcator
+              ref={r => this.topInidcator = r}
+              initiallyCollapsed={true}
+              emitter={this.emitter}
+              {...{questionsTotal, maxItemsQuiz}}
+            />
+          </View>
+        </Animated.View>
       </ViewWithBlurredHeader>
     );
   };
