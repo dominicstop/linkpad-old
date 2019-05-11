@@ -106,17 +106,25 @@ class NextButton extends React.PureComponent {
 };
 
 class TitleDescription extends React.PureComponent {
+  static propTypes = {
+    title: PropTypes.string,
+    description: PropTypes.string,
+    distribution: PropTypes.string,
+  };
+
   static styles = StyleSheet.create({
     headerTextContainer: {
-      flex: 1, 
+      flex: 1,
+      justifyContent: 'center',
     },
-    headerTitle: {
+    //default styles
+    defaultHeaderTitle: {
       color: '#512DA8',
       fontSize: 20, 
       fontWeight: '800',
       textAlign: 'center',
     },
-    headerSubtitle: {
+    defaultHeaderSubtitle: {
       flex: 1,
       fontSize: 16,
       textAlign: 'justify',
@@ -132,6 +140,19 @@ class TitleDescription extends React.PureComponent {
         },
       })
     },
+    //alternate styles
+    altHeaderText: {
+      marginTop: 3,    
+    },
+    altHeaderTitle: {
+      fontSize: 17,
+      fontWeight: '700',
+      color: '#512DA8',      
+    },
+    altHeaderDesc: {
+      fontSize: 16, 
+      fontWeight: '300'   
+    },
   });
 
   constructor(props){
@@ -141,37 +162,110 @@ class TitleDescription extends React.PureComponent {
     this.state = {
       title: props.title,
       description: props.description,
+      distribution: props.distribution,
+      useDefault: true,
     };
   };
 
-  changeText = async ({title, description}) => {
-    await this.textContainer.fadeOut(250);
-    this.setState({title, description});
+  changeText = async ({title, description, distribution}) => {
+    const prevState = this.state;
+    //check for changes
+    const didChangeTitle        = (prevState.title        != title       );
+    const didChangeDescription  = (prevState.description  != description );
+    const didChangeDistribution = (prevState.distribution != distribution);
 
-    if(Platform.OS == 'ios'){
-      await this.textContainer.fadeInUp(250);
+    if(!(didChangeTitle || didChangeDescription) && didChangeDistribution){
+      //only distribution has changed
+      await this.distribution.fadeOut(200);
+      //change text
+      this.setState({useDefault: false, distribution});
+      //animate out
+      await this.distribution.fadeIn(300);
 
     } else {
-      await this.textContainer.fadeIn(250);
+      //either title/desc./distribution has changed 
+      await this.textContainer.fadeOut(250);
+      //change text
+      this.setState({
+        useDefault: false,
+        title, description, distribution, 
+      });
+      //animate in
+      (Platform.OS == 'ios'
+        ? await this.textContainer.fadeInUp(250)
+        : await this.textContainer.fadeIn  (250)
+      );
     };
+  };
+
+  _renderDefault(){
+    const { styles } = TitleDescription;
+    const { title, description } = this.state;
+
+    const defaultTitle       = 'Create Quiz';
+    const defaultDescription = 'Give your custom quiz a title and a description so you can easily find it later.';
+
+    const defaultHeaderTitle = (title       == '')? defaultTitle       : title; 
+    const headerDescription  = (description == '')? defaultDescription : `Quiz Descripton – ${description}`; 
+
+    return(
+      <Fragment>
+        <Text 
+          style={styles.defaultHeaderTitle} 
+          numberOfLines={1} 
+        >
+          {defaultHeaderTitle}
+        </Text>
+        <Text style={styles.defaultHeaderSubtitle}>{headerDescription}</Text>
+      </Fragment>
+    );
+  };
+
+  _renderAlternate(){
+    const { styles } = TitleDescription;
+    const { title, description, distribution } = this.state;
+
+    return(
+      <Fragment>
+        <Text 
+          style={styles.altHeaderText} 
+          numberOfLines={1}
+        >
+          <Text style={styles.altHeaderTitle}>
+            {'Title: '}
+          </Text>
+          <Text style={styles.altHeaderDesc}>
+            {title}
+          </Text>
+        </Text>
+        <Animatable.Text 
+          style={styles.altHeaderText}
+          ref={r => this.distribution = r}
+          numberOfLines={1}
+          useNativeDriver={true}
+        >
+          <Text style={styles.altHeaderTitle}>
+            {'Distribution: '}
+          </Text>
+          <Text style={styles.altHeaderDesc}>
+            {distribution}
+          </Text>
+        </Animatable.Text>
+        <Text style={styles.altHeaderText}>
+          <Text style={styles.altHeaderTitle}>
+            {'Description: '}
+          </Text>
+          <Text style={styles.altHeaderDesc}>
+            {description}
+          </Text>
+        </Text>
+      </Fragment>
+    );
   };
 
   render(){
     const { styles } = TitleDescription;
-    const { title, description } = this.state;
-
-    const defaultTitle = (global.usePlaceholder
-      ? 'Ridiculus Eges'
-      : 'Create Quiz'
-    );
-
-    const defaultDescription = (global.usePlaceholder
-      ? 'Nulla vitae elit libero, a pharetra augue. Maecenas faucibus mollis interdum.'
-      : 'Give your custom quiz a title and a description so you can easily find it later.'
-    );
-
-    const headerTitle       = (title       == '')? defaultTitle       : title; 
-    const headerDescription = (description == '')? defaultDescription : `Quiz Descripton – ${description}`; 
+    const { useDefault } = this.state;
 
     return(
       <Animatable.View 
@@ -179,13 +273,7 @@ class TitleDescription extends React.PureComponent {
         ref={r => this.textContainer = r}
         useNativeDriver={true}
       >
-        <Text 
-          style={styles.headerTitle} 
-          numberOfLines={1} 
-        >
-          {headerTitle}
-        </Text>
-        <Text style={styles.headerSubtitle}>{headerDescription}</Text>
+        {useDefault? this._renderDefault() : this._renderAlternate()}
       </Animatable.View>
     );
   };
@@ -193,9 +281,12 @@ class TitleDescription extends React.PureComponent {
 
 class HeaderCard extends React.PureComponent {
   static propTypes = {
+    selected: PropTypes.array,
+    //details prop
     title: PropTypes.string,
     description: PropTypes.string,
-    selected: PropTypes.array,
+    itemsPerSubject: PropTypes.number,
+    shouldDistributeEqually: PropTypes.bool,
     //event callbacks
     onPressEditDetails: PropTypes.func,
     onPressAddSubject : PropTypes.func,
@@ -248,14 +339,21 @@ class HeaderCard extends React.PureComponent {
   };
 
   async componentDidUpdate(prevProps){
-    const { title, description, selected } = this.props;
+    const { title, description, selected, shouldDistributeEqually, itemsPerSubject } = this.props;
 
     //check if title or desc changed
-    const didChangeTitle       = title       != prevProps.title;
-    const didChangeDescription = description != prevProps.description;
-
+    const didChangeTitle       = (prevProps.title       != title      );
+    const didChangeDescription = (prevProps.description != description);
     //check if either title/desc changed
     const didChangeDetails = (didChangeTitle || didChangeDescription); 
+    //check if title or description not empty
+    const detailsNotEmpty = validateNotEmpty(title) ||  validateNotEmpty(description);
+
+    //check if switch and itemsPerSubject changed
+    const didChangeSwitch = (prevProps.shouldDistributeEqually != shouldDistributeEqually);
+    const didChangeItems  = (prevProps.itemsPerSubject         != itemsPerSubject        );
+    //check if either switch/itemsPerSubject changed
+    const didChangeDistributions = (didChangeSwitch || didChangeItems);
 
     //get prev and current selected count
     const currSelected = (selected           || []).length;
@@ -273,8 +371,10 @@ class HeaderCard extends React.PureComponent {
     const didChangeSelected = (prevSelected != currSelected);
 
     //trans. and change title/desc
-    if(didChangeDetails){
-      this.titleDescription.changeText({title, description});
+    if((didChangeDetails || didChangeDistributions) && detailsNotEmpty){
+      const distributionText = (itemsPerSubject == null)? 'Equal' : `${itemsPerSubject} item per subject`;
+      const distribution = shouldDistributeEqually? distributionText : 'Manual';
+      this.titleDescription.changeText({title, description, distribution});
     };
 
     //handle edit details check transition
@@ -1731,11 +1831,12 @@ export class CreateQuizScreen extends React.Component {
 
     this.state = {
       mountList: true,
-      modules: null,    
+      modules: null, 
+      itemsPerSubject: null,  
       //values for quizdetails modal
       title: '',
       description: '',
-      maxItemsQuiz: 50, 
+      maxItemsQuiz: 90, 
       shouldDistributeEqually: true,
       //values for createquiz modal
       selected: [],
@@ -1754,8 +1855,8 @@ export class CreateQuizScreen extends React.Component {
     const prevSelected = prevState.selected;
 
     //check if details has changed
-    const didChangeTitle   = (prevTitle != title      );
-    const didChangeDesc    = (prevDesc  != description);
+    const didChangeTitle = (prevTitle != title      );
+    const didChangeDesc  = (prevDesc  != description);
 
     //check if subjects has changed
     const didChangeSubject = (prevSelected.length != selected.length);
@@ -1903,7 +2004,7 @@ export class CreateQuizScreen extends React.Component {
   /** flatlist render item: when remove item button is pressed */
   _handleOnPressDelete = async (subjectData) => {
     const { events } = CreateQuizScreen;
-    const { selected } = this.state;
+    const { selected, maxItemsQuiz, shouldDistributeEqually } = this.state;
 
     const deletedSubject = SubjectItem.wrap(subjectData);
     const deletedSubjectID = `${deletedSubject.indexID_module}-${deletedSubject.indexid}`;
@@ -1920,23 +2021,27 @@ export class CreateQuizScreen extends React.Component {
     const questionsTotal = CreateQuizScreen.computeTotalAllocated(newSelected);
     this.emitter.emit(events.onChangeRemainingQuizItems);
 
+    //compute distribution
+    const { itemsPerSubject } = CreateQuizScreen.computeDistributions({maxItemsQuiz, subjects: selected});
+    const nextState = {
+      questionsTotal,
+      selected: newSelected,
+      ...(shouldDistributeEqually && {itemsPerSubject}),
+    };
+
     if(newSelected.length == 0){
       this.expandTopIndicator(false);
       await this.listContainer.fadeOut(300);
       await setStateAsync(this, {mountList: false});
       await setStateAsync(this, {
         mountList: true,
-        selected: newSelected,
-        questionsTotal,
+        ...nextState,
       });
       await this.listContainer.fadeInUp(300);
 
     } else {
       //update selected items and questiontotal without deleted
-      this.setState({
-        selected: newSelected,
-        questionsTotal,
-      });
+      this.setState(nextState);
     };
   };
 
@@ -2053,7 +2158,8 @@ export class CreateQuizScreen extends React.Component {
     if(prevCount > nextCount){
       await this.listContainer.fadeOut(300);
       await setStateAsync(this, {
-        selected: items, 
+        selected: items,
+        itemsPerSubject: distributions.itemsPerSubject,
         //pass down to state
         selectedModules, questionsTotal
       });
@@ -2061,7 +2167,8 @@ export class CreateQuizScreen extends React.Component {
 
     } else {
       this.setState({
-        selected: items, 
+        selected: items,
+        itemsPerSubject: distributions.itemsPerSubject,
         //pass down to state
         selectedModules, questionsTotal
       });
@@ -2122,6 +2229,8 @@ export class CreateQuizScreen extends React.Component {
       nextState.questionsTotal = CreateQuizScreen.computeTotalAllocated(items);
       //append selected to nextState
       nextState.selected = items;
+      //update itemsPerSubject
+      nextState.itemsPerSubject = distributions.itemsPerSubject;
     };
 
     //update state
@@ -2134,7 +2243,7 @@ export class CreateQuizScreen extends React.Component {
   //------ render ------
   /** create quiz header and items list */
   _renderContents = () => {
-    const { title, description, selected, mountList, modules, selectedModules, questionsTotal, maxItemsQuiz, shouldDistributeEqually } = this.state;
+    const { title, description, selected, mountList, modules, selectedModules, questionsTotal, maxItemsQuiz, shouldDistributeEqually, itemsPerSubject } = this.state;
 
     return(
       <Fragment>
@@ -2142,7 +2251,7 @@ export class CreateQuizScreen extends React.Component {
           ref={r => this.headerCard = r}
           onPressEditDetails={this._handleOnPressEditDetails}
           onPressAddSubject={this._handleOnPressAddSubject}
-          {...{title, description, selected}} 
+          {...{title, description, selected, itemsPerSubject, shouldDistributeEqually}} 
         />
         <Animatable.View
           ref={r => this.listContainer = r}
