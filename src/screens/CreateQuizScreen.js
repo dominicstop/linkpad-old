@@ -629,8 +629,10 @@ class Stepper extends React.PureComponent {
   static propTypes = {
     value     : PropTypes.number,
     valueMin  : PropTypes.number,
-    valueMax  : PropTypes.number,
     valueSteps: PropTypes.number,
+    //max values
+    valueMaxSubject: PropTypes.number,
+    valueMaxQuiz   : PropTypes.number,
     //callback events
     onChangeValue: PropTypes.func,
     //for animation
@@ -740,11 +742,50 @@ class Stepper extends React.PureComponent {
 
   constructor(props){
     super(props);
+    this.setupAnimations();
     const { MODES } = Stepper;
 
+    const mode = (
+      props.valueMaxSubject <= 1? MODES.DISABLED :
+      props.valueMaxQuiz    == 0? MODES.MAX      : MODES.NORMAL
+    );
+
+    this.state = {
+      value: props.value,
+      prevValue: null,
+      shouldDistributeEqually: props.shouldDistributeEqually,
+      mode,
+    };
+  };
+
+  componentDidUpdate(prevProps){
+    const { MODES } = Stepper;
+    const { value, valueMaxQuiz } = this.props;
+    const nextMode = this.getModeFromValue(value);
+
+    const didChangeMode    = (prevProps.mode         != nextMode    );
+    const didChangeValue   = (prevProps.value        != value       );
+    const didChangeMaxQuiz = (prevProps.valueMaxQuiz != valueMaxQuiz);
+
+    //new value has been computed, so update local value
+    const nextState = {
+      ...(didChangeValue && {value}),
+    };
+
+    if(didChangeMaxQuiz && valueMaxQuiz == 0){
+      //new maxQuiz, update to MAX if no more remaining
+      this.setState({mode: MODES.MAX, ...nextState});
+
+    } else if(didChangeMaxQuiz && didChangeMode){
+      //new maxQuiz, update to the apropriate mode
+      this.setState({mode: nextMode, ...nextState});
+    };
+  };
+
+  setupAnimations(){
     //animation values
     this.expandedHeight = new Value(120);
-    this.progress       = new Value(props.initiallyCollapsed? 0 : 100);
+    this.progress       = new Value(this.props.initiallyCollapsed? 0 : 100);
 
     //interpolated values
     this.height = interpolate(this.progress, {
@@ -764,14 +805,18 @@ class Stepper extends React.PureComponent {
     });
 
     this.isExpanded = false;
-    this.state = {
-      mode: MODES.NORMAL,
-      value: props.value,
-      shouldDistributeEqually: props.shouldDistributeEqually,
-    };
   };
 
   expand = (expand) => {
+    const { MODES } = Stepper;
+    const { valueMaxQuiz } = this.props;  
+    const { mode } = this.state;
+
+    const shouldUpdate = (mode != MODES.MAX && mode != MODES.DISABLED);
+    if(valueMaxQuiz == 0 && shouldUpdate){
+      this.setState({mode: MODES.MAX});
+    };
+
     const config = {
       duration: 350,
       toValue : expand? 100 : 0,
@@ -791,6 +836,41 @@ class Stepper extends React.PureComponent {
     return({ value, shouldDistributeEqually });
   };
 
+  getValueMax(){
+    const { valueMaxSubject, valueMaxQuiz } = this.props;
+    const { value } = this.state;
+    //should not exceed max subject or max quiz
+    return Math.min(valueMaxSubject, (value + valueMaxQuiz));
+  };
+
+  getValueStep(){
+    const valueMax = this.getValueMax();
+    
+    if(valueMax <= 10){ return 1  };
+    if(valueMax <= 20){ return 2  };
+    if(valueMax <= 30){ return 5  };
+    if(valueMax >= 50){ return 10 };
+  };
+
+  getModeFromValue(value){
+    const { MODES } = Stepper;  
+    const { valueMin, valueMaxSubject } = this.props;
+    const valueMax = this.getValueMax();
+
+    if(valueMaxSubject <= 1){
+      return MODES.DISABLED;
+
+    } else if(value <= valueMin){ 
+      return MODES.MIN;
+
+    } else if(value >= valueMax){
+      return MODES.MAX;
+
+    } else {
+      return MODES.NORMAL;
+    };
+  };
+
   _handleOnLayout = (event) => {
     const {x, y, width, height} = event.nativeEvent.layout;
     //console.log('Stepper: ' + height);
@@ -805,83 +885,104 @@ class Stepper extends React.PureComponent {
     this.textinput.focus();
   };
 
+  _handleOnFocus = () => {
+    const { value } = this.state;
+    this.setState({prevValue: value});
+    this.textinputContainer.pulse(300);
+  };
+
   _handleOnBlur = () => {
     const { MODES } = Stepper;
-    const { valueMin, valueMax, onChangeValue } = this.props;
-    const { value } = this.state;
+    const { valueMin, onChangeValue, valueMaxQuiz } = this.props;
+    const { value, prevValue } = this.state;
 
-    if(value < valueMin){
-      onChangeValue && onChangeValue(valueMin);
-      this.setState({
-        value: valueMin,
-        mode : MODES.MIN,
-      });
+    const valueMax = this.getValueMax();
+    const nextValue = (
+      value > valueMax? valueMax : 
+      value < valueMin? valueMin : value
+    );
 
-    } else if(value > valueMax){
-      onChangeValue && onChangeValue(valueMax);
-      this.setState({
-        value: valueMax,
-        mode : MODES.MAX,
-      });
+    const mode = this.getModeFromValue(nextValue);
+    if(valueMaxQuiz == 0){
+      this.textinputContainer.shake(500);
+      onChangeValue && onChangeValue(prevValue, mode);
+      this.setState({value: prevValue, mode});
 
-    } else {
-      onChangeValue && onChangeValue(value);
-      this.setState({mode : MODES.NORMAL});
+    }else if(mode == MODES.NORMAL){
+      this.textinputContainer.pulse(300);
+      onChangeValue && onChangeValue(nextValue, mode);
+      this.setState({nextValue, mode});
+
+    } else if(mode == MODES.MIN){
+      this.textinputContainer.shake(500);
+      onChangeValue && onChangeValue(valueMin, mode);
+      this.setState({value: valueMin, mode});
+
+    } else if(mode == MODES.MAX){
+      this.textinputContainer.shake(500);
+      onChangeValue && onChangeValue(valueMax, mode);
+      this.setState({value: valueMax, mode});
     };
   };
 
   _handleOnPressStepperLeft = () => {
     const { MODES } = Stepper;
-    const { valueMin, valueSteps, onChangeValue } = this.props;
+    const { valueMin, onChangeValue } = this.props;
     const { value } = this.state;
     
+    const valueSteps = this.getValueStep();
     const nextValue = (value - valueSteps);
-    const didChange = nextValue != value;
-    if(nextValue >= valueMin){
-      this.textinputContainer.pulse(300);
-      onChangeValue && onChangeValue(value);
-      this.setState({
-        value: nextValue,
-        mode : MODES.NORMAL,
-      });
 
-    } else if(nextValue < valueMin ){
+    const mode = this.getModeFromValue(nextValue);
+    if(value <= valueMin){
       this.textinputContainer.shake(500);
-      onChangeValue && onChangeValue(valueMin);
-      this.setState({
-        value: valueMin,
-        mode : MODES.MIN,
-      });
+
+    } else if(mode == MODES.MIN){
+      this.textinputContainer.pulse(300);
+      onChangeValue && onChangeValue(valueMin, mode);
+      this.setState({value: valueMin, mode: MODES.MIN});
+
+    } else if(mode == MODES.NORMAL){
+      this.textinputContainer.pulse(300);
+      onChangeValue && onChangeValue(nextValue, mode);
+      this.setState({value: nextValue, mode: MODES.NORMAL});
+
+    } else if(mode == MODES.DISABLED){
+      this.textinputContainer.shake(500);
     };
   };
 
   _handleOnPressStepperRight = () => {
     const { MODES } = Stepper;
-    const { valueMax, valueSteps, onChangeValue } = this.props;
+    const { onChangeValue } = this.props;
     const { value } = this.state;
-    
-    const nextValue = (value + valueSteps);
-    if(nextValue <= valueMax){
-      this.textinputContainer.pulse(300);
-      onChangeValue && onChangeValue(value);
-      this.setState({
-        value: nextValue,
-        mode : MODES.NORMAL,
-      });
 
-    } else if(nextValue > valueMax){
+    const valueSteps = this.getValueStep();
+    const valueMax   = this.getValueMax ();
+    const nextValue  = (value + valueSteps);
+    
+    const mode = this.getModeFromValue(nextValue);
+    if(value >= valueMax){
       this.textinputContainer.shake(500);
-      onChangeValue && onChangeValue(valueMax);      
-      this.setState({
-        value: valueMax,
-        mode : MODES.MAX,
-      });
+
+    } else if(mode == MODES.MAX){
+      this.textinputContainer.pulse(300);
+      onChangeValue && onChangeValue(valueMax, mode);
+      this.setState({value: valueMax, mode});
+
+    } else if(mode == MODES.NORMAL){
+      this.textinputContainer.pulse(300);
+      onChangeValue && onChangeValue(nextValue, mode);
+      this.setState({value: nextValue, mode: MODES.NORMAL});
+
+    } else if(mode == MODES.DISABLED){
+      this.textinputContainer.shake(500);
     };
   };
 
   _renderTextInput(){
     const { styles } = Stepper;
-    const { valueMax } = this.props;
+    const { valueMaxSubject } = this.props;
 
     return(
       <TouchableOpacity
@@ -902,12 +1003,13 @@ class Stepper extends React.PureComponent {
             multiline={false}
             onChangeText={this._handleOnChangeText}
             onBlur={this._handleOnBlur}
+            onFocus={this._handleOnFocus}
             value={`${this.state.value}`}
             selectTextOnFocus={false}
             contextMenuHidden={true}
           />
           <Text style={styles.textinputLabel}>
-            {`of ${valueMax} items`}
+            {`of ${valueMaxSubject} items`}
           </Text>
         </Animatable.View>
       </TouchableOpacity>
@@ -919,13 +1021,13 @@ class Stepper extends React.PureComponent {
     const { mode } = this.state;
     
     const leftStepperStyle = {
-      ...(mode === MODES.MIN
+      ...(mode === MODES.MIN || mode === MODES.DISABLED
         ? {backgroundColor: PURPLE[300]} 
         : {backgroundColor: PURPLE[500]} 
       ),
     };
     const rightStepperStyle = {
-      ...(mode === MODES.MAX
+      ...(mode === MODES.MAX || mode === MODES.DISABLED
         ? {backgroundColor: PURPLE[300]} 
         : {backgroundColor: PURPLE[500]} 
       ),
@@ -1123,9 +1225,9 @@ class QuizItem extends React.PureComponent {
   };
 
   /** called whenever the stepper value changes */
-  _handleOnChangeValueStepper = (value) => {
+  _handleOnChangeValueStepper = (value, mode) => {
     const { onChangeValueStepper, subjectData } = this.props;
-    onChangeValueStepper && onChangeValueStepper(value, subjectData);
+    onChangeValueStepper && onChangeValueStepper(value, subjectData, mode);
   };
 
   /** delete button: when delete button is pressed */
@@ -1223,26 +1325,21 @@ class QuizItem extends React.PureComponent {
   /** question +/- stepper */
   _renderStepper(){
     const { questionsTotal, maxItemsQuiz, subjectData, shouldDistributeEqually } = this.props;
-    //if(shouldDistributeEqually) return null;
-
     const { questions, itemsPerSubject, allocatedItems } = SubjectItem.wrap(subjectData);
 
     //max value should not exceed the number of questions in a subject
     const valueMaxSubject = questions.length;
     //max value should not exceed the quiz's remaining items 
     const valueMaxQuiz = (maxItemsQuiz - questionsTotal);
-    //should not exceed max subject or max quiz
-    const valueMax = Math.min(valueMaxSubject, valueMaxQuiz);
-
+    
     return(
       <Stepper
         ref={r => this.stepper = r}
         value={allocatedItems}
         valueMin={1}
-        valueSteps={5}
         onChangeValue={this._handleOnChangeValueStepper}
         initiallyCollapsed={shouldDistributeEqually}
-        {...{valueMax, subjectData}}       
+        {...{subjectData, valueMaxSubject, valueMaxQuiz}}       
       />
     );
   };
@@ -1557,31 +1654,36 @@ export class CreateQuizScreen extends React.Component {
 
   //------ static methods ------
   static computeDistributions({maxItemsQuiz, subjects}){
-    const items = SubjectItem.wrapArray(subjects);
+    const subjectsWrapped = SubjectItem.wrapArray(subjects);
 
     const itemsPerSubject = Math.round(maxItemsQuiz / subjects.length);
     let remainingItems = maxItemsQuiz;
+    let someItemsEmpty = false;
 
-    return items.map((subject, index) => {
+    const items = subjectsWrapped.map((subject, index) => {
       const { questions } = subject;
       const questionsCount = questions.length;
       const isLast = (index == subjects.length - 1);
 
       //max
       const computedAllocation = isLast? remainingItems : itemsPerSubject;
-      const allocatedItems = (computedAllocation > questionsCount)? questionsCount : computedAllocation; 
+      const allocatedItems = (computedAllocation > questionsCount)? questionsCount : computedAllocation;
+      if(allocatedItems <= 0) someItemsEmpty = true;
 
-      //console.log("allocatedItems: " + allocatedItems);
+      /*
+      console.log("questionsCount: " + questionsCount);
+      console.log("itemsPerSubject: " + itemsPerSubject);
+      console.log("computedAllocation: " + computedAllocation);
+      console.log("allocatedItems: " + allocatedItems);
+      console.log("remainingItems: " + remainingItems);
+      console.log("\n\n");
+      */
 
       //update remaining items
       remainingItems -= allocatedItems;
-
-      return {
-        ...subject,
-        itemsPerSubject,
-        allocatedItems,
-      };
+      return { ...subject, itemsPerSubject, allocatedItems };
     });
+    return { items, itemsPerSubject, remainingItems, someItemsEmpty };
   };
 
   static computeTotalAllocated(subjects){
@@ -1879,7 +1981,8 @@ export class CreateQuizScreen extends React.Component {
   };
   
   /** flatlist render item: stepper value change */
-  _handleOnChangeValueStepper = (value, subjectData) => {
+  _handleOnChangeValueStepper = (value, subjectData, mode) => {
+    const { MODES } = Stepper;  
     const { events } = CreateQuizScreen;
     const { selected, questionsTotal, maxItemsQuiz } = this.state;
 
@@ -1902,7 +2005,7 @@ export class CreateQuizScreen extends React.Component {
     //total questions allocated
     const nextQuestionsTotal = CreateQuizScreen.computeTotalAllocated(new_subjects);
     const didChange  = (questionsTotal != nextQuestionsTotal);
-    const isTotalMax = (questionsTotal >= maxItemsQuiz);
+    const isTotalMax = (nextQuestionsTotal >= maxItemsQuiz);
     
     if(isTotalMax){
       this.emitter.emit(events.onQuestionTotalMaxed);      
@@ -1930,14 +2033,27 @@ export class CreateQuizScreen extends React.Component {
     const nextCount = selected.length;
     const didChange = (prevCount != nextCount);
 
-    const selectedWithAllocation = CreateQuizScreen.computeDistributions({maxItemsQuiz, subjects: selected});
-    const questionsTotal         = CreateQuizScreen.computeTotalAllocated(selectedWithAllocation);
-    const selectedModules        = CreateQuizScreen.combineModulesAndSubjects(modules, selected);
+    const distributions = CreateQuizScreen.computeDistributions({subjects: selected, maxItemsQuiz});
+    const items = (distributions.someItemsEmpty
+      ? distributions.items.filter((item) => item.allocatedItems != 0 )
+      : distributions.items
+    );
+
+    const questionsTotal  = CreateQuizScreen.computeTotalAllocated(items);
+    const selectedModules = CreateQuizScreen.combineModulesAndSubjects(modules, selected);
+
+    if(distributions.someItemsEmpty){
+      await new Promise(resolve => Alert.alert(
+        'Items Removed',
+        'Some of the subjects were removed because the items exceeds the question limit.',
+        [{text: 'OK', onPress: () => resolve()}],
+      ));
+    };
 
     if(prevCount > nextCount){
       await this.listContainer.fadeOut(300);
       await setStateAsync(this, {
-        selected: selectedWithAllocation, 
+        selected: items, 
         //pass down to state
         selectedModules, questionsTotal
       });
@@ -1945,14 +2061,14 @@ export class CreateQuizScreen extends React.Component {
 
     } else {
       this.setState({
-        selected: selectedWithAllocation, 
+        selected: items, 
         //pass down to state
         selectedModules, questionsTotal
       });
     };
 
     if(didChange){
-      this.emitter.emit(events.onChangeRemainingQuizItems);            
+      this.emitter.emit(events.onChangeRemainingQuizItems);       
     };
 
     if(selected.length > 0){
@@ -1966,25 +2082,53 @@ export class CreateQuizScreen extends React.Component {
     const { events } = CreateQuizScreen;
     const prevState = this.state;
 
+    let nextState = {title, description};
     //check shouldDistributeEqually has changed
-    const didChange = shouldDistributeEqually != prevState.shouldDistributeEqually;
+    const didChangeSwitch  = (prevState.shouldDistributeEqually != shouldDistributeEqually);
+    const didChangeStepper = (prevState.maxItemsQuiz != value);
 
-    if(didChange){
-      await setStateAsync(this, {
-        maxItemsQuiz: value,
-        //pass down params to state
-        title, description, shouldDistributeEqually
-      });
-      //emit event: shouldDistributeEqually switch has changed
-      this.emitter.emit(events.onEqualItemsToggled, {shouldDistributeEqually});            
-
-    } else {
-      this.setState({
-        maxItemsQuiz: value,
-        //pass down params to state
-        title, description, shouldDistributeEqually
-      });
+    //only shouldDistributeEqually changed
+    if(didChangeSwitch){
+      nextState.shouldDistributeEqually = shouldDistributeEqually;
     };
+    
+    //only maxItemsQuiz changed
+    if(didChangeStepper){
+      //update max item quiz with stepper value
+      nextState.maxItemsQuiz = value;
+
+      //recompute the allocations for each subject
+      const distributions = CreateQuizScreen.computeDistributions({
+        subjects: prevState.selected,
+        maxItemsQuiz: value,
+      });
+
+      //filter out empty items
+      const items = (distributions.someItemsEmpty
+        ? distributions.items.filter((item) => item.allocatedItems != 0 )
+        : distributions.items
+      );
+
+      //if items were removed, show dialog
+      if(distributions.someItemsEmpty){
+        await new Promise(resolve => Alert.alert(
+          'Items Removed',
+          'Some of the subjects were removed because the items exceeds the question limit.',
+          [{text: 'OK', onPress: () => resolve()}],
+        ));
+      };
+
+      //update total question count
+      nextState.questionsTotal = CreateQuizScreen.computeTotalAllocated(items);
+      //append selected to nextState
+      nextState.selected = items;
+    };
+
+    //update state
+    await setStateAsync(this, nextState);
+    //emit event: shouldDistributeEqually switch has changed and remaining items changed
+    didChangeSwitch  && this.emitter.emit(events.onEqualItemsToggled, {shouldDistributeEqually});
+    didChangeStepper && this.emitter.emit(events.onChangeRemainingQuizItems);     
   };
 
   //------ render ------
