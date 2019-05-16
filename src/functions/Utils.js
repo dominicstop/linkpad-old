@@ -232,3 +232,9 @@ export function spreadIfTrue(condition, value = {}){
   return condition? value : {};
 };
 
+export function asyncAlert({title, desc}){
+  return new Promise(resolve => Alert.alert(
+    title, desc,
+    [{text: 'OK', onPress: () => resolve()}],
+  ));
+};

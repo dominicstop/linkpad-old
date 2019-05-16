@@ -18,6 +18,7 @@ import * as Animatable from 'react-native-animatable';
 import {  } from 'react-native-paper';
 import NavigationService from '../NavigationService';
 import { ifIphoneX, isIphoneX } from 'react-native-iphone-x-helper';
+import { SubjectItem } from '../models/ModuleModels';
 
 const { Lottie } = DangerZone;
 
@@ -69,156 +70,17 @@ class CheckAnimation extends React.PureComponent {
   };
 };
 
-class QuizCard extends React.PureComponent {
-  static propTypes = {
-    title: PropTypes.string,
-    description: PropTypes.string,
-    selected: PropTypes.array,
-    selectedModules: PropTypes.array,
-  };
-
-  static styles = StyleSheet.create({
-    image: {
-      width: 70, 
-      height: 70,
-      marginRight: 12,
-      marginVertical: 12,
-    },
-    textLabel: {
-      fontWeight: '600', 
-      fontSize: 17,
-      marginBottom: 3,
-    },
-    textLabelValue: {
-      fontWeight: '200',
-    },
-    detailTitle: {
-      color: '#0c0c0c',
-      fontSize: 17,
-      ...Platform.select({
-        ios: {
-          fontWeight: '500'
-        },
-        android: {
-          fontWeight: '900'
-        }
-      }),
-    },
-    detailSubtitle: Platform.select({
-      ios: {
-        fontSize: 22,
-        fontWeight: '200',
-        color: '#161616',
-      },
-      android: {
-        fontSize: 22,
-        fontWeight: '100',
-        color: '#424242'
-      },
-    }),
-  });
-
-  constructor(props){
-    super(props);
-
-    const { selected, selectedModules } = props;
-
-    let questionCount = 0;
-    selected.forEach((subject) => {
-      const { questions = [] } = subject;
-      questionCount += questions.length;
-    });
-
-    console.log(questionCount);
-
-
-    this.state = {
-      subjectCount: selected.length,
-      moduleCount: selectedModules.length,
-      questionCount, 
-    };
-
-    this.imageCard = require('../../assets/icons/notes-pencil.png');
-  };
-
-  _renderTitleDesc(){
-    const { styles } = QuizCard;
-    const { title, description } = this.props;
- 
-    return(
-      <View style={{flex: 1}}>
-        <Text style={styles.textLabel} numberOfLines={1}>
-          {'Title: '}
-          <Text style={styles.textLabelValue}>
-            {title}
-          </Text>
-        </Text>
-        <Text style={styles.textLabel} numberOfLines={4}>
-          {'Description: '}
-          <Text style={styles.textLabelValue}>
-            {description}
-          </Text>
-        </Text>
-      </View>
-    );
-  };
-
-  _renderDetails(){
-    const { styles } = QuizCard;
-    const { subjectCount, moduleCount, questionCount } = this.state;
-
-    return(
-      <View>
-        <View style={{flexDirection: 'row'}}>
-          <View style={{flex: 1}}>
-            <Text numberOfLines={1} style={styles.detailTitle   }>{'Modules: '}</Text>
-            <Text numberOfLines={1} style={styles.detailSubtitle}>{`${moduleCount} ${plural('moodule', module)}`}</Text>
-          </View>
-          <View style={{flex: 1}}>
-            <Text numberOfLines={1} style={styles.detailTitle   }>{'Subjects: '}</Text>
-            <Text numberOfLines={1} style={styles.detailSubtitle}>{`${subjectCount} ${plural('subject', subjectCount)}`}</Text>
-          </View>
-        </View>
-        <View style={{flexDirection: 'row', marginTop: 7}}>
-          <View style={{flex: 1}}>
-            <Text numberOfLines={1} style={styles.detailTitle   }>{'Questions: '}</Text>
-            <Text numberOfLines={1} style={styles.detailSubtitle}>{`${questionCount} ${plural('question', questionCount)}`}</Text>
-          </View>
-        </View>
-      </View>
-    );
-  };
-
-  render(){
-    const { styles } = QuizCard;
-
-    return(
-      <Card>
-        <View style={{flexDirection: 'row', marginBottom: 5}}>
-          <Animatable.Image
-            source={this.imageCard}
-            style={styles.image}
-            animation={'pulse'}
-            easing={'ease-in-out'}
-            iterationCount={"infinite"}
-            duration={7000}
-            useNativeDriver={true}
-          />
-          {this._renderTitleDesc()}
-        </View>
-        <Divider style={{marginTop: 3, marginBottom: 10}}/>
-        {this._renderDetails()}
-      </Card>
-    );
-  };
-};
-
 class ModalContents extends React.PureComponent {
   static propTypes = {
     title: PropTypes.string,
     description: PropTypes.string,
     selected: PropTypes.array,
     selectedModules: PropTypes.array,
+    itemsPerSubject: PropTypes.number, 
+    maxItemsQuiz: PropTypes.number, 
+    questionsTotal: PropTypes.number,
+    shouldDistributeEqually: PropTypes.bool, 
+    //event callbacks
     onPressCreateQuiz: PropTypes.func,
     onPressCancel: PropTypes.func,
   };
@@ -231,7 +93,8 @@ class ModalContents extends React.PureComponent {
     },
     titleContainer: {
       flexDirection: 'row',
-      marginBottom: 3,
+      marginBottom: 1,
+      alignItems: 'center',
     },
     title: {
       color: '#160656',
@@ -252,10 +115,9 @@ class ModalContents extends React.PureComponent {
       fontSize: 16
     },
     body: {
-      borderTopColor: 'rgb(200, 200, 200)',
-      borderTopWidth: 1,
-      paddingTop: 10,
+      paddingTop: 5,
     },
+    //bottom button styles
     buttonsWrapper: {
       padding: 15,
       borderTopColor: 'rgb(200, 200, 200)',
@@ -293,16 +155,72 @@ class ModalContents extends React.PureComponent {
       fontSize: 17,
       textDecorationLine: 'underline'
     },
+    //card styles
+    titleDescContainer: {
+      flexDirection: 'row', 
+      marginBottom: 5
+    },
     image: {
-      width: 75, 
-      height: 75,
+      width: 70, 
+      height: 70,
       marginRight: 12,
       marginVertical: 12,
     },
+    textLabel: {
+      fontWeight: '600', 
+      fontSize: 17,
+      marginBottom: 3,
+    },
+    textLabelValue: {
+      fontWeight: '200',
+    },
+    //card details styles
+    detailRow: {
+      flexDirection: 'row', 
+      marginTop: 7
+    },
+    detailColumn: {
+      flex: 1,
+    },
+    detailTitle: {
+      color: '#0c0c0c',
+      fontSize: 17,
+      ...Platform.select({
+        ios: {
+          fontWeight: '500'
+        },
+        android: {
+          fontWeight: '900'
+        }
+      }),
+    },
+    detailSubtitle: Platform.select({
+      ios: {
+        fontSize: 22,
+        fontWeight: '300',
+        color: '#161616',
+      },
+      android: {
+        fontSize: 22,
+        fontWeight: '100',
+        color: '#424242'
+      },
+    }),
   });
 
   constructor(props){
     super(props);
+    this.imageCard = require('../../assets/icons/notes-pencil.png');
+
+    const subjects = SubjectItem.wrapArray((props.selected || []));
+    const questions = subjects.reduce((acc, curr) => {
+      acc.push(...(curr.questions));
+      return acc;
+    },[]);
+
+    this.state = {
+      totalQuestions: questions.length,
+    };
   };
 
   _handleOnPressCreateQuiz = () => {
@@ -315,27 +233,29 @@ class ModalContents extends React.PureComponent {
     onPressCancel && onPressCancel();
   };
 
+  _handleOnPressQuestion = () => {
+    Alert.alert(
+      "Total Questions",
+      "Shows how many questions will be taken across all of the available subjects you've selected."
+    );
+  };
+
+  /** top: modal header title and description */
   _renderTitle(){
     const { styles } = ModalContents;
 
-    const title = (global.usePlaceholder
-      ? 'Mollis Egestas Matt'
-      : "Custom Quiz Summary"
-    );
-
-    const description = (global.usePlaceholder
-      ? 'Cras justo odio, dapibus ac facilisis in, egestas eget quam. Praesent commodo.'
-      : "If you're done, press 'Create Quiz' to finalize and create your custom quiz."
-    );
+    //title and description
+    const title = "Custom Quiz Summary";
+    const description = "If you're done, press 'Create Quiz' to finalize and create your custom quiz.";
 
     return(
       <View style={styles.containerStyle}>
         <View style={styles.titleContainer}>
           <Icon
-            name={'note'}
-            type={'simple-line-icon'}
+            name={'ios-checkmark-circle'}
+            type={'ionicon'}
             color={'#512DA8'}
-            size={26}
+            size={28}
           />
           <Text style={styles.title}>{title}</Text>
         </View>
@@ -344,17 +264,95 @@ class ModalContents extends React.PureComponent {
     );
   };
 
+  /** body card: title, desc etc.  */
+  _renderCardTitleDesc(){
+    const { styles } = ModalContents;
+    const { title, description } = this.props;
+ 
+    return(
+      <View style={{flex: 1}}>
+        <Text style={styles.textLabel} numberOfLines={1}>
+          {'Title: '}
+          <Text style={styles.textLabelValue}>
+            {title}
+          </Text>
+        </Text>
+        <Text style={styles.textLabel} numberOfLines={4}>
+          {'Description: '}
+          <Text style={styles.textLabelValue}>
+            {description}
+          </Text>
+        </Text>
+      </View>
+    );
+  };
+
+  /** body card: rows of details */
+  _renderCardDetails(){
+    const { styles } = ModalContents;
+    const { questionsTotal, selected, selectedModules, maxItemsQuiz } = this.props;
+    const { totalQuestions } = this.state;
+
+    const moduleCount  = (selectedModules || []).length;
+    const subjectCount = (selected || []).length;
+
+    return(
+      <Fragment>
+        <View style={styles.detailRow}>
+          <View style={styles.detailColumn}>
+            <Text numberOfLines={1} style={styles.detailTitle   }>{'Modules: '}</Text>
+            <Text numberOfLines={1} style={styles.detailSubtitle}>{`${moduleCount} ${plural('module', module)}`}</Text>
+          </View>
+          <View style={styles.detailColumn}>
+            <Text numberOfLines={1} style={styles.detailTitle   }>{'Subjects: '}</Text>
+            <Text numberOfLines={1} style={styles.detailSubtitle}>{`${subjectCount} ${plural('subject', subjectCount)}`}</Text>
+          </View>
+        </View>
+        <View style={styles.detailRow}>
+          <TouchableOpacity 
+            style={styles.detailColumn}
+            onPress={this._handleOnPressQuestion}
+          >
+            <Text numberOfLines={1} style={styles.detailTitle   }>{'Questions: '}</Text>
+            <Text numberOfLines={1} style={styles.detailSubtitle}>{`${questionsTotal}/${totalQuestions} ${plural('item', questionsTotal)}`}</Text>
+          </TouchableOpacity>
+          <View style={styles.detailColumn}>
+            <Text numberOfLines={1} style={styles.detailTitle   }>{'Max Questions: '}</Text>
+            <Text numberOfLines={1} style={styles.detailSubtitle}>{`${maxItemsQuiz} ${plural('item', maxItemsQuiz)}`}</Text>
+          </View>
+        </View>
+      </Fragment>
+    );
+  };
+
+  /** center: contains the card details */
   _renderBody(){
     const { styles } = ModalContents;
     const {title, description, selected, selectedModules} = this.props;
 
     return(
       <View style={styles.body}>
-        <QuizCard {...{title, description, selected, selectedModules}}/>
+        <Card>
+          <View style={styles.titleDescContainer}>
+            <Animatable.Image
+              source={this.imageCard}
+              style={styles.image}
+              animation={'pulse'}
+              easing={'ease-in-out'}
+              iterationCount={"infinite"}
+              duration={7000}
+              useNativeDriver={true}
+            />
+            {this._renderCardTitleDesc()}
+          </View>
+          <Divider style={{marginTop: 3, marginBottom: 10}}/>
+          {this._renderCardDetails()}
+        </Card>
       </View>
     );
   };
 
+  /** bottom: conatains the modal buttons */
   _renderButtons(){
     const { styles } = ModalContents;
 
@@ -439,13 +437,17 @@ export class QuizFinishModal extends React.PureComponent {
       description: '',
       selected: [],
       selectedModules: [],
+      itemsPerSubject: -1, 
+      maxItemsQuiz: -1, 
+      shouldDistributeEqually: false, 
+      questionsTotal: -1,
     };
   };
 
-  openModal = async ({selected, selectedModules, title, description}) => {
+  openModal = async ({selected, selectedModules, title, description, itemsPerSubject, maxItemsQuiz, shouldDistributeEqually, questionsTotal}) => {
     this.setState({
       mountContent: true, 
-      selected, selectedModules, title, description
+      selected, selectedModules, title, description, itemsPerSubject, maxItemsQuiz, shouldDistributeEqually, questionsTotal
     });
 
     this._modal.showModal();
@@ -459,9 +461,9 @@ export class QuizFinishModal extends React.PureComponent {
   };
 
   _handleOnPressCreateQuiz = async () => {
-    const { title, description, selected } = this.state;
+    const { title, description, selected, itemsPerSubject, maxItemsQuiz, shouldDistributeEqually } = this.state;
 
-    const customQuiz = CreateCustomQuiz.createQuiz({title, description, selected});
+    const customQuiz = CreateCustomQuiz.createQuiz({title, description, selected, itemsPerSubject, maxItemsQuiz, shouldDistributeEqually});
     const new_quiz = customQuiz.quiz;
 
     const old_quizes = await CustomQuizStore.read() || [];
@@ -478,12 +480,12 @@ export class QuizFinishModal extends React.PureComponent {
   };
 
   _renderContent(){
-    const {title, description, selected, selectedModules} = this.state;
+    const {title, description, selected, selectedModules, itemsPerSubject, maxItemsQuiz, shouldDistributeEqually, questionsTotal} = this.state;
     return(
       <ModalContents 
         onPressCreateQuiz={this._handleOnPressCreateQuiz}
         onPressCancel={this._handleOnPressCancel}
-        {...{title, description, selected, selectedModules}}
+        {...{title, description, selected, selectedModules, itemsPerSubject, maxItemsQuiz, shouldDistributeEqually, questionsTotal}}
       />
     );
   };

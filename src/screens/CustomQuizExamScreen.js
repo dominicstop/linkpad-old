@@ -22,6 +22,7 @@ import { createStackNavigator } from 'react-navigation';
 import * as Animatable from 'react-native-animatable';
 import { Icon } from 'react-native-elements';
 import {CustomQuiz} from '../functions/CustomQuizStore';
+import { CustomQuizExamResultQAScreen } from './CustomQuizExamResultQAScreen';
 
 //custom header left component
 class CancelButton extends React.PureComponent {
@@ -268,6 +269,8 @@ class CustomQuizExamScreen extends React.Component {
   constructor(props){
     super(props);
     this.didShowAlert = false;
+    this.durations = [];
+    this.prevSnap = null;
 
     this.state = {
       startTime: getTimestamp(true),
@@ -291,6 +294,8 @@ class CustomQuizExamScreen extends React.Component {
     await timeout(100);
     //set header title total
     References && References.HeaderTitle.setTotal(questions.length);
+    //start recording the first item
+    this.recordDuration(0);
 
     //assign callbacks to header buttons
     References.CancelButton.onPress = this._handleOnPressHeaderCancel;
@@ -325,6 +330,28 @@ class CustomQuizExamScreen extends React.Component {
     this.quizExamDoneModal.openModal({quiz, ...customQuizListState});
   };
 
+  /** record how much time is spend on each item */
+  recordDuration(index){
+    const nextSnap = { index, timestamp: Date.now() };
+
+    if(this.prevSnap){
+      const prevSnap = this.prevSnap;
+      this.prevSnap = nextSnap;
+
+      this.durations.push({
+        index: prevSnap.index,
+        duration: nextSnap.timestamp - prevSnap.timestamp,
+        //extra/misc data 
+        timestampPrev: prevSnap.timestamp,
+        timestampNext: nextSnap.timestamp,
+        indexNext: index,
+      });
+
+    } else {
+      this.prevSnap = nextSnap;
+    };
+  };
+
   _onPressCancelAlertOK = () => {
     const { navigation } = this.props;
 
@@ -350,6 +377,7 @@ class CustomQuizExamScreen extends React.Component {
 
   _handleOnSnapToItem = (index) => {
     References && References.HeaderTitle.setIndex(index + 1);
+    this.recordDuration(index);
   };
 
   _onPressFinishAlertCancel = () => {
@@ -391,6 +419,10 @@ class CustomQuizExamScreen extends React.Component {
     const { navigation } = this.props;
     const { startTime  } = this.state;
 
+    //record duration of last item
+    const index = this._carousel.currentIndex;
+    this.recordDuration(index);
+
     //get data from previous screen: ExamScreen
     const quiz = navigation.getParam('quiz' , null);
 
@@ -400,6 +432,7 @@ class CustomQuizExamScreen extends React.Component {
       questionList: this.customQuizList.getQuestionList(), //list of questions shown
       answers     : this.customQuizList.getAnswers     (), //answered questions
       questions   : this.customQuizList.getQuestions   (), //all questions in quiz
+      durations   : this.durations,
       //pass down items
       timeStats, startTime, endTime, quiz
     };
@@ -451,9 +484,10 @@ class CustomQuizExamScreen extends React.Component {
 };
 
 const CustomQuizExamStack = createStackNavigator({
-    [ROUTES.CustomQuizExamRoute      ]: CustomQuizExamScreen,
-    [ROUTES.CustomQuizViewImageRoute ]: ViewImageScreen, 
-    [ROUTES.CustomQuizExamResultRoute]: CustomQuizExamResultScreen,
+    [ROUTES.CustomQuizExamRoute        ]: CustomQuizExamScreen,
+    [ROUTES.CustomQuizViewImageRoute   ]: ViewImageScreen, 
+    [ROUTES.CustomQuizExamResultRoute  ]: CustomQuizExamResultScreen,
+    [ROUTES.CustomQuizExamResultQARoute]: CustomQuizExamResultQAScreen 
   }, {
     headerMode: 'float',
     headerTransitionPreset: 'uikit',

@@ -372,7 +372,7 @@ class HeaderCard extends React.PureComponent {
 
     //trans. and change title/desc
     if((didChangeDetails || didChangeDistributions) && detailsNotEmpty){
-      const distributionText = (itemsPerSubject == null)? 'Equal' : `${itemsPerSubject} item per subject`;
+      const distributionText = (itemsPerSubject == null)? 'Equal' : `${itemsPerSubject} items per subject`;
       const distribution = shouldDistributeEqually? distributionText : 'Manual';
       this.titleDescription.changeText({title, description, distribution});
     };
@@ -1977,7 +1977,7 @@ export class CreateQuizScreen extends React.Component {
   //------ event handlers -------
   /** navbar: next button is pressed */
   _handleOnPressNext = () => {
-    const {selected, selectedModules, title, description} = this.state;
+    const {selected, selectedModules, title, description, itemsPerSubject, maxItemsQuiz, shouldDistributeEqually, questionsTotal} = this.state;
 
     const isValid = (isEmpty(title) || isEmpty(description));
 
@@ -1996,7 +1996,7 @@ export class CreateQuizScreen extends React.Component {
       );
     } else {
       this.finishModal.openModal({
-        selected, selectedModules, title, description
+        selected, selectedModules, title, description, itemsPerSubject, maxItemsQuiz, shouldDistributeEqually, questionsTotal
       });
     };
   };

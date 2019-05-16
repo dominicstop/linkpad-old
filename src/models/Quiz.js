@@ -7,15 +7,15 @@ import { replacePropertiesWithNull, replaceIfNull } from '../functions/Utils';
 export class QuizQuestion {
   /** obj properties with default values */
   static structure = {
-    answer           : ''  ,
-    explanation      : ''  ,
-    indexID_module   : -1  ,
-    indexID_subject  : -1  ,
-    indexID_question : -1  ,
-    photofilename    : ''  ,
-    photouri         : ''  ,
-    question         : ''  ,
-    choices          : [''],
+    answer           : '',
+    explanation      : '',
+    indexID_module   : -1,
+    indexID_subject  : -1,
+    indexID_question : -1,
+    photofilename    : '',
+    photouri         : '',
+    question         : '',
+    choices          : [],
   };
 
   /** wrap object with QuizQuestion.structure to prevent missing properties and enable VSCODE type intellesense */

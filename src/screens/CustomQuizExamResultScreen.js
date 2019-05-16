@@ -16,12 +16,17 @@ import SegmentedControlTab from "react-native-segmented-control-tab";
 
 import * as shape from 'd3-shape'
 import { BarChart, Grid, XAxis, YAxis } from 'react-native-svg-charts'
-import { LinearGradient, Stop, Defs } from 'react-native-svg'
+import { LinearGradient, Stop, Defs, G } from 'react-native-svg'
 
 import { STYLES, ROUTES , HEADER_HEIGHT, LOAD_STATE} from '../Constants';
-import { plural, isEmpty, timeout , formatPercent, ifTrue, callIfTrue} from '../functions/Utils';
+import { plural, isEmpty, timeout , formatPercent, ifTrue, callIfTrue, setStateAsync} from '../functions/Utils';
 import { BLUE , GREY, PURPLE, RED, GREEN} from '../Colors';
-import {CustomQuizResultsStore} from '../functions/CustomQuizResultsStore';
+import {CustomQuizResultsStore,  CustomQuizResultItem} from '../functions/CustomQuizResultsStore';
+
+import Animated, { Easing } from 'react-native-reanimated';
+import { QuestionItem } from '../models/ModuleModels';
+import { PlatformTouchableIconButton } from '../components/Buttons';
+const { set, cond, block, Value, timing, interpolate, and, or, onChange, eq, call, Clock, clockRunning, startClock, stopClock, debug, divide, multiply } = Animated;
 
 //declare animations
 Animatable.initializeRegistryWithDefinitions({
@@ -764,6 +769,11 @@ class ScoreProgressCard extends React.PureComponent {
     segmentedControlContainer: {
       marginVertical: 10,
     },
+    //chart styles
+    chartContainer: {
+      height: 250, 
+      flexDirection: 'row',
+    }
   });
 
   constructor(props){
@@ -783,11 +793,12 @@ class ScoreProgressCard extends React.PureComponent {
     this.incorrectData = resultItems.map(result => ((result.incorrect/result.total) * 100));
     this.unasweredData = resultItems.map(result => ((result.unaswered/result.total) * 100));
 
-    console.log(this.correctData);
+    //console.log(this.correctData);
 
     this.state = {
       mode: MODE.CORRECT,
       showRecent: true,
+      mountChart: true,
       showSwitch,
     };
   };
@@ -802,11 +813,9 @@ class ScoreProgressCard extends React.PureComponent {
       });
       case MODE.INCORRECT: return({
         data: showRecent? this.incorrectData.slice(-10) : this.incorrectData,
-
       });
       case MODE.UNANSWERED: return({
         data: showRecent? this.unasweredData.slice(-10) : this.unasweredData,
-
       });
     };
   };
@@ -832,9 +841,23 @@ class ScoreProgressCard extends React.PureComponent {
     this.setState({showRecent});
   };
 
-  _handleOnTabPress = (mode) => {
-    this.animatedSegementedControlContaine.pulse(500);
-    this.setState({mode});
+  _handleOnTabPress = async (nextMode) => {
+    const { mode } = this.state;
+    this.animatedSegementedControlContainer.pulse(500);
+
+    //temp fix - react-native-svg bug: removedChildren viewCount (0) was not what we expected
+    if(mode > nextMode){
+      await this.chartContainer.fadeOutLeft(200);
+      await setStateAsync(this, {mountChart: false});
+      await setStateAsync(this, {mountChart: true, mode: nextMode});
+      await this.chartContainer.fadeInRight(300);
+
+    } else if(mode < nextMode){
+      await this.chartContainer.fadeOutRight(200);
+      await setStateAsync(this, {mountChart: false});
+      await setStateAsync(this, {mountChart: true, mode: nextMode});
+      await this.chartContainer.fadeInLeft(300);
+    };
   };
 
   _renderSwitch(){
@@ -875,7 +898,7 @@ class ScoreProgressCard extends React.PureComponent {
     return(
       <Animatable.View
         style={styles.segmentedControlContainer}
-        ref={r => this.animatedSegementedControlContaine = r}
+        ref={r => this.animatedSegementedControlContainer = r}
         useNativeDriver={true}
       >
         <SegmentedControlTab
@@ -894,7 +917,10 @@ class ScoreProgressCard extends React.PureComponent {
   };
 
   _renderChart() {
-    const { showRecent } = this.state;
+    const { MODE } = ScoreProgressCard;
+    const { showRecent, mountChart } = this.state;
+    if(!mountChart) return null;
+
     const items = this.correctData.length;
 
     const { data } = this.getStateFromMode();
@@ -919,7 +945,7 @@ class ScoreProgressCard extends React.PureComponent {
     };
 
     return (
-      <View style={{ height: 250, flexDirection: 'row' }}>
+      <Fragment>
         <YAxis
           style={{marginRight: 5}}
           svg={{fill: 'grey', fontSize: 10,}}
@@ -942,8 +968,8 @@ class ScoreProgressCard extends React.PureComponent {
             <Gradient/>
           </BarChart>
         </ProgressChartWrapper>
-      </View>
-    )
+      </Fragment>
+    );
   };
   
   render(){
@@ -954,7 +980,13 @@ class ScoreProgressCard extends React.PureComponent {
         <Divider style={styles.divider}/>
         {this._renderSegmentedControl()}
         {this._renderSwitch()}
-        {this._renderChart()}
+        <Animatable.View 
+          style={styles.chartContainer}
+          ref={r => this.chartContainer = r}
+          useNativeDriver={true}
+        >
+          {this._renderChart()}
+        </Animatable.View>
       </Card>
     );
   };
@@ -966,6 +998,7 @@ class Question extends React.PureComponent {
     index           : PropTypes.number,
     answer          : PropTypes.object, 
     question        : PropTypes.object, 
+    durations       : PropTypes.object,
     questionID      : PropTypes.string, 
     hasMatchedAnswer: PropTypes.bool  ,
   };
@@ -976,10 +1009,11 @@ class Question extends React.PureComponent {
     },
     container: {
       flexDirection: 'row',
-      alignItems: 'center',
+      alignItems: 'flex-start',
     },
     //number indicator styles
     numberIndicatorContainer: {
+      marginTop: 10,
       width: 25,
       height: 25,
       borderRadius: 25/2,
@@ -993,25 +1027,43 @@ class Question extends React.PureComponent {
       color: 'white',
     },
     //question styles
-    questionDetailsContainer: {
+    questionContainer: {
       flex: 1,
       marginLeft: 10,
     },
     questionText: {
       fontSize: 17,
       fontWeight: '500',
+      marginBottom: 5,
       color: PURPLE[1000]
     },
     //answer styles
-    answerContainer: {
+    detailRow: {
       flex: 1,
       flexDirection: 'row',
       alignItems: 'center',
+      marginBottom: 2,
     },
-    answerText: {
+    detailIcon: {
+      width: 18,
+      marginRight: 3,
+    },
+    detailText: {
       fontSize: 17,
       fontWeight: '200',
-      marginLeft: 5,
+      textAlignVertical: 'center',
+    },
+    detailLabel: {
+      fontSize: 17,
+      fontWeight: '500',
+      color: GREY[900],
+      minWidth: 100,
+    },
+    detailTextCount: {
+      fontSize: 15,
+      fontWeight: '100',
+      marginRight: 5,
+      color: GREY[700]
     },
     //time styles
     timeContainer: {
@@ -1025,7 +1077,82 @@ class Question extends React.PureComponent {
       marginRight: 5,
       color: GREY[700]
     },
+    //
+    expandedContainer: {
+      width: '100%',
+      position: 'absolute',
+      overflow: 'hidden',
+      backgroundColor: 'white',
+    },
   });
+
+  constructor(props){
+    super(props);
+
+    //animation values
+    this.heightExpanded  = new Value(-1);
+    this.heightCollapsed = new Value(0);
+    this.progress        = new Value(0);
+
+    this.height = interpolate(this.progress, {
+      inputRange : [0, 100],
+      outputRange: [0, this.heightExpanded],
+      extrapolate: 'clamp',
+    });
+    this.opacity = interpolate(this.progress, {
+      inputRange : [0, 100],
+      outputRange: [0, 1],
+      extrapolate: 'clamp',
+    });
+
+    this.isExpanded = false;
+    this.isHeightMeasured = false;
+    this.state = {
+      mountExpanded: false,
+    };
+  };
+
+  expand = async (expand) => {
+    if(!this.isHeightMeasured){
+      //mount expanded
+      await setStateAsync(this, {mountExpanded: true});
+
+      //get current height of collapsed
+      const heightCollapsed = await new Promise(resolve => {
+        this.collapsedQuestionContainer.measure((x, y, w, h) => resolve(h));
+      });
+      
+      //get current height of expanded
+      const heightExpanded = await new Promise(resolve => {
+        this.expandedContainer.measure((x, y, w, h) => resolve(h));
+      });
+
+      console.log('heightCollapsed: ' + heightCollapsed);
+      console.log('heightExpanded: ' + heightExpanded);
+
+      //set height measured flag to true
+      this.isHeightMeasured = true;
+      //set animated height values
+      this.heightExpanded .setValue(heightExpanded - heightCollapsed);
+    };
+
+    const config = {
+      duration: 250,
+      toValue : expand? 100 : 0,
+      easing  : Easing.inOut(Easing.ease),
+    };
+
+    if(this.isExpanded != expand){
+      //start animation
+      const animation = timing(this.progress, config);
+      animation.start();
+      this.isExpanded = expand;
+    };
+  };
+
+  _handleOnPress = async () => {
+    this.expand(!this.isExpanded);
+  };
 
   _renderNumberIndicator(){
     const { styles } = Question;
@@ -1038,32 +1165,114 @@ class Question extends React.PureComponent {
     );
   };
 
-  _renderAnswer(){
+  _renderExapndedDurations(){
     const { styles } = Question;
-    const { answer, hasMatchedAnswer, questionID, question, index } = this.props;
-
-    const isCorrect  = hasMatchedAnswer? answer.isCorrect  : false;
-    const answerText = hasMatchedAnswer? answer.userAnswer : 'No Answer';
+    const { durations } = this.props;
     
-    const iconProps = (isCorrect
-      ? { name: 'check-circle'     , type: 'font-awesome', color: 'green' }
-      : { name: 'circle-with-cross', type: 'entypo'      , color: 'red'   }
-    );
+    const totalTime = moment(durations.totalTime || 0).format('mm:ss');
+    const viewCount = durations.viewCount || 0;
 
     return(
-      <View style={styles.answerContainer}>
-        <Icon
-          size={17}
-          {...iconProps}
-        />
-        <Text numberOfLines={1} style={styles.answerText}>
-          {answerText}
-        </Text>
+      <View style={styles.detailRow}>
+        <View style={{flex: 1, flexDirection: 'row'}}>
+          <Icon
+            containerStyle={styles.detailIcon}
+            name={'clock'}
+            type={'feather'}
+            color={GREY[700]}
+            size={17}
+          />
+          <Text style={styles.detailText}>
+            <Text style={styles.detailLabel}>{'Duration: '}</Text>
+            {totalTime}
+          </Text>
+        </View>
+        <View style={{flexDirection: 'row'}}>
+          <Text style={styles.detailTextCount}>{`Viewed: ${viewCount}`}</Text>
+          <Icon
+            name={'eye'}
+            type={'feather'}
+            color={GREY[700]}
+            size={17}
+          />
+        </View>
       </View>
     );
   };
 
-  _renderTime(){
+  _renderExpandedAnswer(){
+    const { styles } = Question;
+    const { answer, hasMatchedAnswer, questionID, question, index } = this.props;
+    const questionItem = QuestionItem.wrap(question);
+
+    const isCorrect  = hasMatchedAnswer? answer.isCorrect  : false;
+    const answerText = hasMatchedAnswer? answer.userAnswer : 'No Answer';
+    
+    return (isCorrect?(
+      <View style={styles.detailRow}>
+        <Icon
+          containerStyle={styles.detailIcon}
+          size={17}
+          name={'check-circle'}
+          type={'font-awesome'}
+          color={'green'}
+        />
+        <Text numberOfLines={1} style={styles.detailText}>
+          {questionItem.answer || "No Data"}
+        </Text>
+      </View>
+    ):(
+      <View>
+        <View style={styles.detailRow}>
+          <Icon
+            containerStyle={styles.detailIcon}
+            size={17}
+            name={'circle-with-cross'}
+            type={'entypo'}
+            color={'red'}
+          />
+          <Text style={styles.detailText}>
+            <Text style={styles.detailLabel}>{'Answered: '}</Text>
+            {answerText}
+          </Text>
+        </View>
+        <View style={styles.detailRow}>
+          <Icon
+            containerStyle={styles.detailIcon}
+            size={17}
+            name={'check-circle'}
+            type={'font-awesome'}
+            color={'green'}
+          />
+          <Text style={styles.detailText}>
+            <Text style={styles.detailLabel}>{'Answer: '}</Text>
+            {questionItem.answer}
+          </Text>
+        </View>
+      </View>
+    ));
+  };
+
+  _renderExpanded(){
+    const { styles } = Question;
+    const { answer, hasMatchedAnswer, questionID, question, index } = this.props;
+    const { mountExpanded } = this.state;
+
+    const questionText = isEmpty(question.question)? 'No Question' : question.question; 
+    if(!mountExpanded) return null;
+
+    return(
+      <View ref={r => this.expandedContainer = r}>
+        <Text numberOfLines={3} style={styles.questionText}>
+          {questionText}
+        </Text>
+        {this._renderExapndedDurations()}
+        {this._renderExpandedAnswer()}
+      </View>
+    );
+  };
+
+  _renderCollpasedTime(){
     const { styles } = Question;
     const { answer, hasMatchedAnswer } = this.props;
     if(!hasMatchedAnswer) return null;
@@ -1085,21 +1294,68 @@ class Question extends React.PureComponent {
     );
   };
 
-  _renderQuestionDetails(){
+  _renderCollapsedAnswer(){
+    const { styles } = Question;
+    const { answer, hasMatchedAnswer, questionID, question, index } = this.props;
+
+    const isCorrect  = hasMatchedAnswer? answer.isCorrect  : false;
+    const answerText = hasMatchedAnswer? answer.userAnswer : 'No Answer';
+    
+    const iconProps = (isCorrect
+      ? { name: 'check-circle'     , type: 'font-awesome', color: 'green' }
+      : { name: 'circle-with-cross', type: 'entypo'      , color: 'red'   }
+    );
+
+    return(
+      <View style={styles.detailRow}>
+        <Icon
+          containerStyle={styles.detailIcon}
+          size={17}
+          {...iconProps}
+        />
+        <Text numberOfLines={1} style={styles.detailText}>
+          {answerText}
+        </Text>
+      </View>
+    );
+  };
+
+  _renderCollapsed(){
     const { styles } = Question;
     const { answer, hasMatchedAnswer, questionID, question, index } = this.props;
 
     const questionText = isEmpty(question.question)? 'No Question' : question.question; 
 
     return(
-      <View style={styles.questionDetailsContainer}>
+      <View ref={r => this.collapsedQuestionContainer = r}>
         <Text numberOfLines={1} style={styles.questionText}>
           {questionText}
         </Text>
         <View style={{flexDirection: 'row', alignItems: 'center'}}>
-          {this._renderAnswer()}
-          {this._renderTime  ()}
+          {this._renderCollapsedAnswer()}
+          {this._renderCollpasedTime  ()}
         </View>
+      </View>
+    );
+  };
+
+  _renderQuestionDetails(){
+    const { styles } = Question;
+
+    const expandedContainerStyle = {
+      opacity: this.opacity,
+    };
+    const style = {
+      height: this.height,
+    };
+
+    return(
+      <View style={styles.questionContainer}>
+        {this._renderCollapsed()}
+        <Animated.View style={[styles.expandedContainer, expandedContainerStyle]}>
+          {this._renderExpanded()}
+        </Animated.View>
+        <Animated.View {...{style}}/>
       </View>
     );
   };
@@ -1108,14 +1364,17 @@ class Question extends React.PureComponent {
     const { index } = this.props;
     const { styles } = Question;
     return(
-      <Fragment>
+      <TouchableOpacity 
+        onPress={this._handleOnPress}
+        activeOpacity={0.75}
+      >
         {(index == 0) && <Divider style={styles.divider}/>}
         <View style={styles.container}>
           {this._renderNumberIndicator()}
           {this._renderQuestionDetails()}
         </View>
         <Divider style={styles.divider}/>
-      </Fragment>
+      </TouchableOpacity>
     );
   };
 };
@@ -1124,6 +1383,33 @@ class Question extends React.PureComponent {
 class AnswersListCard extends React.PureComponent {
   static propTypes = {
     questionAnswersList: PropTypes.array,
+    onPressViewAllQuestions: PropTypes.func,
+  };
+
+  static styles = StyleSheet.create({
+    buttonWrapper: {
+      backgroundColor: PURPLE.A700,
+      marginTop: 7,
+      marginBottom: 5,
+    },
+    buttonContainer: {
+      padding: 12,
+    },
+    buttonText: {
+      color: 'white',
+      fontSize: 17,
+      fontWeight: '600',
+    }
+  });
+
+  constructor(props){
+    super(props);
+    //Clipboard.setString(JSON.stringify(props.questionAnswersList));
+  };
+
+  _handleOnPressViewAllQuestions = () => {
+    const { onPressViewAllQuestions } = this.props;
+    onPressViewAllQuestions && onPressViewAllQuestions();
   };
 
   _keyExtractor = (item, index) => {
@@ -1131,16 +1417,18 @@ class AnswersListCard extends React.PureComponent {
   };
   
   _renderItem = ({item, index}) => {
-    const { answer, hasMatchedAnswer, questionID, question } = item;
+    const { answer, hasMatchedAnswer, questionID, question, durations } = item;
 
     return(
-      <Question {...{answer, hasMatchedAnswer, questionID, question, index}}/>
+      <Question {...{answer, hasMatchedAnswer, questionID, question, index, durations}}/>
     );
   };
-  
-  render(){
+
+  _renderHeader(){
+    const { styles } = AnswersListCard;
+
     return(
-      <Card>
+      <Fragment>
         <IconText
           containerStyle={sharedStyles.titleContainer}
           textStyle={sharedStyles.title}
@@ -1152,6 +1440,25 @@ class AnswersListCard extends React.PureComponent {
           iconColor={'#512DA8'}
           iconSize={26}
         />
+        <PlatformTouchableIconButton
+          onPress={this._handleOnPressViewAllQuestions}
+          wrapperStyle={[styles.buttonWrapper, STYLES.lightShadow]}
+          containerStyle={styles.buttonContainer}
+          textStyle={styles.buttonText}
+          text={'View All Questions'}
+          iconName={'eye'}
+          iconColor={'white'}
+          iconType={'feather'}
+          iconSize={23}
+        />
+      </Fragment>
+    );
+  };
+  
+  render(){
+    return(
+      <Card>
+        {this._renderHeader()}
         <FlatList
           data={this.props.questionAnswersList}
           renderItem={this._renderItem}
@@ -1186,7 +1493,27 @@ export class CustomQuizExamResultScreen extends React.Component {
     },
   });
 
-  matchQuestionsWithAnswers(questions, answers){
+  static matchQuestionsWithAnswers(questions, answers, durations){
+    let items = {};
+    durations.forEach(item => {
+      if(items[item.index]){
+        //append to index
+        const {totalTime, viewCount} = items[item.index];
+        //accumulate values 
+        items[item.index] = {
+          totalTime: item.duration + totalTime,
+          viewCount: viewCount + 1,
+        };
+
+      } else {
+        //initialize the counters
+        items[item.index] = {
+          totalTime: item.duration || 0,
+          viewCount: 1,
+        };
+      };
+    });
+
     //remove question from answer
     const new_answers = answers.map((answer) => {
       //extract questions
@@ -1195,7 +1522,7 @@ export class CustomQuizExamResultScreen extends React.Component {
       return otherProperties;
     });
 
-    return questions.map((question) => {
+    return questions.map((question, index) => {
       //used for checking if question matches answers
       const questionID = `${question.indexID_module}-${question.indexID_subject}-${question.indexID_question}`;
   
@@ -1208,16 +1535,22 @@ export class CustomQuizExamResultScreen extends React.Component {
         answer: matchedAnswer, //contains: timestampAnswered, userAnswer etc.
         hasMatchedAnswer     , //used to check if there's a matching answer
         questionID           , //used as unique id in list
-        question             , //contains 
+        question             , //question dewtails
+        //append computed durations
+        durations: {
+          data: durations, //save the raw data
+          hasDuration: items[index] != undefined,
+          ...(items[index] || {totalTime: null, viewCount: null}),
+        }
       });
     });
   };
   
-  countResults(list){
+  static countResults(list){
     const unanswered = list.filter(answer => !answer.hasMatchedAnswer);
     const answered   = list.filter(answer =>  answer.hasMatchedAnswer);
   
-    //count answers that are correct/wrong etc.
+    //viewCount answers that are correct/wrong etc.
     const correct   = answered.reduce((acc, {answer}) => acc += answer.isCorrect? 1 : 0, 0);
     const incorrect = answered.reduce((acc, {answer}) => acc += answer.isCorrect? 0 : 1, 0);
     const unaswered = unanswered.length;
@@ -1230,7 +1563,6 @@ export class CustomQuizExamResultScreen extends React.Component {
 
   constructor(props){
     super(props);
-    
     //for making sure error message is shown only once
     this.didShowError = false;
 
@@ -1238,6 +1570,7 @@ export class CustomQuizExamResultScreen extends React.Component {
     //get data from previous screen: CustomQuizExamScreen
     const questionList       = navigation.getParam('questionList', []);
     const questionsRemaining = navigation.getParam('questions'   , []);
+    const durations          = navigation.getParam('durations'   , []);
     const answers            = navigation.getParam('answers'     , []);
     //store data from prev. screen
     this.timeStats = navigation.getParam('timeStats', null);
@@ -1249,10 +1582,10 @@ export class CustomQuizExamResultScreen extends React.Component {
     const questions = [...questionList, ...questionsRemaining];
     this.questions = questions;
 
-    //used for showing the list of questions answered
-    const questionAnswersList = this.matchQuestionsWithAnswers(questions, answers);
-    //count right, wrong etc. answers
-    const results = this.countResults(questionAnswersList);
+    //combine answers and duration with each question - used for showing the list of questions answered
+    const questionAnswersList = CustomQuizExamResultScreen.matchQuestionsWithAnswers(questions, answers, durations);
+    //viewCount right, wrong etc. answers
+    const results = CustomQuizExamResultScreen.countResults(questionAnswersList);
     
     this.state = {
       questionAnswersList, results,
@@ -1272,9 +1605,10 @@ export class CustomQuizExamResultScreen extends React.Component {
         //pass down state
         questionAnswersList, results,
         //pass down other info
-        timeStats: this.timeStats,
-        startTime: this.startTime,
-        endTime  : this.endTime,
+        timeStats     : this.timeStats,
+        startTime     : this.startTime,
+        endTime       : this.endTime,
+        timestampSaved: Date.now(),
         //pass down quiz id
         indexID_quiz,
       };
@@ -1298,6 +1632,7 @@ export class CustomQuizExamResultScreen extends React.Component {
       const quizResults = await CustomQuizResultsStore.read();
       //filter results that belong to this quiz
       const filtered = quizResults.filter((result) => result.indexID_quiz == indexID_quiz);
+
       //save quiz results and update loading state
       this.setState({
         quizResultsLoaded: LOAD_STATE.SUCCESS, 
@@ -1319,6 +1654,16 @@ export class CustomQuizExamResultScreen extends React.Component {
     //hide loading indicator
     await this.animatedLoadingContainer.fadeOutUp(500);
     this.setState({showLoading: false});
+  };
+
+  _handleOnPressViewAllQuestions = () => {
+    const { navigation } = this.props;
+    const { quizResults } = this.state;
+
+    navigation && navigation.navigate(
+      ROUTES.CustomQuizExamResultQARoute,
+      {quizResults}
+    );
   };
 
   _showErrorMessage(){
@@ -1383,7 +1728,10 @@ export class CustomQuizExamResultScreen extends React.Component {
           {...{min, max, avg, sum, timestamps}}  
         />
         <ScoreProgressCard {...{quizResultsLoaded, quizResults, results}}/>
-        <AnswersListCard {...{questionAnswersList}}/>
+        <AnswersListCard 
+          onPressViewAllQuestions={this._handleOnPressViewAllQuestions}
+          {...{questionAnswersList}}  
+        />
         <IconFooter
           animateIn={false}
           hide={false}

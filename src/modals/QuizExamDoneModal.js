@@ -1215,7 +1215,7 @@ export class QuizExamDoneModal extends React.PureComponent {
 
   openModal = async ({currentIndex, questionList, answers, questions, quiz, startTime}) => {
     //Clipboard.setString(JSON.stringify(answers));
-    this.resetPrevTimestamps();
+    //this.resetPrevTimestamps();
     this.setState({mountContent: true, currentIndex, questionList, answers, questions, quiz, startTime});
     this._modal.showModal();
   };

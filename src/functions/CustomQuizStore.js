@@ -4,17 +4,21 @@ import store from 'react-native-simple-store';
 
 import { shuffleArray, getTimestamp, replacePropertiesWithNull } from './Utils';
 import { QuizQuestion } from '../models/Quiz';
+import { SubjectItem } from '../models/ModuleModels';
 
 let _quizes = [];
 
 export class CustomQuiz {
   /** obj properties with default values */
   static structure = {
-    title           : '',
-    description     : '',
-    indexID_quiz    : -1,
-    timestampCreated: -1,
-    questions       : QuizQuestion.wrapArray([]),
+    title            : '',
+    description      : '',
+    indexID_quiz     : -1,
+    timestampCreated : -1,
+    questions        : QuizQuestion.wrapArray([]),
+    itemsPerSubject  : -1,
+    maxItemsQuiz     : -1,
+    distributeEqually: false,
   };
 
   /** wrap object with CustomQuiz.structure to prevent missing properties and enable VSCODE type intellesense */
@@ -25,15 +29,13 @@ export class CustomQuiz {
       //remove all default values and replace w/ null
       ...replacePropertiesWithNull(CustomQuiz.structure),
       //combine with obj from param
-      ...data,
+      ...(data || {}),
     });
   };
 
   /** wraps each element in an array to make sure */
   static wrapArray(items = [CustomQuiz.structure]){
-    return items.map((item) => 
-      CustomQuiz.wrap(item)
-    );
+    return items.map((item) => CustomQuiz.wrap(item));
   };
 
   constructor(data = CustomQuiz.structure){
@@ -78,44 +80,45 @@ export class CustomQuiz {
 };
 
 export class CreateCustomQuiz {
-  static createQuiz({title = '', description = '', selected = []}){
-    const selectedCopy = _.cloneDeep(selected);
-
-    //append indexid's to questions for identification
-    selectedCopy.forEach((subject) => {
+  static createQuiz({title = '', description = '', selected = [], itemsPerSubject = -1, maxItemsQuiz = -1, shouldDistributeEqually = false}){
+    //append indexid's from subj to questions for identification
+    const subjects = selected.map(item => {
+      const subject = SubjectItem.wrap(item);
       //extract indexid from subject
-      const { indexid, indexID_module } = subject;
-      subject.questions.forEach((question, index) => {
-        //append indexid's to questions
-        question.indexID_module   = indexID_module;
-        question.indexID_subject  = indexid;
-        question.indexID_question = index;
-      });
-    });
-    
-    let questions = [];
-    while(questions.length <= 100){
-      for (let i = 0; i < selectedCopy.length; i++) {
-        const subject = selectedCopy[i];
-        //shuffle questions
-        subject.questions = shuffleArray(subject.questions);
-  
-        if(subject.questions.length > 0){
-          const question = subject.questions.pop();
-          questions.push(question);
-          selectedCopy[i] = subject;
-        };  
-      };
+      const { indexid, indexID_module, questions } = subject;
 
-      const isEmpty = selectedCopy.every((subject) => {
-        return subject.questions.length == 0;
+      //pass down indexid's to each questions
+      const new_questions = questions.map((question, index) => {
+        return {
+          ...question,
+          indexID_module  : indexID_module,
+          indexID_subject : indexid,
+          indexID_question: index,
+        };
       });
-      if(isEmpty) break;
-    };
+
+      return {
+        ...subject,
+        questions: new_questions,
+      };
+    });
+
+    let questions = [];
+    subjects.forEach(subject => {
+      const max = (subject.allocatedItems || 0);
+      const shuffled = shuffleArray(subject.questions);
+      const items = shuffled.slice(0, max);
+      questions.push(...items);
+    });
+
+    const shuffled = shuffleArray(questions);
+    const sliced   = shuffled.slice(0, maxItemsQuiz)
 
     const customQuiz = new CustomQuiz({
-      title, description, questions,
+      questions: sliced,
       indexID_quiz: getTimestamp(),
+      //pass down items
+      title, description, itemsPerSubject, maxItemsQuiz, shouldDistributeEqually
     });
 
     customQuiz.setTimestampCreated();

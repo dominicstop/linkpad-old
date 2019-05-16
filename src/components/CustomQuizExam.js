@@ -13,7 +13,7 @@ import { ifIphoneX, getStatusBarHeight, getBottomSpace } from 'react-native-ipho
 
 import { getLetter , shuffleArray, setStateAsync, timeout, hexToRgbA, getTimestamp, isBase64Image} from '../functions/Utils';
 import { PURPLE } from '../Colors';
-import { QuizAnswer , QuizQuestion} from '../models/Quiz';
+import { QuizAnswer , QuizQuestion } from '../models/Quiz';
 import { CustomQuiz } from '../functions/CustomQuizStore';
 
 /** Used in Choices: shows a single choice item */
@@ -387,17 +387,9 @@ class Question extends React.PureComponent {
       marginBottom: -2,
     },
     number: {
-      ...Platform.select({
-        ios: {
-          fontSize: 16,
-          color: 'white',
-          fontWeight: 'bold',
-        },
-        android: {
-          fontWeight: '500',
-          color: PURPLE.A700,
-        },
-      })
+      marginRight: 10,
+      fontWeight: '500',
+      color: PURPLE[900],
     },
   });
 
@@ -413,31 +405,14 @@ class Question extends React.PureComponent {
     const { styles } = Question;
     const { question, index } = this.props;
 
-    const numberStyle = {
-      fontSize:( 
-        (index + 1 < 9  )? 16 : 
-        (index + 1 < 100)? 14 : 12
-      ),
-    };
-
-    return Platform.select({
-      ios: (
-        <Text>
-          <View style={styles.numberCointainer}>
-            <Text style={[styles.number, numberStyle]}>{index + 1}</Text>
-          </View>
-          <Text style={styles.question}>
-            {` ${question}`}          
-          </Text>
-        </Text>
-      ),
-      android: (
+    return(
+      <Fragment>
         <Text style={styles.question}>
           <Text style={styles.number}>{index + 1}. </Text>
           {question}
         </Text>
-      ),
-    });
+      </Fragment>
+    );
   };
 
   render(){
