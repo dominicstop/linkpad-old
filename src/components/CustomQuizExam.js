@@ -158,7 +158,7 @@ class Choices extends React.PureComponent {
 
     const { choices, answer } = props;
     //extract choices nested inside object
-    const extracted = choices.map(choice => choice.value);
+    const extracted = (choices || []).map(choice => choice.value);
 
     //combine ans/choices then random order
     const combined = [answer, ...extracted];
@@ -198,7 +198,7 @@ class Choices extends React.PureComponent {
     const { answer } = this.props;
     const { selected, selectedIndex, choices } = this.state;
 
-    return choices.map((choice, index) => {
+    return (choices || []).map((choice, index) => {
       //component must have unique key
       const key = `${index}-${answer}-${choice}`;
       const isLast = (index == (choices.length - 1));

@@ -21,10 +21,28 @@ export class QuestionItem {
     //store the answer
     user_answer: '',
     timestamp_answered: 0,
+    //added/appended from _filterModules after fetching
+    questionID : '',
+    modulename : '',
+    subjectname: '',
+    //added/appended from _saveBase64ImageToStorage after _filterModules
+    hasImage: false,
   };
 
-  static wrap(question = QuestionItem.structure){
-    return {...QuestionItem.structure, ...question};
+  static wrap(data = QuestionItem.structure){
+    return ({
+      //assign default properties w/ default values
+      ...QuestionItem.structure,
+      //remove all default values and replace w/ null
+      ...replacePropertiesWithNull(QuestionItem.structure),
+      //combine with obj from param
+      ...(data || {}),
+    });
+  };
+
+  /** wraps each element in an array to make sure */
+  static wrapArray(items = [QuestionItem.structure]){
+    return items.map((item) => QuestionItem.wrap(item));
   };
   
   constructor(question = QuestionItem.structure){
@@ -117,6 +135,9 @@ export class SubjectItem {
     questions  : [QuestionItem.structure],
     //used for identification
     indexID_module: -1,
+    //added/appended from _filterModules after fetching
+    modulename : '',
+    subjectID  : '',
   };
 
   /** wrap object with SubjectItem.structure to prevent missing properties and enable VSCODE type intellesense */
@@ -137,7 +158,6 @@ export class SubjectItem {
       SubjectItem.wrap(item)
     );
   };
-
 
   constructor(subject = SubjectItem.structure){
     this.data = {...SubjectItem.structure, ...subject};
@@ -250,11 +270,11 @@ export class SubjectItem {
 export class ModuleItemModel {
   static structure = {
     //modeled from backend response
+    subjects   : SubjectItem.wrapArray([]),
     description: '', 
     modulename : '', 
     lastupdated: '', 
     indexid    : -1, 
-    subjects   : [],
   };
 
   /** makes sure all of module's properties exists and assigns default values */

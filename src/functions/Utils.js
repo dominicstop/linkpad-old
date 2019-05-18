@@ -238,3 +238,18 @@ export function asyncAlert({title, desc}){
     [{text: 'OK', onPress: () => resolve()}],
   ));
 };
+
+/*
+export function countOccurences(item = '', items = []){
+  const reducer = (acc, cur) => {
+    const didMatch = (cur === item);
+    return didMatch? (acc + 1) : acc;  
+  };
+
+  return items.reduce(reducer, 0);
+};
+*/
+
+export function countOccurences(item = '', items = []){
+  return items.filter(i => i === item).length;
+};
