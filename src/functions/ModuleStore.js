@@ -54,62 +54,60 @@ function _filterModules(modules){
   };
 };
 
-async function _saveBase64ToStorage(items){
-  const modules = ModuleItemModel.wrapArray(items);
+/** store Base64 images to storage and replace with URI */
+async function _saveBase64ToStorage(_modules = [ModuleItemModel.structure]){
+  const modules = _.cloneDeep(_modules);
 
-  return modules.map(module => ({
-    ...module,
-    subjects: (module.subjects || []).map(subject => ({
-      ...subject,
-      questions: (subject.questions || []).map(question => {
-        const { photouri, photofilename, questionID } = question;
+  try {
+    //create folder if does not exist
+    await createFolderIfDoesntExist(BASE_DIR + FOLDER_KEY);
 
-        if(photouri && photofilename){
-          //question has an image
+    //cant use map because it doesnt support await/.then
+    for (const module of modules){
+      for(const subject of module.subjects){
+        for(const question of subject.questions){
+          const { photouri, photofilename } = QuestionItem.wrap(question);
+
+          //check if uri is image
+          const isImage = isBase64Image(photouri || '');
+          //remove space from file name in ios
+          const filename = (photofilename || '').replace(/\ /g, '');
+          //construct the uri for where the image is saved
+          const img_uri = `${BASE_DIR}${FOLDER_KEY}/${filename}`;
+
           try {
-            //check if uri is image
-            const isImage = isBase64Image(photouri);
-            //remove space from file because its an illegal filename in ios
-            const filename = photofilename.replace(/\ /g, '');
-            //construct the uri for where the image is saved
-            const img_uri = `${BASE_DIR}${FOLDER_KEY}/${filename}`;
-
             if(isImage){
-              //save the base64 image to the fs - note: using await inside a map does not work
-              FileSystem.writeAsStringAsync(img_uri, photouri).then(() => {
-                //update module uri
-                return {
-                  ...question,
-                  hasImage: true,
-                  photouri: img_uri,
-                };
-              });
+              //save the base64 image to the fs
+              await FileSystem.writeAsStringAsync(img_uri, photouri);
+              //update module uri
+              question.photouri = img_uri;
+              question.hasImage = true;            
+
             } else {
-              //invalid URI
-              return {
-                ...question,
-                hasImage: false,
-              };
+              //replace with null if invalid uri
+              question.photouri = null;
+              question.hasImage = false;            
             };
+
           } catch(error){
-            //skip: image failed to save
-            console.log(`Unable to save image ${photofilename} from ${questionID}`);
+            //replace with null if cannot be saved to fs
+            question.photouri = null;
+            question.hasImage = false;
+            console.log(`Unable to save image ${photofilename}`); 
             console.log(error);
-            return {
-              ...question,
-              hasImage: false,
-            };
-          };
-        } else {
-          //skip: no subject or quesiton
-          return {
-            ...question,
-            hasImage: false,
           };
         };
-      }),
-    })),
-  }));
+      };
+    };
+
+    //resolve modules
+    return modules;
+
+  } catch(error){
+    console.log('Unable to save images.');
+    console.log(error);
+    throw error;
+  };
 };
 
 export class ModuleHelper {

@@ -1,5 +1,5 @@
 import React, { Fragment } from 'react';
-import { View, LayoutAnimation, ScrollView, ViewPropTypes, Text, TouchableOpacity, AsyncStorage, StyleSheet, Platform , Alert, TouchableNativeFeedback, Clipboard, FlatList, ActivityIndicator, Dimensions, Switch, InteractionManager} from 'react-native';
+import { View, LayoutAnimation, ScrollView, ViewPropTypes, Text, TouchableOpacity, AsyncStorage, StyleSheet, Platform , Alert, TouchableNativeFeedback, Clipboard, FlatList, SectionList, ActivityIndicator, Dimensions, Switch, InteractionManager} from 'react-native';
 import PropTypes from 'prop-types';
 
 import { ViewWithBlurredHeader, IconText, Card, AnimateInView, IconFooter, AnimatedListItem } from '../components/Views';
@@ -486,7 +486,7 @@ class ChoicesCountStat extends React.PureComponent {
 
     return choices.map((item, index) => {
       const choice = item.choice || 'N/A';
-      const width = showPercentage? 38 : null;
+      const width = showPercentage? 40 : null;
       const itemBGColor = this.colors[index];
       const numberColors = ((answer == null)
         ? answerCorrect == (choice)? styleCorrect : styleDefault
@@ -563,6 +563,12 @@ class ResultItem extends React.PureComponent {
   };
 
   static styles = StyleSheet.create({
+    card: {
+      borderRadius: 0,
+      marginTop: 0,
+      marginBottom: 0,
+      paddingTop: 15,
+    },
     //divider styles
     divider: {
       marginVertical: 8,
@@ -572,38 +578,6 @@ class ResultItem extends React.PureComponent {
       marginTop: 8,
       marginBottom: 6,
       marginHorizontal: 10,
-    },
-    //header styles
-    headerContainer: {
-      flexDirection: 'row',
-      alignItems: 'center',
-    },
-    headerTextContainer: {
-      marginLeft: 7,
-    },
-    headerTitle: {
-      fontSize: 17,
-      fontWeight: '600',
-      color: PURPLE[1000]
-    },
-    headerSubtitle: {
-      fontSize: 16,
-      fontWeight: '200',
-      color: GREY[900],
-    },
-    //header number indicator styles
-    headerNumberContainer: {
-      width: 24,
-      height: 24,
-      borderRadius: 24/2,
-      backgroundColor: PURPLE[500],
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    headerNumber: {
-      fontSize: 15,
-      color: 'white',
-      fontWeight: '500',
     },
     //expander styles
     exapnderHeaderContainer: {
@@ -684,38 +658,6 @@ class ResultItem extends React.PureComponent {
       },
     }),
   });
-
-  _renderHeder(){
-    const { styles } = ResultItem;
-    const { question, index } = this.props;
-    const questionWrapped = QuestionItem.wrap(question);
-
-    const moduleName  = questionWrapped.modulename  || 'Module Unknown' ;
-    const subjectName = questionWrapped.subjectname || 'Subject Unknown';
-
-    const fontSize = (
-      (index + 1 < 10 )? 15 :
-      (index + 1 < 100)? 13 : 11
-    );
-
-    return(
-      <View style={styles.headerContainer}>
-        <View style={styles.headerNumberContainer}>
-          <Text style={[styles.headerNumber, {fontSize}]}>
-            {index + 1}
-          </Text>
-        </View>
-        <View style={styles.headerTextContainer}>
-          <Text style={styles.headerTitle}>
-            {moduleName}
-          </Text>
-          <Text style={styles.headerSubtitle}>
-            {subjectName}
-          </Text>
-        </View>
-      </View>
-    );
-  };
 
   _renderQuestionHeader(isExpanded){
     const { styles } = ResultItem;
@@ -926,9 +868,7 @@ class ResultItem extends React.PureComponent {
     const textExplanation = questionWrapped.explanation || "No Explanation Available.";
 
     return(
-      <Card>
-        {this._renderHeder()}
-        <Divider style={styles.dividerTop}/>
+      <Card style={styles.card}>
         <TextExpander renderHeader={this._renderQuestionHeader}>
           <Text style={styles.expanderText}>{textQuestion}</Text>
         </TextExpander>
@@ -965,6 +905,61 @@ export class CustomQuizExamResultQAScreen extends React.PureComponent {
   };
 
   static styles = StyleSheet.create({
+    //section header styles
+    SHCardTop: {
+      borderBottomLeftRadius: 0,
+      borderBottomRightRadius: 0,
+      paddingHorizontal: 0,
+      paddingVertical: 5,
+      backgroundColor: 'white',
+      marginBottom: 0,
+    },
+    SHCardBottom: {
+      borderTopLeftRadius: 0,
+      borderTopRightRadius: 0,
+      paddingHorizontal: 0,
+      paddingVertical: 5,
+    },
+    SHContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginTop: 0,
+      paddingTop: 7,
+      paddingBottom: 0,
+      paddingHorizontal: 0,
+    },
+    SHTextContainer: {
+      flex: 1,
+      marginLeft: 7,
+      marginRight: 10,
+    },
+    SHTitle: {
+      flex: 1,
+      fontSize: 17,
+      fontWeight: '600',
+      color: PURPLE[1000]
+    },
+    SHSubtitle: {
+      fontSize: 16,
+      fontWeight: '200',
+      color: GREY[900],
+    },
+    //header number indicator styles
+    SHNumberContainer: {
+      width: 24,
+      height: 24,
+      borderRadius: 24/2,
+      backgroundColor: PURPLE[500],
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginLeft: 10,
+    },
+    SHNumber: {
+      fontSize: 15,
+      color: 'white',
+      fontWeight: '500',
+    },
+    //loading styles
     container: {
       marginTop: HEADER_HEIGHT,
     },
@@ -985,6 +980,16 @@ export class CustomQuizExamResultQAScreen extends React.PureComponent {
       color: 'white',
     },
   });
+
+  static SECTION_TYPE = {
+    TOP   : 'TOP',
+    BOTTOM: 'BOTTOM',
+  };
+
+  static ITEM_TYPE = {
+    ITEM       : 'ITEM'       ,
+    PLACEHOLDER: 'PLACEHOLDER',
+  };
 
   /** combines all qa across all of the results into 1 qa item */
   static combineSameQuestionsAndAnswers(items){
@@ -1085,13 +1090,14 @@ export class CustomQuizExamResultQAScreen extends React.PureComponent {
     const totalResults = quizResults.length;
 
     this.state = {
-      data: [],
+      sections: [],
       loading: LOAD_STATE.LOADING,
       totalResults,
     };
   };
 
   componentDidMount(){
+    const { SECTION_TYPE, ITEM_TYPE } = CustomQuizExamResultQAScreen;
     const { navigation } = this.props;
     //get data from prev. screen - quiz results
     const quizResults = navigation.getParam('quizResults', []);
@@ -1104,8 +1110,45 @@ export class CustomQuizExamResultQAScreen extends React.PureComponent {
         //combine the same QA items across all results
         const QAList      = CustomQuizExamResultQAScreen.combineSameQuestionsAndAnswers(quizResults);
         const QAStatsList = CustomQuizExamResultQAScreen.appendAnswerStats(QAList);
+
+        Clipboard.setString(JSON.stringify([{results: QAList}, {QAStatsList}]));
+
+
+        let sections = [];
+        QAStatsList.forEach((item, index) => {
+          const { modulename, subjectname } = QuestionItem.wrap(item.question);
+
+          if(index == 0){
+            sections.push({
+              //section item data
+              data: [{type: ITEM_TYPE.ITEM, ...item}],
+              //section header data
+              type: SECTION_TYPE.TOP,
+              modulename, subjectname, index,
+            });
+            sections.push({
+              data: [{type: ITEM_TYPE.PLACEHOLDER}],
+              type: SECTION_TYPE.BOTTOM,
+            });
+
+          } else {
+            sections.push({
+              //section item data
+              data: [{type: ITEM_TYPE.ITEM, ...item}],              
+              //section header data
+              type: SECTION_TYPE.TOP,
+              modulename, subjectname, index,
+            });
+            sections.push({
+              data: [{type: ITEM_TYPE.PLACEHOLDER}],
+              type: SECTION_TYPE.BOTTOM,
+            });
+          };
+        });
+
+
         //update flatlist data and mount
-        this.setState({data: QAStatsList, loading: LOAD_STATE.SUCCESS});
+        this.setState({sections, loading: LOAD_STATE.SUCCESS});
 
       } catch(error){
         this.setState({loading: LOAD_STATE.ERROR});
@@ -1120,27 +1163,76 @@ export class CustomQuizExamResultQAScreen extends React.PureComponent {
   };
 
   _renderItem = ({item, index}) => {
+    const { ITEM_TYPE } = CustomQuizExamResultQAScreen;
     const { totalResults } = this.state;
-    const { answerStats, choicesCount, durations, totalDurations, answer, hasMatchedAnswer, question, questionID } = item;
+    const { type, answerStats, choicesCount, durations, totalDurations, answer, hasMatchedAnswer, question, questionID } = item;
 
-    return(
-      <AnimatedListItem
-        last={5}
-        duration={500}
-        multiplier={300}
-        {...{index}}
-      >
+    switch (type) {
+      case ITEM_TYPE.ITEM: return(
         <ResultItem 
           //pass down items
           {...{index, answerStats, choicesCount, durations, totalDurations, answer, hasMatchedAnswer, question, questionID, totalResults}}
         />
-      </AnimatedListItem>
+      );
+      case ITEM_TYPE.PLACEHOLDER: return(null);
+    };
+  };
+
+  _renderSectionHeader = ({section}) => {
+    const { styles, SECTION_TYPE } = CustomQuizExamResultQAScreen;
+    const { sections } = this.state;
+    const { index } = section;
+
+    const modulename  = section.modulename  || 'Unknown Module';
+    const subjectname = section.subjectname || 'Unknown Subject';
+
+    const fontSize = (
+      (index + 1 < 10 )? 15 :
+      (index + 1 < 100)? 13 : 11
     );
+    
+    const isLast = (index == (sections.length - 1));
+    const SHContainerStyle = (index == 0)? {
+      borderBottomLeftRadius: 0,
+      borderBottomRightRadius: 0,
+    } : {
+      borderRadius: 0,
+      shadowOffset:{
+        width: 2, 
+        height: 8, 
+      },
+    };
+    
+    
+    switch (section.type) {
+      case SECTION_TYPE.TOP: return (
+        <Card style={[styles.SHContainer, SHContainerStyle]}>
+          <View style={styles.SHNumberContainer}>
+            <Text style={[styles.SHNumber, {fontSize}]}>
+              {index + 1}
+            </Text>
+          </View>
+          <View style={styles.SHTextContainer}>
+            <Text numberOfLines={1} style={styles.SHTitle}>{modulename}</Text>
+            <Text numberOfLines={1} style={styles.SHSubtitle}>{subjectname}</Text>
+          </View>
+          <View style={{position: 'absolute', alignSelf: 'flex-end', height: 11, width: '100%', backgroundColor: 'white', bottom: -11, borderBottomColor: GREY[100], borderBottomWidth: 1,}}/>
+        </Card>
+      );
+      case SECTION_TYPE.BOTTOM: return (
+        <View>
+          <Card style={styles.SHCardBottom}>
+            <View style={{position: 'absolute', alignSelf: 'flex-end', height: 5, width: '100%', backgroundColor: 'white', top: -5}}/>
+          </Card>
+          {!isLast && <Card style={styles.SHCardTop}/>}
+        </View>
+      );
+    };
   };
 
   _renderContents(){
     const { styles } = CustomQuizExamResultQAScreen;
-    const { loading, data } = this.state;
+    const { loading, sections } = this.state;
 
     switch (loading) {
       case LOAD_STATE.INITIAL:
@@ -1161,13 +1253,15 @@ export class CustomQuizExamResultQAScreen extends React.PureComponent {
         </Animatable.View>
       );
       case LOAD_STATE.SUCCESS: return (
-        <FlatList
+        <SectionList
           renderItem={this._renderItem}
+          renderSectionHeader={this._renderSectionHeader}
           keyExtractor={this._keyExtractor}
+          stickySectionHeadersEnabled={true}
           //adjust top distance
           contentInset ={{top: HEADER_HEIGHT}}
           contentOffset={{x: 0, y: -HEADER_HEIGHT}}
-          {...{data}}
+          {...{sections}}
         />
       );
       case LOAD_STATE.ERROR: return (
