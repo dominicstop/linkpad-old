@@ -1876,7 +1876,7 @@ export class CreateQuizScreen extends React.Component {
     const wasPreviouslyEmpty = (subjectsWasPreviouslyEmpty|| detailsWasPreviouslyEmpty);
 
     //when details and add subject has been added the first time
-    if(didChange && wasPreviouslyEmpty && !isCurrentlyEmpty){
+    if(didChange && wasPreviouslyEmpty){
       //change header nextButton style to active
       _nextButtonRef && _nextButtonRef.setActive(true);
     };

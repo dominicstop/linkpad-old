@@ -112,6 +112,45 @@ async function _saveBase64ToStorage(items){
   }));
 };
 
+export class ModuleHelper {
+  /** collapse module array into obj - access modules via object[id]. */
+  static getModulesByID(modules){
+    return modules.reduce((acc, module) => {
+      const id = (module.indexid != undefined)? module.indexid : -1; 
+      //skip if moduleid does not exist - because id can be 0 thus, if(0) false
+      if(id == -1) return acc;
+  
+      //append module data to acc
+      acc[id] = module;
+      return acc;
+    }, {});
+  };
+
+  /** collapse module array into obj - access modules via object[id]. */
+  static getSubjectByID(modules){
+    return modules.reduce((acc, module) => {
+      const moduleID = (module.indexid  || -1);
+      const subjects = (module.subjects || []);
+
+      //skip if moduleid does not exist
+      if(moduleID === -1) return acc;
+
+      //collapse subject array into obj
+      const subjectsAcc = subjects.reduce((subjectAcc, subject) => {
+        const subjectID = (subject.indexid != undefined)? subject.indexid : -1; 
+        //skip if subjectid does not exist
+        if(subjectID == -1) return subjectAcc;
+        
+        //append subject data to acc
+        subjectAcc[`${moduleID}-${subjectID}`] = subject;
+        return subjectAcc;
+      }, {});
+      
+      return {...acc, ...subjectsAcc};
+    }, {});
+  };
+};
+
 export class ModuleStore {
   static get KEY(){
     return 'modules';

@@ -9,6 +9,7 @@ import { CustomHeader } from '../components/Header' ;
 import _ from 'lodash';
 import * as Animatable from 'react-native-animatable';
 import moment from "moment";
+import Chroma from 'chroma-js'
 import Pie from 'react-native-pie'
 import { Header, NavigationEvents } from 'react-navigation';
 import { Divider, Icon } from 'react-native-elements';
@@ -20,7 +21,7 @@ import { LinearGradient, Stop, Defs, G } from 'react-native-svg'
 
 import { STYLES, ROUTES , HEADER_HEIGHT, LOAD_STATE} from '../Constants';
 import { plural, isEmpty, timeout , formatPercent, ifTrue, callIfTrue, setStateAsync, countOccurences} from '../functions/Utils';
-import { BLUE , GREY, PURPLE, RED, GREEN} from '../Colors';
+import { BLUE , GREY, PURPLE, RED, GREEN, ORANGE} from '../Colors';
 import {CustomQuizResultsStore,  CustomQuizResultItem, QuestionAnswerItem} from '../functions/CustomQuizResultsStore';
 
 import Animated, { Easing } from 'react-native-reanimated';
@@ -36,7 +37,178 @@ const headerTitle = (props) => <CustomHeader
   {...props}  
 />
 
-class Expander extends React.PureComponent {
+class TextExpander extends React.PureComponent {
+  static propTypes = {
+    renderHeader: PropTypes.func,
+    contentContainer: PropTypes.object,
+    unmountWhenCollapsed: PropTypes.bool,
+  };
+
+  static styles = StyleSheet.create({
+    contentWrapper: {
+      overflow: 'hidden',
+    },
+    headerContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    headerTitle: {
+      flex: 1,
+      marginRight: 10,
+    },
+    arrowContainer: {
+      width: 25,
+      height: 25,
+      borderRadius: 25/2,
+      backgroundColor: PURPLE[500],
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+  });
+
+  constructor(props){
+    super(props);
+
+    //animation values
+    this.heightExpanded  = new Value(-1);
+    this.heightCollapsed = new Value(0);
+    this.progress        = new Value(100);
+
+    this.height = interpolate(this.progress, {
+      inputRange : [0, 100],
+      outputRange: [0, this.heightExpanded],
+      extrapolate: 'clamp',
+    });
+    this.opacity = interpolate(this.progress, {
+      inputRange : [0, 100],
+      outputRange: [0, 1],
+      extrapolate: 'clamp',
+    });
+    this.indicatorOpacity = interpolate(this.progress, {
+      inputRange : [0, 100],
+      outputRange: [0.8, 1],
+      extrapolate: 'clamp',
+    });
+    this.scale = interpolate(this.progress, {
+      inputRange : [0, 100],
+      outputRange: [0.9, 1],
+      extrapolate: 'clamp',
+    });
+    this.rotation = interpolate(this.progress, {
+      inputRange : [0, 100],
+      outputRange: [0, 180],
+      extrapolate: 'clamp',
+    });
+
+    this.isHeightMeasured = false;
+    this.state = {
+      mount: true,
+      isExpanded: true,
+    };
+  };
+
+  expand = async (expand) => {
+    const { isExpanded } = this.state;
+
+    if(!this.isHeightMeasured){      
+      //get current height of expanded
+      const height = await new Promise(resolve => {
+        this.contentContainer.measure((x, y, w, h) => resolve(h));
+      });
+
+      //set height measured flag to true
+      this.isHeightMeasured = true;
+      //set animated height values
+      this.heightExpanded.setValue(height);
+    };
+
+    const config = {
+      duration: 300,
+      toValue : expand? 100 : 0,
+      easing  : Easing.inOut(Easing.ease),
+    };
+    const animation = timing(this.progress, config);
+
+    if(isExpanded != expand){
+      //start animation
+      animation.start();
+      this.setState({isExpanded: !isExpanded});
+    };
+  };
+
+  _handleOnPressHeader = () => {
+    const { isExpanded } = this.state;
+    this.expand(!isExpanded);
+  };
+
+  _renderHeader(){
+    const { styles } = TextExpander;
+    const { renderHeader } = this.props;
+    const { isExpanded } = this.state;
+
+    const arrowContainerStyle = {
+      opacity: this.indicatorOpacity,
+      transform: [
+        { rotate: concat(this.rotation, 'deg') },
+        { scale: this.scale},
+      ],
+    };
+
+    return(
+      <TouchableOpacity 
+        onPress={this._handleOnPressHeader}
+        style={[styles.headerContainer, this.props.headerContainer]}
+        activeOpacity={0.75}
+      >
+        <View style={styles.headerTitle}>
+          {renderHeader && renderHeader(isExpanded)}
+        </View>
+        <Animated.View style={[styles.arrowContainer, arrowContainerStyle]}>
+          <Icon
+            name={'chevron-down'}
+            type={'feather'}
+            color={'white'}
+            size={17}
+          />
+        </Animated.View>
+      </TouchableOpacity>
+    );
+  };
+
+  _renderContent(){
+    const { styles } = TextExpander;
+    const { mount } = this.state;
+
+    const contentWrapperStyle = {
+      opacity: this.opacity,
+      height: this.height,
+    };
+    const contentContainer = {
+      position: cond(eq(this.heightExpanded, -1), 'relative', 'absolute')
+    };
+
+    return(
+      <Animated.View style={[styles.contentWrapper, contentWrapperStyle]}>  
+        <Animated.View style={[this.props.contentContainer, contentContainer]}>
+          <View ref={r => this.contentContainer = r}>
+            {mount && this.props.children}
+          </View>
+        </Animated.View>
+      </Animated.View>
+    );
+  };
+
+  render(){
+    return(
+      <Fragment>
+        {this._renderHeader()}
+        {this._renderContent()}
+      </Fragment>
+    );
+  };
+};
+
+class ContentExpander extends React.PureComponent {
   static propTypes = {
     renderHeader: PropTypes.func,
     contentContainer: PropTypes.object,
@@ -98,18 +270,20 @@ class Expander extends React.PureComponent {
       extrapolate: 'clamp',
     });
 
-    this.isExpanded = true;
     this.isHeightMeasured = false;
+    this.state = {
+      isExpanded: true,
+    };
   };
 
   expand = async (expand) => {
+    const { isExpanded } = this.state;
+
     if(!this.isHeightMeasured){      
       //get current height of expanded
       const height = await new Promise(resolve => {
         this.contentContainer.measure((x, y, w, h) => resolve(h));
       });
-
-      console.log('heightExpanded: ' + height);
 
       //set height measured flag to true
       this.isHeightMeasured = true;
@@ -122,22 +296,24 @@ class Expander extends React.PureComponent {
       toValue : expand? 100 : 0,
       easing  : Easing.inOut(Easing.ease),
     };
-
-    if(this.isExpanded != expand){
+    
+    if(isExpanded != expand){
       //start animation
       const animation = timing(this.progress, config);
       animation.start();
-      this.isExpanded = expand;
+      this.setState({isExpanded: !isExpanded});
     };
   };
 
   _handleOnPressHeader = () => {
-    this.expand(!this.isExpanded);
+    const { isExpanded } = this.state;
+    this.expand(!isExpanded);
   };
 
   _renderHeader(){
-    const { styles } = Expander;
+    const { styles } = ContentExpander;
     const { renderHeader } = this.props;
+    const { isExpanded } = this.state;
 
     const arrowContainerStyle = {
       opacity: this.indicatorOpacity,
@@ -154,7 +330,7 @@ class Expander extends React.PureComponent {
         activeOpacity={0.75}
       >
         <View style={styles.headerTitle}>
-          {renderHeader && renderHeader()}
+          {renderHeader && renderHeader(isExpanded)}
         </View>
         <Animated.View style={[styles.arrowContainer, arrowContainerStyle]}>
           <Icon
@@ -169,32 +345,205 @@ class Expander extends React.PureComponent {
   };
 
   _renderContent(){
-    const { styles } = Expander;
+    const { styles } = ContentExpander;
     const contentWrapperStyle = {
       opacity: this.opacity,
       height: this.height,
     };
-    const contentContainer = {
-      position: cond(eq(this.heightExpanded, -1), 'relative', 'absolute')
-    };
 
     return(
       <Animated.View style={[styles.contentWrapper, contentWrapperStyle]}>  
-        <Animated.View style={[this.props.contentContainer, contentContainer]}>
-          <View ref={r => this.contentContainer = r}>
-            {this.props.children}
-          </View>
-        </Animated.View>
+        <View ref={r => this.contentContainer = r}>
+          {this.props.children}
+        </View>
       </Animated.View>
     );
   };
 
   render(){
     return(
-      <View>
+      <Fragment>
         {this._renderHeader()}
         {this._renderContent()}
-      </View>
+      </Fragment>
+    );
+  };
+};
+
+class TouchableViewPager extends React.PureComponent {
+  constructor(props){
+    super(props);
+    this.state = {
+      current: 0,
+    };
+  };
+
+  _handleOnPress = () => {
+    const { current } = this.state;
+    const max = React.Children.count(this.props.children);
+    const next = current + 1;
+    this.setState({current: (next + 1) > max? 0 : next });
+  };
+
+  render(){
+    const { current } = this.state;
+    return(
+      <TouchableOpacity 
+        onPress={this._handleOnPress}
+        {...this.props}
+      >
+        {this.props.children[current]}
+      </TouchableOpacity>
+    );
+  };
+};
+
+class ChoicesCountStat extends React.PureComponent {
+  static propTypes = {
+    choicesCount: PropTypes.array,
+    questionID: PropTypes.string,
+    totalResults: PropTypes.number,
+    answer: PropTypes.object,
+    question: PropTypes.object,
+  };
+
+  static styles = StyleSheet.create({
+    container: {
+      borderRadius: 12,
+      overflow: 'hidden',
+    },
+    itemContainer: {
+      flexDirection: 'row',
+      backgroundColor: PURPLE[100],
+      paddingHorizontal: 7,
+      paddingVertical: 8,
+    },
+    choiceContainer: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    countContainer: {
+      marginLeft: 5,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    numberContainer: {
+      width: 17,
+      height: 17,
+      borderRadius: 17/2,
+      backgroundColor: 'white',
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginRight: 7,
+    },
+    numberText: {
+      color: PURPLE[800],
+      fontWeight: '700',
+    },
+    choiceText: {
+      color: 'white',
+      fontSize: 16,
+      fontWeight: '200',
+    },
+    countText: {
+      color: 'white',
+      fontSize: 15,
+      fontWeight: '500',
+    },
+  });
+
+  constructor(props){
+    super(props);
+    const count = (props.choicesCount || []).length;
+    this.colors = Chroma.scale([PURPLE[500], PURPLE[900]]).colors(count);
+    
+    this.state = {
+      showPercentage: true,
+    };
+  };
+
+  _handleOnPress = () => {
+    const { showPercentage } = this.state;
+    this.setState({showPercentage: !showPercentage});
+  };
+
+  _renderItems(){
+    const { styles } = ChoicesCountStat;
+    const { choicesCount, questionID, totalResults, answer, question } = this.props;
+    const { showPercentage } = this.state;
+
+    const answerCorrect = question.answer;
+    const answerUser    = answer? answer.userAnswer : null;
+
+    const styleDefault = {BGColor: PURPLE[50 ], textColor: PURPLE[800]};
+    const styleCorrect = {BGColor: GREEN [100], textColor: GREEN [900]};
+    const styleWrong   = {BGColor: RED   [100], textColor: RED   [900]};
+
+    const choices = (choicesCount || []);
+    //sort from lowest to highest
+    choices.sort((a, b) => (a.count || 0) - (b.count || 0));
+
+    return choices.map((item, index) => {
+      const choice = item.choice || 'N/A';
+      const width = showPercentage? 38 : null;
+      const itemBGColor = this.colors[index];
+      const numberColors = ((answer == null)
+        ? answerCorrect == (choice)? styleCorrect : styleDefault
+        : (choice == answerCorrect)? styleCorrect : 
+          (choice == answerUser   )? styleWrong   : styleDefault
+      );
+
+      //number of times selected as answer over the total time answered
+      const countText = (item.count != undefined)? item.count : 'N/A';
+      //compute percentage of number times selected as answer
+      const percent = Math.round((item.count || 0) /(totalResults || 0) * 100);
+      
+      return(
+        <View 
+          style={[styles.itemContainer, {backgroundColor: itemBGColor}]}
+          key={`${questionID}-${choice}-${countText}-${index}`}
+        >
+          <View style={styles.choiceContainer}>
+            <View style={[styles.numberContainer, {backgroundColor: numberColors.BGColor}]}>
+              <Text style={[styles.numberText, {color: numberColors.textColor}]}>
+                {index + 1}
+              </Text>
+            </View>
+            <Text style={styles.choiceText}>
+              {choice}
+            </Text>
+          </View>
+          <View style={[styles.countContainer, {width}]}>
+            {showPercentage? (
+                <Text style={styles.countText}>
+                  {`${percent}%`}
+                </Text>
+              ):(
+                <Text style={styles.countText}>
+                  {countText}
+                  <Text style={{fontWeight: '100'}}>
+                    {`/${totalResults}`}
+                  </Text>
+                </Text>
+              )
+            }
+          </View>
+        </View>
+      );
+    });
+  };
+
+  render(){
+    const { styles } = ChoicesCountStat;
+    return(
+      <TouchableOpacity 
+        style={[styles.container, this.props.style]}
+        onPress={this._handleOnPress}
+        activeOpacity={0.95}
+      >
+        {this._renderItems()}
+      </TouchableOpacity>
     );
   };
 };
@@ -208,12 +557,15 @@ class ResultItem extends React.PureComponent {
     answer: PropTypes.object,
     hasMatchedAnswer: PropTypes.bool,
     question: PropTypes.object,
+    totalDurations: PropTypes.object,
+    questionID: PropTypes.string,
+    totalResults: PropTypes.number,
   };
 
   static styles = StyleSheet.create({
     //divider styles
     divider: {
-      marginVertical: 7,
+      marginVertical: 8,
       marginHorizontal: 10,
     },
     dividerTop: {
@@ -290,6 +642,47 @@ class ResultItem extends React.PureComponent {
     answerLabelText: {
       fontWeight: '500'
     },
+    //stats styles
+    statsContainer: {
+      marginTop: 7,
+    },
+    statsTitle: {
+      fontWeight: '600',
+      fontSize: 18,
+      color: PURPLE[900],
+    },
+    statsSubtitle: {
+      fontSize: 16,
+      fontWeight: '200',
+      marginBottom: 7,
+    },
+    //stats row/column styles
+    detailRow: {
+      flexDirection: 'row',
+      marginBottom: 5,
+    },
+    detailTitle: Platform.select({
+      ios: {
+        fontSize: 17,
+        fontWeight: '600',
+        color: PURPLE[1000]
+      },
+      android: {
+        fontSize: 17,
+        fontWeight: '900'
+      }
+    }),
+    detailSubtitle: Platform.select({
+      ios: {
+        fontSize: 21,
+        fontWeight: '200'
+      },
+      android: {
+        fontSize: 21,
+        fontWeight: '100',
+        color: '#424242'
+      },
+    }),
   });
 
   _renderHeder(){
@@ -324,8 +717,10 @@ class ResultItem extends React.PureComponent {
     );
   };
 
-  _renderQuestionHeader(){
+  _renderQuestionHeader(isExpanded){
     const { styles } = ResultItem;
+    const suffix = isExpanded? 'collapse' : 'expand';
+
     return(
       <View style={styles.exapnderHeaderContainer}>
         <Icon
@@ -336,14 +731,16 @@ class ResultItem extends React.PureComponent {
         />
         <View style={styles.exapnderHeaderTextContainer}>
           <Text style={styles.expanderHeaderTitle}>Question</Text>
-          <Text style={styles.expanderHeaderSubtitle}>Tap to expand or collapse</Text>
+          <Text style={styles.expanderHeaderSubtitle}>{`Tap here to ${suffix}`}</Text>          
         </View>
       </View>
     );
   };
 
-  _renderExplanationHeader(){
+  _renderExplanationHeader(isExpanded){
     const { styles } = ResultItem;
+    const suffix = isExpanded? 'collapse' : 'expand';
+
     return(
       <View style={styles.exapnderHeaderContainer}>
         <Icon
@@ -354,17 +751,18 @@ class ResultItem extends React.PureComponent {
         />
         <View style={styles.exapnderHeaderTextContainer}>
           <Text style={styles.expanderHeaderTitle}>Explanation</Text>
-          <Text style={styles.expanderHeaderSubtitle}>Tap to expand or collapse</Text>
+          <Text style={styles.expanderHeaderSubtitle}>{`Tap here to ${suffix}`}</Text>          
         </View>
       </View>
     );
   };
 
-  _renderAnswerHeader = () => {
+  _renderAnswerHeader = (isExpanded) => {
     const { styles } = ResultItem;
     const { answer } = this.props;
-    
-    const isCorrect  = (answer.isCorrect  || false);
+    const suffix = isExpanded? 'collapse' : 'expand';  
+
+    const isCorrect  = answer? answer.isCorrect  : false;
     const name = isCorrect? 'check-circle' : 'x-circle';
 
     return(
@@ -377,7 +775,7 @@ class ResultItem extends React.PureComponent {
         />
         <View style={styles.exapnderHeaderTextContainer}>
           <Text style={styles.expanderHeaderTitle}>Answers</Text>
-          <Text style={styles.expanderHeaderSubtitle}>Tap to expand or collapse</Text>
+          <Text style={styles.expanderHeaderSubtitle}>{`Tap here to ${suffix}`}</Text>
         </View>
       </View>
     );
@@ -389,8 +787,8 @@ class ResultItem extends React.PureComponent {
 
     const questionItem = QuestionItem.wrap(question);
     
-    const isCorrect  = (answer.isCorrect  || false       );
-    const userAnswer = (answer.userAnswer || 'No Answer.');
+    const isCorrect  = answer? answer.isCorrect  : false;
+    const userAnswer = answer? answer.userAnswer : 'No Answer.';
 
     return (isCorrect?(
       <View style={styles.answerRowContainer}>
@@ -435,18 +833,87 @@ class ResultItem extends React.PureComponent {
         </View>
       </View>
     ));
+  };
 
-    return (
-      <View>
-        <View style={styles.answerRowContainer}>
-          <Icon
-            name={''}
-            type={''}
-            size={20}
-            color={'red'}
-          />
+  _renderStatsHeader(isExpanded) {
+    const { styles } = ResultItem;
+    const suffix = isExpanded? 'collapse' : 'expand';
+    return(
+      <View style={styles.exapnderHeaderContainer}>
+        <Icon
+          name={'plus-circle'}
+          type={'feather'}
+          color={PURPLE[500]}
+          size={25}
+        />
+        <View style={styles.exapnderHeaderTextContainer}>
+          <Text style={styles.expanderHeaderTitle}>Statistics</Text>
+          <Text style={styles.expanderHeaderSubtitle}>{`Tap here to ${suffix}`}</Text>
         </View>
       </View>
+    );
+  };
+
+  _renderStatsDuration(){
+    const { styles } = ResultItem;
+    const { answerStats, durations, totalDurations } = this.props;
+
+    //current durations
+    const totalTime = (durations !== undefined)? durations.totalTime || 0 : 0;
+    const viewCount = (durations !== undefined)? durations.viewCount || 0 : 0;
+    //aggregate durations
+    const sumTotalTime = (durations !== undefined)? totalDurations.totalTime || 0 : 0;
+    const sumviewCount = (durations !== undefined)? totalDurations.viewCount || 0 : 0;
+    //dont show if current and aggregate are the same
+    const showTotalRow = (totalTime != sumTotalTime) && (viewCount != sumviewCount);
+    
+    //format totalTime
+    const duration      = moment(totalTime).format('mm:ss');
+    const totalDuration = moment(sumTotalTime).format('mm:ss');
+
+    return(
+      <Fragment>
+        <Text style={styles.statsTitle}>Duration and Views</Text>
+        <Text style={styles.statsSubtitle}>Tap to toggle between showing the current or aggregate duration and view count.</Text>
+        <View style={styles.detailRow}>
+          <TouchableViewPager style={{flex: 1}}>
+            <Fragment>
+              <Text numberOfLines={1} style={styles.detailTitle   }>{'Duration: '}</Text>
+              <Text numberOfLines={1} style={styles.detailSubtitle}>{duration}</Text>
+            </Fragment>
+            <Fragment>
+              <Text numberOfLines={1} style={styles.detailTitle   }>{'Total Duration: '}</Text>
+              <Text numberOfLines={1} style={styles.detailSubtitle}>{totalDuration}</Text>
+            </Fragment>
+          </TouchableViewPager>
+          <TouchableViewPager style={{flex: 1}}>
+            <Fragment>
+              <Text numberOfLines={1} style={styles.detailTitle   }>{'View Count: '}</Text>
+              <Text numberOfLines={1} style={styles.detailSubtitle}>{`${viewCount} times`}</Text>
+            </Fragment>
+            <Fragment>
+              <Text numberOfLines={1} style={styles.detailTitle   }>{'Total Views: '}</Text>
+              <Text numberOfLines={1} style={styles.detailSubtitle}>{`${sumviewCount} times`}</Text>
+            </Fragment>
+          </TouchableViewPager>
+        </View>
+      </Fragment>
+    );
+  };
+
+  _renderStatsAnswer(){
+    const { styles } = ResultItem;
+    const { answerStats, choicesCount, questionID, totalResults, answer, question } = this.props;
+
+    return(
+      <Fragment>
+        <Text style={styles.statsTitle}>Choices Frequency</Text>
+        <Text style={styles.statsSubtitle}>Shows how many times a choice has been selected. Tap to toggle percentage.</Text>
+        <ChoicesCountStat
+          style={{marginTop: 5}}
+          {...{choicesCount, questionID, totalResults, answer, question}}
+        />
+      </Fragment>
     );
   };
 
@@ -462,17 +929,25 @@ class ResultItem extends React.PureComponent {
       <Card>
         {this._renderHeder()}
         <Divider style={styles.dividerTop}/>
-        <Expander renderHeader={this._renderQuestionHeader}>
+        <TextExpander renderHeader={this._renderQuestionHeader}>
           <Text style={styles.expanderText}>{textQuestion}</Text>
-        </Expander>
+        </TextExpander>
         <Divider style={styles.divider}/>
-        <Expander renderHeader={this._renderExplanationHeader}>
+        <TextExpander renderHeader={this._renderExplanationHeader}>
           <Text style={styles.expanderText}>{textExplanation}</Text>
-        </Expander>
+        </TextExpander>
         <Divider style={styles.divider}/>
-        <Expander renderHeader={this._renderAnswerHeader}>
+        <TextExpander renderHeader={this._renderAnswerHeader}>
           {this._renderAnswer()}
-        </Expander>
+        </TextExpander>
+        <Divider style={styles.divider}/>
+        <ContentExpander renderHeader={this._renderStatsHeader}>
+          <View style={styles.statsContainer}>
+            {this._renderStatsDuration()}
+            <Divider style={styles.divider}/>
+            {this._renderStatsAnswer()}
+          </View>
+        </ContentExpander>
         <Divider style={styles.divider}/>
       </Card>
     );
@@ -543,6 +1018,10 @@ export class CustomQuizExamResultQAScreen extends React.PureComponent {
         skipped: 0,
         wrong  : 0, 
       };
+      const totalDurations = {
+        totalTime: 0,
+        viewCount: 0,
+      };
 
       const { question } = results[0];
       //extract choices from questions
@@ -557,6 +1036,12 @@ export class CustomQuizExamResultQAScreen extends React.PureComponent {
         //check if there's an answer
         const hasMatchedAnswer = (result.hasMatchedAnswer || false);
         const hasAnswer = (result.answer != undefined);
+
+        if(result.durations){
+          const { totalTime, viewCount } = result.durations;
+          totalDurations.totalTime += (totalTime || 0);
+          totalDurations.viewCount += (viewCount || 0);
+        };
 
         if(hasMatchedAnswer && hasAnswer){
           const { isCorrect, userAnswer } = result.answer;
@@ -579,10 +1064,13 @@ export class CustomQuizExamResultQAScreen extends React.PureComponent {
         choice,
       }));
 
-      const result = results[0];
+
+      //get the last/latest/current results
+      const result = results.pop() || {};
       return {
         answerStats: stats,
         choicesCount,
+        totalDurations,
         ...result,
       };
     });
@@ -590,66 +1078,35 @@ export class CustomQuizExamResultQAScreen extends React.PureComponent {
 
   constructor(props){
     super(props);
-    const {navigation  } = props;
+    const { navigation } = props;
 
     //get data from prev. screen - quiz results
     const quizResults = navigation.getParam('quizResults', []);
-    
-    //combine the same QA items across all results
-    const QAList = CustomQuizExamResultQAScreen.combineSameQuestionsAndAnswers(quizResults);
-    const QAStatsList = CustomQuizExamResultQAScreen.appendAnswerStats(QAList);
+    const totalResults = quizResults.length;
 
     this.state = {
-      data: QAStatsList,
-      modulesByID: null,
-      subjectsByID: null,
+      data: [],
       loading: LOAD_STATE.LOADING,
+      totalResults,
     };
   };
 
   componentDidMount(){
+    const { navigation } = this.props;
+    //get data from prev. screen - quiz results
+    const quizResults = navigation.getParam('quizResults', []);
+
     InteractionManager.runAfterInteractions(async () => {
       try {
-        const data = await ModuleStore.read();
-        const modules = ModuleItemModel.wrapArray(data);
+        //delay processing of data
+        await timeout(500);
 
-        //collapse module array into obj - access modules via dot not.
-        const modulesByID = modules.reduce((acc, module) => {
-          const id = (module.indexid != undefined)? module.indexid : -1; 
-          //skip if moduleid does not exist - because id can be 0 thus, if(0) false
-          if(id == -1) return acc;
+        //combine the same QA items across all results
+        const QAList      = CustomQuizExamResultQAScreen.combineSameQuestionsAndAnswers(quizResults);
+        const QAStatsList = CustomQuizExamResultQAScreen.appendAnswerStats(QAList);
+        //update flatlist data and mount
+        this.setState({data: QAStatsList, loading: LOAD_STATE.SUCCESS});
 
-          //append module data to acc
-          acc[id] = module;
-          return acc;
-        }, {});
-
-        //collapse module array into obj - access subjec via dot not.
-        const subjectsByID = modules.reduce((acc, module) => {
-          const moduleID = (module.indexid  || -1);
-          const subjects = (module.subjects || []);
-
-          //skip if moduleid does not exist
-          if(moduleID === -1) return acc;
-
-          //collapse subject array into obj
-          const subjectsAcc = subjects.reduce((subjectAcc, subject) => {
-            const subjectID = (subject.indexid != undefined)? subject.indexid : -1; 
-            //skip if subjectid does not exist
-            if(subjectID == -1) return subjectAcc;
-            
-            //append subject data to acc
-            subjectAcc[`${moduleID}-${subjectID}`] = subject;
-            return subjectAcc;
-          }, {});
-          
-          return {...acc, ...subjectsAcc};
-        }, {});
-
-        this.setState({
-          loading: LOAD_STATE.SUCCESS,
-          modulesByID, subjectsByID,
-        });
       } catch(error){
         this.setState({loading: LOAD_STATE.ERROR});
         console.log('Modules could not be loaded');
@@ -663,7 +1120,8 @@ export class CustomQuizExamResultQAScreen extends React.PureComponent {
   };
 
   _renderItem = ({item, index}) => {
-    const { answerStats, choicesCount, durations, answer, hasMatchedAnswer, question } = item;
+    const { totalResults } = this.state;
+    const { answerStats, choicesCount, durations, totalDurations, answer, hasMatchedAnswer, question, questionID } = item;
 
     return(
       <AnimatedListItem
@@ -674,7 +1132,7 @@ export class CustomQuizExamResultQAScreen extends React.PureComponent {
       >
         <ResultItem 
           //pass down items
-          {...{index, answerStats, choicesCount, durations, answer, hasMatchedAnswer, question}}
+          {...{index, answerStats, choicesCount, durations, totalDurations, answer, hasMatchedAnswer, question, questionID, totalResults}}
         />
       </AnimatedListItem>
     );
