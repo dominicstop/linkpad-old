@@ -13,7 +13,7 @@ import { TipsStore } from '../functions/TipsStore'     ;
 import { ResourcesStore } from '../functions/ResourcesStore';
 import { UserStore, UserModel } from '../functions/UserStore'        ;
 
-import { ROUTES } from '../Constants';
+import { ROUTES, FONT_NAMES } from '../Constants';
 
 import PreboardExamStore from '../functions/PreboardExamStore';
 import { FlatList } from 'react-native-gesture-handler';
@@ -39,8 +39,9 @@ export default class AuthLoadingScreen extends React.Component {
     try {
       //animate in and authenticate
       const [user] = await Promise.all([
-        this._authenticate(),
-        this._loadFonts   (),
+        this._authenticate (),
+        this._loadIconFonts(),
+        this._loadTextFonts(),
       ]);
 
       const isLoggedIn = user.email != '';
@@ -99,7 +100,7 @@ export default class AuthLoadingScreen extends React.Component {
     };
   };
 
-  async _loadFonts(){
+  async _loadIconFonts(){
     await Font.loadAsync({
       'Material Design Icons': require("@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/MaterialCommunityIcons.ttf" ),
       'Material Icons'       : require("@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/MaterialIcons.ttf"  ),
@@ -109,6 +110,47 @@ export default class AuthLoadingScreen extends React.Component {
       'Feather'              : require('@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/Feather.ttf'        ),
       'Ionicons'             : require('@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/Ionicons.ttf'       ),
       'Entypo'               : require('@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/Entypo.ttf'         ),
+    });
+  };
+
+  async _loadTextFonts(){
+    await Font.loadAsync({
+      //------ Play Fair Display ------
+      //[FONT_NAMES.playfair_regular]: require('../../assets/fonts/Playfair_Display/PlayfairDisplay-Regular.ttf'),
+      //[FONT_NAMES.playfair_bold   ]: require('../../assets/fonts/Playfair_Display/PlayfairDisplay-Bold.ttf'   ),
+      //[FONT_NAMES.playfair_black  ]: require('../../assets/fonts/Playfair_Display/PlayfairDisplay-Black.ttf'  ),
+      //------ Taviraj ------
+      //[FONT_NAMES.taviraj_regular    ]: require('../../assets/fonts/Taviraj/Taviraj-Regular.ttf'     ),
+      //[FONT_NAMES.taviraj_light      ]: require('../../assets/fonts/Taviraj/Taviraj-Light.ttf'       ),
+      //[FONT_NAMES.taviraj_extra_light]: require('../../assets/fonts/Taviraj/Taviraj-ExtraLight.ttf'  ),
+      //[FONT_NAMES.taviraj_medium     ]: require('../../assets/fonts/Taviraj/Taviraj-Medium.ttf'      ),
+      //[FONT_NAMES.taviraj_semi_bold  ]: require('../../assets/fonts/Taviraj/Taviraj-SemiBold.ttf'    ),
+      //[FONT_NAMES.taviraj_bold       ]: require('../../assets/fonts/Taviraj/Taviraj-Taviraj-Bold.ttf'),
+      //------ Barlow ------
+      [FONT_NAMES.barlow_extra_light]: require('../../assets/fonts/Barlow/Barlow-ExtraLight.ttf'),
+      [FONT_NAMES.barlow_light      ]: require('../../assets/fonts/Barlow/Barlow-Light.ttf'     ),
+      [FONT_NAMES.barlow_regular    ]: require('../../assets/fonts/Barlow/Barlow-Regular.ttf'   ),
+      [FONT_NAMES.barlow_medium     ]: require('../../assets/fonts/Barlow/Barlow-Medium.ttf'    ),
+      [FONT_NAMES.barlow_semi_bold  ]: require('../../assets/fonts/Barlow/Barlow-SemiBold.ttf'  ),
+      [FONT_NAMES.barlow_bold       ]: require('../../assets/fonts/Barlow/Barlow-Bold.ttf'      ),
+      [FONT_NAMES.barlow_extra_bold ]: require('../../assets/fonts/Barlow/Barlow-ExtraBold.ttf' ),
+      [FONT_NAMES.barlow_black      ]: require('../../assets/fonts/Barlow/Barlow-Black.ttf'     ),
+      //------ Barlow Semi Condensed ------
+      //[FONT_NAMES.barlow_semicondensed_extra_light]: require('../../assets/fonts/Barlow_Semi_Condensed/BarlowSemiCondensed-ExtraLight.ttf'),
+      [FONT_NAMES.barlow_semicondensed_light      ]: require('../../assets/fonts/Barlow_Semi_Condensed/BarlowSemiCondensed-Light.ttf'     ),
+      //[FONT_NAMES.barlow_semicondensed_regular    ]: require('../../assets/fonts/Barlow_Semi_Condensed/BarlowSemiCondensed-Regular.ttf'   ),
+      [FONT_NAMES.barlow_semicondensed_medium     ]: require('../../assets/fonts/Barlow_Semi_Condensed/BarlowSemiCondensed-Medium.ttf'    ),
+      [FONT_NAMES.barlow_semicondensed_semi_bold  ]: require('../../assets/fonts/Barlow_Semi_Condensed/BarlowSemiCondensed-SemiBold.ttf'  ),
+      [FONT_NAMES.barlow_semicondensed_bold       ]: require('../../assets/fonts/Barlow_Semi_Condensed/BarlowSemiCondensed-Bold.ttf'      ),
+      //[FONT_NAMES.barlow_semicondensed_extra_bold ]: require('../../assets/fonts/Barlow_Semi_Condensed/BarlowSemiCondensed-ExtraBold.ttf' ),
+      //[FONT_NAMES.barlow_semicondensed_black      ]: require('../../assets/fonts/Barlow_Semi_Condensed/BarlowSemiCondensed-Black.ttf'     ),
+      //------ Barlow Condensed ------
+      //[FONT_NAMES.barlow_condensed_regular   ]: require('../../assets/fonts/Barlow_Condensed/BarlowCondensed-Regular.ttf'  ),
+      //[FONT_NAMES.barlow_condensed_medium    ]: require('../../assets/fonts/Barlow_Condensed/BarlowCondensed-Medium.ttf'   ),
+      //[FONT_NAMES.barlow_condensed_semi_bold ]: require('../../assets/fonts/Barlow_Condensed/BarlowCondensed-SemiBold.ttf' ),
+      //[FONT_NAMES.barlow_condensed_bold      ]: require('../../assets/fonts/Barlow_Condensed/BarlowCondensed-Bold.ttf'     ),
+      //[FONT_NAMES.barlow_condensed_extra_bold]: require('../../assets/fonts/Barlow_Condensed/BarlowCondensed-ExtraBold.ttf'),
+      //[FONT_NAMES.barlow_condensed_black     ]: require('../../assets/fonts/Barlow_Condensed/BarlowCondensed-Black.ttf'    ),
     });
   };
 

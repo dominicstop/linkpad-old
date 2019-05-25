@@ -436,13 +436,15 @@ class Interactable extends Component {
   }
 
   render() {
-    const { children, style, horizontalOnly, verticalOnly } = this.props;
+    const { children, style, horizontalOnly, verticalOnly, ...optherProps } = this.props;
     return (
       <PanGestureHandler
         maxPointers={1}
         enabled={this.props.dragEnabled}
         onGestureEvent={this._onGestureEvent}
-        onHandlerStateChange={this._onGestureEvent}>
+        onHandlerStateChange={this._onGestureEvent}
+        {...optherProps}
+      >
         <Animated.View
           style={[
             style,

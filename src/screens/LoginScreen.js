@@ -23,7 +23,7 @@ import { NavigationEvents } from 'react-navigation';
 import { BlurView, LinearGradient } from 'expo';
 
 import Animated, { Easing } from 'react-native-reanimated';
-const { set, cond, block, add, Value, timing, interpolate, and, or, onChange, eq, call, Clock, clockRunning, startClock, stopClock, concat, color, divide, multiply, sub, lessThan, abs, modulo, round, debug, clock } = Animated;
+const { set, cond, block, add, Value, timing, interpolate, and, or, onChange, eq, call, Clock, clockRunning, startClock, stopClock, concat, color, divide, multiply, sub, lessThan, abs, modulo, round, debug, floor, clock, defined } = Animated;
 
 //enable layout animation
 UIManager.setLayoutAnimationEnabledExperimental && UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -311,11 +311,11 @@ class Expander extends React.PureComponent {
     this.progress = Expander.runTiming(clock, this.progressInitial, this.progressFinal);
 
     //interpolated values
-    this.height = cond(eq(this.expandedHeight, -1), 0, interpolate(this.progress, {
+    this.height = interpolate(this.progress, {
       inputRange : [0, 100],
       outputRange: [collapsedHeight, this.expandedHeight],
       extrapolate: 'clamp',
-    }));
+    });
     this.opacity = interpolate(this.progress, {
       inputRange : [0, 100],
       outputRange: [0, 1],
@@ -478,11 +478,7 @@ class ProgressBar extends React.PureComponent {
     };
       
     return block([
-      cond(clockRunning(clock), [,
-        // if the clock is already running we update the toValue, in case a new dest has been passed in
-        set(config.toValue, dest),
-        set(value, state.position),
-      ], [
+      cond(clockRunning(clock), 0, [
         // if the clock isn't running we reset all the animation params and start the clock
         set(state.finished , 0),
         set(state.time     , 0),
@@ -493,13 +489,8 @@ class ProgressBar extends React.PureComponent {
       ]),
       // we run the step here that is going to update position
       timing(clock, state, config),
-      // if the animation is over, reset
+      // if the animation is over
       cond(state.finished, [
-        set(state.finished , 0),
-        set(state.time     , 0),
-        set(state.frameTime, 0),
-        set(state.position , value),
-        set(config.toValue , dest ),
         stopClock(clock),
         call([state.position], callback),        
       ]),
@@ -556,7 +547,7 @@ class ProgressBar extends React.PureComponent {
     super(props);
     const { MODES } = ProgressBar;
 
-    this.progressFinal   = new Value(0);
+    this.progressFinal   = new Value(1);
     this.progressCurrent = new Value(0);
 
     const clock = new Clock();
@@ -565,7 +556,11 @@ class ProgressBar extends React.PureComponent {
       this.progressFinal, 
       this._handleAnimationFinished
     );
-
+    this.width = interpolate(this.progress, {
+      inputRange : [0, 100],
+      outputRange: [0, 100],
+      extrapolate: 'clamp',
+    });
     this.opacity = interpolate(this.progress, {
       inputRange : [0, 100],
       outputRange: [0.1, 0.3],
@@ -576,17 +571,19 @@ class ProgressBar extends React.PureComponent {
       outputRange: [12, 25, 12],
       extrapolate: 'clamp',
     });
+    /*
     this.color = ProgressBar.colorHSV(251, 0, interpolate(this.progress, {
       inputRange : [0, 100],
       outputRange: [1, 0],  
       extrapolate: 'clamp',
     }));
-    
+    */
+    /*
     //prevent multiple/redundant updates
     this.progressAnimateTo = _.throttle(this.progressAnimateTo, 1000, {
       leading: false, trailing: true 
     });
-    
+    */
     this.state = {
       percentage: 0,
       mode: MODES.INITIAL,
@@ -1574,6 +1571,12 @@ export default class LoginScreen extends React.Component {
       paddingTop: 20,
       paddingBottom: 25,
     },
+    formContainer: {
+      backgroundColor: 'rgba(0,0,0,0.9)',
+      paddingHorizontal: 18,
+      paddingTop: 20,
+      paddingBottom: 25,
+    },
   });
 
   static MODES = {
@@ -1825,34 +1828,74 @@ export default class LoginScreen extends React.Component {
         />
       </Fragment>
     );
+
+    return(
+      <Fragment>
+        <SigninForm
+          ref={r => this.signinForm = r}
+          onPressLogin={this._handleOnPressSignin}
+          onPressSignUp={this._handleOnPressSignUp}
+          {...{results}}
+        />
+        <WelcomeUser
+          ref={r => this.welcomeUser = r}
+          onPressNext={this._handleOnPressNextWelcome}
+          {...{results}}
+        />
+        <Downloading
+          ref={r => this.downloading = r}
+          onDownloadFinished={this._handleOnDownloadFinished}
+          onDownloadFailed={this._hadleOnDownloadFailed}
+          onPressNext={this._handleOnPressNextDownload}
+        />
+      </Fragment>
+    );
   };
 
   _renderContainer(){
     const { styles } = LoginScreen;
-    return(
-      <Animatable.View 
-        ref={r => this.signInContainer = r}
-        style={styles.signInContainer}
-        animation={'bounceInUp'}
-        duration={1000}
-        easing={'ease-in-out'}
-        useNativeDriver={true}
-      >
-        <BlurView
-          style={styles.blurview}
-          intensity={100}
-          tint={'default'}
+
+    switch (Platform.OS) {
+      case 'ios': return (
+        <Animatable.View 
+          ref={r => this.signInContainer = r}
+          style={styles.signInContainer}
+          animation={'bounceInUp'}
+          duration={1000}
+          easing={'ease-in-out'}
+          useNativeDriver={true}
         >
-          <LinearGradient
-            style={styles.gradientBG}
-            colors={['rgba(0,0,0,0.5)', 'rgba(0,0,0,0.75)']}
+          <BlurView
+            style={styles.blurview}
+            intensity={100}
+            tint={'default'}
           >
+            <LinearGradient
+              style={styles.gradientBG}
+              colors={['rgba(0,0,0,0.5)', 'rgba(0,0,0,0.75)']}
+            >
+              <FormHeader ref={r => this.formHeader = r}/>
+              {this._renderContents()}
+            </LinearGradient>
+          </BlurView>
+        </Animatable.View>
+      );
+      case 'android': return (
+        <Animatable.View 
+          ref={r => this.signInContainer = r}
+          style={styles.signInContainer}
+          animation={'bounceInUp'}
+          duration={1000}
+          easing={'ease-in-out'}
+          useNativeDriver={true}
+        >
+          <View style={styles.formContainer}>
             <FormHeader ref={r => this.formHeader = r}/>
             {this._renderContents()}
-          </LinearGradient>
-        </BlurView>
-      </Animatable.View>
-    );
+          </View>
+        </Animatable.View>
+      );
+    };
   };
 
   render(){

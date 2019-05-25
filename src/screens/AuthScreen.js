@@ -17,7 +17,7 @@ const AuthStack = createStackNavigator({
     [ROUTES.LoginRoute  ]: LoginScreen  ,
     [ROUTES.SignUpRoute ]: SignUpScreen ,
   }, {
-    initialRouteName: ROUTES.WelcomeRoute,
+    initialRouteName: ROUTES.LoginRoute,
     headerMode: 'hidden',
     cardStyle: {
       backgroundColor: 'transparent',

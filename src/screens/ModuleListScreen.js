@@ -13,7 +13,7 @@ import * as Animatable from 'react-native-animatable';
 import TimeAgo from 'react-native-timeago';
 import { Header, NavigationEvents } from 'react-navigation';
 import { Divider } from 'react-native-elements';
-import {HEADER_HEIGHT} from '../Constants';
+import {HEADER_HEIGHT, FONT_STYLES} from '../Constants';
 
 
 class ModulesHeader extends React.PureComponent {
@@ -49,55 +49,10 @@ class ModulesHeader extends React.PureComponent {
       flex: 1, 
       justifyContent: 'center', 
     },
-    headerTitle: {
-      textAlign: 'center',
-      color: '#512DA8',
-      fontSize: 20, 
-      fontWeight: '800'
-    },
-    headerSubtitle: {
-      fontSize: 16,
-      marginTop: 2,
-      textAlign: 'left',
-      ...Platform.select({
-        ios: {
-          fontWeight: '200',
-          color: '#202020',
-        },
-        android: {
-          fontWeight: '100',
-          color: '#424242'
-        },
-      })
-    },
     divider: {
       marginHorizontal: 15,
       marginVertical: 8,
     },  
-    detailTitle: Platform.select({
-      ios: {
-        fontSize: 17,
-        fontWeight: '500',
-        color: '#161616'
-      },
-      android: {
-        fontSize: 17,
-        fontWeight: '900',
-        color: '#161616',
-      }
-    }),
-    detailSubtitle: Platform.select({
-      ios: {
-        fontSize: 16,
-        fontWeight: '200',
-        color: '#161616',
-      },
-      android: {
-        fontSize: 16,
-        fontWeight: '100',
-        color: '#424242'
-      },
-    }),
   });
 
   constructor(props){
@@ -122,12 +77,12 @@ class ModulesHeader extends React.PureComponent {
     return(
       <View style={{flexDirection: 'row'}}>
         <View style={{flex: 1}}>
-          <Text numberOfLines={1} style={styles.detailTitle   }>{'Modules: '}</Text>
-          <Text numberOfLines={1} style={styles.detailSubtitle}>{`${moduleCount} items`}</Text>
+          <Text numberOfLines={1} style={FONT_STYLES.detailTitle   }>{'Modules: '}</Text>
+          <Text numberOfLines={1} style={FONT_STYLES.detailSubtitle}>{`${moduleCount} items`}</Text>
         </View>
         <View style={{flex: 1}}>
-          <Text numberOfLines={1} style={styles.detailTitle   }>{'Updated: '}</Text>
-          <Time numberOfLines={1} style={styles.detailSubtitle}/>              
+          <Text numberOfLines={1} style={FONT_STYLES.detailTitle   }>{'Updated: '}</Text>
+          <Time numberOfLines={1} style={FONT_STYLES.detailSubtitle}/>              
         </View>
       </View>
     );
@@ -159,10 +114,10 @@ class ModulesHeader extends React.PureComponent {
           useNativeDriver={true}
         />
         <View style={styles.headerTextContainer}>
-          <Text style={styles.headerTitle}>
+          <Text style={FONT_STYLES.cardTitle}>
             {'Available Modules'}
           </Text>
-          <Text style={styles.headerSubtitle}>
+          <Text style={FONT_STYLES.cardSubtitle}>
             {'Each module contains several subjects with related topics. Choose a subject and start learning.'}
           </Text>
           <Divider style={styles.divider}/>

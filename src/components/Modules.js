@@ -9,6 +9,9 @@ import { ModuleItemModel, SubjectItem } from '../models/ModuleModels';
 import _ from 'lodash';
 import * as Animatable from 'react-native-animatable';
 import Carousel from 'react-native-snap-carousel';
+import { NumberIndicator } from './NumberIndicator';
+import { FONT_NAMES } from '../Constants';
+import { GREY } from '../Colors';
 
 
 export const subjectProps = {
@@ -24,52 +27,66 @@ export const moduleProps = {
   ]),
   modulename : PropTypes.string,
   description: PropTypes.string,
-  subjects   : PropTypes.arrayOf(
-    PropTypes.shape(subjectProps)
-  ),
+  subjects   : PropTypes.array ,
 };
 
 //subject title and desc 
 export class SubjectDetails extends React.PureComponent {
   static propTypes = {
-    subjectData: PropTypes.shape(subjectProps),
-    onPress: PropTypes.func,
+    subjectData: PropTypes.object,
     numberOfLinesDesc: PropTypes.number,
+    onPress: PropTypes.func,
     containerStyle: ViewPropTypes.style,
   }
 
-  static defaultProps = {
-    onPress: () => alert(),
-  }
+  static styles = StyleSheet.create({
+    title: {
 
-  constructor() {
-    super();
-  }
+    },
+    description: {
+      flex: 1, 
+      textAlign: 'justify',
+      ...Platform.select({
+        ios: {
+          marginTop: 1,
+          fontWeight: '200',
+        },
+        android: {
+          marginTop: -1,
+          fontWeight: '100',
+        },
+      }),
+    },
+  });
+
+  _handleOnPress = () => {
+    const { onPress } = this.props;
+    onPress && onPress(subjectData);
+  };
 
   render() {
-    const { subjectData, onPress, containerStyle, color, numberOfLinesDesc } = this.props;
+    const { styles } = SubjectDetails;
+    const { subjectData, containerStyle, numberOfLinesDesc } = this.props;
+
+    const subjectname = subjectData.subjectname || "Unknown Subject";
+    const description = subjectData.description || "Description not available";
+
+    const sharedTextProps = {
+      ellipsizeMode: 'tail', 
+      lineBreakMode: 'tail',
+    };
+
     return(
       <TouchableOpacity 
         style={[{flex: 1,}, containerStyle]} 
-        onPress={() => onPress(subjectData)}
+        onPress={this._handleOnPress}
         activeOpacity={0.7}
       >
-        {/*Title*/}
-        <Text 
-          style={[styles.subjectTitle]}
-          numberOfLines={1}
-          ellipsizeMode={'tail'} 
-          lineBreakMode={'tail'}
-        >
-          {subjectData.subjectname}
+        <Text style={styles.title} numberOfLines={1} {...sharedTextProps}>
+          {subjectname}
         </Text>
-        <Text 
-          style={[{flex: 1, marginTop: 1, textAlign: 'justify'}, styles.subjectSubtitle]} 
-          numberOfLines={numberOfLinesDesc}
-          ellipsizeMode={'tail'} 
-          lineBreakMode={'tail'}
-        >
-          {subjectData.description}
+        <Text style={styles.description} numberOfLines={numberOfLinesDesc} {...sharedTextProps}>
+          {description}
         </Text>
       </TouchableOpacity>
     );
@@ -87,7 +104,7 @@ export class SubjectListItem extends React.PureComponent {
     onPressSubject: PropTypes.func,
     //styles
     containerStyle: ViewPropTypes.style,
-  }
+  };
 
   static defaultProps = {
     showDetails: false,
@@ -101,11 +118,20 @@ export class SubjectListItem extends React.PureComponent {
       color: '#161616',
     },
     description: {
-      textAlign: 'justify',
-      marginTop: 3, 
-      fontWeight: '300',
       fontSize: 16,
-      color: '#202020',
+      ...Platform.select({
+        ios: {
+          marginTop: 2,    
+          textAlign: 'justify',
+          fontWeight: '300',
+          color: '#202020',
+        },
+        android: {
+          marginTop: -1, 
+          fontWeight: '100',
+          color: GREY[800],
+        },
+      }),
     },
     detail: Platform.select({
       ios: {
@@ -161,20 +187,16 @@ export class SubjectListItem extends React.PureComponent {
     }),
   });
 
-  constructor() {
-    super();
-  }
-
   _handleOnPress = () => {
     const { subjectData, onPressSubject } = this.props;
     onPressSubject && onPressSubject(subjectData);
-  }
+  };
 
   _onPressSubject = () => {
     const { onPressSubject, subjectData, moduleData } = this.props;
     //pass subject data as param to callback
     onPressSubject(subjectData, moduleData);
-  }
+  };
 
   _renderDetails(){
     const { styles } = SubjectListItem;
@@ -191,11 +213,13 @@ export class SubjectListItem extends React.PureComponent {
         <Text style={styles.detail}>{` (Updated: ${lastupdated})`}</Text>
       </View>
     );
-  }
+  };
 
   _renderDescription(){
     const { styles } = SubjectListItem;
     const { subjectData, numberOfLinesDesc } = this.props;
+
+    const description = subjectData.description || "No description available.";
 
     return(
       <TouchableOpacity
@@ -218,11 +242,11 @@ export class SubjectListItem extends React.PureComponent {
           ellipsizeMode={'tail'} 
           lineBreakMode={'tail'}
         >
-          {subjectData.description}
+          {description}
         </Text>
       </TouchableOpacity>
     );
-  }
+  };
 
   render() {
     const { styles } = SubjectListItem;
@@ -235,18 +259,14 @@ export class SubjectListItem extends React.PureComponent {
         </View>
       </View>
     );
-  }
+  };
 };
 
 //displays a single module item and a list of subjects
 export class ModuleItem extends React.PureComponent {
   static propTypes = {
-    modules: PropTypes.arrayOf(
-      PropTypes.shape(moduleProps)
-    ).isRequired,
-    moduleData: PropTypes.shape(
-      moduleProps
-    ).isRequired,
+    modules: PropTypes.array,
+    moduleData: PropTypes.object,
     numberOfLinesDesc: PropTypes.number,
     //callbacks
     onPressSubject: PropTypes.func,
@@ -258,6 +278,13 @@ export class ModuleItem extends React.PureComponent {
   };
 
   static styles = StyleSheet.create({
+    titleContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    numberIndicator: {
+      marginRight: 5,
+    },
     title: {
       flex: 1,
       color: '#150a44',
@@ -268,8 +295,7 @@ export class ModuleItem extends React.PureComponent {
         },
         android: {
           fontSize: 24,
-          fontWeight: '900',
-          textDecorationLine: 'underline', 
+          fontFamily: FONT_NAMES.barlow_semicondensed_semi_bold,
         }
       }),
     },
@@ -294,9 +320,18 @@ export class ModuleItem extends React.PureComponent {
       color: 'grey'
     },
     description: {
-      fontWeight: '200',
       fontSize: 18,
-      textAlign: 'justify'
+      ...Platform.select({
+        ios: {
+          fontWeight: '200',
+          textAlign: 'justify',    
+        },
+        android: {
+          marginTop: -2,
+          fontWeight: '100',
+          color: GREY[900],
+        },
+      })
     },
   });
 
@@ -312,41 +347,33 @@ export class ModuleItem extends React.PureComponent {
 
   _renderHeader(){
     const { styles } = ModuleItem;
-    const { moduleData } = this.props;
+    const { moduleData, index } = this.props;
+
+    const modulename  = moduleData.modulename  || 'Unknown Module';
+    const description = moduleData.description || 'No description';
+    const lastupdated = moduleData.lastupdated || 'No Date';
 
     return(
       <TouchableOpacity 
         style={{paddingHorizontal: 12}} 
         onPress={this._onPressModule}
       >
-        <IconText
-          //text
-          text={moduleData.modulename}
-          textStyle={styles.title}
-          //icon
-          iconName='file-text-o'
-          iconType='font-awesome'
-          iconColor='#7E57C2'
-          iconSize ={20}
-        />
+        <View style={styles.titleContainer}>
+          <NumberIndicator 
+            value={index + 1}
+            containerStyle={styles.numberIndicator}
+          />
+          <Text style={styles.title} numberOfLines={1}>
+            {modulename}
+          </Text>
+        </View>
         <Text style={styles.description} numberOfLines={2}>
-          {moduleData.description}
+          {description}
+        </Text>
+        <Text style={styles.detail} numberOfLines={1}>
+          {`Updated on: ${lastupdated}`}
         </Text>
       </TouchableOpacity>
-    );
-  };
-
-  _renderDetails(){
-    const { styles } = ModuleItem;
-    const { moduleData } = this.props;
-    const model = new ModuleItemModel(moduleData);
-
-    return(
-      <View style={{flexDirection: 'row', paddingHorizontal: 12}}>
-        <Text style={styles.detail}>
-          {`Updated on: ${moduleData.lastupdated}`}
-        </Text>
-      </View>
     );
   };
 
@@ -366,6 +393,7 @@ export class ModuleItem extends React.PureComponent {
 
   render() {
     const { moduleData } = this.props;
+    const data = _.compact(moduleData.subjects);
 
     //ui values
     const sliderWidth = Dimensions.get('window').width;
@@ -381,7 +409,7 @@ export class ModuleItem extends React.PureComponent {
         layout: 'default',
         activeSlideAlignment: 'start',
         itemWidth: sliderWidth - 50,
-        enableSnap: false,
+        enableSnap: true,
         inactiveSlideShift: 0,
         inactiveSlideOpacity: 0.9,
         inactiveSlideScale: 1,
@@ -392,19 +420,16 @@ export class ModuleItem extends React.PureComponent {
     return(
       <View style={{justifyContent: 'center', marginBottom: 5}}>
         {this._renderHeader()}
-        {this._renderDetails()}
         <Carousel
           ref={r => this._carousel = r }
-          data={_.compact(moduleData.subjects)}
           renderItem={this._renderItem}
-          sliderWidth={sliderWidth}
           activeSlideAlignment={'center'}
           removeClippedSubviews={false}
-          {...platformSpecificProps}
+          {...{data, sliderWidth, ...platformSpecificProps}}
         />
       </View>
     );
-  }
+  };
 };
 
 //displays the list of modules
@@ -436,7 +461,7 @@ export class ModuleList extends React.PureComponent {
           moduleData={item}
           numberOfLinesDesc={3}
           //pass down props
-          {...{modules, onPressModule, onPressSubject}}
+          {...{modules, onPressModule, onPressSubject, index}}
         />
       </AnimatedListItem>
     );
@@ -461,10 +486,8 @@ export class ModuleList extends React.PureComponent {
 export class SubjectList extends React.Component {
   static propTypes = {
     //extra props
-    modules: PropTypes.arrayOf(
-      PropTypes.shape(moduleProps)
-    ).isRequired,
-    moduleData: PropTypes.shape(moduleProps).isRequired,
+    modules   : PropTypes.array ,
+    moduleData: PropTypes.object,
     //callbacks
     onPressSubject: PropTypes.func,
     //style
@@ -519,7 +542,7 @@ export class SubjectList extends React.Component {
           subjectData={item}
           onPressSubject={this._handleOnPressSubject}
           //pass dowm props
-          {...{moduleData}}
+          {...{moduleData, index}}
         />
       </AnimatedListItem>
     );

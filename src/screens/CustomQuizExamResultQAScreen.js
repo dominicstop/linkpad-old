@@ -1,5 +1,5 @@
 import React, { Fragment } from 'react';
-import { View, LayoutAnimation, ScrollView, ViewPropTypes, Text, TouchableOpacity, AsyncStorage, StyleSheet, Platform , Alert, TouchableNativeFeedback, Clipboard, FlatList, SectionList, ActivityIndicator, Dimensions, Switch, InteractionManager} from 'react-native';
+import { View, LayoutAnimation, ScrollView, ViewPropTypes, Text, TouchableOpacity, AsyncStorage, StyleSheet, Platform , Alert, TouchableNativeFeedback, Clipboard, FlatList, ActivityIndicator, Dimensions, Switch, InteractionManager} from 'react-native';
 import PropTypes from 'prop-types';
 
 import { ViewWithBlurredHeader, IconText, Card, AnimateInView, IconFooter, AnimatedListItem } from '../components/Views';
@@ -27,8 +27,8 @@ import {CustomQuizResultsStore,  CustomQuizResultItem, QuestionAnswerItem} from 
 import Animated, { Easing } from 'react-native-reanimated';
 import { ModuleStore } from '../functions/ModuleStore';
 import { ModuleItemModel, QuestionItem, SubjectItem } from '../models/ModuleModels';
+import { TextExpander, ContentExpander } from '../components/Expander';
 const { set, cond, block, add, Value, timing, interpolate, and, or, onChange, eq, call, Clock, clockRunning, startClock, stopClock, concat, color, divide, multiply, sub, lessThan, abs, modulo, round, debug, clock } = Animated;
-
 
 const headerTitle = (props) => <CustomHeader 
   name={'info'}
@@ -36,339 +36,6 @@ const headerTitle = (props) => <CustomHeader
   size={22}
   {...props}  
 />
-
-class TextExpander extends React.PureComponent {
-  static propTypes = {
-    renderHeader: PropTypes.func,
-    contentContainer: PropTypes.object,
-    unmountWhenCollapsed: PropTypes.bool,
-  };
-
-  static styles = StyleSheet.create({
-    contentWrapper: {
-      overflow: 'hidden',
-    },
-    headerContainer: {
-      flexDirection: 'row',
-      alignItems: 'center',
-    },
-    headerTitle: {
-      flex: 1,
-      marginRight: 10,
-    },
-    arrowContainer: {
-      width: 25,
-      height: 25,
-      borderRadius: 25/2,
-      backgroundColor: PURPLE[500],
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-  });
-
-  constructor(props){
-    super(props);
-
-    //animation values
-    this.heightExpanded  = new Value(-1);
-    this.heightCollapsed = new Value(0);
-    this.progress        = new Value(100);
-
-    this.height = interpolate(this.progress, {
-      inputRange : [0, 100],
-      outputRange: [0, this.heightExpanded],
-      extrapolate: 'clamp',
-    });
-    this.opacity = interpolate(this.progress, {
-      inputRange : [0, 100],
-      outputRange: [0, 1],
-      extrapolate: 'clamp',
-    });
-    this.indicatorOpacity = interpolate(this.progress, {
-      inputRange : [0, 100],
-      outputRange: [0.8, 1],
-      extrapolate: 'clamp',
-    });
-    this.scale = interpolate(this.progress, {
-      inputRange : [0, 100],
-      outputRange: [0.9, 1],
-      extrapolate: 'clamp',
-    });
-    this.rotation = interpolate(this.progress, {
-      inputRange : [0, 100],
-      outputRange: [0, 180],
-      extrapolate: 'clamp',
-    });
-
-    this.isHeightMeasured = false;
-    this.state = {
-      mount: true,
-      isExpanded: true,
-    };
-  };
-
-  expand = async (expand) => {
-    const { isExpanded } = this.state;
-
-    if(!this.isHeightMeasured){      
-      //get current height of expanded
-      const height = await new Promise(resolve => {
-        this.contentContainer.measure((x, y, w, h) => resolve(h));
-      });
-
-      //set height measured flag to true
-      this.isHeightMeasured = true;
-      //set animated height values
-      this.heightExpanded.setValue(height);
-    };
-
-    const config = {
-      duration: 300,
-      toValue : expand? 100 : 0,
-      easing  : Easing.inOut(Easing.ease),
-    };
-    const animation = timing(this.progress, config);
-
-    if(isExpanded != expand){
-      //start animation
-      animation.start();
-      this.setState({isExpanded: !isExpanded});
-    };
-  };
-
-  _handleOnPressHeader = () => {
-    const { isExpanded } = this.state;
-    this.expand(!isExpanded);
-  };
-
-  _renderHeader(){
-    const { styles } = TextExpander;
-    const { renderHeader } = this.props;
-    const { isExpanded } = this.state;
-
-    const arrowContainerStyle = {
-      opacity: this.indicatorOpacity,
-      transform: [
-        { rotate: concat(this.rotation, 'deg') },
-        { scale: this.scale},
-      ],
-    };
-
-    return(
-      <TouchableOpacity 
-        onPress={this._handleOnPressHeader}
-        style={[styles.headerContainer, this.props.headerContainer]}
-        activeOpacity={0.75}
-      >
-        <View style={styles.headerTitle}>
-          {renderHeader && renderHeader(isExpanded)}
-        </View>
-        <Animated.View style={[styles.arrowContainer, arrowContainerStyle]}>
-          <Icon
-            name={'chevron-down'}
-            type={'feather'}
-            color={'white'}
-            size={17}
-          />
-        </Animated.View>
-      </TouchableOpacity>
-    );
-  };
-
-  _renderContent(){
-    const { styles } = TextExpander;
-    const { mount } = this.state;
-
-    const contentWrapperStyle = {
-      opacity: this.opacity,
-      height: this.height,
-    };
-    const contentContainer = {
-      position: cond(eq(this.heightExpanded, -1), 'relative', 'absolute')
-    };
-
-    return(
-      <Animated.View style={[styles.contentWrapper, contentWrapperStyle]}>  
-        <Animated.View style={[this.props.contentContainer, contentContainer]}>
-          <View ref={r => this.contentContainer = r}>
-            {mount && this.props.children}
-          </View>
-        </Animated.View>
-      </Animated.View>
-    );
-  };
-
-  render(){
-    return(
-      <Fragment>
-        {this._renderHeader()}
-        {this._renderContent()}
-      </Fragment>
-    );
-  };
-};
-
-class ContentExpander extends React.PureComponent {
-  static propTypes = {
-    renderHeader: PropTypes.func,
-    contentContainer: PropTypes.object,
-  };
-
-  static styles = StyleSheet.create({
-    contentWrapper: {
-      overflow: 'hidden',
-    },
-    headerContainer: {
-      flexDirection: 'row',
-      alignItems: 'center',
-    },
-    headerTitle: {
-      flex: 1,
-      marginRight: 10,
-    },
-    arrowContainer: {
-      width: 25,
-      height: 25,
-      borderRadius: 25/2,
-      backgroundColor: PURPLE[500],
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-  });
-
-  constructor(props){
-    super(props);
-
-    //animation values
-    this.heightExpanded  = new Value(-1);
-    this.heightCollapsed = new Value(0);
-    this.progress        = new Value(100);
-
-    this.height = interpolate(this.progress, {
-      inputRange : [0, 100],
-      outputRange: [0, this.heightExpanded],
-      extrapolate: 'clamp',
-    });
-    this.opacity = interpolate(this.progress, {
-      inputRange : [0, 100],
-      outputRange: [0, 1],
-      extrapolate: 'clamp',
-    });
-    this.indicatorOpacity = interpolate(this.progress, {
-      inputRange : [0, 100],
-      outputRange: [0.8, 1],
-      extrapolate: 'clamp',
-    });
-    this.scale = interpolate(this.progress, {
-      inputRange : [0, 100],
-      outputRange: [0.9, 1],
-      extrapolate: 'clamp',
-    });
-    this.rotation = interpolate(this.progress, {
-      inputRange : [0, 100],
-      outputRange: [0, 180],
-      extrapolate: 'clamp',
-    });
-
-    this.isHeightMeasured = false;
-    this.state = {
-      isExpanded: true,
-    };
-  };
-
-  expand = async (expand) => {
-    const { isExpanded } = this.state;
-
-    if(!this.isHeightMeasured){      
-      //get current height of expanded
-      const height = await new Promise(resolve => {
-        this.contentContainer.measure((x, y, w, h) => resolve(h));
-      });
-
-      //set height measured flag to true
-      this.isHeightMeasured = true;
-      //set animated height values
-      this.heightExpanded.setValue(height);
-    };
-
-    const config = {
-      duration: 300,
-      toValue : expand? 100 : 0,
-      easing  : Easing.inOut(Easing.ease),
-    };
-    
-    if(isExpanded != expand){
-      //start animation
-      const animation = timing(this.progress, config);
-      animation.start();
-      this.setState({isExpanded: !isExpanded});
-    };
-  };
-
-  _handleOnPressHeader = () => {
-    const { isExpanded } = this.state;
-    this.expand(!isExpanded);
-  };
-
-  _renderHeader(){
-    const { styles } = ContentExpander;
-    const { renderHeader } = this.props;
-    const { isExpanded } = this.state;
-
-    const arrowContainerStyle = {
-      opacity: this.indicatorOpacity,
-      transform: [
-        { rotate: concat(this.rotation, 'deg') },
-        { scale: this.scale},
-      ],
-    };
-
-    return(
-      <TouchableOpacity 
-        onPress={this._handleOnPressHeader}
-        style={[styles.headerContainer, this.props.headerContainer]}
-        activeOpacity={0.75}
-      >
-        <View style={styles.headerTitle}>
-          {renderHeader && renderHeader(isExpanded)}
-        </View>
-        <Animated.View style={[styles.arrowContainer, arrowContainerStyle]}>
-          <Icon
-            name={'chevron-down'}
-            type={'feather'}
-            color={'white'}
-            size={17}
-          />
-        </Animated.View>
-      </TouchableOpacity>
-    );
-  };
-
-  _renderContent(){
-    const { styles } = ContentExpander;
-    const contentWrapperStyle = {
-      opacity: this.opacity,
-      height: this.height,
-    };
-
-    return(
-      <Animated.View style={[styles.contentWrapper, contentWrapperStyle]}>  
-        <View ref={r => this.contentContainer = r}>
-          {this.props.children}
-        </View>
-      </Animated.View>
-    );
-  };
-
-  render(){
-    return(
-      <Fragment>
-        {this._renderHeader()}
-        {this._renderContent()}
-      </Fragment>
-    );
-  };
-};
 
 class TouchableViewPager extends React.PureComponent {
   constructor(props){
@@ -486,7 +153,7 @@ class ChoicesCountStat extends React.PureComponent {
 
     return choices.map((item, index) => {
       const choice = item.choice || 'N/A';
-      const width = showPercentage? 40 : null;
+      const width = showPercentage? 38 : null;
       const itemBGColor = this.colors[index];
       const numberColors = ((answer == null)
         ? answerCorrect == (choice)? styleCorrect : styleDefault
@@ -563,12 +230,6 @@ class ResultItem extends React.PureComponent {
   };
 
   static styles = StyleSheet.create({
-    card: {
-      borderRadius: 0,
-      marginTop: 0,
-      marginBottom: 0,
-      paddingTop: 15,
-    },
     //divider styles
     divider: {
       marginVertical: 8,
@@ -578,6 +239,38 @@ class ResultItem extends React.PureComponent {
       marginTop: 8,
       marginBottom: 6,
       marginHorizontal: 10,
+    },
+    //header styles
+    headerContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    headerTextContainer: {
+      marginLeft: 7,
+    },
+    headerTitle: {
+      fontSize: 17,
+      fontWeight: '600',
+      color: PURPLE[1000]
+    },
+    headerSubtitle: {
+      fontSize: 16,
+      fontWeight: '200',
+      color: GREY[900],
+    },
+    //header number indicator styles
+    headerNumberContainer: {
+      width: 24,
+      height: 24,
+      borderRadius: 24/2,
+      backgroundColor: PURPLE[500],
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    headerNumber: {
+      fontSize: 15,
+      color: 'white',
+      fontWeight: '500',
     },
     //expander styles
     exapnderHeaderContainer: {
@@ -658,6 +351,38 @@ class ResultItem extends React.PureComponent {
       },
     }),
   });
+
+  _renderHeder(){
+    const { styles } = ResultItem;
+    const { question, index } = this.props;
+    const questionWrapped = QuestionItem.wrap(question);
+
+    const moduleName  = questionWrapped.modulename  || 'Module Unknown' ;
+    const subjectName = questionWrapped.subjectname || 'Subject Unknown';
+
+    const fontSize = (
+      (index + 1 < 10 )? 15 :
+      (index + 1 < 100)? 13 : 11
+    );
+
+    return(
+      <View style={styles.headerContainer}>
+        <View style={styles.headerNumberContainer}>
+          <Text style={[styles.headerNumber, {fontSize}]}>
+            {index + 1}
+          </Text>
+        </View>
+        <View style={styles.headerTextContainer}>
+          <Text style={styles.headerTitle}>
+            {moduleName}
+          </Text>
+          <Text style={styles.headerSubtitle}>
+            {subjectName}
+          </Text>
+        </View>
+      </View>
+    );
+  };
 
   _renderQuestionHeader(isExpanded){
     const { styles } = ResultItem;
@@ -868,7 +593,9 @@ class ResultItem extends React.PureComponent {
     const textExplanation = questionWrapped.explanation || "No Explanation Available.";
 
     return(
-      <Card style={styles.card}>
+      <Card>
+        {this._renderHeder()}
+        <Divider style={styles.dividerTop}/>
         <TextExpander renderHeader={this._renderQuestionHeader}>
           <Text style={styles.expanderText}>{textQuestion}</Text>
         </TextExpander>
@@ -905,61 +632,6 @@ export class CustomQuizExamResultQAScreen extends React.PureComponent {
   };
 
   static styles = StyleSheet.create({
-    //section header styles
-    SHCardTop: {
-      borderBottomLeftRadius: 0,
-      borderBottomRightRadius: 0,
-      paddingHorizontal: 0,
-      paddingVertical: 5,
-      backgroundColor: 'white',
-      marginBottom: 0,
-    },
-    SHCardBottom: {
-      borderTopLeftRadius: 0,
-      borderTopRightRadius: 0,
-      paddingHorizontal: 0,
-      paddingVertical: 5,
-    },
-    SHContainer: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      marginTop: 0,
-      paddingTop: 7,
-      paddingBottom: 0,
-      paddingHorizontal: 0,
-    },
-    SHTextContainer: {
-      flex: 1,
-      marginLeft: 7,
-      marginRight: 10,
-    },
-    SHTitle: {
-      flex: 1,
-      fontSize: 17,
-      fontWeight: '600',
-      color: PURPLE[1000]
-    },
-    SHSubtitle: {
-      fontSize: 16,
-      fontWeight: '200',
-      color: GREY[900],
-    },
-    //header number indicator styles
-    SHNumberContainer: {
-      width: 24,
-      height: 24,
-      borderRadius: 24/2,
-      backgroundColor: PURPLE[500],
-      alignItems: 'center',
-      justifyContent: 'center',
-      marginLeft: 10,
-    },
-    SHNumber: {
-      fontSize: 15,
-      color: 'white',
-      fontWeight: '500',
-    },
-    //loading styles
     container: {
       marginTop: HEADER_HEIGHT,
     },
@@ -980,16 +652,6 @@ export class CustomQuizExamResultQAScreen extends React.PureComponent {
       color: 'white',
     },
   });
-
-  static SECTION_TYPE = {
-    TOP   : 'TOP',
-    BOTTOM: 'BOTTOM',
-  };
-
-  static ITEM_TYPE = {
-    ITEM       : 'ITEM'       ,
-    PLACEHOLDER: 'PLACEHOLDER',
-  };
 
   /** combines all qa across all of the results into 1 qa item */
   static combineSameQuestionsAndAnswers(items){
@@ -1090,14 +752,13 @@ export class CustomQuizExamResultQAScreen extends React.PureComponent {
     const totalResults = quizResults.length;
 
     this.state = {
-      sections: [],
+      data: [],
       loading: LOAD_STATE.LOADING,
       totalResults,
     };
   };
 
   componentDidMount(){
-    const { SECTION_TYPE, ITEM_TYPE } = CustomQuizExamResultQAScreen;
     const { navigation } = this.props;
     //get data from prev. screen - quiz results
     const quizResults = navigation.getParam('quizResults', []);
@@ -1110,45 +771,8 @@ export class CustomQuizExamResultQAScreen extends React.PureComponent {
         //combine the same QA items across all results
         const QAList      = CustomQuizExamResultQAScreen.combineSameQuestionsAndAnswers(quizResults);
         const QAStatsList = CustomQuizExamResultQAScreen.appendAnswerStats(QAList);
-
-        Clipboard.setString(JSON.stringify([{results: QAList}, {QAStatsList}]));
-
-
-        let sections = [];
-        QAStatsList.forEach((item, index) => {
-          const { modulename, subjectname } = QuestionItem.wrap(item.question);
-
-          if(index == 0){
-            sections.push({
-              //section item data
-              data: [{type: ITEM_TYPE.ITEM, ...item}],
-              //section header data
-              type: SECTION_TYPE.TOP,
-              modulename, subjectname, index,
-            });
-            sections.push({
-              data: [{type: ITEM_TYPE.PLACEHOLDER}],
-              type: SECTION_TYPE.BOTTOM,
-            });
-
-          } else {
-            sections.push({
-              //section item data
-              data: [{type: ITEM_TYPE.ITEM, ...item}],              
-              //section header data
-              type: SECTION_TYPE.TOP,
-              modulename, subjectname, index,
-            });
-            sections.push({
-              data: [{type: ITEM_TYPE.PLACEHOLDER}],
-              type: SECTION_TYPE.BOTTOM,
-            });
-          };
-        });
-
-
         //update flatlist data and mount
-        this.setState({sections, loading: LOAD_STATE.SUCCESS});
+        this.setState({data: QAStatsList, loading: LOAD_STATE.SUCCESS});
 
       } catch(error){
         this.setState({loading: LOAD_STATE.ERROR});
@@ -1163,76 +787,27 @@ export class CustomQuizExamResultQAScreen extends React.PureComponent {
   };
 
   _renderItem = ({item, index}) => {
-    const { ITEM_TYPE } = CustomQuizExamResultQAScreen;
     const { totalResults } = this.state;
-    const { type, answerStats, choicesCount, durations, totalDurations, answer, hasMatchedAnswer, question, questionID } = item;
+    const { answerStats, choicesCount, durations, totalDurations, answer, hasMatchedAnswer, question, questionID } = item;
 
-    switch (type) {
-      case ITEM_TYPE.ITEM: return(
+    return(
+      <AnimatedListItem
+        last={5}
+        duration={500}
+        multiplier={300}
+        {...{index}}
+      >
         <ResultItem 
           //pass down items
           {...{index, answerStats, choicesCount, durations, totalDurations, answer, hasMatchedAnswer, question, questionID, totalResults}}
         />
-      );
-      case ITEM_TYPE.PLACEHOLDER: return(null);
-    };
-  };
-
-  _renderSectionHeader = ({section}) => {
-    const { styles, SECTION_TYPE } = CustomQuizExamResultQAScreen;
-    const { sections } = this.state;
-    const { index } = section;
-
-    const modulename  = section.modulename  || 'Unknown Module';
-    const subjectname = section.subjectname || 'Unknown Subject';
-
-    const fontSize = (
-      (index + 1 < 10 )? 15 :
-      (index + 1 < 100)? 13 : 11
+      </AnimatedListItem>
     );
-    
-    const isLast = (index == (sections.length - 1));
-    const SHContainerStyle = (index == 0)? {
-      borderBottomLeftRadius: 0,
-      borderBottomRightRadius: 0,
-    } : {
-      borderRadius: 0,
-      shadowOffset:{
-        width: 2, 
-        height: 8, 
-      },
-    };
-    
-    
-    switch (section.type) {
-      case SECTION_TYPE.TOP: return (
-        <Card style={[styles.SHContainer, SHContainerStyle]}>
-          <View style={styles.SHNumberContainer}>
-            <Text style={[styles.SHNumber, {fontSize}]}>
-              {index + 1}
-            </Text>
-          </View>
-          <View style={styles.SHTextContainer}>
-            <Text numberOfLines={1} style={styles.SHTitle}>{modulename}</Text>
-            <Text numberOfLines={1} style={styles.SHSubtitle}>{subjectname}</Text>
-          </View>
-          <View style={{position: 'absolute', alignSelf: 'flex-end', height: 11, width: '100%', backgroundColor: 'white', bottom: -11, borderBottomColor: GREY[100], borderBottomWidth: 1,}}/>
-        </Card>
-      );
-      case SECTION_TYPE.BOTTOM: return (
-        <View>
-          <Card style={styles.SHCardBottom}>
-            <View style={{position: 'absolute', alignSelf: 'flex-end', height: 5, width: '100%', backgroundColor: 'white', top: -5}}/>
-          </Card>
-          {!isLast && <Card style={styles.SHCardTop}/>}
-        </View>
-      );
-    };
   };
 
   _renderContents(){
     const { styles } = CustomQuizExamResultQAScreen;
-    const { loading, sections } = this.state;
+    const { loading, data } = this.state;
 
     switch (loading) {
       case LOAD_STATE.INITIAL:
@@ -1253,15 +828,13 @@ export class CustomQuizExamResultQAScreen extends React.PureComponent {
         </Animatable.View>
       );
       case LOAD_STATE.SUCCESS: return (
-        <SectionList
+        <FlatList
           renderItem={this._renderItem}
-          renderSectionHeader={this._renderSectionHeader}
           keyExtractor={this._keyExtractor}
-          stickySectionHeadersEnabled={true}
           //adjust top distance
           contentInset ={{top: HEADER_HEIGHT}}
           contentOffset={{x: 0, y: -HEADER_HEIGHT}}
-          {...{sections}}
+          {...{data}}
         />
       );
       case LOAD_STATE.ERROR: return (

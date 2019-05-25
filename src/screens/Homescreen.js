@@ -5,7 +5,7 @@ import Constants, { STYLES, ROUTES } from '../Constants';
 import { CustomHeader  } from '../components/Header' ;
 import { AndroidHeader } from '../components/AndroidHeader';
 
-import { SubjectModal     } from '../components/SwipableModal';
+import { SubjectModal     } from '../modals/SubjectModal';
 import { DrawerButton     } from '../components/Buttons';
 import { CreateQuizModal  } from '../modals/CreateQuizModal';
 import { QuizDetailsModal } from '../modals/QuizDetailsModal';

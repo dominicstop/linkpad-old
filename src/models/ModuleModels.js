@@ -132,7 +132,7 @@ export class SubjectItem {
     subjectname: '',
     description: '', 
     lastupdated: '', 
-    questions  : [QuestionItem.structure],
+    questions  : QuestionItem.wrapArray([]),
     //used for identification
     indexID_module: -1,
     //added/appended from _filterModules after fetching
@@ -154,9 +154,7 @@ export class SubjectItem {
 
   /** wraps each element in an array to make sure */
   static wrapArray(items = [SubjectItem.structure]){
-    return items.map((item) => 
-      SubjectItem.wrap(item)
-    );
+    return items.map((item) => SubjectItem.wrap(item));
   };
 
   constructor(subject = SubjectItem.structure){

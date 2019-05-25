@@ -1,5 +1,5 @@
 import React, { Component, Fragment } from 'react';
-import { StyleSheet, View, Dimensions, Image, Text, TouchableOpacity, ScrollView, Platform, Alert, LayoutAnimation, UIManager, SectionList, SafeAreaView } from 'react-native';
+import { StyleSheet, View, Dimensions, Image, Text, TouchableOpacity, ScrollView, Platform, Alert, LayoutAnimation, UIManager, SectionList, SafeAreaView, StatusBar } from 'react-native';
 import PropTypes from 'prop-types';
 
 import Animated, { Easing } from 'react-native-reanimated';
@@ -20,14 +20,18 @@ import TimeAgo from 'react-native-timeago';
 import { Icon, Divider } from 'react-native-elements';
 import { ROUTES } from '../Constants';
 import {PURPLE} from '../Colors';
-import { isIphoneX, ifIphoneX } from 'react-native-iphone-x-helper';
+import { isIphoneX, ifIphoneX, getStatusBarHeight } from 'react-native-iphone-x-helper';
 
 const Screen = {
   width : Dimensions.get('window').width ,
   height: Dimensions.get('window').height,
 };
 
-export const MODAL_DISTANCE_FROM_TOP = isIphoneX()? 65 : 40;
+const SPACING = 20;
+export const MODAL_DISTANCE_FROM_TOP = Platform.select({
+  ios: isIphoneX()? (getStatusBarHeight() + SPACING) : (20 + SPACING),
+  android: StatusBar.currentHeight + SPACING,
+});
 export const MODAL_EXTRA_HEIGHT = 300;
 
 //enable layout animation on android
@@ -48,7 +52,7 @@ export class ModalBackground extends React.PureComponent {
       flex: 1, 
       backgroundColor: Platform.select({
         ios    : 'transparent',
-        android: 'rgb(245, 245, 245)',
+        android: 'rgb(220, 220, 220)',
       }),
     },
     backgroundImage: {
@@ -145,7 +149,6 @@ export class SwipableModal extends React.PureComponent {
     },
     panel: {
       flex: 1,
-      shadowColor: '#000000',
       overflow: 'hidden',
     },
   });
@@ -167,12 +170,12 @@ export class SwipableModal extends React.PureComponent {
 
   static defaultProps = {
     snapPoints: [
-      //full screen
-      { y: MODAL_DISTANCE_FROM_TOP },
-      //hidden
-      { y: Screen.height * 1 },
+      { y: MODAL_DISTANCE_FROM_TOP }, //full screen
+      { y: Screen.height * 1       }, //hidden
     ],
-    hitSlop: { bottom: -(Screen.height + MODAL_EXTRA_HEIGHT - 60) }
+    hitSlop: {
+      bottom: -(Screen.height + MODAL_EXTRA_HEIGHT - 80)
+    },
   };
 
   constructor(props) {
@@ -183,6 +186,7 @@ export class SwipableModal extends React.PureComponent {
 
     this.state = {
       mountModal: false,
+      visible: false,
     };
   };
 
@@ -195,7 +199,9 @@ export class SwipableModal extends React.PureComponent {
       //wait for modal to finish animation
       await new Promise(resolve => this.stopCallback = resolve);
       //reset stop callback
-      this.stopCallback = null;      
+      this.stopCallback = null; 
+
+      this.setState({visible: true});
     };
   };
 
@@ -215,7 +221,10 @@ export class SwipableModal extends React.PureComponent {
       */
       
       this.stopCallback = null;  
-      await setStateAsync(this, {mountModal: false});
+      await setStateAsync(this, {
+        mountModal: false,
+        visible: false,
+      });
     };
   };
 
@@ -253,7 +262,8 @@ export class SwipableModal extends React.PureComponent {
   };
 
   _handleOnPressShadow = () => {
-    this.hideModal();
+    const { visible } = this.state;
+    visible && this.hideModal();
   };
 
   _renderShadow = () => {
@@ -316,20 +326,19 @@ export class SwipableModal extends React.PureComponent {
 
     return(
       <Interactable.View
+        ref={r => this._interactable = r}
+        style={styles.panelContainer}
         verticalOnly={true}
-        boundaries={{ top: -300 }}
+        boundaries={{ top: MODAL_DISTANCE_FROM_TOP - 20 }}
         initialPosition={snapPoints[1]}
         animatedValueY={this._deltaY}
-        ref={r => this._interactable = r}
         onSnap={this._handleOnSnap}
         onStop={this._handleOnStop}
         {...{snapPoints, hitSlop}}
       >
-        <View style={styles.panelContainer}>
-          <Animated.View style={[styles.panel, panelStyle]}>
-            {this.props.children}
-          </Animated.View>
-        </View>
+        <Animated.View style={[styles.panel, panelStyle]}>
+          {this.props.children}
+        </Animated.View>
       </Interactable.View>
     );
   };
@@ -619,649 +628,7 @@ export class BoardExamModalContent extends React.PureComponent {
   };
 };
 
-//used in homescreen: when a subject is pressed in module list
-export class SubjectModal extends React.PureComponent {
-  static styles = StyleSheet.create({
-    container: {
-      flex: 1, 
-      backgroundColor: Platform.select({
-        ios    : 'transparent',
-        android: 'white',
-      }),
-    },
-    scrollview: {
-      flex: 1, 
-      padding: 10, 
-      borderTopColor: 'rgba(0, 0, 0, 0.15)', 
-      borderTopWidth: 1
-    },
-    //conatainer for buttons
-    buttonsContainer: {
-      flexDirection: 'row', 
-      height: 80, 
-      padding: 10,
-      paddingVertical: 15,
-      borderTopColor: 'rgba(0, 0, 0, 0.25)', 
-      borderTopWidth: 1, 
-      shadowOffset:{  width: 2,  height: 3,  }, 
-      shadowColor: 'black', 
-      shadowRadius: 3, 
-      shadowOpacity: 0.5,
-      ...ifIphoneX({
-        paddingBottom: 22,
-        height: 90,
-      }),
-    },
-    //shared styles for buttons
-    buttonContainer: {
-      flex: 1,
-      padding: 10,
-      alignItems: 'center',
-      justifyContent: 'center',
-      elevation: 5,
-    },
-    buttonText: {
-      flex: 0,
-      color: 'white',
-      fontSize: 17,
-      textDecorationLine: 'underline'
-    },
-    title: {
-      color: '#160656',
-      ...Platform.select({
-        ios: {
-          fontSize: 24, 
-          fontWeight: '800'
-        },
-        android: {
-          fontSize: 26, 
-          fontWeight: '900'
-        }
-      })
-    },
-    textSubtitle: {
-      fontSize: 18,
-      fontWeight: '200',
-      color: '#212121',
-      textAlign: 'justify',
-      marginBottom: 5,
-    },
-    textBody: {
-      fontSize: 18, 
-      textAlign: 'justify',
-      color: '#202020',
-    },
-    detailTitle: {
-      color: '#0c0c0c',
-      ...Platform.select({
-        ios: {
-          fontSize: 18,
-          fontWeight: '500'
-        },
-        android: {
-          fontSize: 18,
-          fontWeight: '900'
-        }
-      }),
-    },
-    detailSubtitle: Platform.select({
-      ios: {
-        fontSize: 24,
-        fontWeight: '200',
-        color: '#161616',
-      },
-      android: {
-        fontSize: 24,
-        fontWeight: '100',
-        color: '#424242'
-      },
-    }),
-    image: {
-      width: 75, 
-      height: 75, 
-      marginHorizontal: 15,
-      marginVertical: 15
-    },
-    gradeTextContainer: {
-      flex: 1, 
-      alignItems: 'center', 
-      justifyContent: 'center', 
-      paddingVertical: 10
-    },
-    gradeTitle: {
-      color: '#512DA8',
-      fontSize: 20, 
-      fontWeight: '800'
-    },
-    gradeSubtitle: {
-      fontSize: 16, 
-      ...Platform.select({
-        ios: {
-          fontWeight: '200'
-        },
-        android: {
-          fontWeight: '100',
-          color: '#424242'
-        },
-      })
-    },
-  });
 
-  static sharedImageProps = {
-    animation      : 'pulse'      ,
-    iterationCount : "infinite"   ,
-    easing         : 'ease-in-out',
-    duration       : 5000         ,
-    useNativeDriver: true         ,
-  };
-  
-  constructor(props){
-    super(props);
-    
-    this.state = {
-      moduleData  : null ,
-      subjectData : null ,
-      mountContent: false,
-      //false while loading from store
-      mountPracticeExams: false,
-      mountGrades       : false,
-    };
-
-    //load images
-    this.imageGradeInactive    = require('../../assets/icons/books-2.png');
-    this.imagePreviousInactive = require('../../assets/icons/phone-book.png');
-
-    this.modalClosedCallback = null;
-    this.modalOpenedCallback = null;
-  };
-
-  componentWillUnmount(){
-    alert('unmounted');
-  };
-
-  initModels(moduleData, subjectData){
-    //wrap inside model
-    let moduleModel  = new ModuleItemModel(moduleData );
-    let subjectModel = new SubjectItem    (subjectData);
-
-    //get matching subject
-    const indexID_subject = subjectModel.get().indexid;
-    subjectModel = moduleModel.getSubjectByID(indexID_subject);
-
-    //set as property
-    this.moduleModel  = moduleModel ;
-    this.subjectModel = subjectModel;
-  };
-
-  async loadPracticeExams(){
-    const { subjectModel, moduleModel } = this;
-
-    //load from store
-    const model = await IncompletePracticeExamStore.getAsModel();
-    //set as property
-    this.practiceExamsModel = model;
-
-    if(model != undefined){
-      //extract id's
-      const { indexID_module, indexID_subject } = subjectModel.getIndexIDs();
-
-      const match = model.findMatchFromIDs({ indexID_module, indexID_subject });
-      const hasMatch = match != undefined;
-      
-      //init. model and set match as property
-      this.practiceExamModel = new IncompletePracticeExamModel(match);
-
-      this.setState({mountPracticeExams: hasMatch});
-    }
-  };
-
-  openSubjectModal = (moduleData, subjectData) => {
-    this.initModels( moduleData, subjectData);
-
-    this.setState({
-      moduleData, subjectData, 
-      mountContent: true
-    });
-
-    this.loadPracticeExams();
-    this._modal.showModal();
-  };
-
-  closeSubjectModal = () => {
-    this._modal.showModal();
-  };
-
-  isModalVisible = () => {
-    const { mountContent } = this.state;
-    return mountContent;
-  };
-
-  _handleOnModalShow = () => {
-    //call callbacks if defined
-    this.modalOpenedCallback && this.modalOpenedCallback();
-  };
-
-  _handleOnModalHide = () => {
-    //call callbacks if defined
-    this.modalClosedCallback && this.modalClosedCallback();
-
-    //clean up state
-    this.setState({
-      moduleData  : null ,
-      subjectData : null ,
-      mountContent: false,
-      mountPracticeExams: false,
-    });
-
-    //cleanup/reset models
-    this.moduleModel        = undefined;
-    this.subjectModel       = undefined;
-    this.practiceExamsModel = undefined;
-    this.practiceExamModel  = undefined;
-  };
-
-  _handleOnDelete = async () => {
-    const { practiceExamsModel, practiceExamModel } = this;
-
-    //remove current iPE from array
-    practiceExamsModel.removeItem(practiceExamModel);
-    //update store
-    await IncompletePracticeExamStore.set(practiceExamsModel);
-
-    //update state
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    this.setState({mountPracticeExams: false});
-  };
-
-  _handleOnPressTitle = () => {
-    const { subjectData } = this.state;
-    //wrap data into helper object for easier access
-    const subject = new SubjectItem    (subjectData).get();
-
-    Alert.alert(
-      'Subject Name', subject.subjectname,
-    );
-  };
-
-  _handleOnPressDelete = () => {
-    Alert.alert(
-      'Do you want to reset?',
-      "All of your progress will be lost.",
-      [
-        {text: 'Cancel', style  : 'cancel'            },
-        {text: 'OK'    , onPress: this._handleOnDelete},
-      ],
-      { cancelable: false }
-    );
-  };
-
-  _handleOnPressStart = () => {
-    const { moduleData, subjectData } = this.state;
-    NavigationService.navigateApp(ROUTES.PracticeExamRoute, {
-      moduleData, subjectData,
-    });
-  };
-
-  _handleOnPressClose = () => {
-    this._modal.hideModal();
-  };
-
-  _renderTitle(){
-    const { styles } = SubjectModal;
-    const { subjectData, moduleData } = this.state;
-    
-    //wrap data into helper object for easier access
-    const subject = new SubjectItem    (subjectData).get();
-    const module  = new ModuleItemModel(moduleData ).get();
-
-    const activeOpacity = Platform.select({
-      ios    : 0.6,
-      android: 0.8
-    });
-    
-    return(
-      <TouchableOpacity 
-        onPress={this._handleOnPressTitle}
-        {...{activeOpacity}}
-      >
-        <IconText
-          containerStyle={{marginLeft: 7, marginRight: 25, marginBottom: 10}}
-          textStyle={styles.title}
-          subtitleStyle={{fontWeight: '200', fontSize: 16}}
-          text     ={subject.subjectname}
-          subtitle ={module .modulename }
-          iconName ={'notebook'}
-          iconType ={'simple-line-icon'}
-          iconColor={'#512DA8'}
-          iconSize ={26}
-        />
-      </TouchableOpacity>      
-    );
-  };
-
-  _renderDescriptionTitle(){
-    const { styles } = SubjectModal;
-    return(
-      <IconText
-        //icon
-        iconName={'info'}
-        iconType={'feather'}
-        iconColor={'#512DA8'}
-        iconSize={26}
-        //title
-        text={'Description'}
-        textStyle={styles.title}
-      />
-    );
-  };
-
-  _renderDescription(){
-    const { styles } = SubjectModal;
-    const { subjectData } = this.state;
-    //wrap data into helper object for easier access
-    const subject = new SubjectItem(subjectData).get();
-    //title comp for collapsable
-    return(
-      <View style={{overflow: 'hidden', marginTop: 5}}>
-        <AnimatedCollapsable
-          extraAnimation={false}
-          text={subject.description}
-          maxChar={400}
-          collapsedNumberOfLines={6}
-          titleComponent={this._renderDescriptionTitle()}
-          style={styles.textBody}
-        />
-      </View>
-    );
-  };
-
-  _renderDetails(){
-    const { styles } = SubjectModal;
-    const { subjectData } = this.state;
-    //wrap data into helper object for easier access
-    const subject = new SubjectItem(subjectData).get();
-
-    return(
-      <Fragment>
-        <IconText
-          //icon
-          iconName={'file-text'}
-          iconType={'feather'}
-          iconColor={'#512DA8'}
-          iconSize={26}
-          //title
-          text={'Subject Details'}
-          textStyle={styles.title}
-        />
-        <View style={{flexDirection: 'row', marginTop: 3}}>
-          <View style={{flex: 1}}>
-            <Text numberOfLines={1} style={styles.detailTitle   }>{'Questions: '}</Text>
-            <Text numberOfLines={1} style={styles.detailSubtitle}>{subject.questions.length + ' items'}</Text>
-          </View>
-          <View style={{flex: 1}}>
-            <Text numberOfLines={1} style={styles.detailTitle   }>{'Updated: '}</Text>
-            <Text numberOfLines={1} style={styles.detailSubtitle}>{subject.lastupdated}</Text>
-          </View>
-        </View>
-      </Fragment>
-    );
-  };
-
-  _renderPreviousActive(){
-    const { styles } = SubjectModal;
-    const { subjectModel, practiceExamModel } = this;
-
-    const { timestamp_started } = practiceExamModel.get();
-    const time = timestamp_started * 1000;
-
-    //count answered question over total questions
-    const totalQuestions = subjectModel     .getQuestionLength();
-    const totalAnswers   = practiceExamModel.getAnswersCount  ();
-    const answered = `${totalAnswers}/${totalQuestions} items`;
-
-    return(
-      <View style={{flexDirection: 'row', marginTop: 3}}>
-        <View style={{flex: 1}}>
-          <Text numberOfLines={1} style={styles.detailTitle   }>{'Answered: '}</Text>
-          <Text numberOfLines={1} style={styles.detailSubtitle}>{answered}</Text>
-        </View>
-        <View style={{flex: 1}}>
-          <Text numberOfLines={1} style={styles.detailTitle   }>{'Started: '}</Text>
-          <TimeAgo 
-            numberOfLines={1} 
-            style={styles.detailSubtitle} 
-            {...{time}}
-          />
-        </View>
-        <TouchableOpacity onPress={this._handleOnPressDelete}>
-          <Icon
-            containerStyle={{flex: 1, alignSelf: 'center', justifyContent: 'center'}}
-            name={'trash-2'}
-            type={'feather'}
-            color={'red'}
-            size={30}
-          />
-        </TouchableOpacity>
-      </View>
-    );
-  };
-
-  _renderPreviousInactive(){
-    const { styles, sharedImageProps } = SubjectModal;
-
-    return(
-      <View style={{flex: 1, alignItems: 'flex-start', justifyContent: 'center', flexDirection: 'row'}}>
-        <Animatable.Image
-          source={this.imagePreviousInactive}
-          style={styles.image}
-          {...sharedImageProps}
-        />
-        <View style={styles.gradeTextContainer}>
-          <Text style={styles.gradeTitle   }>No Previous Session</Text>
-          <Text style={styles.gradeSubtitle}>If you couldn't answer everthing, we'll save your progress so you can come back to it later.</Text>
-        </View>
-      </View>
-    );
-  };
-
-  _renderPrevious(){
-    const { styles } = SubjectModal;
-    const { mountPracticeExams } = this.state;
-
-    const descriptionActive   = 'You have answered some of the questions in this subject in a previous session.';
-    const descriptionInactive = 'If you were unable to finish, your answers and progress will be saved here.';
-    
-    const description = mountPracticeExams? descriptionActive : descriptionInactive;
-
-    return(
-      <Fragment>
-        <IconText
-          //icon
-          iconName={'clock'}
-          iconType={'feather'}
-          iconColor={'#512DA8'}
-          iconSize={26}
-          //title
-          text={'Previous Session'}
-          textStyle={styles.title}
-        />
-        <Text style={styles.textSubtitle}>
-          {description}
-        </Text>
-        {mountPracticeExams? this._renderPreviousActive() : this._renderPreviousInactive()}
-      </Fragment>
-    );
-  };
-
-  _renderGradesInactive(){
-    const { styles, sharedImageProps } = SubjectModal;
-    return(
-      <View style={{flex: 1, alignItems: 'flex-start', justifyContent: 'center', flexDirection: 'row'}}>
-        <Animatable.Image
-          source={this.imageGradeInactive}
-          style={styles.image}
-          {...sharedImageProps}
-        />
-        <View style={styles.gradeTextContainer}>
-          <Text style={styles.gradeTitle   }>No Grades Available</Text>
-          <Text style={styles.gradeSubtitle}>Your grades will be available here once you've completed a practice exam.</Text>
-        </View>
-      </View>
-    );
-  };
-
-  _renderGradesActive(){
-    
-  };
-
-  _renderGrades(){
-    const { styles } = SubjectModal;
-    const { mountGrades } = this.state;
-    return(
-      <Fragment>
-        <IconText
-          //icon
-          iconName={'bar-chart'}
-          iconType={'feather'}
-          iconColor={'#512DA8'}
-          iconSize={26}
-          //title
-          text={'Grades'}
-          textStyle={styles.title}
-          //subtitle
-          subtitleStyle={{fontWeight: '200', fontSize: 16, }}
-          subtitle ={'Previous grades'}
-        />
-        {mountGrades? this._renderGradesActive() : this._renderGradesInactive()}
-      </Fragment>
-    );
-  };
-
-  _renderButtons(){
-    const { styles } = SubjectModal;
-    const { mountPracticeExams } = this.state;
-
-    const borderRadius = isIphoneX? 17 : 10;
-    //shared props
-    const buttonProps = {
-      iconSize: 22,
-      iconColor: 'white',
-      textStyle: styles.buttonText,
-    };
-    
-    return(
-      <View style={styles.buttonsContainer}>
-        <IconButton
-          text={mountPracticeExams? 'Resume' : 'Start'}
-          wrapperStyle={{flex: 1}}
-          containerStyle={[styles.buttonContainer, {borderTopLeftRadius: borderRadius, borderBottomLeftRadius: borderRadius, backgroundColor: '#6200EA'}]}
-          iconName={'pencil-square-o'}
-          iconType={'font-awesome'}
-          onPress={this._handleOnPressStart}
-          {...buttonProps}
-        />
-        <IconButton
-          text={'Cancel'}
-          wrapperStyle={{flex: 1}}
-          containerStyle={[styles.buttonContainer, {borderTopRightRadius: borderRadius, borderBottomRightRadius: borderRadius, backgroundColor: '#C62828'}]}
-          iconName={'close'}
-          iconType={'simple-line-icon'}
-          onPress={this._handleOnPressClose}
-          {...buttonProps}
-        />
-      </View>
-      
-    );
-  };
-
-  _renderFooter = () => {
-    const delay = 1000;
-    const animation = Platform.select({
-      ios    : 'fadeInUp',
-      android: 'zoomIn'  ,
-    });
-
-    return (
-      <Animatable.View 
-        style={{paddingBottom: 80}}
-        duration={750}
-        useNativeDriver={true}
-        {...{animation, delay}}
-      >
-        <Animatable.View
-          animation={'pulse'}
-          duration={1000}
-          easing={'ease-in-out'}
-          iterationCount={'infinite'}
-          useNativeDriver={true}
-          {...{delay}}
-        >
-          <Icon
-            name={'heart'}
-            type={'entypo'}
-            color={'#B39DDB'}
-            size={24}
-          />
-        </Animatable.View>
-      </Animatable.View>
-    );
-  };
-
-  _renderContent(){
-    const { styles } = SubjectModal;
-    const Separator = (props) =>  <View style={{alignSelf: 'center', width: '80%', height: 1, backgroundColor: 'rgba(0, 0, 0, 0.2)', margin: 15}} {...props}/>
-    
-    return(
-      <Fragment>
-        <ModalTopIndicator/>
-        {this._renderTitle()}
-        <ScrollView style={styles.scrollview}>
-          <AnimateInView
-            animation={'fadeInUp'}
-            duration={350}
-            difference={100}
-            delay={150}
-          >
-            <Fragment>
-              {this._renderDescription()}
-              <Separator/>
-            </Fragment>
-            <Fragment>
-              {this._renderDetails()}
-              <Separator/>
-            </Fragment>
-            <Fragment>
-              {this._renderPrevious()}
-              <Separator/>
-            </Fragment>
-            {this._renderGrades()}
-          </AnimateInView>
-          {this._renderFooter()}
-        </ScrollView>
-        {this._renderButtons()}
-      </Fragment>
-    );
-  };
-
-  render(){
-    const { styles } = SubjectModal;
-    const { mountContent } = this.state;
-
-    const paddingBottom = (MODAL_EXTRA_HEIGHT + MODAL_DISTANCE_FROM_TOP);
-
-    return(
-      <SwipableModal 
-        ref={r => this._modal = r}
-        onModalShow={this._handleOnModalShow}
-        onModalHide={this._handleOnModalHide}
-      >
-        <ModalBackground style={{paddingBottom}}>
-          {mountContent && this._renderContent()}
-        </ModalBackground>
-      </SwipableModal>
-    );
-  };
-};
 
 export class SearchTipsModal extends React.PureComponent {
 
