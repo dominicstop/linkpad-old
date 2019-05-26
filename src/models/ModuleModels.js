@@ -3,6 +3,14 @@ import _ from 'lodash';
 import { IncompletePracticeExamModel, AnswerModel } from '../functions/IncompletePracticeExamStore';
 import { getTimestamp , replacePropertiesWithNull} from '../functions/Utils';
 
+export const IMAGE_TYPE = {
+  'BASE64': 'BASE64',
+  'STORE' : 'STORE' ,
+  'FS_URI': 'FS_URI',
+  'NONE'  : 'NONE'  ,
+  'FAILED': 'FAILED',
+};
+
 //structure of single question item in module subject.questions array
 export class QuestionItem {
   static structure = {
@@ -26,7 +34,7 @@ export class QuestionItem {
     modulename : '',
     subjectname: '',
     //added/appended from _saveBase64ImageToStorage after _filterModules
-    hasImage: false,
+    imageType: IMAGE_TYPE.NONE,
   };
 
   static wrap(data = QuestionItem.structure){

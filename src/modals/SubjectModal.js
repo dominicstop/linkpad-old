@@ -238,14 +238,7 @@ class OLD_SubjectModal extends React.PureComponent {
     this._modal.showModal();
   };
 
-  closeSubjectModal = () => {
-    this._modal.showModal();
-  };
-
-  isModalVisible = () => {
-    const { mountContent } = this.state;
-    return mountContent;
-  };
+  
 
   _handleOnModalShow = () => {
     //call callbacks if defined
@@ -1268,6 +1261,15 @@ export class SubjectModal extends React.PureComponent {
     this._modal.showModal();
   };
 
+  closeSubjectModal = () => {
+    this._modal.showModal();
+  };
+
+  isModalVisible = () => {
+    const { mountContent } = this.state;
+    return mountContent;
+  };
+
   _handleHeaderOnLayout = ({nativeEvent}) => {
     const { headerHeight } = this.state;
     const { height } = nativeEvent.layout;
@@ -1281,6 +1283,7 @@ export class SubjectModal extends React.PureComponent {
     this.footer.show();
   };
 
+  //------ render ------
   _renderHeader(){
     const { styles } = SubjectModal;
     const { moduleData, subjectData } = this.state;

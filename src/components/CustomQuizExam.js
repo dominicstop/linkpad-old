@@ -6,15 +6,16 @@ import _ from 'lodash';
 import * as Animatable from 'react-native-animatable';
 import Carousel from 'react-native-snap-carousel';
 
-import { LinearGradient } from 'expo';
+import { LinearGradient, FileSystem } from 'expo';
 import { Header } from 'react-navigation';
 import { Icon } from 'react-native-elements';
 import { ifIphoneX, getStatusBarHeight, getBottomSpace } from 'react-native-iphone-x-helper';
 
 import { getLetter , shuffleArray, setStateAsync, timeout, hexToRgbA, getTimestamp, isBase64Image} from '../functions/Utils';
-import { PURPLE } from '../Colors';
+import { PURPLE, RED } from '../Colors';
 import { QuizAnswer , QuizQuestion } from '../models/Quiz';
 import { CustomQuiz } from '../functions/CustomQuizStore';
+import { LOAD_STATE } from '../Constants';
 
 /** Used in Choices: shows a single choice item */
 class ChoiceItem extends React.PureComponent {
@@ -252,9 +253,14 @@ class QuestionImage extends React.PureComponent {
     container: {
       height: 400,
       marginTop: 10,
-      backgroundColor: PURPLE[100],
+      backgroundColor: PURPLE[200],
       overflow: 'hidden',
       borderRadius: 15,
+    },
+    errorContainer: {
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: RED[400]
     },
     loadingContainer: {
       position: 'absolute',
@@ -271,34 +277,55 @@ class QuestionImage extends React.PureComponent {
   constructor(props){
     super(props);
 
-    const hasImage = props.photouri != null;
-    //console.log(props.photouri);
+    const base64Images = props.base64Images || {};
+    const base64Image  = base64Images[props.photouri];
+
+    const hasImage    = props.photouri != null;
+    const hasB64Image = base64Image != undefined;
+
+    const STATES = {
+      none    : { loading: LOAD_STATE.SUCCESS, showImage: false, loadImage: false },
+      loaded  : { loading: LOAD_STATE.SUCCESS, showImage: true , loadImage: false },
+      unloaded: { loading: LOAD_STATE.LOADING, showImage: false, loadImage: true  },
+    };
     
     this.state = {
-      hasImage,
-      base64Image: null,
-      loading: hasImage,
-      showImage: false,
+      base64Image, ...(
+        hasB64Image? STATES.loaded   :
+        hasImage   ? STATES.unloaded : STATES.none
+      ),
     };
   };
+
 
   async componentDidMount(){
     const { photouri } = this.props;
-    const { hasImage, showImage } = this.state;
+    const { loadImage } = this.state;
     
     try {
-      if(hasImage){
+      if(loadImage){
+        //delay loading
         Platform.OS == 'android' && await timeout(750);
-        const base64Image = await Expo.FileSystem.readAsStringAsync(photouri);
+        console.log('loading image from store...');
+
+        //load image from file system
+        const base64Image = await FileSystem.readAsStringAsync(photouri);
         const isValidBase64Image = isBase64Image(base64Image || '');
-        this.setState({base64Image, loading: false, showImage: isValidBase64Image});
+
+        this.setState({
+          showImage: isValidBase64Image,
+          loading: LOAD_STATE.SUCCESS,
+          base64Image, 
+        });
       };
+      
     }catch(error){
       console.log('Unable to load image');
       console.log(error);
+      this.setState({base64Image, loading: LOAD_STATE.ERROR});
     };
   };
-
+  
   /** TouchableOpacity: called when image is pressed */
   _handleImageOnPress = () => {
     const { onPressImage, photofilename, photouri } = this.props;
@@ -311,25 +338,22 @@ class QuestionImage extends React.PureComponent {
 
   _renderImage(){
     const { styles } = QuestionImage;
-    const { base64Image } = this.state;
+    const { containerStyle, imageStyle } = this.props;
+    const { base64Image, showImage } = this.state;
+    if(!showImage) return null;
 
     return(
       <TouchableOpacity
+        style={[styles.container, containerStyle]}
         onPress={this._handleImageOnPress}
         activeOpacity={0.85}
       >
-        <Animatable.View
-          animation={'fadeIn'}
-          duration={500}
-          delay={500}
-          useNativeDriver={true}
-        >
-          <Image
-            style={[styles.image]}
-            source={{uri: base64Image}} 
-            resizeMode={'cover'}
-          />
-        </Animatable.View>
+        <Image
+          style={[styles.image, imageStyle]}
+          source={{uri: base64Image}} 
+          resizeMode={'cover'}
+          fadeDuration={1000}
+        />
       </TouchableOpacity>
     );
   };
@@ -338,23 +362,44 @@ class QuestionImage extends React.PureComponent {
     const { styles } = QuestionImage;
     return(
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size={'large'}/>
+        <ActivityIndicator 
+          size={'large'}
+          color={'white'}
+        />
+      </View>
+    );
+  };
+
+  _renderError(){
+    const { styles } = QuestionImage;
+    return(
+      <View style={[styles.container, styles.error]}>
+        <Icon 
+          name={'ios-warning'}
+          type={'ionicon'}
+          color={'white'}
+          size={24}
+        />
       </View>
     );
   };
 
   render(){
-    const { styles } = QuestionImage;
-    const { loading, showImage, hasImage } = this.state;
-    //dont render when there's no image
-    if(!hasImage) return null;
+    const { loading, } = this.state;
 
-    return(
-      <View style={styles.container}>
-        {showImage && this._renderImage  ()}
-        {loading   && this._renderLoading()}
-      </View>
-    );
+    /**
+    console.log('loading: ' + loading);
+    console.log('base64Image: ' + (this.state.base64Image || '').slice(0, 30));
+    console.log('showImage: ' + this.state.showImage);
+    console.log('loadImage: ' + this.state.loadImage);
+    console.log('\n');
+    */
+    
+    switch (loading) {
+      case LOAD_STATE.LOADING: return this._renderLoading();
+      case LOAD_STATE.SUCCESS: return this._renderImage  ();
+      case LOAD_STATE.ERROR  : return this._loadError    ();
+    };
   };
 };
 
@@ -417,7 +462,7 @@ class Question extends React.PureComponent {
 
   render(){
     const { styles } = Question;
-    const { photofilename, photouri } = this.props;
+    const { photofilename, photouri, base64Images } = this.props;
 
     return(
       <ScrollView 
@@ -427,7 +472,7 @@ class Question extends React.PureComponent {
         {this._renderQuestion()}
         <QuestionImage 
           onPressImage={this._handleOnPressImage}
-          {...{photofilename, photouri}}
+          {...{photofilename, photouri, base64Images}}
         />
       </ScrollView>
     );
@@ -507,7 +552,7 @@ class QuestionItem extends React.PureComponent {
 
   render(){
     const { styles } = QuestionItem;
-    const { index, onPressImage } = this.props;
+    const { index, onPressImage, base64Images } = this.props;
 
     //wrap question object prop to prevent missing properties + vscode intellisense
     const question = QuizQuestion.wrap(this.props.question);
@@ -523,7 +568,7 @@ class QuestionItem extends React.PureComponent {
       <View style={styles.container}>
         <Question
           question={questionText}
-          {...{index, photofilename, photouri, onPressImage}}
+          {...{index, photofilename, photouri, onPressImage, base64Images}}
         />
         <Choices
           onPressChoice={this._handleOnPressChoice}
@@ -537,6 +582,7 @@ class QuestionItem extends React.PureComponent {
 export class CustomQuizList extends React.Component {
   static propTypes = {
     quiz                   : PropTypes.object,
+    base64Images           : PropTypes.object,
     onAnsweredAllQuestions : PropTypes.func  ,
     onNewAnswerSelected    : PropTypes.func  ,
     onPressImage           : PropTypes.func  ,
@@ -665,7 +711,7 @@ export class CustomQuizList extends React.Component {
 
   //----- render -----
   _renderItem = ({item, index}) => {
-    const { onPressImage, quiz } = this.props;
+    const { onPressImage, quiz, base64Images } = this.props;
     const answers = this.answers;
 
     //wrap quiz and extract questions
@@ -677,7 +723,7 @@ export class CustomQuizList extends React.Component {
       <QuestionItem
         question={item}
         onPressChoice={this._handleOnPressChoice}
-        {...{isLast, index, answers, onPressImage}}
+        {...{isLast, index, answers, onPressImage, base64Images}}
       />
     );
   };

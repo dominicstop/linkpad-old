@@ -1,11 +1,10 @@
-import { Clipboard } from 'react-native';
+import { Clipboard, ImageStore } from 'react-native';
 import { FileSystem } from 'expo';
 import store from 'react-native-simple-store';
 import _ from 'lodash';
 
-
 import { createFolderIfDoesntExist, isBase64Image , fetchWithProgress} from './Utils';
-import { ModuleItemModel, SubjectItem, QuestionItem } from '../models/ModuleModels';
+import { ModuleItemModel, SubjectItem, QuestionItem, IMAGE_TYPE } from '../models/ModuleModels';
 
 //save a copy of modules
 let _modules = null;
@@ -81,18 +80,18 @@ async function _saveBase64ToStorage(_modules = [ModuleItemModel.structure]){
               await FileSystem.writeAsStringAsync(img_uri, photouri);
               //update module uri
               question.photouri = img_uri;
-              question.hasImage = true;            
+              question.imageType = IMAGE_TYPE.FS_URI;            
 
             } else {
               //replace with null if invalid uri
               question.photouri = null;
-              question.hasImage = false;            
+              question.imageType = IMAGE_TYPE.NONE;         
             };
 
           } catch(error){
             //replace with null if cannot be saved to fs
             question.photouri = null;
-            question.hasImage = false;
+            question.imageType = IMAGE_TYPE.FAILED;
             console.log(`Unable to save image ${photofilename}`); 
             console.log(error);
           };
@@ -232,6 +231,28 @@ export class ModuleStore {
       console.error('Failed to read modules from store.');
       throw error;
     };
+  };
+
+  static async getImages(modules){
+    const base64Images = {};
+
+    for (const module of modules){
+      for(const subject of module.subjects){
+        for(const question of subject.questions){
+          const { imageType, photouri } = question;
+          
+          try {
+            if(imageType == IMAGE_TYPE.FS_URI){
+              const base64Image = await FileSystem.readAsStringAsync(photouri);
+              base64Images[photouri] = base64Image;
+            };
+          } catch(error){
+            console.log(error);
+          };
+        };
+      };
+    };
+    return { modules, base64Images };
   };
 
   static async set(modules){

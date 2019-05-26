@@ -1,10 +1,11 @@
 import { Clipboard } from 'react-native'
 import _ from 'lodash';
+import { FileSystem } from 'expo';
 import store from 'react-native-simple-store';
 
 import { shuffleArray, getTimestamp, replacePropertiesWithNull } from './Utils';
 import { QuizQuestion } from '../models/Quiz';
-import { SubjectItem } from '../models/ModuleModels';
+import { SubjectItem, IMAGE_TYPE } from '../models/ModuleModels';
 
 let _quizes = [];
 
@@ -152,6 +153,28 @@ export class CustomQuizStore {
   /** get quizes from cache variable */
   static get(){
     return CustomQuiz.wrapArray(_quizes);
+  };
+
+  /** get the base64Images from the question's URI's */
+  static async getImages(data){
+    const quiz = CustomQuiz.wrap(data);
+    const base64Images = {};
+
+    for(const question of quiz.questions){
+      const { imageType, photouri } = question;
+      
+      try {
+        if(imageType == IMAGE_TYPE.FS_URI){
+          const base64Image = await FileSystem.readAsStringAsync(photouri);
+          base64Images[photouri] = base64Image;
+        };
+      } catch(error){
+        console.log('Unable to getImages');
+        console.log(error);
+      };
+    };
+
+    return { quiz, base64Images };
   };
 
   /** replace existing quizes */

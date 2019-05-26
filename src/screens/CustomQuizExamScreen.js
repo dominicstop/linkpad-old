@@ -1,5 +1,5 @@
 import React, { Fragment } from 'react';
-import { View, LayoutAnimation, ScrollView, ViewPropTypes, Text, TouchableOpacity, AsyncStorage, StyleSheet, Platform , Alert, TouchableNativeFeedback, Clipboard} from 'react-native';
+import { View, LayoutAnimation, ScrollView, ViewPropTypes, Text, TouchableOpacity, AsyncStorage, StyleSheet, Platform , Alert, TouchableNativeFeedback, Clipboard, ActivityIndicator, InteractionManager} from 'react-native';
 import PropTypes from 'prop-types';
 
 import { plural , timeout, getTimestamp} from '../functions/Utils';
@@ -14,14 +14,14 @@ import { ViewImageScreen } from './ViewImageScreen';
 import { QuizExamDoneModal} from '../modals/QuizExamDoneModal';
 import { CustomQuizExamResultScreen } from './CustomQuizExamResultScreen';
 
-import Constants from '../Constants'
+import Constants, { LOAD_STATE } from '../Constants'
 import { ROUTES, STYLES } from '../Constants';
 import { PURPLE, RED } from '../Colors';
 
 import { createStackNavigator } from 'react-navigation';
 import * as Animatable from 'react-native-animatable';
 import { Icon } from 'react-native-elements';
-import {CustomQuiz} from '../functions/CustomQuizStore';
+import {CustomQuiz, CustomQuizStore} from '../functions/CustomQuizStore';
 import { CustomQuizExamResultQAScreen } from './CustomQuizExamResultQAScreen';
 
 //custom header left component
@@ -145,15 +145,23 @@ class HeaderTitle extends React.PureComponent {
     const { styles } = HeaderTitle;
 
     return(
-      <Animatable.View 
-        style={styles.container}
-        animation={'pulse'}
-        duration={10000}
-        delay={3000}
-        iterationCount={'infinite'}
+      <Animatable.View
+        animation={'fadeIn'}
+        duration={750}
+        delay={500}
         useNativeDriver={true}
       >
-        {this._renderText()}
+        <Animatable.View 
+          style={styles.container}
+          animation={'pulse'}
+          duration={10000}
+          delay={3000}
+          iterationCount={'infinite'}
+          iterationDelay={1000}
+          useNativeDriver={true}
+        >
+          {this._renderText()}
+        </Animatable.View>
       </Animatable.View>
     );
   };
@@ -264,16 +272,24 @@ class CustomQuizExamScreen extends React.Component {
     container: {
       flex: 1,
     },
+    loadingContainer: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
   });
 
   constructor(props){
     super(props);
+
     this.didShowAlert = false;
     this.durations = [];
     this.prevSnap = null;
+    this.base64Images = {};
 
     this.state = {
       startTime: getTimestamp(true),
+      loading: LOAD_STATE.LOADING,
     };
 
     //references
@@ -287,26 +303,32 @@ class CustomQuizExamScreen extends React.Component {
     //get data from previous screen: ExamScreen
     const quiz = navigation.getParam('quiz' , null);
     const { questions = [] } = quiz;
-    
-    //assign carousel ref
-    this._carousel = this.customQuizList.getCarouselRef();
 
-    await timeout(100);
-    //set header title total
-    References && References.HeaderTitle.setTotal(questions.length);
-    //start recording the first item
-    this.recordDuration(0);
+    InteractionManager.runAfterInteractions(async () => {
+      //load base64 images from fs
+      const { base64Images } = await CustomQuizStore.getImages(quiz);
+      this.base64Images = base64Images;
 
-    //assign callbacks to header buttons
-    References.CancelButton.onPress = this._handleOnPressHeaderCancel;
-    References.DoneButton  .onPress = this._handleOnPressHeaderDone;
+      //set header title total
+      References && References.HeaderTitle.setTotal(questions.length);
+      //start recording the first item
+      this.recordDuration(0);
 
-    //get ref from screenprops
-    const { getRefQuizExamDoneModal } = this.props.screenProps;
-    this.quizExamDoneModal = getRefQuizExamDoneModal();
-    //assign callbacks to modal
-    this.quizExamDoneModal.onPressQuestionItem = this._handleOnPressQuestionItem;
-    this.quizExamDoneModal.onPressFinishButton = this._handleOnPressFinishButton;
+      //assign callbacks to header buttons
+      References.CancelButton.onPress = this._handleOnPressHeaderCancel;
+      References.DoneButton  .onPress = this._handleOnPressHeaderDone;
+
+      //get ref from screenprops
+      const { getRefQuizExamDoneModal } = this.props.screenProps;
+      this.quizExamDoneModal = getRefQuizExamDoneModal();
+      //assign callbacks to modal
+      this.quizExamDoneModal.onPressQuestionItem = this._handleOnPressQuestionItem;
+      this.quizExamDoneModal.onPressFinishButton = this._handleOnPressFinishButton;
+
+      this.setState({loading: LOAD_STATE.SUCCESS});
+      //assign carousel ref
+      this._carousel = this.customQuizList.getCarouselRef();
+    });
   };
 
   openDoneModal = () => {
@@ -448,24 +470,24 @@ class CustomQuizExamScreen extends React.Component {
     );
   };
 
-  render(){
+  _renderContent(){
     const { styles } = CustomQuizExamScreen;
     const { navigation } = this.props;
+    const { loading } = this.state;
     
     //wrap quiz to make sure all properties exists
     const quiz = CustomQuiz.wrap(
       //get data from previous screen: ExamScreen
       navigation.getParam('quiz' , {})
     );
-    
-    return (
-      <ViewWithBlurredHeader hasTabBar={false}>
+
+    switch (loading) {
+      case LOAD_STATE.SUCCESS: return (
         <Animatable.View
           ref={r => this._listContainer = r}
           style={styles.container}
           animation={'fadeInUp'}
           duration={500}
-          delay={300}
           useNativeDriver={true}
         >
           <CustomQuizList
@@ -475,9 +497,31 @@ class CustomQuizExamScreen extends React.Component {
             onNewAnswerSelected={this._handleOnNewAnswerSelected}
             onPressQuestionItem={this._handleOnPressQuestionItem}
             onPressImage={this._handleOnPressImage}
+            base64Images={this.base64Images}
             {...{quiz}}
           />
         </Animatable.View>
+      );
+      case LOAD_STATE.LOADING: return (
+        <Animatable.View
+          style={styles.loadingContainer}
+          animation={'fadeIn'}
+          duration={300}
+          useNativeDriver={true}
+        >
+          <ActivityIndicator
+            size={'large'}
+            color={PURPLE.A700}
+          />
+        </Animatable.View>
+      );
+    };
+  };
+
+  render(){  
+    return (
+      <ViewWithBlurredHeader hasTabBar={false}>
+        {this._renderContent()}
       </ViewWithBlurredHeader>
     );
   };
