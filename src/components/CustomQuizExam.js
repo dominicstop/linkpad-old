@@ -348,11 +348,13 @@ class QuestionImage extends React.PureComponent {
         onPress={this._handleImageOnPress}
         activeOpacity={0.85}
       >
-        <Image
+        <Animatable.Image
           style={[styles.image, imageStyle]}
           source={{uri: base64Image}} 
           resizeMode={'cover'}
-          fadeDuration={1000}
+          duration={750}
+          delay={500}
+          useNativeDriver={true}
         />
       </TouchableOpacity>
     );

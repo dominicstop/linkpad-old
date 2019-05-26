@@ -26,6 +26,7 @@ import {CustomQuizResultsStore,  CustomQuizResultItem} from '../functions/Custom
 import Animated, { Easing } from 'react-native-reanimated';
 import { QuestionItem } from '../models/ModuleModels';
 import { PlatformTouchableIconButton } from '../components/Buttons';
+import { CustomQuizExamResultQAScreen } from './CustomQuizExamResultQAScreen';
 const { set, cond, block, Value, timing, interpolate, and, or, onChange, eq, call, Clock, clockRunning, startClock, stopClock, debug, divide, multiply } = Animated;
 
 //declare animations
@@ -1001,6 +1002,7 @@ class Question extends React.PureComponent {
     durations       : PropTypes.object,
     questionID      : PropTypes.string, 
     hasMatchedAnswer: PropTypes.bool  ,
+    onPressNavigate : PropTypes.func  ,
   };
 
   static styles = StyleSheet.create({
@@ -1150,8 +1152,18 @@ class Question extends React.PureComponent {
     };
   };
 
-  _handleOnPress = async () => {
+  _handleOnPressIndicator = () => {
+    const { onPressNavigate, ...otherProps } = this.props;
+    onPressNavigate && onPressNavigate({...otherProps});
+  };
+
+  _handleOnPressQuestion = async () => {
     this.expand(!this.isExpanded);
+  };
+
+  _handleOnLongPressQuestion = async () => {
+    const { onPressNavigate, ...otherProps } = this.props;
+    onPressNavigate && onPressNavigate({...otherProps});
   };
 
   _renderNumberIndicator(){
@@ -1159,9 +1171,12 @@ class Question extends React.PureComponent {
     const { index } = this.props;
 
     return(
-      <View style={styles.numberIndicatorContainer}>
+      <TouchableOpacity 
+        style={styles.numberIndicatorContainer}
+        onPress={this._handleOnPressIndicator}
+      >
         <Text style={styles.numberIndicatorText}>{index + 1}</Text>
-      </View>
+      </TouchableOpacity>
     );
   };
 
@@ -1263,9 +1278,7 @@ class Question extends React.PureComponent {
 
     return(
       <View ref={r => this.expandedContainer = r}>
-        <Text numberOfLines={3} style={styles.questionText}>
-          {questionText}
-        </Text>
+        <Text numberOfLines={3} style={styles.questionText}>{questionText}</Text>
         {this._renderExapndedDurations()}
         {this._renderExpandedAnswer()}
       </View>
@@ -1350,31 +1363,33 @@ class Question extends React.PureComponent {
     };
 
     return(
-      <View style={styles.questionContainer}>
+      <TouchableOpacity 
+        style={styles.questionContainer}
+        onPress={this._handleOnPressQuestion}
+        onLongPress={this._handleOnLongPressQuestion}
+      >
         {this._renderCollapsed()}
         <Animated.View style={[styles.expandedContainer, expandedContainerStyle]}>
           {this._renderExpanded()}
         </Animated.View>
         <Animated.View {...{style}}/>
-      </View>
+      </TouchableOpacity>
     );
   };
 
   render(){
     const { index } = this.props;
     const { styles } = Question;
+
     return(
-      <TouchableOpacity 
-        onPress={this._handleOnPress}
-        activeOpacity={0.75}
-      >
+      <Fragment>
         {(index == 0) && <Divider style={styles.divider}/>}
         <View style={styles.container}>
-          {this._renderNumberIndicator()}
+          {this._renderNumberIndicator()}    
           {this._renderQuestionDetails()}
         </View>
         <Divider style={styles.divider}/>
-      </TouchableOpacity>
+      </Fragment>
     );
   };
 };
@@ -1383,10 +1398,26 @@ class Question extends React.PureComponent {
 class AnswersListCard extends React.PureComponent {
   static propTypes = {
     questionAnswersList: PropTypes.array,
+    //event callbacks
     onPressViewAllQuestions: PropTypes.func,
+    onPressNavigate        : PropTypes.func,
   };
 
   static styles = StyleSheet.create({
+    headerContainer: {
+      flexDirection: 'row',
+      marginBottom: 1,
+      marginTop: 5,
+      alignItems: 'center',
+    },
+    headerTitle: {
+      flex: 1,
+      marginLeft: 8,
+    },
+    headerSubtitle: {
+      fontSize: 16,
+      fontWeight: '200',
+    },
     buttonWrapper: {
       backgroundColor: PURPLE.A700,
       marginTop: 7,
@@ -1412,6 +1443,11 @@ class AnswersListCard extends React.PureComponent {
     onPressViewAllQuestions && onPressViewAllQuestions();
   };
 
+  _handleOnPressNavigate = (params) => {
+    const { onPressNavigate } = this.props;
+    onPressNavigate && onPressNavigate(params);
+  };
+
   _keyExtractor = (item, index) => {
     return(item.questionID || index);
   };
@@ -1420,7 +1456,10 @@ class AnswersListCard extends React.PureComponent {
     const { answer, hasMatchedAnswer, questionID, question, durations } = item;
 
     return(
-      <Question {...{answer, hasMatchedAnswer, questionID, question, index, durations}}/>
+      <Question 
+        onPressNavigate={this._handleOnPressNavigate}
+        {...{answer, hasMatchedAnswer, questionID, question, index, durations}}
+      />
     );
   };
 
@@ -1429,17 +1468,19 @@ class AnswersListCard extends React.PureComponent {
 
     return(
       <Fragment>
-        <IconText
-          containerStyle={sharedStyles.titleContainer}
-          textStyle={sharedStyles.title}
-          text={'Answers List'}
-          subtitleStyle={sharedStyles.subtitle}
-          subtitle={"Questions and corresponding answer."}
-          iconName={'notebook'}
-          iconType={'simple-line-icon'}
-          iconColor={'#512DA8'}
-          iconSize={26}
-        />
+        <View style={[styles.headerContainer, sharedStyles.titleContainer]}>
+          <Icon
+            name={'notebook'}
+            type={'simple-line-icon'}
+            color={'#512DA8'}
+            size={23}
+          />
+          <Text style={[styles.headerTitle, sharedStyles.title]}>{'Answers List'}</Text>
+        </View>
+        <Text style={styles.headerSubtitle}>
+          {"Long press on a question or tap on it's number to view all of it's details."}
+        </Text>
+
         <PlatformTouchableIconButton
           onPress={this._handleOnPressViewAllQuestions}
           wrapperStyle={[styles.buttonWrapper, STYLES.lightShadow]}
@@ -1657,13 +1698,39 @@ export class CustomQuizExamResultScreen extends React.Component {
   };
 
   _handleOnPressViewAllQuestions = () => {
+    const { NAV_PARAMS } = CustomQuizExamResultQAScreen;
     const { navigation } = this.props;
-    const { quizResults } = this.state;
+    const { quizResults, questionAnswersList } = this.state;
 
-    navigation && navigation.navigate(
-      ROUTES.CustomQuizExamResultQARoute,
-      {quizResults}
-    );
+    //pass data and navigate to CustomQuizExamResultQAScreen
+    navigation && navigation.navigate(ROUTES.CustomQuizExamResultQARoute, {
+      [NAV_PARAMS.quizResults]: quizResults,
+      [NAV_PARAMS.QAList     ]: questionAnswersList,
+    });
+  };
+
+  _handleOnPressNavigate = async ({index}) => {
+    const { NAV_PARAMS } = CustomQuizExamResultQAScreen;
+    const { navigation } = this.props;
+    const { quizResults, questionAnswersList } = this.state;
+
+    const result = await new Promise(resolve => Alert.alert(
+      `Show Question #${index + 1}`,
+      `Do you want to view all of the deatils for question #${index + 1}?`, [
+        { text: 'OK'    , style: 'default', onPress: () => resolve(true )},
+        { text: 'Cancel', style: 'cancel' , onPress: () => resolve(false)},
+      ],
+      {cancelable: false}, 
+    ));
+
+    //pass data and navigate to CustomQuizExamResultQAScreen
+    if(result){
+      navigation && navigation.navigate(ROUTES.CustomQuizExamResultQARoute, {
+        [NAV_PARAMS.quizResults]: quizResults,
+        [NAV_PARAMS.QAList     ]: questionAnswersList,
+        [NAV_PARAMS.initIndex  ]: index,
+      });
+    };
   };
 
   _showErrorMessage(){
@@ -1730,6 +1797,7 @@ export class CustomQuizExamResultScreen extends React.Component {
         <ScoreProgressCard {...{quizResultsLoaded, quizResults, results}}/>
         <AnswersListCard 
           onPressViewAllQuestions={this._handleOnPressViewAllQuestions}
+          onPressNavigate={this._handleOnPressNavigate}
           {...{questionAnswersList}}  
         />
         <IconFooter

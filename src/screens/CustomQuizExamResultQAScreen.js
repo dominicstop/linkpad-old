@@ -632,12 +632,9 @@ export class CustomQuizExamResultQAScreen extends React.PureComponent {
   };
 
   static styles = StyleSheet.create({
-    container: {
-      marginTop: HEADER_HEIGHT,
-    },
     loadingContainer: {
+      marginTop: HEADER_HEIGHT + 15,
       alignSelf: 'center',
-      marginTop: 15,
       flexDirection: 'row',
       alignItems: 'center',
       paddingVertical: 8,
@@ -652,6 +649,15 @@ export class CustomQuizExamResultQAScreen extends React.PureComponent {
       color: 'white',
     },
   });
+
+  static NAV_PARAMS = {
+    /** the previous results */
+    quizResults: 'quizResults',
+    /** the current QA list */
+    QAList: 'questionAnswersList',
+    /** which item to show */
+    initIndex: 'initIndex'
+  };
 
   /** combines all qa across all of the results into 1 qa item */
   static combineSameQuestionsAndAnswers(items){
@@ -745,34 +751,54 @@ export class CustomQuizExamResultQAScreen extends React.PureComponent {
 
   constructor(props){
     super(props);
+    const { NAV_PARAMS } = CustomQuizExamResultQAScreen;
     const { navigation } = props;
 
     //get data from prev. screen - quiz results
-    const quizResults = navigation.getParam('quizResults', []);
+    const quizResults = navigation.getParam(NAV_PARAMS.quizResults, []);
     const totalResults = quizResults.length;
-
+    
     this.state = {
       data: [],
       loading: LOAD_STATE.LOADING,
+      initialNumToRender: 6,
       totalResults,
     };
   };
 
   componentDidMount(){
+    const { NAV_PARAMS } = CustomQuizExamResultQAScreen;
     const { navigation } = this.props;
     //get data from prev. screen - quiz results
-    const quizResults = navigation.getParam('quizResults', []);
+    const quizResults = navigation.getParam(NAV_PARAMS.quizResults     , []);
+    const itemIndex   = navigation.getParam(NAV_PARAMS.initIndex, 0 );
 
     InteractionManager.runAfterInteractions(async () => {
       try {
-        //delay processing of data
-        await timeout(500);
-
         //combine the same QA items across all results
         const QAList      = CustomQuizExamResultQAScreen.combineSameQuestionsAndAnswers(quizResults);
         const QAStatsList = CustomQuizExamResultQAScreen.appendAnswerStats(QAList);
+
+        //hide loading indicator
+        await this.container.fadeOutUp(300);
+
         //update flatlist data and mount
-        this.setState({data: QAStatsList, loading: LOAD_STATE.SUCCESS});
+        if(itemIndex == 0){
+          await setStateAsync(this, {data: QAStatsList, loading: LOAD_STATE.SUCCESS});
+          await this.container.fadeInUp(400);
+
+        } else {
+          setStateAsync(this, {data: QAStatsList, loading: LOAD_STATE.SUCCESS, initialNumToRender: itemIndex + 1});
+          await timeout(500);
+          this.flatlist.scrollToIndex({
+            index: itemIndex, 
+            animated: false,
+            ...Platform.select({ios: {viewOffset: HEADER_HEIGHT}}),
+          });
+          await timeout(500);
+          setStateAsync(this, {initialNumToRender: 6});
+          await this.container.fadeInUp(400);
+        };
 
       } catch(error){
         this.setState({loading: LOAD_STATE.ERROR});
@@ -791,50 +817,37 @@ export class CustomQuizExamResultQAScreen extends React.PureComponent {
     const { answerStats, choicesCount, durations, totalDurations, answer, hasMatchedAnswer, question, questionID } = item;
 
     return(
-      <AnimatedListItem
-        last={5}
-        duration={500}
-        multiplier={300}
-        {...{index}}
-      >
-        <ResultItem 
-          //pass down items
-          {...{index, answerStats, choicesCount, durations, totalDurations, answer, hasMatchedAnswer, question, questionID, totalResults}}
-        />
-      </AnimatedListItem>
+      <ResultItem 
+        //pass down items
+        {...{index, answerStats, choicesCount, durations, totalDurations, answer, hasMatchedAnswer, question, questionID, totalResults}}
+      />
     );
   };
 
   _renderContents(){
     const { styles } = CustomQuizExamResultQAScreen;
-    const { loading, data } = this.state;
+    const { loading, data, initialNumToRender } = this.state;
 
     switch (loading) {
       case LOAD_STATE.INITIAL:
       case LOAD_STATE.LOADING: return (
-        <Animatable.View
-          style={styles.container}
-          animation={'fadeInUp'}
-          duration={500}
-          useNativeDriver={true}
-        >
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator
-              size={'small'}
-              color={'white'}
-            />
-            <Text style={styles.loadingText}>Loading</Text>
-          </View>
-        </Animatable.View>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator
+            size={'small'}
+            color={'white'}
+          />
+          <Text style={styles.loadingText}>Loading</Text>
+        </View>
       );
       case LOAD_STATE.SUCCESS: return (
         <FlatList
+          ref={r => this.flatlist = r}
           renderItem={this._renderItem}
           keyExtractor={this._keyExtractor}
           //adjust top distance
           contentInset ={{top: HEADER_HEIGHT}}
           contentOffset={{x: 0, y: -HEADER_HEIGHT}}
-          {...{data}}
+          {...{data, initialNumToRender}}
         />
       );
       case LOAD_STATE.ERROR: return (
@@ -855,7 +868,14 @@ export class CustomQuizExamResultQAScreen extends React.PureComponent {
   render(){
     return(
       <ViewWithBlurredHeader hasTabBar={false}>
-        {this._renderContents()}
+        <Animatable.View
+          ref={r => this.container = r}
+          animation={'fadeInUp'}
+          duration={500}
+          useNativeDriver={true}
+        >
+          {this._renderContents()}
+        </Animatable.View>
       </ViewWithBlurredHeader>
     );
   };
