@@ -34,9 +34,6 @@ export const MODAL_DISTANCE_FROM_TOP = Platform.select({
 });
 export const MODAL_EXTRA_HEIGHT = 300;
 
-//enable layout animation on android
-UIManager.setLayoutAnimationEnabledExperimental && 
-UIManager.setLayoutAnimationEnabledExperimental(true);
 
 export class ModalBackground extends React.PureComponent {
   static propTypes = {

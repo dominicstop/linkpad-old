@@ -1,5 +1,5 @@
 import React, { Fragment } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ViewPropTypes, TextProps, UIManager, LayoutAnimation, Platform, TouchableNativeFeedback } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ViewPropTypes, TextProps, LayoutAnimation, Platform, TouchableNativeFeedback } from 'react-native';
 import PropTypes from 'prop-types';
 
 import * as Animatable from 'react-native-animatable';
@@ -8,11 +8,6 @@ import { Icon } from 'react-native-elements';
 import PlatformTouchable from './Touchable';
 import { STYLES } from '../Constants';
 import NavigationService from '../NavigationService';
-
-
-
-
-UIManager.setLayoutAnimationEnabledExperimental && UIManager.setLayoutAnimationEnabledExperimental(true);
 
 //icon and text
 export class IconButton extends React.PureComponent {

@@ -253,3 +253,7 @@ export function countOccurences(item = '', items = []){
 export function countOccurences(item = '', items = []){
   return items.filter(i => i === item).length;
 };
+
+function lerp(a, b, n) {
+  return (1 - n) * a + n * b;
+}

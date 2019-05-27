@@ -63,7 +63,7 @@ export class TextExpander extends React.PureComponent {
     });
     this.scale = interpolate(this.progress, {
       inputRange : [0, 100],
-      outputRange: [0.9, 1],
+      outputRange: [0.95, 1],
       extrapolate: 'clamp',
     });
     this.rotation = interpolate(this.progress, {
@@ -215,10 +215,11 @@ export class ContentExpander extends React.PureComponent {
     this.heightExpanded  = new Value(-1);
     this.heightCollapsed = new Value(0);
     this.progress        = new Value(100);
+    this.status          = new Value(0);
 
     this.height = interpolate(this.progress, {
-      inputRange : [0, 100],
-      outputRange: [0, this.heightExpanded],
+      inputRange : [0, 99.99, 100],
+      outputRange: [0, this.heightExpanded, -1],
       extrapolate: 'clamp',
     });
     this.opacity = interpolate(this.progress, {
@@ -233,7 +234,7 @@ export class ContentExpander extends React.PureComponent {
     });
     this.scale = interpolate(this.progress, {
       inputRange : [0, 100],
-      outputRange: [0.9, 1],
+      outputRange: [0.95, 1],
       extrapolate: 'clamp',
     });
     this.rotation = interpolate(this.progress, {
@@ -256,9 +257,6 @@ export class ContentExpander extends React.PureComponent {
       const height = await new Promise(resolve => {
         this.contentContainer.measure((x, y, w, h) => resolve(h));
       });
-
-      console.log('Height: ');
-      console.log(height);
 
       //set height measured flag to true
       this.isHeightMeasured = true;
@@ -283,6 +281,10 @@ export class ContentExpander extends React.PureComponent {
   _handleOnPressHeader = () => {
     const { isExpanded } = this.state;
     this.expand(!isExpanded);
+  };
+
+  _handleAnimationFinished = () => {
+
   };
 
   _renderHeader(){
@@ -339,15 +341,24 @@ export class ContentExpander extends React.PureComponent {
   };
 
   render(){
+    const { progress, status, height } = this;
     return(
       <Fragment>
         {this._renderHeader()}
         {this._renderContent()}
+        <Animated.Code exec={block([
+          //animation started
+          onChange(progress, cond(eq(status, 0), set(status, 1))),
+          //animation finished
+          cond(and(eq(status, 1), or(eq(progress, 0), eq(progress, 100))), [ 
+            set(status, 0),
+            call([progress], this._handleAnimationFinished),
+          ]),
+        ])}/>
       </Fragment>
     );
   };
 };
-
 
 export class TextExpandable extends React.PureComponent {
   static propTypes = {

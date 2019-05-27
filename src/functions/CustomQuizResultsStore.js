@@ -51,6 +51,7 @@ export class CustomQuizResultItem {
     startTime: -1,
     endTime: -1,
     indexID_quiz: -1,
+    timestampSaved: -1,
     results: {
       correct  : -1,
       incorrect: -1,

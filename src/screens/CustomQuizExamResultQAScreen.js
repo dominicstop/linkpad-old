@@ -1,5 +1,5 @@
 import React, { Fragment } from 'react';
-import { View, LayoutAnimation, ScrollView, ViewPropTypes, Text, TouchableOpacity, AsyncStorage, StyleSheet, Platform , Alert, TouchableNativeFeedback, Clipboard, FlatList, ActivityIndicator, Dimensions, Switch, InteractionManager} from 'react-native';
+import { View, LayoutAnimation, ScrollView, ViewPropTypes, Text, TouchableOpacity, AsyncStorage, StyleSheet, Platform , Alert, TouchableNativeFeedback, Clipboard, FlatList, ActivityIndicator, Dimensions, Switch, InteractionManager } from 'react-native';
 import PropTypes from 'prop-types';
 
 import { ViewWithBlurredHeader, IconText, Card, AnimateInView, IconFooter, AnimatedListItem } from '../components/Views';
@@ -14,6 +14,7 @@ import Pie from 'react-native-pie'
 import { Header, NavigationEvents } from 'react-navigation';
 import { Divider, Icon } from 'react-native-elements';
 import SegmentedControlTab from "react-native-segmented-control-tab";
+import TimeAgo from 'react-native-timeago';
 
 import * as shape from 'd3-shape'
 import { BarChart, Grid, XAxis, YAxis } from 'react-native-svg-charts'
@@ -215,10 +216,676 @@ class ChoicesCountStat extends React.PureComponent {
   };
 };
 
+class FilterButton extends React.PureComponent {
+  static propTypes = {
+    value  : PropTypes.number,
+    kind   : PropTypes.string,
+    mode   : PropTypes.string,
+    onPress: PropTypes.func  ,
+  };
+
+  static styles = StyleSheet.create({
+    buttonContainer: {
+      flexDirection: 'row',
+      width: 137,
+      height: 32,
+      marginBottom: 8,
+      //chart radius - inner chart radius
+      paddingLeft: (32/2) - (25/2),
+      alignItems: 'center',
+      borderRadius: 32/2,
+      borderWidth: 1,
+    },
+    label: {
+      fontSize: 16,
+      marginLeft: 7,
+      width: 72,
+      textAlign: 'center',
+    },
+    result: {
+      fontSize: 16,
+    }
+  });
+
+  getStateFromModeKind(){
+    const { MODE } = ResultPieChart;
+    const { kind } = this.props;
+    switch (kind) {
+      case MODE.CORRECT: return {
+        label: 'Correct',
+        color: GREEN[800],
+        //icon props
+        name: 'check-circle', 
+        type: 'font-awesome', 
+      };
+      case MODE.INCORRECT: return {
+        label: 'Wrong',
+        color: RED[900],
+        //icon props
+        name: 'times-circle', 
+        type: 'font-awesome', 
+      };
+      case MODE.UNANSWERED: return {
+        label: 'Skipped',
+        color: GREY[900],
+        //icon props
+        name: 'question-circle', 
+        type: 'font-awesome', 
+      };
+    };
+  };
+
+  _handleOnPress = () => {
+    const { onPress, kind } = this.props;
+    onPress && onPress(kind);
+  };
+
+  _renderContents(){
+    const { styles } = FilterButton;
+    const { kind, mode, value } = this.props;
+
+    const { label, name, type, color } = this.getStateFromModeKind();
+    const isSelected = (kind == mode);
+
+    const iconColor = isSelected? 'white' : color;
+
+    const labelStyle = (isSelected
+      ? { color: 'white'  , fontWeight: '500' }
+      : { color: GREY[900], fontWeight: '300' }
+    );
+
+    return(
+      <Fragment>
+        <Icon
+          size={25}
+          color={iconColor}
+          {...{name, type}}
+        />
+        <Text style={[styles.label, labelStyle]}>
+          {label}
+        </Text>
+        <Text style={[styles.result, labelStyle]}>
+          {value}
+        </Text>
+      </Fragment>
+    );
+  };
+
+  render(){
+    const { styles } = FilterButton;
+    const { kind, mode } = this.props;
+
+    const { color } = this.getStateFromModeKind();
+    const isSelected = (kind == mode);
+
+    const buttonContainerStyle = (isSelected
+      ? { borderColor: color    , backgroundColor: color   }
+      : { borderColor: GREY[300], backgroundColor: 'white' }
+    );
+
+    return(
+      <TouchableOpacity
+        style={[styles.buttonContainer, buttonContainerStyle]}
+        onPress={this._handleOnPress}
+      >
+        {this._renderContents()}
+      </TouchableOpacity>
+    );
+  };
+};
+
+class ResultPieChart extends React.PureComponent {
+  static propTypes = {
+    results: PropTypes.object,
+  };
+
+  static MODE = {
+    DEFAULT   : 'DEFAULT'   , //initial state
+    CORRECT   : 'CORRECT'   , //selected: correct
+    INCORRECT : 'INCORRECT' , //selected: incorrect
+    UNANSWERED: 'UNANSWERED', //selected: unanswered
+  };
+
+  static styles = StyleSheet.create({
+    cardContainer: {
+      paddingBottom: 10,
+    },
+    divider: {
+      marginVertical: 10,
+    },
+    headerTextContainer: {
+      flex: 1, 
+      alignItems: 'center', 
+      justifyContent: 'center', 
+    },
+    //picture desc styles
+    image: {
+      width: 75, 
+      height: 75,
+      marginRight: 8,
+    },
+    pictureDescContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: 10,
+    },
+    pictureDescText: {
+      flex: 1,
+      textAlignVertical: 'center',
+    },
+    pictureDescResultText: {
+      color: PURPLE[900],
+      fontWeight: '500',
+    },
+    //results styles
+    resultPieContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingVertical: 10,
+    },
+    resultsContainer: {
+      marginRight: 15,
+    },
+    //piechart styles
+    pieContainer: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    pieInfoContainer: {
+      position: 'absolute',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    pieInfoFractionLabel: {
+      fontSize: 18,
+      fontWeight: '700',
+    },
+    //pie icon styles
+    pieIconContainer: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingTop: 5,
+    },
+    pieIcon: {
+      width: 12,
+      height: 12,
+      borderRadius: 12/2,
+    },
+  });
+
+  constructor(props){
+    super(props);
+    const { MODE } = ResultPieChart;
+
+    const { correct, incorrect, unaswered, total } = props.results;
+    this.state = {
+      mode: MODE.DEFAULT,
+      showPercentage: false,
+    };
+
+
+    //compute percentages
+    this.resultPercentages = {
+      perentageCorrect   : (correct   / total) * 100,
+      perentageIncorrect : (incorrect / total) * 100,
+      perentageUnanswered: (unaswered / total) * 100,
+    };  
+  };
+
+  getStateFromMode(){
+    const { MODE } = ResultPieChart;
+    const { results } = this.props;
+    const { mode, showPercentage } = this.state;
+    //destruct percentages
+    const { perentageCorrect, perentageIncorrect, perentageUnanswered } = this.resultPercentages;
+    
+    switch (mode) {
+      case MODE.DEFAULT: return {
+        series: [perentageCorrect, perentageIncorrect, perentageUnanswered],
+        colors: [GREEN.A700, RED.A700, GREY[500]],
+        label : showPercentage? `${formatPercent(perentageCorrect)}` : `${results.correct}/${results.total}`,
+        color : 'white',
+        desc  : 'Tap on an item for more info.',
+      };
+      case MODE.CORRECT: return {
+        series: [perentageCorrect, perentageIncorrect, perentageUnanswered],
+        colors: [GREEN.A700, RED[100], GREY[100]],
+        label : showPercentage? `${formatPercent(perentageCorrect)}` : `${results.correct}/${results.total}`,
+        color : GREEN.A700,
+        desc  : 'Items you answered correctly',
+      };
+      case MODE.INCORRECT: return {
+        series: [perentageCorrect, perentageIncorrect, perentageUnanswered],
+        colors: [GREEN[100], RED.A700, GREY[100]],
+        label : showPercentage? `${formatPercent(perentageIncorrect)}` : `${results.incorrect}/${results.total}`,
+        color : RED.A700,
+        desc  : 'The items you got wrong.'
+      };
+      case MODE.UNANSWERED: return {
+        series: [perentageCorrect, perentageIncorrect, perentageUnanswered],
+        colors: [GREEN[100], RED[100], GREY[500]],
+        label : showPercentage? `${formatPercent(perentageUnanswered)}` : `${results.unaswered}/${results.total}`,
+        color : GREY[500],
+        desc  : 'Questions with no answer.'
+      };
+    };
+  };
+
+  _handleOnPressResult = (type) => {
+    const { MODE } = ResultPieChart;
+    const { mode } = this.state;
+
+    this.animatedChart.pulse(500);
+    if(mode == type){
+      //reset mode to default
+      this.setState({mode: MODE.DEFAULT});
+    } else {
+      this.setState({mode: type});
+    };
+  };
+
+  _handleOnPressPie = () => {
+    const { showPercentage } = this.state;
+    this.animatedChart.pulse(500);
+    this.setState({showPercentage: !showPercentage});
+  };
+  
+  _renderHeader(){
+    const { desc } = this.getStateFromMode();
+    return(
+      <IconText
+        containerStyle={sharedStyles.titleContainer}
+        textStyle={sharedStyles.title}
+        text={'Quiz Results'}
+        subtitleStyle={sharedStyles.subtitle}
+        subtitle={desc}
+        iconName={'clipboard'}
+        iconType={'feather'}
+        iconColor={'#512DA8'}
+        iconSize={30}
+      />
+    );
+  };
+
+  _renderResults(){
+    const { styles, MODE } = ResultPieChart;
+    const { results } = this.props;
+    const { mode } = this.state;
+
+    return(
+      <View style={styles.resultsContainer}>
+        <FilterButton
+          kind={MODE.CORRECT}
+          value={results.correct}
+          onPress={this._handleOnPressResult}
+          {...{mode}}
+        />
+        <FilterButton
+          kind={MODE.INCORRECT}
+          value={results.incorrect}
+          onPress={this._handleOnPressResult}
+          {...{mode}}
+        />
+        <FilterButton
+          kind={MODE.UNANSWERED}
+          value={results.unaswered}
+          onPress={this._handleOnPressResult}
+          {...{mode}}
+        />
+      </View>
+    );
+  };
+
+  _renderPieIcon(){
+    const { styles, MODE } = ResultPieChart;
+    const { mode } = this.state;
+
+    const { color } = this.getStateFromMode();
+    const pieIconStyle = {
+      backgroundColor: color,
+    };
+
+    //dont render icon when default
+    if(mode == MODE.DEFAULT){
+      return(
+        <View style={styles.pieIconContainer}>
+          <Text>Score</Text>
+        </View>
+      );
+    } else {
+      return(
+        <Animatable.View 
+          style={styles.pieIconContainer}
+          animation={'pulse'}
+          duration={1000}
+          iterationCount={'infinite'}
+          iterationDelay={1000}
+          useNativeDriver={true}
+        >
+          <View style={[styles.pieIcon, pieIconStyle]}/>
+        </Animatable.View>
+      );
+    };
+  };
+
+  _renderPieChart(){
+    const { styles } = ResultPieChart;
+
+    const radius = 60;
+    const innerRadius = 45;
+
+    const { series, colors, label } = this.getStateFromMode();
+    
+    const pieInfoContainerStyle = {
+      width  : radius * 2,
+      height : radius * 2,
+      padding: radius - innerRadius,
+    };
+
+    return(
+      <Animatable.View
+        style={styles.pieContainer}
+        ref={r => this.animatedChart = r}
+        useNativeDriver={true}
+      >
+        <TouchableOpacity onPress={this._handleOnPressPie}>
+          <Animatable.View
+            animation={'rotate360'}
+            duration={1000 * 80}
+            iterationCount={'infinite'}
+            delay={1000}
+            useNativeDriver={true}
+          >
+            <Pie
+              backgroundColor='#ddd'
+              //pass down props
+              {...{radius, innerRadius, series, colors}}
+            />
+          </Animatable.View>
+          <View style={[styles.pieInfoContainer, pieInfoContainerStyle]}>
+            {this._renderPieIcon()}
+            <Text style={styles.pieInfoFractionLabel}>
+              {label}
+            </Text>
+            <View style={{flex: 1}}/>
+          </View>
+        </TouchableOpacity>
+      </Animatable.View>
+    );
+  };
+
+  render(){
+    const { styles } = ResultPieChart;
+    return (
+      <View style={styles.resultPieContainer}>
+        {this._renderResults ()}
+        {this._renderPieChart()}
+      </View>
+    );
+  };
+};
+
+class ScoreItem extends React.PureComponent {
+  static styles = StyleSheet.create({
+    indicator: {
+      width: 10,
+      height: 10,
+      borderRadius: 10/2,
+      backgroundColor: 'rgba(255,255,255, 0.75)'
+    },
+  });
+
+  _handleOnPress = () => {
+    const { onPress, timestampSaved, type, index, selected } = this.props;
+    onPress && onPress({timestampSaved, type, index, selected});
+  };
+
+  render(){
+    const { styles } = ScoreItem; 
+    const { onPress, timestampSaved, type, index, selected, ...otherProps } = this.props;
+    const isSelected = (`${timestampSaved}-${type}-${index}` == selected);
+
+    return(
+      <TouchableOpacity 
+        onPress={this._handleOnPress}
+        {...otherProps}
+      >
+        {isSelected && <View style={styles.indicator}/>}
+      </TouchableOpacity>
+    );
+  };
+};
+
+class ScoreBar extends React.PureComponent {
+  static propTypes = {
+    scoreHistory: PropTypes.array,
+    title: PropTypes.string,
+    subtitle: PropTypes.string,
+    //styles
+    containerStyle: PropTypes.object,
+    titleStyle: PropTypes.object,
+    subtitleStyle: PropTypes.object,
+  };
+
+  static TYPES = {
+    correct: 'correct',
+    wrong  : 'wrong'  ,
+    skipped: 'skipped',
+  };
+
+  static VALUES = {
+    SIZE  : 25 ,
+    MARGIN: 0.75,
+  };
+
+  static styles = StyleSheet.create({
+    //box styles
+    boxContainer: {
+      flexDirection: 'row',
+      overflow: 'hidden',
+      flexWrap: 'wrap',
+      alignItems: 'flex-start',
+      overflow: 'hidden',
+      borderRadius: 12,
+      marginTop: 7,
+      backgroundColor: GREY[100],
+    },
+    box: (() => {
+      const { MARGIN, SIZE } = ScoreBar.VALUES;
+      return {
+        overflow: 'hidden',
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderColor: GREY[100],
+        borderTopWidth  : MARGIN,
+        borderRightWidth: MARGIN,
+        width : SIZE - MARGIN,
+        height: SIZE,
+      };
+    })(),
+    //header styles
+    detailsContainer: {
+      marginTop: 3,
+      flexDirection: 'row',
+      marginBottom: 10,
+      paddingRight: 10,  
+    },
+    datesContainer: {
+      flex: 1,
+      marginRight: 7,
+    },
+    date: {
+      fontSize: 16,
+      fontWeight: '500',
+      color: 'black',
+    },
+    time: {
+      fontSize: 16,
+      fontWeight: '300',
+      color: GREY[900],
+    },
+    indicator: {
+      width: 30,
+      height: 30,
+      borderRadius: 30/2,
+      backgroundColor: 'red',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+  });
+
+  constructor(props){
+    super(props);
+    this.state = {
+      width: -1,
+      selected: -1,
+      timestampSaved: -1, 
+      type: '',
+    };
+  };
+
+  getColor(type){
+    const { TYPES } = ScoreBar;
+    switch (type) {
+      case TYPES.wrong  : return RED  [500];
+      case TYPES.correct: return GREEN[500];
+      case TYPES.skipped: return GREY [500];
+    };
+  };
+
+  _handeOnLayout = ({nativeEvent}) => {
+    const {x, y, width, height} = nativeEvent.layout;
+    if(this.state.width == -1){
+      this.setState({width});
+    };
+  };
+
+  _handleOnPress = ({timestampSaved, type, index}) => {
+    const { selected } = this.state;
+    const nextSelected = `${timestampSaved}-${type}-${index}`;
+
+    //temp: replace with expander
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    this.setState({
+      selected: nextSelected == selected? -1 : nextSelected,
+      timestampSaved, type
+    });
+  };
+
+  _renderBoxes(){
+    const { styles, VALUES } = ScoreBar;
+    const { scoreHistory } = this.props;
+    const { selected, width } = this.state;
+    const scores = scoreHistory || [];
+
+    //how many items that can fit in a row (ex: 12)
+    const columns = Math.floor(width / VALUES.SIZE);
+    const extra_space = width - (columns * VALUES.SIZE);
+    const actual_size = VALUES.SIZE + (extra_space / columns);
+
+    scores.sort((a, b) => (a.timestampSaved || 0) - (b.timestampSaved || 0));
+    const recentScores = scores.slice(columns * -4)
+
+    return recentScores.map(({timestampSaved, type}, index) => {
+      const boxStyle = {
+        width: actual_size,
+        height: actual_size,
+        backgroundColor: this.getColor(type),
+      };
+      return( 
+        <ScoreItem 
+          key={`${timestampSaved}-${type}-${index}`}
+          style={[styles.box, boxStyle]}
+          collapsable={true}
+          onPress={this._handleOnPress}
+          {...{timestampSaved, type, selected, index}}
+        /> 
+      );
+    });
+  };
+
+  _renderSubtitle(){
+    const { styles, TYPES } = ScoreBar;
+    const { subtitleStyle, subtitle } = this.props;
+    const { selected, timestampSaved, type } = this.state;
+    const isSelected = (selected != -1);
+
+    const time = timestampSaved || 0;
+    const date = moment(time).format('dddd, MMM D YYYY');
+    //indicator bg color
+    const backgroundColor = this.getColor(type || '');
+    const iconProps = (
+      type == TYPES.correct? {type: 'feather', name: 'check'} :
+      type == TYPES.wrong  ? {type: 'feather', name: 'x'    } : {type: 'ionicon', name: 'md-help' }
+    );
+
+    return isSelected? (
+      <View style={[styles.detailsContainer]}>
+        <View style={styles.datesContainer}>
+          <Text numberOfLines={1} style={styles.date}>{date}</Text>
+          <TimeAgo 
+            style={styles.time}
+            numberOfLines={1} 
+            {...{time}}
+          />
+        </View>
+        <View style={[styles.indicator, {backgroundColor}]}>
+          <Icon
+            size={20}
+            color={'white'}
+            {...iconProps}
+          />
+        </View>
+      </View>
+    ):(
+      <Text style={[styles.subtitle, subtitleStyle]}>
+        {subtitle}
+      </Text>
+    );
+  };
+
+  _renderHeader(){
+    const { styles } = ScoreBar;
+    const { titleStyle, title } = this.props;
+
+    return(
+      <Fragment>
+        <Text style={[styles.title, titleStyle]}>
+          {title}
+        </Text>
+        {this._renderSubtitle()}
+      </Fragment>
+    );
+  };
+
+  render(){
+    const { styles } = ScoreBar;
+    const { containerStyle, boxContainerStyle } = this.props;
+    const { width } = this.state;
+    const isSizeSet = (width != -1);
+
+    return(
+      <View style={[styles.container, containerStyle]}>
+        {this._renderHeader()}
+        <View 
+          style={[styles.boxContainer, boxContainerStyle]}
+          onLayout={this._handeOnLayout}
+        >
+          {isSizeSet && this._renderBoxes()}
+        </View>
+      </View>
+    );
+  };
+};
+
 class ResultItem extends React.PureComponent {
   static propTypes = {
     index: PropTypes.number,
     answerStats: PropTypes.object,
+    scoreHistory: PropTypes.array,
     choicesCount: PropTypes.array,
     durations: PropTypes.object,
     answer: PropTypes.object,
@@ -293,6 +960,9 @@ class ResultItem extends React.PureComponent {
       marginTop: 5,
       fontSize: 17,
     },
+    expanderContainer: {
+      marginTop: 7,
+    },
     //answer text styles
     answerRowContainer: {
       flexDirection: 'row',
@@ -310,9 +980,6 @@ class ResultItem extends React.PureComponent {
       fontWeight: '500'
     },
     //stats styles
-    statsContainer: {
-      marginTop: 7,
-    },
     statsTitle: {
       fontWeight: '600',
       fontSize: 18,
@@ -322,6 +989,14 @@ class ResultItem extends React.PureComponent {
       fontSize: 16,
       fontWeight: '200',
       marginBottom: 7,
+    },
+    statsChoices: {
+      marginTop: 5,
+      marginBottom: 5,
+    },
+    //history style
+    historyGridContainer: {
+      marginTop: 5,
     },
     //stats row/column styles
     detailRow: {
@@ -577,10 +1252,62 @@ class ResultItem extends React.PureComponent {
         <Text style={styles.statsTitle}>Choices Frequency</Text>
         <Text style={styles.statsSubtitle}>Shows how many times a choice has been selected. Tap to toggle percentage.</Text>
         <ChoicesCountStat
-          style={{marginTop: 5}}
+          style={styles.statsChoices}
           {...{choicesCount, questionID, totalResults, answer, question}}
         />
       </Fragment>
+    );
+  };
+
+  _renderHistoryHeader(isExpanded) {
+    const { styles } = ResultItem;
+    const suffix = isExpanded? 'collapse' : 'expand';
+    return(
+      <View style={styles.exapnderHeaderContainer}>
+        <Icon
+          name={'rotate-ccw'}
+          type={'feather'}
+          color={PURPLE[500]}
+          size={25}
+        />
+        <View style={styles.exapnderHeaderTextContainer}>
+          <Text style={styles.expanderHeaderTitle}>History</Text>
+          <Text style={styles.expanderHeaderSubtitle}>{`Tap here to ${suffix}`}</Text>
+        </View>
+      </View>
+    );
+  };
+
+  _renderHistory(){
+    const { styles } = ResultItem;
+    const { answerStats, scoreHistory } = this.props;
+
+    //compute total
+    const values = Object.values(answerStats || {});
+    const total = values.reduce((acc, cur) => acc + parseInt(cur) || 0, 0);
+
+    const results = { 
+      correct  : answerStats.correct || 0, 
+      incorrect: answerStats.wrong   || 0, 
+      unaswered: answerStats.skipped || 0,
+      //pass down total
+      total,
+    };
+
+    return(
+      <View style={styles.expanderContainer}>
+        <Text style={styles.statsTitle}>Overall Results</Text>
+        <Text style={styles.statsSubtitle}>Shows how many times you got this question right or wrong.</Text>
+        <ResultPieChart {...{results}}/>
+        <Divider style={styles.divider}/>
+        <ScoreBar
+          titleStyle={styles.statsTitle}
+          subtitleStyle={styles.statsSubtitle}
+          title={'Result History'}
+          subtitle={'Shows your recent results for this question in chronological order.'}
+          {...{scoreHistory}}
+        />
+      </View>
     );
   };
 
@@ -609,11 +1336,15 @@ class ResultItem extends React.PureComponent {
         </TextExpander>
         <Divider style={styles.divider}/>
         <ContentExpander renderHeader={this._renderStatsHeader}>
-          <View style={styles.statsContainer}>
+          <View style={styles.expanderContainer}>
             {this._renderStatsDuration()}
             <Divider style={styles.divider}/>
             {this._renderStatsAnswer()}
           </View>
+        </ContentExpander>
+        <Divider style={styles.divider}/>
+        <ContentExpander renderHeader={this._renderHistoryHeader}>
+          {this._renderHistory()}
         </ContentExpander>
         <Divider style={styles.divider}/>
       </Card>
@@ -633,6 +1364,7 @@ export class CustomQuizExamResultQAScreen extends React.PureComponent {
 
   static styles = StyleSheet.create({
     loadingContainer: {
+      position: 'absolute',
       marginTop: HEADER_HEIGHT + 15,
       alignSelf: 'center',
       flexDirection: 'row',
@@ -653,6 +1385,8 @@ export class CustomQuizExamResultQAScreen extends React.PureComponent {
   static NAV_PARAMS = {
     /** the previous results */
     quizResults: 'quizResults',
+    /** the current result */
+    quizResult: 'quizResult',
     /** the current QA list */
     QAList: 'questionAnswersList',
     /** which item to show */
@@ -662,7 +1396,10 @@ export class CustomQuizExamResultQAScreen extends React.PureComponent {
   /** combines all qa across all of the results into 1 qa item */
   static combineSameQuestionsAndAnswers(items){
     const results = CustomQuizResultItem.wrapArray(items);
-    const QALists = results.map(result => result.questionAnswersList);
+    const QALists = results.map(({questionAnswersList, timestampSaved}) => 
+      //pass down timestampSaved to each QA item
+      questionAnswersList.map(QAItem => ({ timestampSaved, ...QAItem }))  
+    );
 
     let list = {};
     QALists.forEach(QAList => {
@@ -682,10 +1419,11 @@ export class CustomQuizExamResultQAScreen extends React.PureComponent {
 
   /** get stats */
   static appendAnswerStats(items){
+    const { TYPES } = ScoreBar;
     const questionIDs = Object.keys(items);
 
     return questionIDs.map(id => {
-      const results = QuestionAnswerItem.wrapArray(items[id]);
+      const QAItems = QuestionAnswerItem.wrapArray(items[id]);
       const stats = {
         correct: 0,
         skipped: 0,
@@ -696,7 +1434,9 @@ export class CustomQuizExamResultQAScreen extends React.PureComponent {
         viewCount: 0,
       };
 
-      const { question } = results[0];
+      let scoreHistory = [];
+
+      const { question } = QAItems[0];
       //extract choices from questions
       const choicesWrong = (question.choices || []).map(choice => choice.value);
       //get the correct answer/choice
@@ -705,27 +1445,32 @@ export class CustomQuizExamResultQAScreen extends React.PureComponent {
       const choices = [choiceCorrect, ...choicesWrong];
       
       //extract user's answers and count correct/wrong/skipped
-      const answers = results.map(result => {
+      const answers = QAItems.map(QAItem => {
+        const timestampSaved = QAItem.timestampSaved || 0;
         //check if there's an answer
-        const hasMatchedAnswer = (result.hasMatchedAnswer || false);
-        const hasAnswer = (result.answer != undefined);
+        const hasMatchedAnswer = (QAItem.hasMatchedAnswer || false);
+        const hasAnswer = (QAItem.answer != undefined);
 
-        if(result.durations){
-          const { totalTime, viewCount } = result.durations;
+        if(QAItem.durations){
+          const { totalTime, viewCount } = QAItem.durations;
           totalDurations.totalTime += (totalTime || 0);
           totalDurations.viewCount += (viewCount || 0);
         };
 
         if(hasMatchedAnswer && hasAnswer){
-          const { isCorrect, userAnswer } = result.answer;
+          const { isCorrect, userAnswer } = QAItem.answer;
           //increment correct/wrong count
           isCorrect? stats.correct += 1 : stats.wrong += 1;
+          //add to score history
+          isCorrect? scoreHistory.push({timestampSaved, type: TYPES.correct }) : scoreHistory.push({timestampSaved, type: TYPES.wrong });
           //return user's answer
           return userAnswer || null;
 
         } else {
           //increment skipped count          
           stats.skipped += 1;
+          //add to score history
+          scoreHistory.push({timestampSaved, type: TYPES.skipped });
           //return null since there's no answer
           return null;
         };
@@ -738,12 +1483,13 @@ export class CustomQuizExamResultQAScreen extends React.PureComponent {
       }));
 
 
-      //get the last/latest/current results
-      const result = results.pop() || {};
+      //get the last/latest/current QAItems
+      const result = QAItems.pop() || {};
       return {
         answerStats: stats,
         choicesCount,
         totalDurations,
+        scoreHistory,
         ...result,
       };
     });
@@ -756,13 +1502,15 @@ export class CustomQuizExamResultQAScreen extends React.PureComponent {
 
     //get data from prev. screen - quiz results
     const quizResults = navigation.getParam(NAV_PARAMS.quizResults, []);
-    const totalResults = quizResults.length;
-    
+    const itemIndex   = navigation.getParam(NAV_PARAMS.initIndex  , 0 );
+
     this.state = {
       data: [],
-      loading: LOAD_STATE.LOADING,
-      initialNumToRender: 6,
-      totalResults,
+      totalResults: quizResults.length,
+      ...((itemIndex == 0)
+        ? {loading: LOAD_STATE.LOADING, initialNumToRender: 6            }
+        : {loading: LOAD_STATE.INITIAL, initialNumToRender: itemIndex + 1}
+      ),
     };
   };
 
@@ -770,8 +1518,8 @@ export class CustomQuizExamResultQAScreen extends React.PureComponent {
     const { NAV_PARAMS } = CustomQuizExamResultQAScreen;
     const { navigation } = this.props;
     //get data from prev. screen - quiz results
-    const quizResults = navigation.getParam(NAV_PARAMS.quizResults     , []);
-    const itemIndex   = navigation.getParam(NAV_PARAMS.initIndex, 0 );
+    const quizResults = navigation.getParam(NAV_PARAMS.quizResults, []);
+    const itemIndex   = navigation.getParam(NAV_PARAMS.initIndex  , 0 );
 
     InteractionManager.runAfterInteractions(async () => {
       try {
@@ -779,25 +1527,27 @@ export class CustomQuizExamResultQAScreen extends React.PureComponent {
         const QAList      = CustomQuizExamResultQAScreen.combineSameQuestionsAndAnswers(quizResults);
         const QAStatsList = CustomQuizExamResultQAScreen.appendAnswerStats(QAList);
 
-        //hide loading indicator
-        await this.container.fadeOutUp(300);
-
         //update flatlist data and mount
         if(itemIndex == 0){
+          //hide loading indicator
+          await this.container.fadeOutUp(300);
           await setStateAsync(this, {data: QAStatsList, loading: LOAD_STATE.SUCCESS});
-          await this.container.fadeInUp(400);
+          await timeout(250);
+          await this.container.fadeInUp(500);
 
         } else {
-          setStateAsync(this, {data: QAStatsList, loading: LOAD_STATE.SUCCESS, initialNumToRender: itemIndex + 1});
+          await setStateAsync(this, {data: QAStatsList, loading: LOAD_STATE.LOADING});
           await timeout(500);
           this.flatlist.scrollToIndex({
             index: itemIndex, 
             animated: false,
             ...Platform.select({ios: {viewOffset: HEADER_HEIGHT}}),
           });
-          await timeout(500);
-          setStateAsync(this, {initialNumToRender: 6});
-          await this.container.fadeInUp(400);
+
+          await timeout(750);
+          await this.container.fadeOutUp(300);
+          await setStateAsync(this, {loading: LOAD_STATE.SUCCESS, initialNumToRender: 6});
+          await this.container.fadeInUp(500);
         };
 
       } catch(error){
@@ -808,40 +1558,94 @@ export class CustomQuizExamResultQAScreen extends React.PureComponent {
     });
   };
 
+  getStateFromMode(){
+    const { loading } = this.state;
+    
+    switch (loading) {
+      case LOAD_STATE.INITIAL: return {
+        mount  : false,
+        hidden : true ,
+        loading: true ,
+      };
+      case LOAD_STATE.LOADING : return {
+        mount  : true,
+        hidden : true,
+        loading: true,
+      };
+      case LOAD_STATE.SUCCESS : return {
+        mount  : true,
+        hidden : false,
+        loading: false,
+      };
+      case LOAD_STATE.ERROR: return {
+        mount  : true,
+        hidden : false,
+        loading: false,
+      };
+    };
+  };
+
   _keyExtractor = (item, index) => {
     return(item.questionID || index);
   };
 
   _renderItem = ({item, index}) => {
     const { totalResults } = this.state;
-    const { answerStats, choicesCount, durations, totalDurations, answer, hasMatchedAnswer, question, questionID } = item;
+    const { answerStats, scoreHistory, choicesCount, durations, totalDurations, answer, hasMatchedAnswer, question, questionID } = item;
 
     return(
       <ResultItem 
         //pass down items
-        {...{index, answerStats, choicesCount, durations, totalDurations, answer, hasMatchedAnswer, question, questionID, totalResults}}
+        {...{index, answerStats, scoreHistory, choicesCount, durations, totalDurations, answer, hasMatchedAnswer, question, questionID, totalResults}}
       />
+    );
+  };
+
+  _renderLoading(){
+    const { styles } = CustomQuizExamResultQAScreen;
+    const { loading } = this.getStateFromMode();
+    if(!loading) return null;
+
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator
+          size={'small'}
+          color={'white'}
+        />
+        <Text style={styles.loadingText}>Loading</Text>
+      </View>
+    );
+  };
+
+  _renderError(){
+    const { styles } = CustomQuizExamResultQAScreen;
+    return (
+      <Animatable.View
+        style={styles.container}
+        animation={'fadeInUp'}
+        duration={300}
+        useNativeDriver={true}
+      >
+        <Card>
+          <Text>Error</Text>
+        </Card>
+      </Animatable.View>
     );
   };
 
   _renderContents(){
     const { styles } = CustomQuizExamResultQAScreen;
-    const { loading, data, initialNumToRender } = this.state;
+    const { data, initialNumToRender } = this.state;
 
-    switch (loading) {
-      case LOAD_STATE.INITIAL:
-      case LOAD_STATE.LOADING: return (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator
-            size={'small'}
-            color={'white'}
-          />
-          <Text style={styles.loadingText}>Loading</Text>
-        </View>
-      );
-      case LOAD_STATE.SUCCESS: return (
+    const { mount, hidden } = this.getStateFromMode();
+    const opacity = hidden? 0 : 1;
+    if(!mount) return null;
+
+    return (
+      <Fragment>
         <FlatList
           ref={r => this.flatlist = r}
+          style={{opacity}}
           renderItem={this._renderItem}
           keyExtractor={this._keyExtractor}
           //adjust top distance
@@ -849,20 +1653,8 @@ export class CustomQuizExamResultQAScreen extends React.PureComponent {
           contentOffset={{x: 0, y: -HEADER_HEIGHT}}
           {...{data, initialNumToRender}}
         />
-      );
-      case LOAD_STATE.ERROR: return (
-        <Animatable.View
-          style={styles.container}
-          animation={'fadeInUp'}
-          duration={300}
-          useNativeDriver={true}
-        >
-          <Card>
-            <Text>Error</Text>
-          </Card>
-        </Animatable.View>
-      );
-    };
+      </Fragment>
+    );
   };
 
   render(){
@@ -875,6 +1667,7 @@ export class CustomQuizExamResultQAScreen extends React.PureComponent {
           useNativeDriver={true}
         >
           {this._renderContents()}
+          {this._renderLoading ()}
         </Animatable.View>
       </ViewWithBlurredHeader>
     );

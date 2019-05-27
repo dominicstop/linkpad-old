@@ -1,6 +1,6 @@
 import PropTypes from 'prop-types';
 import React, { Fragment } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, Keyboard, ScrollView, TextInput, UIManager, ActivityIndicator, Platform, InteractionManager, Clipboard } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, Keyboard, ScrollView, TextInput, ActivityIndicator, Platform, InteractionManager, Clipboard } from 'react-native';
 
 import { ROUTES } from '../Constants';
 import { RED } from '../Colors';
@@ -24,9 +24,6 @@ import { BlurView, LinearGradient } from 'expo';
 
 import Animated, { Easing } from 'react-native-reanimated';
 const { set, cond, block, add, Value, timing, interpolate, and, or, onChange, eq, call, Clock, clockRunning, startClock, stopClock, concat, color, divide, multiply, sub, lessThan, abs, modulo, round, debug, floor, clock, defined } = Animated;
-
-//enable layout animation
-UIManager.setLayoutAnimationEnabledExperimental && UIManager.setLayoutAnimationEnabledExperimental(true);
 
 class InputForm extends React.PureComponent {
   static propTypes = {

@@ -1367,6 +1367,7 @@ class Question extends React.PureComponent {
         style={styles.questionContainer}
         onPress={this._handleOnPressQuestion}
         onLongPress={this._handleOnLongPressQuestion}
+        activeOpacity={0.75}
       >
         {this._renderCollapsed()}
         <Animated.View style={[styles.expandedContainer, expandedContainerStyle]}>
@@ -1420,7 +1421,7 @@ class AnswersListCard extends React.PureComponent {
     },
     buttonWrapper: {
       backgroundColor: PURPLE.A700,
-      marginTop: 7,
+      marginTop: 12,
       marginBottom: 5,
     },
     buttonContainer: {
@@ -1606,6 +1607,7 @@ export class CustomQuizExamResultScreen extends React.Component {
     super(props);
     //for making sure error message is shown only once
     this.didShowError = false;
+    this.quizResult = null;
 
     const { navigation } = props;
     //get data from previous screen: CustomQuizExamScreen
@@ -1642,7 +1644,7 @@ export class CustomQuizExamResultScreen extends React.Component {
       const { questionAnswersList, results } = this.state;
       const { indexID_quiz } = this.quiz;
 
-      const quizResult = {
+      const quizResult = CustomQuizResultItem.wrap({
         //pass down state
         questionAnswersList, results,
         //pass down other info
@@ -1652,10 +1654,12 @@ export class CustomQuizExamResultScreen extends React.Component {
         timestampSaved: Date.now(),
         //pass down quiz id
         indexID_quiz,
-      };
+      });
       
-      //save quiz result
+      //save/store quiz result
       await CustomQuizResultsStore.insert(quizResult);
+      this.quizResult = quizResult;
+
       //update loading state
       this.setState({quizResultSaved: LOAD_STATE.SUCCESS});
 
@@ -1705,6 +1709,7 @@ export class CustomQuizExamResultScreen extends React.Component {
     //pass data and navigate to CustomQuizExamResultQAScreen
     navigation && navigation.navigate(ROUTES.CustomQuizExamResultQARoute, {
       [NAV_PARAMS.quizResults]: quizResults,
+      [NAV_PARAMS.quizResult ]: this.quizResult ,
       [NAV_PARAMS.QAList     ]: questionAnswersList,
     });
   };
@@ -1727,6 +1732,7 @@ export class CustomQuizExamResultScreen extends React.Component {
     if(result){
       navigation && navigation.navigate(ROUTES.CustomQuizExamResultQARoute, {
         [NAV_PARAMS.quizResults]: quizResults,
+        [NAV_PARAMS.quizResult ]: this.quizResult,
         [NAV_PARAMS.QAList     ]: questionAnswersList,
         [NAV_PARAMS.initIndex  ]: index,
       });

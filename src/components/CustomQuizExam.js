@@ -352,6 +352,7 @@ class QuestionImage extends React.PureComponent {
           style={[styles.image, imageStyle]}
           source={{uri: base64Image}} 
           resizeMode={'cover'}
+          animation={'fadeIn'}
           duration={750}
           delay={500}
           useNativeDriver={true}

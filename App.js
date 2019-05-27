@@ -1,5 +1,5 @@
-import React, {Fragment} from 'react';
-import { StyleSheet, Text, View, StatusBar, Platform } from 'react-native';
+import React from 'react';
+import { StatusBar, UIManager } from 'react-native';
 
 import { createSwitchNavigator, createStackNavigator } from 'react-navigation';
 import { useScreens } from 'react-native-screens';
@@ -18,6 +18,10 @@ import NavigationService from './src/NavigationService';
 
 //use native navigation
 useScreens();
+
+//enable layout animation on android
+UIManager.setLayoutAnimationEnabledExperimental && 
+UIManager.setLayoutAnimationEnabledExperimental(true);
 
 //main stack for app screens
 const AppStack = createStackNavigator({
