@@ -218,7 +218,7 @@ export class DetailColumn extends React.PureComponent {
     title: {
       ...FONT_STYLES.detailTitle,  
       color: 'black',
-      fontWeight: '700',
+      fontWeight: '500',
     },
     subtitleContainer: {
       marginTop: 3,

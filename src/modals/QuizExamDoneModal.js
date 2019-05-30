@@ -1,15 +1,14 @@
 import React, { Fragment } from 'react';
-import { StyleSheet, View, Text, TouchableOpacity, Platform, Animated as NativeAnimated, TextInput, TouchableWithoutFeedback, Keyboard, Alert, Dimensions, Clipboard, SectionList, Image, ScrollView, FlatList } from 'react-native';
-import { LinearGradient, BlurView, DangerZone } from 'expo';
+import { StyleSheet, View, Text, TouchableOpacity, Platform, Animated as NativeAnimated, Dimensions, ScrollView, FlatList } from 'react-native';
+import { DangerZone } from 'expo';
 import PropTypes from 'prop-types';
 
 import { STYLES, FONT_STYLES } from '../Constants';
 import { PURPLE, GREY, BLUE, GREEN } from '../Colors';
-
-import { setStateAsync, isEmpty , getTimestamp, plural, timeout, addLeadingZero} from '../functions/Utils';
+import { setStateAsync, timeout, addLeadingZero } from '../functions/Utils';
 
 import { MODAL_DISTANCE_FROM_TOP, MODAL_EXTRA_HEIGHT, SwipableModal, ModalBackground, ModalTopIndicator } from '../components/SwipableModal';
-import { IconText, AnimateInView, IconFooter } from '../components/Views';
+import { IconFooter } from '../components/Views';
 import { PlatformTouchableIconButton } from '../components/Buttons';
 
 import _ from 'lodash';
@@ -677,13 +676,14 @@ class QuestionList extends React.PureComponent {
     //list empty styles
     emptyContainer: {  
       flexDirection: 'row',
-      paddingTop: 10,
-      paddingBottom: 15,
-      paddingHorizontal: 5,
+      paddingTop: 15,
+      paddingBottom: 20,
+      paddingHorizontal: 12,
+      alignItems: 'center',
     },
     image: {
-      width : 80,
-      height: 80,
+      width : 75,
+      height: 75,
     },
     textContainer: {
       flex: 1,
@@ -761,7 +761,7 @@ class QuestionList extends React.PureComponent {
     return (`${item.questionID || index}`);
   };
 
-  _renderEmptyQuestion(){
+  _renderEmptyQuestion = () => {
     const { styles } = QuestionList;
     return(
       <View style={styles.emptyContainer}>
@@ -776,7 +776,7 @@ class QuestionList extends React.PureComponent {
         />
         <View style={styles.textContainer}>
           <Text style={styles.title}>{'No Answers Yet'}</Text>
-          <Text style={styles.description}>{'Nothing to show here (when you answer a question, your answers will appear here.)'}</Text>
+          <Text style={styles.description}>{'Nothing to show here yet. When you answer a question, your answers will appear here.'}</Text>
         </View>
       </View>
     );
@@ -785,10 +785,12 @@ class QuestionList extends React.PureComponent {
   _renderHeader = () => {
     const { styles } = QuestionList;
     const { currentIndex, maxIndex, answers } = this.props;
+
     const answersCount = (answers || []).length;
+    if(answersCount == 0) return null;
 
     const isSelected = (currentIndex <  answersCount);
-    const isMaxed    = (currentIndex >= maxIndex - 1);
+    const isMaxed    = (answersCount >= maxIndex    );
 
     const textActive   = {title: "Here's a Tip" , subtitle: "The active question is marked blue. Tap on 'Current Question' to jump to latest item."};
     const textInactive = {title: "Tap to Jump"  , subtitle: "Tap on a item in the list to jump and naviagte to that question."};
@@ -1132,9 +1134,9 @@ export class QuizExamDoneModal extends React.PureComponent {
     return(
       <Animatable.View
         style={styles.footerWrapper}
-        animation={'fadeInUp'}
+        animation={'slideInUp'}
         duration={500}
-        delay={500}
+        delay={300}
         useNativeDriver={true}
       >
         <BlurViewWrapper
@@ -1171,7 +1173,7 @@ export class QuizExamDoneModal extends React.PureComponent {
     const { headerHeight, quiz, startTime, answers, questions, currentIndex, questionList } = this.state;
     
     if(headerHeight == -1) return null;
-    const maxIndex = (questionList || []).length;
+    const maxIndex = (questions || []).length + (questionList || []).length;
 
     const style = {
       flex: 1,

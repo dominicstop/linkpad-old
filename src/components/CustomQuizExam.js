@@ -6,7 +6,7 @@ import _ from 'lodash';
 import * as Animatable from 'react-native-animatable';
 import Carousel from 'react-native-snap-carousel';
 
-import { LinearGradient, FileSystem } from 'expo';
+import { LinearGradient, FileSystem, BlurView } from 'expo';
 import { Header } from 'react-navigation';
 import { Icon } from 'react-native-elements';
 import { ifIphoneX, getStatusBarHeight, getBottomSpace } from 'react-native-iphone-x-helper';
@@ -16,6 +16,7 @@ import { PURPLE, RED } from '../Colors';
 import { QuizAnswer , QuizQuestion } from '../models/Quiz';
 import { CustomQuiz } from '../functions/CustomQuizStore';
 import { LOAD_STATE } from '../Constants';
+import { BlurViewWrapper } from './StyledComponents';
 
 /** Used in Choices: shows a single choice item */
 class ChoiceItem extends React.PureComponent {
@@ -147,10 +148,21 @@ class Choices extends React.PureComponent {
   };
 
   static styles =  StyleSheet.create({
+    blurview: {
+      position: 'absolute',
+      width: '100%',
+      bottom: 0,
+    },
+    blurviewContainer: {
+      paddingTop: 10,
+      backgroundColor: 'rgba(255,255,255,0.5)',
+    },
     container: {
-      borderRadius: 10,
       overflow: 'hidden',
       backgroundColor: PURPLE[500],
+      marginHorizontal: 10,
+      marginBottom: 10,
+      borderRadius: 10,
     },
   });
 
@@ -216,28 +228,43 @@ class Choices extends React.PureComponent {
   render(){
     const { styles } = Choices;
 
-    const gradientProps = Platform.select({
-      //diagonal gradient
-      ios: {
-        start: {x: 0.0, y: 0.25}, 
-        end  : {x: 0.5, y: 1.00}
-      },
-      //horizonal gradient
-      android: {
-        start: {x: 0, y: 0}, 
-        end  : {x: 1, y: 0}
-      }
-    });
+    const gradientProps = {
+      style : styles.container,
+      colors: [PURPLE[500], PURPLE[1000]],
+      ...Platform.select({
+        //diagonal gradient
+        ios: {
+          start: {x: 0.0, y: 0.25}, 
+          end  : {x: 0.5, y: 1.00}
+        },
+        //horizonal gradient
+        android: {
+          start: {x: 0, y: 0}, 
+          end  : {x: 1, y: 0}
+        }
+      }),
+    };
 
-    return(
-      <LinearGradient 
-        style={styles.container}
-        colors={[PURPLE[500], PURPLE[1000]]}
-        {...gradientProps}
-      >
-        {this._renderChoices()}
-      </LinearGradient>
-    );
+    switch (Platform.OS) {
+      case 'ios': return(
+        <BlurViewWrapper
+          wrapperStyle={styles.blurview}
+          containerStyle={styles.blurviewContainer}
+          onLayout={this.props.onLayout}
+          tint={'default'}
+          intensity={100}
+        >
+          <LinearGradient {...gradientProps}>
+            {this._renderChoices()}
+          </LinearGradient>
+        </BlurViewWrapper>
+      );
+      case 'android': return(
+        <LinearGradient {...gradientProps}>
+          {this._renderChoices()}
+        </LinearGradient>
+      );
+    };
   };
 };
 
@@ -418,7 +445,17 @@ class Question extends React.PureComponent {
 
   static styles = StyleSheet.create({
     scrollview: {
-      marginBottom: 10,
+      flex: 1,
+      ...Platform.select({
+        ios: {
+          paddingHorizontal: 10,
+          paddingBottom: 10,
+        },
+        android: {
+          padding: 10,
+          marginBottom: 10,
+        },
+      }),
     },
     question: {
       flex: 1,
@@ -439,6 +476,9 @@ class Question extends React.PureComponent {
       fontWeight: '500',
       color: PURPLE[900],
     },
+    spacer: {
+      marginBottom: 10,
+    },
   });
 
   /** QuestionImage: called when an image has been pressed */
@@ -457,7 +497,7 @@ class Question extends React.PureComponent {
       <Fragment>
         <Text style={styles.question}>
           <Text style={styles.number}>{index + 1}. </Text>
-          {question}
+          {question || '( No question to display )'}
         </Text>
       </Fragment>
     );
@@ -465,18 +505,38 @@ class Question extends React.PureComponent {
 
   render(){
     const { styles } = Question;
-    const { photofilename, photouri, base64Images } = this.props;
+    const { photofilename, photouri, base64Images, bottomSpace } = this.props;
+
+    //dont render until choices height is measured in ios
+    if(Platform.OS == 'ios' && bottomSpace == 0) return null;
+
+    const PlatformProps = {
+      ...Platform.select({
+        ios: {
+          contentInset: {
+            top   : 7,
+            bottom: bottomSpace + 10,
+          },
+          contentOffset:{
+            x: 0, 
+            y: -7
+          },
+        },
+      }),
+    };
 
     return(
       <ScrollView 
         style={styles.scrollview}
         alwaysBounceVertical={false}
+        {...PlatformProps}
       >
         {this._renderQuestion()}
         <QuestionImage 
           onPressImage={this._handleOnPressImage}
           {...{photofilename, photouri, base64Images}}
         />
+        <View style={styles.spacer}/>
       </ScrollView>
     );
   };
@@ -497,6 +557,9 @@ class QuestionItem extends React.PureComponent {
   constructor(props){
     super(props);
     // note: sometimes questionItem is unmounted when list becomes to big
+    this.state = {
+      choicesHeight: 0,
+    };
   };
 
   static styles = StyleSheet.create({
@@ -505,7 +568,6 @@ class QuestionItem extends React.PureComponent {
       flex: 1,
       backgroundColor: 'white',
       margin: 12,
-      padding: 10,
       borderRadius: 20,
       ...Platform.select({
         //ios card shadow
@@ -546,16 +608,26 @@ class QuestionItem extends React.PureComponent {
     });
   };
 
+  _handleChoicesOnLayout = ({nativeEvent}) => {
+    const { choicesHeight } = this.state;
+    const { height } = nativeEvent.layout;
+
+    if(choicesHeight == 0){
+      this.setState({choicesHeight: height});
+    };
+  };
+
   /** Choices: Called when a choice has been selected */
   _handleOnPressChoice = (choicesProps = {prevSelected, choice, answer, isCorrect}) => {
     const { onPressChoice, ...questionItemProps } = this.props;
     //pass props to callback
     onPressChoice && onPressChoice({...choicesProps, ...questionItemProps});
   };
-
+  
   render(){
     const { styles } = QuestionItem;
     const { index, onPressImage, base64Images } = this.props;
+    const { choicesHeight } = this.state;
 
     //wrap question object prop to prevent missing properties + vscode intellisense
     const question = QuizQuestion.wrap(this.props.question);
@@ -571,10 +643,12 @@ class QuestionItem extends React.PureComponent {
       <View style={styles.container}>
         <Question
           question={questionText}
+          bottomSpace={this.state.choicesHeight}
           {...{index, photofilename, photouri, onPressImage, base64Images}}
         />
         <Choices
           onPressChoice={this._handleOnPressChoice}
+          onLayout={this._handleChoicesOnLayout}
           {...{choices, answer, matchedAnswer}}
         />
       </View>
