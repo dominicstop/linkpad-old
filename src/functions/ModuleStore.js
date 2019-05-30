@@ -170,8 +170,8 @@ export class ModuleStore {
   static async fetch(){
     try {
       //get modules from server
-      let results = await fetch(ModuleStore.URL);
-      let json    = await results.json();
+      const results = await fetch(ModuleStore.URL);
+      const json    = await results.json();
       //resolve
       return (json);
 
@@ -345,5 +345,17 @@ export class ModuleStore {
 
   static async delete(){
     await store.delete(ModuleStore.KEY);
+  };
+
+  static async importJSON(json){
+    //makes sure all of the properties exists and has a default value
+    const modules_filtered = _filterModules(json);
+    //process base64 images and store      
+    const modules = await _saveBase64ToStorage(modules_filtered);
+    //write modules to storage
+    await store.save(ModuleStore.KEY, modules);
+
+    //update cache variable
+    _modules = modules;
   };
 };

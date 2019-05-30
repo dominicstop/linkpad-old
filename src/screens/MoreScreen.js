@@ -1,22 +1,22 @@
 import React from 'react';
-import { View, ScrollView, ViewPropTypes, Text, TouchableOpacity, AsyncStorage, StyleSheet } from 'react-native';
+import { View, ScrollView, ViewPropTypes, Text, TouchableOpacity, AsyncStorage, StyleSheet, Alert } from 'react-native';
 import PropTypes from 'prop-types';
 
 import   NavigationService       from '../NavigationService';
-import { HEADER_PROPS          } from '../Constants';
+import { HEADER_PROPS, HEADER_HEIGHT          } from '../Constants';
 import { ViewWithBlurredHeader, IconText, Card } from '../components/Views' ;
 import { CustomHeader          } from '../components/Header';
 import { DrawerButton          } from '../components/Buttons';
 
 
-import ModuleStore from '../functions/ModuleStore';
-import TipsStore   from '../functions/TipsStore';
-import UserStore   from '../functions/UserStore';
+import { ModuleStore } from '../functions/ModuleStore';
 
 import { setStateAsync } from '../functions/Utils';
 
 import { Header, createStackNavigator } from 'react-navigation';
 import { Icon, Divider } from 'react-native-elements';
+
+import { DocumentPicker, FileSystem } from 'expo';
 
 const HeaderProps = {
   headerTransparent: true,
@@ -94,95 +94,60 @@ export class MoreScreen extends React.Component {
     super(props);
     this.state = {
       user: null,
-    }
-  }
-
-  _signOutAsync = async () => {
-    //clear variables
-    ModuleStore.clear();
-    UserStore.clear();
-    TipsStore.clear();
-    //delete everything
-    await AsyncStorage.clear();
-    NavigationService.navigateRoot('AuthRoute');
+    };
   };
 
-  async componentWillMount(){
-    let user_data = await UserStore.getUserData();
-    await setStateAsync(this, {user: user_data.user[0]});
-  }
+  _handleOnPressModule = async () => {
+    const { type, uri, name, size } = await DocumentPicker.getDocumentAsync();
 
-  _renderUserDetails(){
-    const { user } = this.state;
-    console.log(user);
+    if(type === 'success'){
+      console.log('URI : ' + ('' + uri  || '').slice(0, 50));
+      console.log('NAME: ' + ('' + name || '').slice(0, 50));
+      console.log('SIZE: ' + ('' + size || '').slice(0, 50));
+      console.log('-----------------------------\n\n');
 
-    const name  = user.dispayName ? user.dispayName  : 'Name unknown' ;
-    const email = user.email      ? user.email       : 'Email unknown';
-    const phone = user.phoneNumber? user.phoneNumber : 'Phone unknown';
+      const info = await FileSystem.getInfoAsync(uri);
+      console.log('exists: ' + ('' + info.exists           || '').slice(0, 50));
+      console.log('isDir : ' + ('' + info.isDirectory      || '').slice(0, 50));
+      console.log('md5   : ' + ('' + info.md5              || '').slice(0, 50));
+      console.log('modifi: ' + ('' + info.modificationTime || '').slice(0, 50));
+      console.log('size  : ' + ('' + info.size             || '').slice(0, 50));
+      console.log('uri   : ' + ('' + info.uri              || '').slice(0, 50));
+      console.log('-----------------------------\n\n');
 
-    const GRAY = 'rgb(175, 175, 175)';
-    
-    return(
-      <Card>
-        <Text style={{fontSize: 26, fontWeight: '800'}}>About User</Text>
-        <Divider style={{marginVertical: 10}}/>
-        <IconText
-          //icon
-          iconName={'user'}
-          iconType={'feather'}
-          iconColor={GRAY}
-          iconSize={24}
-          //text
-          text={name}
-          textStyle={styles.userDetail}
-          //container
-          containerStyle={styles.userDetailContainer}
-        />
-        <IconText
-          //icon
-          iconName={'mail'}
-          iconType={'feather'}
-          iconColor={GRAY}
-          iconSize={24}
-          //text
-          text={email}
-          textStyle={styles.userDetail}
-          //container
-          containerStyle={styles.userDetailContainer}
-        />
-        <IconText
-          //icon
-          iconName={'phone'}
-          iconType={'feather'}
-          iconColor={GRAY}
-          iconSize={24}
-          //text
-          text={phone}
-          textStyle={styles.userDetail}
-          //container
-          containerStyle={styles.userDetailContainer}
-        />
-      </Card>
-    );
-  }
+      const fileString = await FileSystem.readAsStringAsync(uri);
+      console.log('fileString: ' + (fileString || '').slice(0, 100));
+
+      const fileJSON = await JSON.parse(fileString);
+      console.log('fileJSON: ' + JSON.stringify(Object.keys(fileJSON || {})));
+
+      //modules array
+      const modules = fileJSON.modules;
+      //save to store
+      await ModuleStore.importJSON(modules);
+
+      Alert.alert('Import Success');
+    };
+  };
 
   render(){
-    const { user } = this.state;
     return(
-      <ViewWithBlurredHeader hasTabBar={true}>
-        <ScrollView style={{paddingTop: Header.HEIGHT + 15, paddingHorizontal: 15}}>
-          {user && this._renderUserDetails()}
+      <ViewWithBlurredHeader hasTabBar={false}>
+        <ScrollView
+          contentInset={{top: HEADER_HEIGHT}}
+          contentOffset={{x: 0, y: -HEADER_HEIGHT}}
+        >
           <TouchableOpacity 
-            style={{padding: 10, margin: 10, backgroundColor: 'pink'}}
-            onPress={() => this._signOutAsync()}
+            style={{padding: 10, margin: 10, backgroundColor: 'blue'}}
+            onPress={this._handleOnPressModule}
           >
-            <Text>Sign Out</Text>
+            <Text>Load Module JSON Data</Text>
           </TouchableOpacity>
         </ScrollView>
       </ViewWithBlurredHeader>
     );
-  }
-}
+  };
+};
 
 export const styles = StyleSheet.create({
   userDetail: {
