@@ -122,7 +122,6 @@ export class TextExpander extends React.PureComponent {
       opacity: this.indicatorOpacity,
       transform: [
         { rotate: concat(this.rotation, 'deg') },
-        { scale: this.scale},
       ],
     };
 
@@ -184,6 +183,11 @@ export class ContentExpander extends React.PureComponent {
   static propTypes = {
     renderHeader: PropTypes.func,
     contentContainer: PropTypes.object,
+    renderHeader: PropTypes.bool,
+  };
+
+  static defaultProps = {
+    renderHeader: true,
   };
 
   static styles = StyleSheet.create({
@@ -227,21 +231,25 @@ export class ContentExpander extends React.PureComponent {
       outputRange: [0, 1],
       extrapolate: 'clamp',
     });
-    this.indicatorOpacity = interpolate(this.progress, {
-      inputRange : [0, 100],
-      outputRange: [0.8, 1],
-      extrapolate: 'clamp',
-    });
-    this.scale = interpolate(this.progress, {
-      inputRange : [0, 100],
-      outputRange: [0.95, 1],
-      extrapolate: 'clamp',
-    });
-    this.rotation = interpolate(this.progress, {
-      inputRange : [0, 100],
-      outputRange: [0, 180],
-      extrapolate: 'clamp',
-    });
+    
+    //animated values for header
+    if(props.renderHeader){
+      this.indicatorOpacity = interpolate(this.progress, {
+        inputRange : [0, 100],
+        outputRange: [0.8, 1],
+        extrapolate: 'clamp',
+      });
+      this.scale = interpolate(this.progress, {
+        inputRange : [0, 100],
+        outputRange: [0.95, 1],
+        extrapolate: 'clamp',
+      });
+      this.rotation = interpolate(this.progress, {
+        inputRange : [0, 100],
+        outputRange: [0, 180],
+        extrapolate: 'clamp',
+      });
+    };
 
     this.isHeightMeasured = false;
     this.state = {
@@ -278,9 +286,13 @@ export class ContentExpander extends React.PureComponent {
     };
   };
 
-  _handleOnPressHeader = () => {
+  toggle = () => {
     const { isExpanded } = this.state;
     this.expand(!isExpanded);
+  };
+
+  _handleOnPressHeader = () => {
+    this.toggle();
   };
 
   _handleAnimationFinished = () => {
@@ -291,6 +303,7 @@ export class ContentExpander extends React.PureComponent {
     const { styles } = ContentExpander;
     const { renderHeader } = this.props;
     const { isExpanded } = this.state;
+    if(!renderHeader) return null;
 
     const arrowContainerStyle = {
       opacity: this.indicatorOpacity,

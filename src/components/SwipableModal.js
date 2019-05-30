@@ -52,6 +52,11 @@ export class ModalBackground extends React.PureComponent {
         android: 'rgb(220, 220, 220)',
       }),
     },
+    blurview: {
+      position: 'absolute',
+      width: '100%',
+      height: '100%',
+    },
     backgroundImage: {
       position: 'absolute',
       width: '100%',
@@ -73,19 +78,22 @@ export class ModalBackground extends React.PureComponent {
   _renderIOS(){
     const { styles } = ModalBackground;
     const { style, children, ...otherProps } = this.props;
+    const props = this.props;
 
     return(
-      <BlurView 
-        style={[styles.container, style]} 
-        intensity={100} 
-        tint={'light'}
-        {...otherProps}
-      >
-        {this._renderBG()}
-        <SafeAreaView style={{flex: 1}}>
+      <View style={[styles.container, style]}>
+        <BlurView 
+          style={[styles.blurview, props.blurviewStyle]} 
+          intensity={100} 
+          tint={'light'}
+          {...otherProps}
+        >
+          {this._renderBG()}
+        </BlurView>
+        <View style={{flex: 1}}>
           {children}
-        </SafeAreaView>
-      </BlurView>
+        </View>
+      </View>
     );
   };
 
@@ -105,6 +113,7 @@ export class ModalBackground extends React.PureComponent {
   _renderAndroid(){
     const { styles } = ModalBackground;
     const { style, children, ...otherProps } = this.props;
+    
     return(
       <View 
         style={[styles.container, style]} 

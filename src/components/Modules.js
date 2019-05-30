@@ -9,7 +9,7 @@ import { ModuleItemModel, SubjectItem } from '../models/ModuleModels';
 import _ from 'lodash';
 import * as Animatable from 'react-native-animatable';
 import Carousel from 'react-native-snap-carousel';
-import { NumberIndicator } from './NumberIndicator';
+import { NumberIndicator } from './StyledComponents';
 import { FONT_NAMES } from '../Constants';
 import { GREY } from '../Colors';
 
@@ -360,7 +360,7 @@ export class ModuleItem extends React.PureComponent {
       >
         <View style={styles.titleContainer}>
           <NumberIndicator 
-            value={index + 1}
+            value={(index || 0) + 1}
             containerStyle={styles.numberIndicator}
           />
           <Text style={styles.title} numberOfLines={1}>

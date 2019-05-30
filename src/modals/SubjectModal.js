@@ -25,6 +25,9 @@ import {PURPLE, GREY, RED} from '../Colors';
 import { isIphoneX, ifIphoneX, getStatusBarHeight, getBottomSpace } from 'react-native-iphone-x-helper';
 import { SwipableModal, ModalTopIndicator, ModalBackground, MODAL_DISTANCE_FROM_TOP, MODAL_EXTRA_HEIGHT } from '../components/SwipableModal';
 
+
+import { BlurViewWrapper, StickyHeader, DetailRow, DetailColumn, ModalBottomTwoButton } from '../components/StyledComponents';
+
 const Screen = {
   width : Dimensions.get('window').width ,
   height: Dimensions.get('window').height,
@@ -695,105 +698,6 @@ const sharedStyles = {
   },
 };
 
-/** renders View on android */
-const BlurViewWrapper = (props) => {
-  const { children, ...otherProps } = props;
-  return Platform.select({ 
-    ios: (
-      <BlurView
-        intensity={100}
-        tint={'default'}
-        style={props.wrapperStyle}
-        {...otherProps}
-      >
-        <View style={props.containerStyle}>{children}</View>
-      </BlurView>
-    ), 
-    android: (
-      <View 
-        style={[props.wrapperStyle, props.containerStyle]} 
-        {...otherProps}
-      >
-        {children}
-      </View>
-    ),
-  });
-};
-
-const StickyHeader = (props) => {
-  const styles = StyleSheet.create({
-    wrapper: {
-      ...Platform.select({
-        ios: {
-          borderTopWidth: 1,
-          borderBottomWidth: 1,
-          borderColor: GREY[900],
-        },
-        android: {
-          borderWidth: 0.75,
-          borderColor: GREY[200],
-        },
-      }),
-    },
-    container: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      paddingHorizontal: 10,
-      paddingVertical: 5,
-      ...Platform.select({
-        ios: {
-          backgroundColor: 'rgba(255,255,255,0.75)'
-        },
-        android: {
-          backgroundColor: PURPLE[25],
-        },
-      }),
-    },
-    textContainer: {
-      marginLeft: 7,
-    },
-    title: {
-      ...FONT_STYLES.heading6,
-      color: PURPLE[900],
-      ...Platform.select({
-        ios: {
-          fontWeight: '600',
-        },
-        android: {
-          fontWeight: '500',
-        },
-      }),
-    },
-    subtitle: {
-      ...FONT_STYLES.subtitle1,  
-      ...Platform.select({
-        ios: {
-          fontWeight: '100'
-        },
-      }),    
-    },
-  });
-
-  return(
-    <BlurViewWrapper 
-      wrapperStyle={styles.wrapper}
-      containerStyle={[styles.container, props.containerStyle]}
-    >
-      <Icon
-        containerStyle={sharedStyles.iconContainer}
-        name={props.iconName}
-        type={props.iconType}
-        color={PURPLE.A700}
-        size={24}
-      />
-      <View style={styles.textContainer}>
-        <Text numberOfLines={1} style={styles.title   }>{props.title    }</Text>
-        <Text numberOfLines={1} style={styles.subtitle}>{props.subtitle }</Text>
-      </View>
-    </BlurViewWrapper>
-  );
-};
-
 const ExpanderHeader = (props) => {
   const styles = StyleSheet.create({
     container: {
@@ -839,58 +743,6 @@ const ExpanderHeader = (props) => {
         <Text style={styles.subtitle}>{`Tap here to ${suffix}`}</Text>
       </View>
     </View>
-  );
-};
-
-const DetailRow = (props) => {
-  const styles = StyleSheet.create({
-    container: {
-      flexDirection: 'row',
-    },
-    column: {
-      flex: 1,
-    },
-  });
-
-  const content = React.Children.map(props.children, (child) => 
-    <View style={[styles.column, props.column]}>
-      {child}
-    </View>
-  );
-
-  return (
-    <View style={[styles.container, props.containerStyle]}>
-      {content}
-    </View>
-  );
-};
-
-const DetailColumn = (props) => {
-  const styles = StyleSheet.create({
-    title: {
-      ...FONT_STYLES.detailTitle,  
-      color: PURPLE[1000],
-      fontWeight: '600',
-    },
-    subtitle: {
-      ...FONT_STYLES.detailSubtitle,
-      fontSize: 20,
-      ...Platform.select({
-        ios: {
-          fontWeight: '200',
-        },
-        android: {
-          color: GREY[800],
-        },
-      }),
-    },
-  });
-
-  return (
-    <Fragment>
-      <Text style={[styles.title   , props.titleStyle   ]}>{props.title   }</Text>
-      <Text style={[styles.subtitle, props.subtitleStyle]}>{props.subtitle}</Text>
-    </Fragment>
   );
 };
 
@@ -1188,7 +1040,6 @@ export class SubjectModal extends React.PureComponent {
       bottom: 0,
     },
     footerContainer: {
-      flexDirection: 'row', 
       ...Platform.select({
         ios: {
           backgroundColor: 'rgba(255,255,255,0.4)',
@@ -1207,30 +1058,6 @@ export class SubjectModal extends React.PureComponent {
           padding: 10,
           height: 80,
           elevation: 15,
-        },
-      }),
-    },
-    //shared styles for buttons
-    buttonContainer: {
-      flex: 1,
-      padding: 10,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    buttonText: {
-      flex: 0,
-      color: 'white',
-      fontSize: 17,
-      fontWeight: '500',
-      ...Platform.select({
-        ios: {
-          shadowColor: 'white', 
-          shadowRadius: 10, 
-          shadowOpacity: 0.5,
-          shadowOffset:{  
-            width: 1,  
-            height: 2,  
-          }, 
         },
       }),
     },
@@ -1318,73 +1145,6 @@ export class SubjectModal extends React.PureComponent {
     );
   };
 
-  _renderButtons(){
-    const { styles } = SubjectModal;
-
-    const borderRadius = isIphoneX? 17 : 10;
-    const leftButtonStyle = {
-      borderTopLeftRadius: borderRadius, 
-      borderBottomLeftRadius: borderRadius, 
-      backgroundColor: PURPLE.A700,
-      ...Platform.select({
-        ios: {
-          shadowColor: PURPLE.A700, 
-          shadowRadius: 5, 
-          shadowOpacity: 0.6,
-          shadowOffset:{ 
-            width: -1,
-            height: 3,  
-          }, 
-        },
-      }),
-    };
-    const rightButtonStyle = {
-      borderTopRightRadius: borderRadius, 
-      borderBottomRightRadius: borderRadius, 
-      backgroundColor: RED.A700,
-      ...Platform.select({
-        ios: {
-          shadowColor: RED.A700, 
-          shadowRadius: 5, 
-          shadowOpacity: 0.5,
-          shadowOffset:{  
-            width: 1,  
-            height: 3,  
-          }, 
-        },
-      }),
-    };
-    
-    const buttonProps = {
-      iconSize: 22,
-      iconColor: 'white',
-      textStyle: styles.buttonText,
-    };
-    
-    return(
-      <Fragment>
-        <IconButton
-          text={'Start'}
-          wrapperStyle={{flex: 1}}
-          containerStyle={[styles.buttonContainer, leftButtonStyle]}
-          iconName={'pencil-square-o'}
-          iconType={'font-awesome'}
-          onPress={this._handleOnPressStart}
-          {...buttonProps}
-        />
-        <IconButton
-          text={'Cancel'}
-          wrapperStyle={{flex: 1}}
-          containerStyle={[styles.buttonContainer, rightButtonStyle]}
-          iconName={'close'}
-          iconType={'simple-line-icon'}
-          onPress={this._handleOnPressClose}
-          {...buttonProps}
-        />
-      </Fragment>
-    );
-  };
-
   _renderFooter(){
     const { styles } = SubjectModal;
 
@@ -1395,7 +1155,12 @@ export class SubjectModal extends React.PureComponent {
         intensity={100}
         tint={'default'}
       >
-        {this._renderButtons()}
+        <ModalBottomTwoButton
+          leftText={'Start'}
+          rightText={'Cancel'}
+          onPressLeft={this._handleOnPressStart}
+          onPressRight={this._handleOnPressCancel}
+        />
       </BlurViewWrapper>
     );
   };
@@ -1436,8 +1201,10 @@ export class SubjectModal extends React.PureComponent {
         <StickyHeader
           title={'Subject Details'}
           subtitle={'Information about the current subject.'}
+          iconContainer={sharedStyles.iconContainer}
           iconName={'file-text'}
           iconType={'feather'}
+          iconContainer={sharedStyles.iconContainer}
         />
         <SubjectDetails
           containerStyle={styles.sectionContainer}
@@ -1446,6 +1213,7 @@ export class SubjectModal extends React.PureComponent {
         <StickyHeader
           title={'Previous Session'}
           subtitle={'Praesent commodo cursus magna, vel sceler'}
+          iconContainer={sharedStyles.iconContainer}
           iconName={'clock'}
           iconType={'feather'}
         />
@@ -1455,6 +1223,7 @@ export class SubjectModal extends React.PureComponent {
         <StickyHeader
           title={'Grades'}
           subtitle ={'Previous grades'}
+          iconContainer={sharedStyles.iconContainer}
           iconName={'bar-chart'}
           iconType={'feather'}
         />

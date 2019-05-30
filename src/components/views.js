@@ -73,8 +73,9 @@ export class IconText extends React.PureComponent {
     textStyle     : Text.propTypes.style,
     subtitleStyle : Text.propTypes.style,
   };
+
   render(){
-    const {text, subtitle, iconName, iconColor, iconType, iconSize, containerStyle, textStyle, subtitleStyle, wrapperStyle, ...viewProps} = this.props;
+    const {text, subtitle, iconName, iconColor, iconType, iconSize, containerStyle, textStyle, subtitleStyle, wrapperStyle, iconContainerStyle, ...viewProps} = this.props;
     const childrenCount = React.Children.count(this.props.children);
 
     const styles = StyleSheet.create({
@@ -115,7 +116,7 @@ export class IconText extends React.PureComponent {
         {...viewProps}
       >
         <Icon
-          containerStyle={{marginRight: 10}}
+          containerStyle={[{marginRight: 10}, iconContainerStyle]}
           name ={iconName }
           color={iconColor}
           type ={iconType }

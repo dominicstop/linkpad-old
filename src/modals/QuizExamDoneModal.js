@@ -1,30 +1,35 @@
 import React, { Fragment } from 'react';
-import { StyleSheet, View, Text, TouchableOpacity, Platform, Animated, TextInput, TouchableWithoutFeedback, Keyboard, Alert, Dimensions, Clipboard, SectionList, Image } from 'react-native';
+import { StyleSheet, View, Text, TouchableOpacity, Platform, Animated as NativeAnimated, TextInput, TouchableWithoutFeedback, Keyboard, Alert, Dimensions, Clipboard, SectionList, Image, ScrollView, FlatList } from 'react-native';
+import { LinearGradient, BlurView, DangerZone } from 'expo';
 import PropTypes from 'prop-types';
 
-import { STYLES } from '../Constants';
-import { PURPLE , GREY} from '../Colors';
+import { STYLES, FONT_STYLES } from '../Constants';
+import { PURPLE, GREY, BLUE, GREEN } from '../Colors';
 
 import { setStateAsync, isEmpty , getTimestamp, plural, timeout, addLeadingZero} from '../functions/Utils';
 
 import { MODAL_DISTANCE_FROM_TOP, MODAL_EXTRA_HEIGHT, SwipableModal, ModalBackground, ModalTopIndicator } from '../components/SwipableModal';
-import { IconText, AnimateInView } from '../components/Views';
+import { IconText, AnimateInView, IconFooter } from '../components/Views';
 import { PlatformTouchableIconButton } from '../components/Buttons';
 
 import _ from 'lodash';
 import moment from "moment";
 import TimeAgo from 'react-native-timeago';
-import { LinearGradient, BlurView, DangerZone } from 'expo';
+import Chroma from 'chroma-js'
+
 import { Icon, Divider } from 'react-native-elements';
 
-import * as _Reanimated from 'react-native-reanimated';
 import * as Animatable from 'react-native-animatable';
-import { QuizAnswer } from '../models/Quiz';
-import { ifIphoneX, getBottomSpace } from 'react-native-iphone-x-helper';
+import { QuizAnswer, QuizQuestion } from '../models/Quiz';
+import { isIphoneX, getBottomSpace } from 'react-native-iphone-x-helper';
 
+import { BlurViewWrapper, StickyHeader, DetailRow, DetailColumn, ModalBottomTwoButton, ModalTitle, StickyHeaderCollapsable, ModalSection, ExpanderHeader, NumberIndicator } from '../components/StyledComponents';
 const { Lottie } = DangerZone;
-const { Easing } = _Reanimated;
-const Reanimated = _Reanimated.default;
+
+import Animated, { Easing } from 'react-native-reanimated';
+import { ContentExpander } from '../components/Expander';
+import { CustomQuiz } from '../functions/CustomQuizStore';
+const { interpolate, Value } = Animated; 
 
 const Screen = {
   width : Dimensions.get('window').width ,
@@ -66,6 +71,56 @@ function getAverage(nums = []){
     min: isFinite(min)? min : null,
     max: isFinite(max)? max : null, 
   });
+};
+
+class CheckOverlay extends React.PureComponent {
+  constructor(props){
+    super(props);
+
+    this.state = {
+      mountAnimation: false,
+    };
+
+    this._source = require('../animations/checked_done_.json');
+    this._value = new NativeAnimated.Value(0);
+    this._config = { 
+      toValue: 1,
+      duration: 1000,
+      useNativeDriver: true 
+    };
+    this._animated = NativeAnimated.timing(this._value, this._config);
+  };
+
+  //start animation
+  start = () => {
+    return new Promise(async resolve => {
+      await setStateAsync(this, {mountAnimation: true});
+      this._animated.start(() => resolve());
+    });
+  };
+
+  render(){
+    //dont mount until animation starts
+    if(!this.state.mountAnimation) return null;
+
+    return(
+      <Animatable.View
+        style={{width: '100%', height: '100%'}}
+        animation={'bounceIn'}
+        duration={1000}
+        useNativeDriver={true}
+      >
+        <Lottie
+          resizeMode={'contain'}
+          ref={r => this.animation = r}
+          progress={this._value}
+          source={this._source}
+          loop={false}
+          autoplay={false}
+        />
+      </Animatable.View>
+    );
+  };
 };
 
 class TimeElasped extends React.PureComponent {
@@ -131,195 +186,12 @@ class TimeElasped extends React.PureComponent {
   };
 };
 
-class FireworksAnimation extends React.PureComponent {
-  constructor(props){
-    super(props);
-
-    this.state = {
-      mountAnimation: false,
-    };
-
-    this._source = require('../animations/checked_done_.json');
-    this._value = new Animated.Value(0);
-    this._config = { 
-      toValue: 1,
-      duration: 1000,
-      useNativeDriver: true 
-    };
-    this._animated = Animated.timing(this._value, this._config);
-  };
-
-  //start animation
-  start = () => {
-    return new Promise(async resolve => {
-      await setStateAsync(this, {mountAnimation: true});
-      this._animated.start(() => resolve());
-    });
-  };
-
-  render(){
-    //dont mount until animation starts
-    if(!this.state.mountAnimation) return null;
-
-    return(
-      <Animatable.View
-        style={{width: '100%', height: '100%'}}
-        animation={'bounceIn'}
-        duration={1000}
-        useNativeDriver={true}
-      >
-        <Lottie
-          resizeMode={'contain'}
-          ref={r => this.animation = r}
-          progress={this._value}
-          source={this._source}
-          loop={false}
-          autoplay={false}
-        />
-      </Animatable.View>
-    );
-  };
-};
-
-class ModalSectionItemQuestion extends React.PureComponent {
-  static propTypes = {
-    answerID: PropTypes.string,
-    question: PropTypes.object,
-    userAnswer: PropTypes.string,
-    isCorrect: PropTypes.bool,
-    index: PropTypes.number,
-    currentIndex: PropTypes.number,
-    timestampAnswered: PropTypes.number,
-    onPressItem: PropTypes.func,
-    isLast: PropTypes.bool,
-  };
-
-  static styles = StyleSheet.create({
-    container: Platform.select({
-      ios: {
-        paddingHorizontal: 12,
-        paddingVertical: 10,
-        borderBottomWidth: 1,
-        backgroundColor: 'rgba(245, 245, 245, 0.5)',
-        borderBottomColor: 'rgba(0, 0, 0, 0.1)', 
-      },
-      android: {
-        paddingHorizontal: 12,
-        paddingVertical: 15,
-        backgroundColor: 'white',
-        borderBottomWidth: 1,
-        borderColor: 'rgb(190,190,190)',
-      },
-    }),
-    question: {
-      fontSize: 18,
-      fontWeight: '400'
-    },
-    questionNumber: {
-      fontWeight: '600',
-      color: PURPLE[1000],
-    },
-    answerContainer: {
-      flexDirection: 'row',
-      marginTop: 2,
-      alignItems: 'center',
-    },
-    answer: {
-      flex: 1,
-      fontSize: 18,
-      fontWeight: '400',
-      color: 'rgb(50, 50, 50)',
-    },
-    answerLabel: {
-      fontWeight: '600',
-      color: PURPLE[1000],
-    },
-    answerTime: {
-      fontSize: 16,
-      fontWeight: '100',
-      color: GREY[600]
-    }
-  });
-
-  _handleOnPress = () => {
-    const { onPressItem, index } = this.props;
-    onPressItem && onPressItem({index});
-  };
-
-  _renderQuestion(){
-    const { styles } = ModalSectionItemQuestion;
-    const { index, question: {question}, currentIndex } = this.props;
-
-    const isSelected = (index == currentIndex);
-    const questionStyle = {
-      ...isSelected? {
-        fontSize: 20,
-      } : null,
-    };
-
-    return(
-      <Text style={[styles.question, questionStyle]} numberOfLines={1}>
-        <Text style={styles.questionNumber}>{`${index+1}. `}</Text>
-        {question}
-      </Text>
-    );
-  };
-
-  _renderDetails(){
-    const { styles } = ModalSectionItemQuestion;
-    const { userAnswer, index, currentIndex, timestampAnswered } = this.props;
-
-    const isSelected = (index == currentIndex);
-    const answerStyle = {
-      ...isSelected? {
-        fontSize: 20,
-      } : null,
-    };
-
-    const answerTime = moment(timestampAnswered).format('LTS');
-
-    return(
-      <View style={styles.answerContainer}>
-        <Text style={[styles.answer, answerStyle]} numberOfLines={1}>
-          <Text style={styles.answerLabel}>{'Answer: '}</Text>
-          {userAnswer}
-        </Text>
-        <Text style={styles.answerTime}>{answerTime}</Text>
-      </View>
-    );
-  };
-
-  render(){
-    const { styles } = ModalSectionItemQuestion;
-    const { index, currentIndex, isLast } = this.props;
-
-    const isSelected = (index == currentIndex);
-
-    const containerStyle = {
-      ...isSelected? {
-        backgroundColor: PURPLE[100],
-      } : null,
-    };
-
-    return (
-      <TouchableOpacity 
-        style={[styles.container, containerStyle, {}]}
-        onPress={this._handleOnPress}
-        activeOpacity={0.75}
-      >
-        {this._renderQuestion()}
-        {this._renderDetails()}
-      </TouchableOpacity>
-    );
-  };
-};
-
-class ModalSectionItemStats extends React.PureComponent {
+class QuizStats extends React.PureComponent {
   static propTypes = {
     startTime: PropTypes.number,
-    answers: PropTypes.array,
-    questions: PropTypes.array,
-    quiz: PropTypes.object,
+    answers  : PropTypes.array ,
+    questions: PropTypes.array ,
+    quiz     : PropTypes.object,
   };
 
   static styles = StyleSheet.create({
@@ -338,7 +210,7 @@ class ModalSectionItemStats extends React.PureComponent {
     }),
     divider: {
       height: 1,
-      margin: 10,
+      margin: 15,
       backgroundColor: 'rgba(0,0,0, 0.12)'
     },
     detailsCompContainer: {
@@ -385,8 +257,6 @@ class ModalSectionItemStats extends React.PureComponent {
     const new_timestamps = answers.map(answer => answer.timestampAnswered);
     const timestamps = [...new Set([...prevTimestamps, ...new_timestamps])];
 
-    console.log(timestamps);
-
     //update old timestamps
     prevTimestamps = [...timestamps];
 
@@ -407,46 +277,60 @@ class ModalSectionItemStats extends React.PureComponent {
   };
 
   _renderDetailsTime(){
-    const { styles } = ModalSectionItemStats;
+    const { styles } = QuizStats;
     const { startTime, answers, quiz, questions } = this.props;
 
     const timeStarted = moment(startTime).format('LT');
     const total = quiz.questions.length || 'N/A';
 
-    const progress = `${answers.length}/${total} items`;
-    const left     = `${total - answers.length} remaining`;
+    const progress  = `${answers.length}/${total} items`;
+    const remaining = `${total - answers.length} remaining`;
 
     return(
       <Fragment>
-        <View style={{flexDirection: 'row'}}>
-          <View style={{flex: 1}}>
-            <Text numberOfLines={1} style={styles.detailTitle   }>{'Started: '}</Text>
-            <Text numberOfLines={1} style={styles.detailSubtitle}>{timeStarted}</Text>
-          </View>
-          <View style={{flex: 1}}>
-            <Text        numberOfLines={1} style={styles.detailTitle   }>{'Elapsed: '}</Text>
-            <TimeElasped numberOfLines={1} style={styles.detailSubtitle} {...{startTime}}/>
-          </View>
-        </View>
-        <View style={{flexDirection: 'row', marginTop: 10}}>
-          <View style={{flex: 1}}>
-            <Text numberOfLines={1} style={styles.detailTitle   }>{'Progress: '}</Text>
-            <Text numberOfLines={1} style={styles.detailSubtitle}>{progress}</Text>
-          </View>
-          <View style={{flex: 1}}>
-            <Text numberOfLines={1} style={styles.detailTitle   }>{'Questions: '}</Text>
-            <Text numberOfLines={1} style={styles.detailSubtitle}>{left}</Text>
-          </View>
-        </View>
-        <View style={{flexDirection: 'row', marginTop: 10}}>
-          
-        </View>
+        <DetailRow>
+          <DetailColumn
+            title={'Started: '}
+            subtitle={timeStarted}
+            help={true}
+            helpTitle={'Started'}
+            helpSubtitle={'Tells you what time the quiz began.'}
+            backgroundColor={PURPLE.A400}
+          />
+          <DetailColumn 
+            title={'Elapsed: '}
+            help={true}
+            helpTitle={'Elapsed'}
+            helpSubtitle={'Tells you how much time has elapsed.'}
+            backgroundColor={PURPLE.A400}
+          >
+            <TimeElasped {...{startTime}}/>
+          </DetailColumn>
+        </DetailRow>
+        <DetailRow marginTop={10}>
+          <DetailColumn
+            title={'Progress: '}
+            subtitle={progress}
+            help={true}
+            helpTitle={'Progress'}
+            helpSubtitle={'Shows how many questions you have answered over the total questions in this quiz.'}
+            backgroundColor={PURPLE.A700}
+          />
+          <DetailColumn
+            title={'Questions: '}
+            subtitle={remaining}
+            help={true}
+            helpTitle={'Remaining Questions'}
+            helpSubtitle={'Shows how many questions are left for this quiz.'}
+            backgroundColor={PURPLE.A700}
+          />
+        </DetailRow>
       </Fragment>
     );
   };
 
   _renderDetailsComp(){
-    const { styles } = ModalSectionItemStats;
+    const { styles } = QuizStats;
     const { min, max, avg, sum, timestamps } = this.state;
 
     const timesAnswered = `${timestamps.length} times`;
@@ -454,52 +338,68 @@ class ModalSectionItemStats extends React.PureComponent {
     const minText = min? `${min.toFixed(1)} Seconds` : 'N/A';
     const maxText = max? `${max.toFixed(1)} Seconds` : 'N/A';
     const avgText = avg? `${avg.toFixed(1)} Seconds` : 'N/A';
-    
+
+    const marginTop = 12;
+
     return(
       <View style={styles.detailsCompContainer}>
         <Text style={styles.title}>Time Per Answer</Text>
         <Text style={styles.subtitle}>Computes the amount of time it took to answer each question.</Text>
-        <View style={{flexDirection: 'row', marginTop: 10}}>
-          <View style={{flex: 1}}>
-            <Text numberOfLines={1} style={styles.detailTitle   }>{'Shortest:'}</Text>
-            <Text numberOfLines={1} style={styles.detailSubtitle}>{minText}</Text>
-          </View>
-          <View style={{flex: 1}}>
-            <Text numberOfLines={1} style={styles.detailTitle   }>{'Longest:'}</Text>
-            <Text numberOfLines={1} style={styles.detailSubtitle}>{maxText}</Text>
-          </View>
-        </View>
-        <View style={{flexDirection: 'row', marginTop: 10}}>
-          <View style={{flex: 1}}>
-            <Text numberOfLines={1} style={styles.detailTitle   }>{'Average:'}</Text>
-            <Text numberOfLines={1} style={styles.detailSubtitle}>{avgText}</Text>
-          </View>
-          <View style={{flex: 1}}>
-            <Text numberOfLines={1} style={styles.detailTitle   }>{'Answered:'}</Text>
-            <Text numberOfLines={1} style={styles.detailSubtitle}>{timesAnswered}</Text>
-          </View>
-        </View>
+        <DetailRow {...{marginTop}}>
+          <DetailColumn
+            title={'Shortest: '}
+            subtitle={minText}
+            help={true}
+            helpTitle={'Shortest Time'}
+            helpSubtitle={'Tells you what time the quiz began.'}
+            backgroundColor={BLUE.A400}
+          />
+          <DetailColumn 
+            title={'Longest: '}
+            subtitle={maxText}
+            help={true}
+            helpTitle={'Longest Time'}
+            helpSubtitle={'Tells you what was the max. amount of time you spent on a question.'}
+            backgroundColor={BLUE.A400}
+          />
+        </DetailRow>
+        <DetailRow {...{marginTop}}>
+          <DetailColumn
+            title={'Average: '}
+            subtitle={avgText}
+            help={true}
+            helpTitle={'Average Time'}
+            helpSubtitle={'Tells you the average amount of time you spent on a single question..'}
+            backgroundColor={BLUE.A700}
+          />
+          <DetailColumn 
+            title={'Answered: '}
+            subtitle={timesAnswered}
+            help={true}
+            helpTitle={'Times Answered'}
+            helpSubtitle={'Tells you how many times you selected a choice across all of the questions in this quiz.'}
+            backgroundColor={BLUE.A700}
+          />
+        </DetailRow>
       </View>
     );
   };
 
   render(){
-    const { styles } = ModalSectionItemStats;
+    const { styles } = QuizStats;
     const { startTime } = this.props;
 
-    const timeStarted = moment(startTime).format('LT');
-
     return(
-      <View style={styles.container}>
+      <ModalSection>
         {this._renderDetailsTime()}
         <View style={styles.divider}/>
         {this._renderDetailsComp()}
-      </View>
+      </ModalSection>
     );
   };
 };
 
-class ModalSectionItemDetails extends React.PureComponent {
+class QuizDetails extends React.PureComponent {
   static propTypes = {
     quiz: PropTypes.object,
   };
@@ -523,7 +423,7 @@ class ModalSectionItemDetails extends React.PureComponent {
       backgroundColor: 'rgba(0,0,0, 0.12)'
     },
     title: {
-      fontSize: 24,
+      fontSize: 20,
       color: PURPLE[600],
       fontWeight: '600',
     },
@@ -532,9 +432,9 @@ class ModalSectionItemDetails extends React.PureComponent {
       color: 'black',
       fontWeight: '300',
     },
-    dateLabel: {
-      color: PURPLE[1100],
-      fontWeight: '600',
+    label: {
+      color: PURPLE[1000],
+      fontWeight: '500',
     },
     dateString: {
       color: 'rgb(80, 80, 80)',
@@ -550,22 +450,23 @@ class ModalSectionItemDetails extends React.PureComponent {
   });
 
   _renderTitle(){
-    const { styles } = ModalSectionItemDetails;
-    const { quiz: {title} } = this.props;
+    const { styles } = QuizDetails;
+    const quiz = CustomQuiz.wrap(this.props.quiz);
 
     return(
       <Text 
         style={styles.title}
         numberOfLines={1}
       >
-        {title}
+        {quiz.title || 'Unknown Title'}
       </Text>
     );
   };
 
   _renderDate(){
-    const { styles } = ModalSectionItemDetails;
-    const { quiz: {timestampCreated} } = this.props;
+    const { styles } = QuizDetails;
+    const quiz = CustomQuiz.wrap(this.props.quiz);
+    const timestampCreated = quiz.timestampCreated || 0; 
 
     const time = timestampCreated * 1000;
     const date = new Date(time);
@@ -575,7 +476,7 @@ class ModalSectionItemDetails extends React.PureComponent {
 
     return(
       <Text style={styles.date}>
-        <Text style={styles.dateLabel}>Created: </Text>
+        <Text style={styles.label}>Created: </Text>
         <TimeAgo {...{time}}/>
         <Text style={styles.dateString}>{` (${dateString})`}</Text>
       </Text>
@@ -583,79 +484,211 @@ class ModalSectionItemDetails extends React.PureComponent {
   };
 
   _renderDescription(){
-    const { styles } = ModalSectionItemDetails;
-    const { quiz: {description} } = this.props;
+    const { styles } = QuizDetails;
+    const quiz = CustomQuiz.wrap(this.props.quiz);
 
     return(
       <Text style={styles.description}>
-        <Text style={styles.descriptionLabel}>Description - </Text>
-        {description}
+        <Text style={styles.label}>Description: </Text>
+        {quiz.description || 'No Description Available'}
       </Text>
     );
   };
 
   render(){
-    const { styles } = ModalSectionItemDetails;
-    const { quiz: {title, description, timestampCreated} } = this.props;
-
+    const { styles } = QuizDetails;
     return(
-      <View style={styles.container}>
+      <ModalSection>
         {this._renderTitle()}
         {this._renderDate()}
         <View style={styles.divider}/>
         {this._renderDescription()}
-      </View>
+      </ModalSection>
     );
   };
 };
 
-class ModalSectionFooter extends React.PureComponent {
+class QuestionItem extends React.PureComponent {
   static propTypes = {
-    type: PropTypes.string, 
-    data: PropTypes.array, 
-    currentIndex: PropTypes.number, 
-    questionList: PropTypes.array,
+    //indexes
+    maxIndex    : PropTypes.number,
+    currentIndex: PropTypes.number,
+    //time answered
+    timestampAnswered: PropTypes.number,
+    //style
+    indicatorColor: PropTypes.string,
+    //data
+    answerID  : PropTypes.string,
+    userAnswer: PropTypes.string,
+    question  : PropTypes.object,
+    isCorrect : PropTypes.bool  ,
+    isLast    : PropTypes.bool  ,
+    //events
+    onPressItem: PropTypes.func,
   };
 
   static styles = StyleSheet.create({
-    seperator: Platform.select({
-      ios: {
-        marginBottom: 20,
-        borderBottomWidth: 1,
-        borderBottomColor: 'rgba(0, 0, 0, 0.1)', 
-      },
-      android: {
-        padding: 15,
-        backgroundColor: 'white'        
-      }
-    }),
-    container: {  
-      flexDirection: 'row',
+    container: {
+      paddingHorizontal: 12,
+      paddingVertical: 10,
       ...Platform.select({
-        ios:{
-          paddingHorizontal: 17,
-          paddingVertical: 20,
+        ios: {
           borderBottomWidth: 1,
-          backgroundColor: 'rgba(245, 245, 245, 0.5)',
           borderBottomColor: 'rgba(0, 0, 0, 0.1)', 
         },
         android: {
-          alignItems: 'center',
           backgroundColor: 'white',
-          borderColor: 'rgb(190,190,190)',
           borderBottomWidth: 1,
-          paddingVertical: 20,
-          paddingHorizontal: 15,
+          borderColor: 'rgb(190,190,190)',
         },
       }),
     },
+    questionContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    question: {
+      flex: 1,
+      marginLeft: 5,
+      fontSize: 18,
+      fontWeight: '400'
+    },
+    answerContainer: {
+      flexDirection: 'row',
+      marginTop: 2,
+      alignItems: 'center',
+    },
+    answer: {
+      flex: 1,
+      fontSize: 18,
+      fontWeight: '400',
+      color: 'rgb(50, 50, 50)',
+    },
+    answerLabel: {
+      fontWeight: '600',
+      color: PURPLE[1000],
+    },
+    answerTime: {
+      fontSize: 16,
+      fontWeight: '100',
+      color: GREY[600]
+    }
+  });
+
+  _handleOnPress = () => {
+    const { onPressItem, index } = this.props;
+    onPressItem && onPressItem({index});
+  };
+
+  _renderQuestion(){
+    const { styles } = QuestionItem;
+    const { index, currentIndex } = this.props;
+    const props = this.props;
+    const question = QuizQuestion.wrap(props.question);
+
+    const isSelected = (index == currentIndex);
+    const color = isSelected? BLUE.A700 : props.indicatorColor;
+    const questionStyle = {
+      ...(isSelected && {
+        fontSize: 19,
+      }),
+    };
+
+    return(
+      <View style={styles.questionContainer}>
+        <NumberIndicator 
+          value={index + 1}
+          size={20}
+          initFontSize={15}
+          diffFontSize={1.5}
+          {...{color}}
+        />
+        <Text style={[styles.question, questionStyle]} numberOfLines={1}>
+          {question.question || 'No question to show...'}
+        </Text>
+      </View>
+    );
+  };
+
+  _renderDetails(){
+    const { styles } = QuestionItem;
+    const { userAnswer, index, currentIndex, timestampAnswered } = this.props;
+
+    const isSelected = (index == currentIndex);
+    const answerStyle = {
+      ...(isSelected && {
+        fontSize: 19,
+      }),
+    };
+
+    const answerTime = moment(timestampAnswered).format('LTS');
+
+    return(
+      <View style={styles.answerContainer}>
+        <Text style={[styles.answer, answerStyle]} numberOfLines={1}>
+          <Text style={styles.answerLabel}>{'Answer: '}</Text>
+          {userAnswer || 'N/A'}
+        </Text>
+        <Text style={styles.answerTime}>{answerTime}</Text>
+      </View>
+    );
+  };
+
+  render(){
+    const { styles } = QuestionItem;
+    const { index, currentIndex, isLast } = this.props;
+
+    const isSelected = (index == currentIndex);
+
+    const containerStyle = {
+      ...isSelected? {
+        backgroundColor: BLUE[50],
+      } : null,
+    };
+
+    return (
+      <TouchableOpacity 
+        style={[styles.container, containerStyle, {}]}
+        onPress={this._handleOnPress}
+        activeOpacity={0.75}
+      >
+        {this._renderQuestion()}
+        {this._renderDetails()}
+      </TouchableOpacity>
+    );
+  };
+};
+
+class QuestionList extends React.PureComponent {
+  static propTypes = {
+    currentIndex: PropTypes.number,
+    maxIndex    : PropTypes.number,
+    answers     : PropTypes.array ,
+    //events
+    onPressQuestion: PropTypes.func,
+  };
+
+  static styles = StyleSheet.create({
+    container: {
+      paddingHorizontal: 0,
+      paddingTop: 0,
+      paddingBottom: 0,
+    },
+    //list empty styles
+    emptyContainer: {  
+      flexDirection: 'row',
+      paddingTop: 10,
+      paddingBottom: 15,
+      paddingHorizontal: 5,
+    },
     image: {
-      width: 75,
-      height: 75,
+      width : 80,
+      height: 80,
     },
     textContainer: {
       flex: 1,
       marginLeft: 12,
+      //justifyContent: 'center',
     },
     title: {
       textAlign: 'center',
@@ -667,79 +700,74 @@ class ModalSectionFooter extends React.PureComponent {
       fontSize: 16,
       fontWeight: '300'
     },
-    jumpButtonContainer: {
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    jumpButton: {
+    //header styles
+    headerContainer: {
       flexDirection: 'row',
-      borderRadius: 15,
-      marginHorizontal: 10,
-      marginVertical: 15,
-      paddingVertical: 10,
-      paddingHorizontal: 15,
-      backgroundColor: PURPLE[700],
+      paddingHorizontal: 10,
+      paddingVertical: 7,
+      borderColor: GREY[200],
+      borderBottomWidth: 1,
       alignItems: 'center',
-      elevation: 5,
     },
-    buttonText: {
-      fontSize: 16,
+    headerImage: {
+      width : 75,
+      height: 75,
+    },
+    headerTitle: {
+      fontSize: 18,
+      fontWeight: '700',
+      color: PURPLE[700],
+    },
+    //footer styles
+    footerContainer: {
+      paddingHorizontal: 12,
+      paddingVertical: 10,
+    },
+    footerTitleContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    footerTitle: {
+      flex: 1,
+      marginLeft: 5,
+      fontSize: 18,
+      fontWeight: '500'
+    },
+    footerSubtitle: {
+      marginTop: 2,  
+      fontSize: 17,
+      color: GREY[900],
       fontWeight: '400',
-      color: 'white',
-      marginLeft: 10,
-      marginRight: 5,
-      marginBottom: 1,
     },
   });
 
   constructor(props){
     super(props);
-    this.image = require('../../assets/icons/exam.png');
+    this.imageScroll = require('../../assets/icons/exam.png');
+    this.imageBook   = require('../../assets/icons/book-forest.png');
+    
+    //number indicator colors
+    this.colors = Chroma.scale([PURPLE.A400, PURPLE.A700]).colors(props.maxIndex);
   };
 
-  _renderSeperator(){
-    const { styles } = ModalSectionFooter;
-    return (
-      <View style={styles.seperator}/>
-    );
+  _handleOnPressFooter = () => {
+    const { onPressQuestion, answers } = this.props;
+    const answersCount = (answers || []).length;
+    onPressQuestion && onPressQuestion({index: answersCount});
   };
 
-  _renderJumpToCurrent(){
-    const { styles } = ModalSectionFooter;
-    const { currentIndex, questionList } = this.props;
-
-    const showJumpToCurrent = (currentIndex + 1) < questionList.length;
-    if(!showJumpToCurrent) return this._renderSeperator();
-
-    return(
-      <Animatable.View 
-        style={styles.jumpButtonContainer}
-        animation={'pulse'}
-        duration={7000}
-        iterationCount={'infinite'}
-        iterationDelay={750}
-        useNativeDriver={true}
-      >
-        <TouchableOpacity style={styles.jumpButton}>
-          <Icon
-            name={'arrow-down'}
-            type={'feather'}
-            color={'rgba(255, 255, 255, 0.75)'}
-            size={25}
-          />
-          <Text style={styles.buttonText}>Jump to Last</Text>
-        </TouchableOpacity>
-      </Animatable.View>
-    );
+  /** from _renderQuestionList FlatList */
+  _handleKeyExtractor = (item, index) => {
+    return (`${item.questionID || index}`);
   };
 
   _renderEmptyQuestion(){
-    const { styles } = ModalSectionFooter;
+    const { styles } = QuestionList;
     return(
-      <View style={styles.container}>
+      <View style={styles.emptyContainer}>
         <Animatable.Image 
           style={styles.image}
-          source={this.image}
+          source={this.imageScroll}
           animation={'pulse'}
           iterationCount={'infinite'}
           iterationDelay={1000}
@@ -754,405 +782,107 @@ class ModalSectionFooter extends React.PureComponent {
     );
   };
 
-  render(){
-    const { SECTION_TYPES } = ModalContents;
-    const { type, data } = this.props;
+  _renderHeader = () => {
+    const { styles } = QuestionList;
+    const { currentIndex, maxIndex, answers } = this.props;
+    const answersCount = (answers || []).length;
 
-    const isSectionEmpty = data.length == 0;
+    const isSelected = (currentIndex <  answersCount);
+    const isMaxed    = (currentIndex >= maxIndex - 1);
 
-    switch (type) {
-      case SECTION_TYPES.QUESTIONS: return(isSectionEmpty
-        ? this._renderEmptyQuestion() 
-        : this._renderJumpToCurrent()
-      );
-      default: return (
-        this._renderSeperator()
-      );
-    };
-  };
-};
+    const textActive   = {title: "Here's a Tip" , subtitle: "The active question is marked blue. Tap on 'Current Question' to jump to latest item."};
+    const textInactive = {title: "Tap to Jump"  , subtitle: "Tap on a item in the list to jump and naviagte to that question."};
+    const textFinished = {title: "Done already?", subtitle: "Done checking your answers? Tap on the Finish button to see your grade."};
 
-class ModalSectionHeader extends React.PureComponent {
-  static propTypes = {
-    type: PropTypes.string,
-  };
-
-  static styles = StyleSheet.create({
-    container: Platform.select({
-      ios: {
-        padding: 10,
-        backgroundColor: 'rgba(255, 255, 255, 0.20)',
-      },
-      android: {
-        backgroundColor: 'white',
-        borderColor: 'rgb(190,190,190)',
-        borderBottomWidth: 1,
-        borderTopWidth: 1,
-      }
-    }),
-    wrapper: {
-      padding: 10,
-      backgroundColor: 'white', 
-    },
-    contentContainer: {
-      flexDirection: 'row',
-    },
-    titleContainer: {
-      flex: 1,
-      marginLeft: 8,
-    },
-    headerTitle: {
-      fontWeight: '600',
-      fontSize: 20,
-      color: PURPLE[900],
-    },
-    headerSubtitle: {
-      fontSize: 18,
-      fontWeight: '300'
-    },
-  });
-
-  getIconProps(type){
-    const { SECTION_TYPES } = ModalContents;
-    switch (type){
-      case SECTION_TYPES.DETAILS: return {
-        name: 'message-circle',
-        type: 'feather'
-      };
-      case SECTION_TYPES.STATS: return {
-        name: 'eye',
-        type: 'feather'
-      };
-      case SECTION_TYPES.QUESTIONS: return {
-        name: 'list',
-        type: 'feather'
-      };
-    };
-  };
-
-  getHeaderDetails(type){
-    const { SECTION_TYPES } = ModalContents;
-    switch (type){
-      case SECTION_TYPES.DETAILS: return {
-        title: 'Quiz Details',
-        description: 'Details about the current quiz',
-      };
-      case SECTION_TYPES.STATS: return {
-        title: 'Quiz Statistics',
-        description: 'How well are you doing so far?',
-      };
-      case SECTION_TYPES.QUESTIONS: return {
-        title: 'Questions & Answers',
-        description: 'Overview of your answers.',
-      };
-    };
-  };
-
-  _renderIcon(){
-    const { type } = this.props;
-    const iconProps = this.getIconProps(type);
-    return (
-      <Icon
-        {...iconProps}
-        color={PURPLE[500]}
-        size={27}
-      />
+    const text = (
+      isMaxed   ? textFinished :
+      isSelected? textActive   : textInactive
     );
-  };
-
-  _renderContent(){
-    const { styles } = ModalSectionHeader;
-    const { type } = this.props;
-
-    const { title, description } = this.getHeaderDetails(type);
 
     return(
-      <Animatable.View 
-        style={styles.contentContainer}
-        animation={'pulse'}
-        duration={10000}
-        delay={2000}
-        iterationCount={'infinite'}
-        iterationDelay={5000}
-        easing={'ease-in-out'}
-        useNativeDriver={true}
-      >
-        {this._renderIcon()}
-        <View style={styles.titleContainer}>
-          <Text numberOfLines={1} style={styles.headerTitle}>{title}</Text>
-          <Text numberOfLines={2} style={styles.headerSubtitle}>{description}</Text>
-        </View>
-      </Animatable.View>
-    );
-  };
-
-  _renderIOS(){
-    const { styles } = ModalSectionHeader;
-
-    return(
-      <BlurView
-        style={{marginBottom: 2, borderBottomColor: 'black'}}
-        tint={'default'}
-        intensity={100}
-      >
-        <View style={styles.container}>
-          {this._renderContent()}
-        </View>
-      </BlurView>
-    );
-  };
-
-  _renderAndroid(){
-    const { styles } = ModalSectionHeader;
-
-    return(
-      <View style={styles.container}>
-        <View style={styles.wrapper}>
-          {this._renderContent()}
+      <View style={styles.headerContainer}>
+        <Animatable.Image 
+          style={styles.headerImage}
+          source={this.imageBook}
+          animation={'pulse'}
+          iterationCount={'infinite'}
+          iterationDelay={1000}
+          duration={10000}
+          useNativeDriver={true}
+        />
+        <View style={styles.textContainer}>
+          <Text style={styles.headerTitle}>{text.title}</Text>
+          <Text style={styles.description}>{text.subtitle}</Text>
         </View>
       </View>
     );
   };
 
-  render(){
-    return Platform.select({
-      ios    : this._renderIOS(),
-      android: this._renderAndroid(),
-    });
-  };
-};
+  _renderFooter = () => {
+    const { styles } = QuestionList;
+    const { currentIndex, maxIndex, answers } = this.props;
+    const answersCount = (answers || []).length;
 
-class ModalContents extends React.PureComponent {
-  static propTypes = {
-    quiz: PropTypes.object, 
-    questions: PropTypes.array, 
-    questionList: PropTypes.array, 
-    answers: PropTypes.array, 
-    currentIndex: PropTypes.number,
-    onPressQuestionItem: PropTypes.func,
-    onPressFinish: PropTypes.func,
-    startTime: PropTypes.number
-  };
+    const isSelected = (currentIndex <  answersCount);
+    const isMaxed    = (currentIndex >= maxIndex - 1);
 
-  static SECTION_TYPES = {
-    QUESTIONS: 'QUESTIONS',
-    DETAILS: 'DETAILS',
-    STATS: 'STATS'
-  };
-  
-  static styles = StyleSheet.create({
-    scrollview: {
-      flex: 1,
-      //borderTopColor: 'rgb(200, 200, 200)', 
-      //borderTopWidth: 1
-    },
-    title: {
-      color: '#160656',
-      ...Platform.select({
-        ios: {
-          fontSize: 24, 
-          fontWeight: '800'
-        },
-        android: {
-          fontSize: 26, 
-          fontWeight: '900'
-        }
-      })
-    },
-    titleContainer: {
-      marginLeft: 7, 
-      marginRight: 25, 
-      marginBottom: 10,
-    },
-    subtitle: {
-      fontWeight: '200',
-      fontSize: 16,
-    },
-    body: {
-      borderTopColor: 'rgb(200, 200, 200)', 
-      borderTopWidth: 1
-    },
-    buttonContainer: {
-      borderTopColor: 'rgba(0, 0, 0, 0.25)',
-      borderBottomColor: 'rgba(0, 0, 0, 0.25)',
-      borderTopWidth: 1,
-      borderBottomWidth: 1,
-    },
-    button: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
-      backgroundColor: PURPLE[700], 
-      borderRadius: 12,
-      margin: 12,
-      padding: 15,
-      elevation: 10,
-      ...ifIphoneX({
-        marginBottom: getBottomSpace(),
-        borderRadius: 17,
-      }),
-    },
-    buttonText: {
-      flex: 1,
-      fontSize: 16,
-      fontWeight: '500',
-      color: 'white',
-      textAlign: 'left',
-      textAlignVertical: 'center',
-      marginLeft: 13,
-    },
-  });
-
-  constructor(props){
-    super(props);
-
-    const { SECTION_TYPES } = ModalContents;
-    const { quiz, questions, questionList, answers, currentIndex } = props;
-
-    this.state = {
-      sections: [
-        {type: SECTION_TYPES.DETAILS  , data: [{quiz}]},
-        {type: SECTION_TYPES.STATS    , data: [{}]},
-        {type: SECTION_TYPES.QUESTIONS, data: [...answers]},
-      ],
-    };
-  };
-
-  _handleOnPressQuestionItem = ({index}) => {
-    const { onPressQuestionItem } = this.props;
-    onPressQuestionItem && onPressQuestionItem({index});
-  };
-
-  _handleOnPressFinish = () => {
-    const { onPressFinish } = this.props;
-    //get computed time stats
-    const timeStats = this.modalSectionItemStats.getState();
-    //pass down timestats to callback
-    onPressFinish && onPressFinish({timeStats});
-  };
-
-  _renderTitle(){
-    const { styles } = ModalContents;
+    // dont show if no more questions remaining \
+    // or when at the last index
+    if(!isSelected || isMaxed) return null;
 
     return(
-      <IconText
-        containerStyle={styles.titleContainer}
-        textStyle={styles.title}
-        text={'Custom Quiz Details'}
-        subtitleStyle={styles.subtitle}
-        subtitle={"When you're done, press finish. "}
-        iconName={'notebook'}
-        iconType={'simple-line-icon'}
-        iconColor={'#512DA8'}
-        iconSize={26}
-      />
-    );
-  };
-
-  _renderFinishButton(){
-    const { styles } = ModalContents;
-    return(
-      <Animatable.View
-        style={styles.buttonContainer}
-        animation={'fadeInUp'}
-        duration={300}
-        delay={300}
-        useNativeDriver={true}
+      <TouchableOpacity 
+        style={styles.footerContainer}
+        onPress={this._handleOnPressFooter}
+        activeOpacity={0.75}
       >
-        <TouchableOpacity onPress={this._handleOnPressFinish}>
-          <LinearGradient
-            style={[styles.button, STYLES.mediumShadow]}
-            colors={[PURPLE[800], PURPLE[500]]}
-            start={[0, 1]} end={[1, 0]}
-          >
-            <Icon
-              name={'ios-checkmark-circle-outline'}
-              type={'ionicon'}
-              color={'white'}
-              size={24}
-            />
-            <Text style={styles.buttonText}>{"Finish Quiz"}</Text>
-            <Icon
-              name={'chevron-right'}
-              type={'feather'}
-              color={'white'}
-              size={30}
-            />
-          </LinearGradient>
-        </TouchableOpacity>
-      </Animatable.View>
-    );
-  };
-
-  _renderSectionHeader = ({section: {type, data}}) => {
-    return (
-      <ModalSectionHeader {...{type}}/>
-    );
-  };
-
-  _renderSectionFooter = ({section: {type, data}}) => {
-    const { currentIndex, questionList } = this.props;
-    return (
-      <ModalSectionFooter 
-        {...{type, data, currentIndex, questionList}}
-      />
-    );
-  };
-
-  _renderItem = ({item, index, section: {type}}) => {
-    const { SECTION_TYPES } = ModalContents;
-    const { currentIndex, answers, quiz, startTime, questions } = this.props;
-
-    const isLast = (index == (answers.length - 1));
-    
-    switch (type) {
-      case SECTION_TYPES.DETAILS: return(
-        <ModalSectionItemDetails {...item}/>
-      );
-      case SECTION_TYPES.STATS: return(
-        <ModalSectionItemStats
-          ref={r => this.modalSectionItemStats = r}
-          {...{startTime, answers, questions, quiz}}
-        />
-      );
-      case SECTION_TYPES.QUESTIONS: return(
-        <ModalSectionItemQuestion 
-          onPressItem={this._handleOnPressQuestionItem}
-          {...{index, currentIndex, isLast, ...item}}
-        />
-      );
-      default: return null;
-    };
-  };
-
-  _renderListFooter = () => {
-    return(
-      <View style={{marginBottom: 75}}/>
-    );
-  };
-
-  render(){
-    const { styles } = ModalContents;
-    const { sections } = this.state;
-
-    return(
-      <View style={{flex: 1}}>
-        <View style={{flex: 1}}>
-          {this._renderTitle()}
-          <SectionList
-            style={styles.scrollview}
-            renderItem={this._renderItem}
-            renderSectionHeader={this._renderSectionHeader}
-            renderSectionFooter={this._renderSectionFooter}
-            ListFooterComponent={this._renderListFooter}
-            SectionSeparatorComponent={this._renderSectionSeperator}
-            keyExtractor={(item, index) => item + index}
-            stickySectionHeadersEnabled={true}
-            {...{sections}}
+        <View style={styles.footerTitleContainer}>
+          <NumberIndicator 
+            value={answersCount + 1}
+            size={20}
+            initFontSize={15}
+            diffFontSize={1.5}
+            color={GREEN.A700}
           />
+          <Text numberOfLines={1} style={styles.footerTitle}>
+            {'Current Question'}
+          </Text>
         </View>
-        {this._renderFinishButton()}
-      </View>
+        <Text numberOfLines={1} style={styles.footerSubtitle}>
+          {'Tap here to jump to your last unanswered question.'}
+        </Text>
+      </TouchableOpacity>
+    );
+  };
+
+  /** for _renderQuestionList */
+  _renderItem = ({item, index}) => {
+    const { currentIndex, maxIndex, answers } = this.props;
+    const answersCount = (answers || []).length;
+    const isLast = (index == (answersCount - 1));
+
+    return(
+      <QuestionItem
+        onPressItem={this.props.onPressQuestion}
+        indicatorColor={this.colors[index]}
+        {...{index, currentIndex, isLast, ...item}}
+      />
+    );
+  };
+
+  render(){
+    const { styles } = QuestionList;
+    return(
+      <ModalSection containerStyle={styles.container}>
+        <FlatList
+          data={this.props.answers}
+          keyExtractor={this._handleKeyExtractor}
+          renderItem={this._renderItem}
+          ListEmptyComponent={this._renderEmptyQuestion}
+          ListHeaderComponent={this._renderHeader}
+          ListFooterComponent={this._renderFooter}
+        />
+      </ModalSection>
     );
   };
 };
@@ -1163,11 +893,16 @@ export class QuizExamDoneModal extends React.PureComponent {
   };
 
   static styles = StyleSheet.create({
-    overlayContainer: {
+    container: {
+      paddingBottom: MODAL_EXTRA_HEIGHT + MODAL_DISTANCE_FROM_TOP,
+    },
+    //overlay styles
+    overlayWrapper: {
       flex: 1,
       position: 'absolute',
       height: '100%',
       width: '100%',
+      marginBottom: MODAL_EXTRA_HEIGHT + MODAL_DISTANCE_FROM_TOP,
     },
     overlay: {
       position: 'absolute',
@@ -1176,7 +911,7 @@ export class QuizExamDoneModal extends React.PureComponent {
       opacity: 0,
       backgroundColor: 'white',
     },
-    fireworksContainer: {
+    overlayContainer: {
       width: '100%',
       height: '100%',
       //alignItems: 'flex-start',
@@ -1185,8 +920,69 @@ export class QuizExamDoneModal extends React.PureComponent {
       //height: '100%', 
       //backgroundColor: 'red'
     },
-    modalBackground: {
-      backgroundColor: 'rgb(175, 175, 175)'
+    //header styles
+    headerWrapper: {
+      ...Platform.select({
+        ios: {
+          position: 'absolute',
+          width: '100%',
+        },
+        android: {
+          borderBottomColor: GREY[900],
+        },
+      }),
+    },
+    headerContainer: {
+      paddingHorizontal: 7,
+      paddingBottom: 10,
+      ...Platform.select({
+        ios: {
+          borderBottomColor: GREY[100],
+          borderBottomWidth: 1,
+          backgroundColor: 'rgba(255,255,255, 0.5)',      
+        },
+        android: {
+          backgroundColor: 'rgba(255,255,255, 0.75)',      
+        },
+      }),
+    },
+    //content styles
+    scrollview: {
+      flex: 1,
+      paddingBottom: 75,
+    },
+    //footer styles
+    footerWrapper: {
+      position: 'absolute',
+      width: '100%',
+      bottom: 0,
+    },
+    footerContainer: {
+      ...Platform.select({
+        ios: {
+          backgroundColor: 'rgba(255,255,255,0.4)',
+          paddingVertical: 12,
+          paddingHorizontal: 10,
+          //border
+          borderColor: 'rgba(0,0,0,0.2)',
+          borderTopWidth: 1,
+          borderBottomWidth: 1,
+          //extra padding
+          ...(isIphoneX() && {
+            paddingBottom: getBottomSpace() + 10,
+          }),
+        },
+        android: {
+          backgroundColor: 'white',          
+          padding: 10,
+          height: 80,
+          elevation: 15,
+        },
+      }),
+    },
+    //list footer
+    listFooterContainer: {
+      marginBottom: 75
     },
   });
 
@@ -1195,6 +991,8 @@ export class QuizExamDoneModal extends React.PureComponent {
 
     this.state = {
       mountContent: false,
+      headerHeight: -1,
+      //data from openModal
       currentIndex: -1,
       startTime: -1,
       questionList: [], 
@@ -1210,13 +1008,33 @@ export class QuizExamDoneModal extends React.PureComponent {
   };
 
   componentDidMount(){
-    this._deltaY = this._modal._deltaY;
+    const expandedHeight = (Screen.height - MODAL_DISTANCE_FROM_TOP);
+    const deltaY = this._modal._deltaY;
+
+    this.opacity = interpolate(deltaY, {
+      inputRange : [0, expandedHeight],
+      outputRange: [1, 0.5],
+      extrapolate: 'clamp',
+    });
+    this.scale = interpolate(deltaY, {
+      inputRange : [0, expandedHeight],
+      outputRange: [1, 0.95],
+      extrapolate: 'clamp',
+    });
+    this.translateX = interpolate(deltaY, {
+      inputRange : [0, expandedHeight],
+      outputRange: [1, 10],
+      extrapolate: 'clamp',
+    });
   };
 
+  //------ public functions ------
   openModal = async ({currentIndex, questionList, answers, questions, quiz, startTime}) => {
-    //Clipboard.setString(JSON.stringify(answers));
-    //this.resetPrevTimestamps();
-    this.setState({mountContent: true, currentIndex, questionList, answers, questions, quiz, startTime});
+    this.setState({
+      mountContent: true, 
+      //pass down to state
+      currentIndex, questionList, answers, questions, quiz, startTime
+    });
     this._modal.showModal();
   };
 
@@ -1224,7 +1042,20 @@ export class QuizExamDoneModal extends React.PureComponent {
     prevTimestamps = [];
   };
 
-  _handleOnModalShow = () => {
+  //#region ------ events/handlers ------
+  /** from _renderHeader */
+  _handleHeaderOnLayout = ({nativeEvent}) => {
+    const { headerHeight } = this.state;
+    const { height } = nativeEvent.layout;
+
+    if(headerHeight == -1){
+      this.setState({headerHeight: height});
+    };
+  };
+
+  /** from _renderContent: scrolllview */
+  _handleOnEndReached = () => {
+    this.footer.show();
   };
 
   _handleOnModalHide = () => {
@@ -1232,18 +1063,22 @@ export class QuizExamDoneModal extends React.PureComponent {
     this.setState({mountContent: false, });
   };
 
-  _handleOnPressQuestionItem = async ({index}) => {
+  /** from _renderContent: QuestionItem*/
+  _handleOnPressQuestion = async ({index}) => {
     await this._modal.hideModal();
+    //callback assigned via ref
     this.onPressQuestionItem && this.onPressQuestionItem({index});
   };
 
-  _handleOnPressFinishButton = async ({timeStats}) => {
+  /** from _renderFooter */
+  _handleOnPressFinish = async () => {
+    const timeStats = this.quizStats.getState();
+    
     const overlayOpacity = Platform.select({
       ios: 0.5, android: 0.7,
     });
-
     this.overlay.transitionTo({opacity: overlayOpacity}, 500);
-    this.animationFireworks.start();
+    this.checkOverlay.start();
     await timeout(750);
     await this._modal.hideModal();
 
@@ -1251,36 +1086,163 @@ export class QuizExamDoneModal extends React.PureComponent {
     this.onPressFinishButton && this.onPressFinishButton({timeStats});
   };
 
+  /** from _renderFooter */
+  _handleOnPressCancel = () => {
+    this._modal.hideModal();
+  };
+
+  //#endregion 
+  //#region ------ render functions ------
+  /** shows a check animation */
+  _renderHeader(){
+    const { styles } = QuizExamDoneModal;
+
+    const style = {
+      opacity: this.opacity,
+      transform: [
+        { translateX: this.translateX },
+        { scale     : this.scale      },
+      ],
+    };
+
+    return(
+      <BlurViewWrapper
+        wrapperStyle={styles.headerWrapper}
+        containerStyle={styles.headerContainer}
+        onLayout={this._handleHeaderOnLayout}
+      >
+        <ModalTopIndicator/>
+        <Animated.View {...{style}}>
+          <ModalTitle
+            title={'Custom Quiz Details'}
+            subtitle={"When you're done, press finish. "}
+            iconStyle={{marginTop: 2}}
+            iconName={'ios-book'}
+            iconType={'ionicon'}
+          />
+        </Animated.View>
+      </BlurViewWrapper>
+    );
+  };
+
+  /** bottom buttons */
+  _renderFooter(){
+    const { styles } = QuizExamDoneModal;
+
+    return(
+      <Animatable.View
+        style={styles.footerWrapper}
+        animation={'fadeInUp'}
+        duration={500}
+        delay={500}
+        useNativeDriver={true}
+      >
+        <BlurViewWrapper
+          containerStyle={styles.footerContainer}
+          intensity={100}
+          tint={'default'}
+        >
+          <ModalBottomTwoButton
+            leftText={'Finish'}
+            rightText={'Cancel'}
+            onPressLeft={this._handleOnPressFinish}
+            onPressRight={this._handleOnPressCancel}
+          />
+        </BlurViewWrapper>
+      </Animatable.View>
+    );
+  };
+
+  /** bottom heart icon */
+  _renderListFooter = () => {
+    const { styles } = QuizExamDoneModal;
+    return(
+      <View style={styles.listFooterContainer}>
+        <IconFooter 
+          hide={false}
+          delay={3000}
+        />
+      </View>
+    );
+  };
+
   _renderContent(){
-    const { quiz, questions, questionList, answers, currentIndex, startTime } = this.state;
+    const { styles } = QuizExamDoneModal;
+    const { headerHeight, quiz, startTime, answers, questions, currentIndex, questionList } = this.state;
+    
+    if(headerHeight == -1) return null;
+    const maxIndex = (questionList || []).length;
 
     const style = {
       flex: 1,
-      opacity: this._deltaY.interpolate({
-        inputRange: [0, Screen.height - MODAL_DISTANCE_FROM_TOP],
-        outputRange: [1, 0.25],
-        extrapolateRight: 'clamp',
+      opacity: this.opacity,
+    };
+
+    const PlatformProps = {
+      ...Platform.select({
+        ios: {
+          contentInset :{top: headerHeight},
+          contentOffset:{x: 0, y: -headerHeight},
+        },
       }),
     };
 
     return(
-      <Reanimated.View {...{style}}>
-        <ModalContents
-          onPressQuestionItem={this._handleOnPressQuestionItem}
-          onPressFinish={this._handleOnPressFinishButton}
-          {...{quiz, questions, questionList, answers, currentIndex, startTime}}
-        />
-      </Reanimated.View>
+      <Animatable.View
+        style={{flex: 1}}
+        animation={'fadeInUp'}
+        duration={500}
+        useNativeDriver={true}
+      >
+        <Animated.View {...{style}}>
+          <ScrollView
+            style={styles.scrollview}
+            stickyHeaderIndices={[0, 2]}
+            onEndReached={this._handleOnEndReached}
+            {...PlatformProps}
+          >
+            <StickyHeader
+              title={'Quiz Details'}
+              subtitle={'Details about the current quiz.'}
+              iconName={'message-circle'}
+              iconType={'feather'}
+            />
+            <QuizDetails {...{quiz}}/>
+
+            <StickyHeader
+              title={'Quiz Statistics'}
+              subtitle={'How well are you doing so far?'}
+              iconName={'eye'}
+              iconType={'feather'}
+            />
+            <QuizStats
+              ref={r => this.quizStats = r}
+              {...{quiz, startTime, answers, questions}}
+            />
+            
+            <StickyHeader
+              title={'Questions & Answers'}
+              subtitle ={'Overview of your answer.'}
+              iconName={'list'}
+              iconType={'feather'}
+            />
+            <QuestionList
+              onPressQuestion={this._handleOnPressQuestion}
+              {...{currentIndex, maxIndex, answers}}
+            />
+            {this._renderListFooter()}
+          </ScrollView>
+        </Animated.View>
+      </Animatable.View>
     );
   };
-
+  
   _renderOverlay(){
     const { styles } = QuizExamDoneModal;
-    const paddingBottom = (MODAL_EXTRA_HEIGHT + MODAL_DISTANCE_FROM_TOP);
-
+    
     return (
       <View 
-        style={[styles.overlayContainer, {paddingBottom}]}
+        style={styles.overlayWrapper}
         pointerEvents={'none'}
       >
         <Animatable.View 
@@ -1288,8 +1250,8 @@ export class QuizExamDoneModal extends React.PureComponent {
           style={styles.overlay}
           useNativeDriver={true}
         />
-        <View style={styles.fireworksContainer}>
-          <FireworksAnimation ref={r => this.animationFireworks = r}/>
+        <View style={styles.overlayContainer}>
+          <CheckOverlay ref={r => this.checkOverlay = r}/>
         </View>
       </View>
     );
@@ -1298,9 +1260,6 @@ export class QuizExamDoneModal extends React.PureComponent {
   render(){
     const { styles } = QuizExamDoneModal;
     const { mountContent } = this.state;
-    const paddingBottom = (
-      MODAL_EXTRA_HEIGHT + MODAL_DISTANCE_FROM_TOP
-    );
 
     return(
       <SwipableModal 
@@ -1308,14 +1267,14 @@ export class QuizExamDoneModal extends React.PureComponent {
         onModalShow={this._handleOnModalShow}
         onModalHide={this._handleOnModalHide}
       >
-        <Fragment>
-          <ModalBackground style={[{paddingBottom}, styles.modalBackground]}>
-            <ModalTopIndicator/>
-            {mountContent && this._renderContent()}
-          </ModalBackground>
-          {this._renderOverlay()}
-        </Fragment>
+        <ModalBackground style={styles.container}>
+          {mountContent && this._renderContent()}
+          {mountContent && this._renderHeader ()}
+          {mountContent && this._renderFooter ()}
+          {mountContent && this._renderOverlay()}
+        </ModalBackground>
       </SwipableModal>
     );
   };
+  //#endregion 
 };
