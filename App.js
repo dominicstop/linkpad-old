@@ -1,5 +1,6 @@
 import React from 'react';
 import { StatusBar, UIManager } from 'react-native';
+import { Constants as ExpoConstants } from 'expo';
 
 import { createSwitchNavigator, createStackNavigator } from 'react-navigation';
 import { useScreens } from 'react-native-screens';
@@ -16,8 +17,19 @@ import AuthLoadingScreen from './src/screens/AuthLoadingScreen';
 import AuthScreen        from './src/screens/AuthScreen';
 import NavigationService from './src/NavigationService';
 
-//use native navigation
-useScreens();
+const expoVersion = ExpoConstants.expoVersion;
+const version     = parseFloat(expoVersion.slice(0,4));
+
+if(version <= 2.1){
+  //use native navigation
+  useScreens();
+
+  //issue: https://github.com/react-navigation/react-navigation/issues/5955
+  //latest: 2.11.0.106093 (broken )
+  //prev  : 2.10.0.105125 (working)
+  console.log('expoVersion: ' + ExpoConstants.expoVersion); 
+};
+
 
 //enable layout animation on android
 UIManager.setLayoutAnimationEnabledExperimental && 
