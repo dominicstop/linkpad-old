@@ -11,9 +11,14 @@ const { set, cond, block, add, Value, timing, interpolate, and, or, onChange, eq
 
 export class TextExpander extends React.PureComponent {
   static propTypes = {
-    renderHeader: PropTypes.func,
-    contentContainer: PropTypes.object,
-    unmountWhenCollapsed: PropTypes.bool,
+    initCollpased       : PropTypes.bool  ,
+    renderHeader        : PropTypes.func  ,
+    contentContainer    : PropTypes.object,
+    unmountWhenCollapsed: PropTypes.bool  ,
+  };
+
+  static defaultProps = {
+    initCollpased: false,
   };
 
   static styles = StyleSheet.create({
@@ -40,15 +45,24 @@ export class TextExpander extends React.PureComponent {
 
   constructor(props){
     super(props);
+    //props
+    const isCollapsed  = props.initCollpased;
+    const initProgress = isCollapsed? 0 : 100;
+    const initPosition = isCollapsed? 1 : 0  ;
+
+    console.log('isCollapsed : ' + isCollapsed );
+    console.log('initProgress: ' + initProgress);
 
     //animation values
-    this.heightExpanded  = new Value(-1);
+    this.position        = new Value(initPosition);
+    this.progress        = new Value(initProgress);
+    this.heightExpanded  = new Value(0);
     this.heightCollapsed = new Value(0);
-    this.progress        = new Value(100);
 
-    this.height = interpolate(this.progress, {
+
+    this.marginBottom = interpolate(this.progress, {
       inputRange : [0, 100],
-      outputRange: [0, this.heightExpanded],
+      outputRange: [multiply(this.heightExpanded, -1), 0],
       extrapolate: 'clamp',
     });
     this.opacity = interpolate(this.progress, {
@@ -72,27 +86,43 @@ export class TextExpander extends React.PureComponent {
       extrapolate: 'clamp',
     });
 
+    this.layoutHeight = -1;
     this.isHeightMeasured = false;
     this.state = {
       mount: true,
-      isExpanded: true,
+      isExpanded: !isCollapsed,
+    };
+  };
+
+  _handleOnLayout = ({nativeEvent}) => {
+    const { height } = nativeEvent.layout;
+    if(this.layoutHeight == -1){
+      this.layoutHeight = height;
+      
+      this.position.setValue(0);
+      this.heightExpanded.setValue(height);
     };
   };
 
   expand = async (expand) => {
     const { isExpanded } = this.state;
 
-    if(!this.isHeightMeasured){      
+    if(!this.isHeightMeasured){
       //get current height of expanded
       const height = await new Promise(resolve => {
         this.contentContainer.measure((x, y, w, h) => resolve(h));
       });
+
+      console.log('height: ' + height);
 
       //set height measured flag to true
       this.isHeightMeasured = true;
       //set animated height values
       this.heightExpanded.setValue(height);
     };
+
+    console.log('expand: ' + expand);
+    console.log('\n');
 
     const config = {
       duration: 300,
@@ -110,6 +140,7 @@ export class TextExpander extends React.PureComponent {
 
   _handleOnPressHeader = () => {
     const { isExpanded } = this.state;
+    console.log('isExpanded: ' + isExpanded);
     this.expand(!isExpanded);
   };
 
@@ -151,20 +182,19 @@ export class TextExpander extends React.PureComponent {
     const { mount } = this.state;
 
     const contentWrapperStyle = {
-      opacity: this.opacity,
-      height: this.height,
-    };
-    const contentContainer = {
-      position: cond(eq(this.heightExpanded, -1), 'relative', 'absolute')
+      opacity     : this.opacity     ,
+      marginBottom: this.marginBottom,
+      position    : cond(eq(this.position, 0), 'relative', 'absolute')
     };
 
     return(
       <Animated.View style={[styles.contentWrapper, contentWrapperStyle]}>  
-        <Animated.View style={[this.props.contentContainer, contentContainer]}>
-          <View ref={r => this.contentContainer = r}>
-            {mount && this.props.children}
-          </View>
-        </Animated.View>
+        <View 
+          ref={r => this.contentContainer = r}
+          onLayout={this._handleOnLayout}
+        >
+          {mount && this.props.children}
+        </View>
       </Animated.View>
     );
   };
@@ -183,11 +213,14 @@ export class ContentExpander extends React.PureComponent {
   static propTypes = {
     renderHeader: PropTypes.func,
     contentContainer: PropTypes.object,
+    //options
     renderHeader: PropTypes.bool,
+    initCollpased: PropTypes.bool,
   };
 
   static defaultProps = {
-    renderHeader: true,
+    initCollpased: true,
+    renderHeader : true,
   };
 
   static styles = StyleSheet.create({
@@ -215,10 +248,15 @@ export class ContentExpander extends React.PureComponent {
   constructor(props){
     super(props);
 
+    const isCollapsed  = props.initCollpased;
+    const initProgress = (isCollapsed? 0 : 100);
+    const initPosition = (isCollapsed? 1 : 0  );
+
     //animation values
+    this.position        = new Value(initPosition);
+    this.progress        = new Value(initProgress);
     this.heightExpanded  = new Value(-1);
     this.heightCollapsed = new Value(0);
-    this.progress        = new Value(100);
     this.status          = new Value(0);
 
     this.height = interpolate(this.progress, {
@@ -251,9 +289,10 @@ export class ContentExpander extends React.PureComponent {
       });
     };
 
+    this.layoutHeight = -1;
     this.isHeightMeasured = false;
     this.state = {
-      isExpanded: true,
+      isExpanded: !isCollapsed,
     };
   };
 
@@ -269,7 +308,7 @@ export class ContentExpander extends React.PureComponent {
       //set height measured flag to true
       this.isHeightMeasured = true;
       //set animated height values
-      this.heightExpanded.setValue(height);
+      //this.heightExpanded.setValue(height);
     };
 
     const config = {
@@ -289,6 +328,16 @@ export class ContentExpander extends React.PureComponent {
   toggle = () => {
     const { isExpanded } = this.state;
     this.expand(!isExpanded);
+  };
+
+  _handleOnLayout = ({nativeEvent}) => {
+    const { height } = nativeEvent.layout;
+    if(this.layoutHeight == -1){
+      this.layoutHeight = height;
+      
+      this.position.setValue(0);
+      this.heightExpanded.setValue(height);
+    };
   };
 
   _handleOnPressHeader = () => {
@@ -337,14 +386,16 @@ export class ContentExpander extends React.PureComponent {
   _renderContent(){
     const { styles } = ContentExpander;
     const contentWrapperStyle = {
-      opacity: this.opacity,
-      height: this.height,
+      opacity : this.opacity,
+      height  : this.height,
+      position: cond(eq(this.position, 0), 'relative', 'absolute')
     };
 
     return(
       <Animated.View style={[styles.contentWrapper, contentWrapperStyle]}>  
         <View 
           ref={r => this.contentContainer = r}
+          onLayout={this._handleOnLayout}
           collapsable={false}
         >
           {this.props.children}
