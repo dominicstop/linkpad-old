@@ -50,9 +50,6 @@ export class TextExpander extends React.PureComponent {
     const initProgress = isCollapsed? 0 : 100;
     const initPosition = isCollapsed? 1 : 0  ;
 
-    console.log('isCollapsed : ' + isCollapsed );
-    console.log('initProgress: ' + initProgress);
-
     //animation values
     this.position        = new Value(initPosition);
     this.progress        = new Value(initProgress);
@@ -113,16 +110,11 @@ export class TextExpander extends React.PureComponent {
         this.contentContainer.measure((x, y, w, h) => resolve(h));
       });
 
-      console.log('height: ' + height);
-
       //set height measured flag to true
       this.isHeightMeasured = true;
       //set animated height values
       this.heightExpanded.setValue(height);
     };
-
-    console.log('expand: ' + expand);
-    console.log('\n');
 
     const config = {
       duration: 300,
@@ -140,7 +132,6 @@ export class TextExpander extends React.PureComponent {
 
   _handleOnPressHeader = () => {
     const { isExpanded } = this.state;
-    console.log('isExpanded: ' + isExpanded);
     this.expand(!isExpanded);
   };
 
