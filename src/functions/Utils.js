@@ -87,7 +87,8 @@ export function isValidTimestamp(timestamp){
 };
 
 export function isEmpty(string){
-  return (/^\s+$/.test(string) || string == '');
+  const text = string || '';
+  return (text.length == 0) || (text == '');
 };
 
 export function hexToRgbA(hex, opacity){

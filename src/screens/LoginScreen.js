@@ -880,7 +880,7 @@ class SigninForm extends React.PureComponent {
           numberOfLines={1}
           ellipsizeMode='tail'
         >
-          Don't have an acoount? Sign Up
+          {"Don't have an acoount? Sign Up"}
         </Text>
       </TouchableOpacity>
     );
@@ -1803,28 +1803,6 @@ export default class LoginScreen extends React.Component {
   _renderContents(){
     const { MODES } = LoginScreen;
     const { mode, results } = this.state;
-
-    return(
-      <Fragment>
-        <SigninForm
-          ref={r => this.signinForm = r}
-          onPressLogin={this._handleOnPressSignin}
-          onPressSignUp={this._handleOnPressSignUp}
-          {...{results}}
-        />
-        <WelcomeUser
-          ref={r => this.welcomeUser = r}
-          onPressNext={this._handleOnPressNextWelcome}
-          {...{results}}
-        />
-        <Downloading
-          ref={r => this.downloading = r}
-          onDownloadFinished={this._handleOnDownloadFinished}
-          onDownloadFailed={this._hadleOnDownloadFailed}
-          onPressNext={this._handleOnPressNextDownload}
-        />
-      </Fragment>
-    );
 
     return(
       <Fragment>

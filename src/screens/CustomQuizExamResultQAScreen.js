@@ -29,6 +29,7 @@ import Animated, { Easing } from 'react-native-reanimated';
 import { ModuleStore } from '../functions/ModuleStore';
 import { ModuleItemModel, QuestionItem, SubjectItem } from '../models/ModuleModels';
 import { TextExpander, ContentExpander } from '../components/Expander';
+import { TransitionAB } from '../components/Transitioner';
 const { set, cond, block, add, Value, timing, interpolate, and, or, onChange, eq, call, Clock, clockRunning, startClock, stopClock, concat, color, divide, multiply, sub, lessThan, abs, modulo, round, debug, clock } = Animated;
 
 const headerTitle = (props) => <CustomHeader 
@@ -154,7 +155,7 @@ class ChoicesCountStat extends React.PureComponent {
 
     return choices.map((item, index) => {
       const choice = item.choice || 'N/A';
-      const width = showPercentage? 38 : null;
+      const width = showPercentage? 40 : null;
       const itemBGColor = this.colors[index];
       const numberColors = ((answer == null)
         ? answerCorrect == (choice)? styleCorrect : styleDefault
@@ -708,8 +709,10 @@ class ScoreBar extends React.PureComponent {
     })(),
     //header styles
     detailsContainer: {
-      marginTop: 3,
+      flex: 1,
       flexDirection: 'row',
+      alignItems: 'center',
+      marginTop: 3,
       marginBottom: 10,
       paddingRight: 10,  
     },
@@ -766,11 +769,11 @@ class ScoreBar extends React.PureComponent {
   _handleOnPress = ({timestampSaved, type, index}) => {
     const { selected } = this.state;
     const nextSelected = `${timestampSaved}-${type}-${index}`;
+    const isSelected = (nextSelected == selected);
 
-    //temp: replace with expander
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    this.trans.transition(!isSelected);
     this.setState({
-      selected: nextSelected == selected? -1 : nextSelected,
+      selected: isSelected? -1 : nextSelected,
       timestampSaved, type
     });
   };
@@ -807,12 +810,11 @@ class ScoreBar extends React.PureComponent {
     });
   };
 
-  _renderSubtitle(){
+  _renderHeader(){
     const { styles, TYPES } = ScoreBar;
-    const { subtitleStyle, subtitle } = this.props;
+    const { titleStyle, subtitleStyle } = this.props;
     const { selected, timestampSaved, type } = this.state;
-    const isSelected = (selected != -1);
-
+    
     const time = timestampSaved || 0;
     const date = moment(time).format('dddd, MMM D YYYY');
     //indicator bg color
@@ -822,42 +824,42 @@ class ScoreBar extends React.PureComponent {
       type == TYPES.wrong  ? {type: 'feather', name: 'x'    } : {type: 'ionicon', name: 'md-help' }
     );
 
-    return isSelected? (
-      <View style={[styles.detailsContainer]}>
-        <View style={styles.datesContainer}>
-          <Text numberOfLines={1} style={styles.date}>{date}</Text>
-          <TimeAgo 
-            style={styles.time}
-            numberOfLines={1} 
-            {...{time}}
-          />
-        </View>
-        <View style={[styles.indicator, {backgroundColor}]}>
-          <Icon
-            size={20}
-            color={'white'}
-            {...iconProps}
-          />
-        </View>
-      </View>
-    ):(
-      <Text style={[styles.subtitle, subtitleStyle]}>
-        {subtitle}
-      </Text>
-    );
-  };
-
-  _renderHeader(){
-    const { styles } = ScoreBar;
-    const { titleStyle, title } = this.props;
-
     return(
-      <Fragment>
-        <Text style={[styles.title, titleStyle]}>
-          {title}
-        </Text>
-        {this._renderSubtitle()}
-      </Fragment>
+      <TransitionAB ref={r => this.trans = r}>
+        <Fragment>
+          <Text style={[styles.title, titleStyle]}>
+            {'Result History'}
+          </Text>
+          <Text style={[styles.subtitle, subtitleStyle]}>
+            {'Shows your recent results for this question in chronological order.'}
+          </Text>
+        </Fragment>
+        <Fragment>
+          <Text style={[styles.title, titleStyle]}>
+            {'Result Item'}
+          </Text>
+          <Text style={[styles.subtitle, subtitleStyle]}>
+            {'Tap on the selected result again to dismiss.'}
+          </Text>
+          <View style={[styles.detailsContainer]}>
+            <View style={styles.datesContainer}>
+              <Text numberOfLines={1} style={styles.date}>{date}</Text>
+              <TimeAgo 
+                style={styles.time}
+                numberOfLines={1} 
+                {...{time}}
+              />
+            </View>
+            <View style={[styles.indicator, {backgroundColor}]}>
+              <Icon
+                size={20}
+                color={'white'}
+                {...iconProps}
+              />
+            </View>
+          </View>
+        </Fragment>
+      </TransitionAB>
     );
   };
 
@@ -1303,8 +1305,6 @@ class ResultItem extends React.PureComponent {
         <ScoreBar
           titleStyle={styles.statsTitle}
           subtitleStyle={styles.statsSubtitle}
-          title={'Result History'}
-          subtitle={'Shows your recent results for this question in chronological order.'}
           {...{scoreHistory}}
         />
       </View>

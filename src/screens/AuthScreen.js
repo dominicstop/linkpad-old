@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, View, Platform, InteractionManager } from 'react-native';
+import { StyleSheet, View, Platform, Text } from 'react-native';
 
 import { createStackNavigator } from 'react-navigation';
 import * as Animatable from 'react-native-animatable';

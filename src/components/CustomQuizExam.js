@@ -5,13 +5,14 @@ import PropTypes from 'prop-types';
 import _ from 'lodash';
 import * as Animatable from 'react-native-animatable';
 import Carousel from 'react-native-snap-carousel';
+import { validateNotEmpty } from '../functions/Validation';
 
 import { LinearGradient, FileSystem, BlurView } from 'expo';
 import { Header } from 'react-navigation';
 import { Icon } from 'react-native-elements';
 import { ifIphoneX, getStatusBarHeight, getBottomSpace } from 'react-native-iphone-x-helper';
 
-import { getLetter , shuffleArray, setStateAsync, timeout, hexToRgbA, getTimestamp, isBase64Image} from '../functions/Utils';
+import { getLetter , shuffleArray, setStateAsync, timeout, hexToRgbA, getTimestamp, isBase64Image, isEmpty} from '../functions/Utils';
 import { PURPLE, RED } from '../Colors';
 import { QuizAnswer , QuizQuestion } from '../models/Quiz';
 import { CustomQuiz } from '../functions/CustomQuizStore';
@@ -83,7 +84,7 @@ class ChoiceItem extends React.PureComponent {
     return(
       <Text style={isSelected? styles.choiceTextSelected : styles.choiceText}>
         <Text style={styles.keyText}>{answerKey}. </Text>
-        {choice}
+        {choice || 'N/A'}
       </Text>
     );
   };
@@ -172,9 +173,11 @@ class Choices extends React.PureComponent {
     const { choices, answer } = props;
     //extract choices nested inside object
     const extracted = (choices || []).map(choice => choice.value);
+    //filter out empty string
+    const filtered = (extracted || []).filter(choice => !isEmpty(choice));
 
     //combine ans/choices then random order
-    const combined = [answer, ...extracted];
+    const combined = [answer, ...filtered];
     const shuffled = shuffleArray(combined);
 
     //used as initial value  for selected just in case this view unmounts
@@ -514,12 +517,7 @@ class Question extends React.PureComponent {
       ...Platform.select({
         ios: {
           contentInset: {
-            top   : 7,
             bottom: bottomSpace + 10,
-          },
-          contentOffset:{
-            x: 0, 
-            y: -7
           },
         },
       }),
@@ -554,6 +552,46 @@ class QuestionItem extends React.PureComponent {
     onPressImage: PropTypes.func,
   };
 
+  static styles = StyleSheet.create({
+    //card container
+    wrapper: {
+      //ios only style
+      flex: 1,
+      margin: 12,
+      backgroundColor: 'white',
+      borderRadius: 20,
+      paddingTop: 10,
+      //ios card shadow
+      shadowColor: 'black',
+      shadowRadius: 5,
+      shadowOpacity: 0.5,
+      shadowOffset: {  
+        width: 2,  
+        height: 4,  
+      },
+      //extra bottom space
+      ...ifIphoneX({
+        marginBottom: getBottomSpace(),
+      }),
+    },
+    container: {
+      flex: 1,
+      ...Platform.select({
+        ios: {
+          overflow: 'hidden',
+          borderRadius: 15,
+        },
+        //android card shadow
+        android: {
+          borderRadius: 20,
+          elevation: 15,
+          margin: 12,
+          backgroundColor: 'white',
+        }
+      }),
+    }
+  });
+
   constructor(props){
     super(props);
     // note: sometimes questionItem is unmounted when list becomes to big
@@ -561,36 +599,6 @@ class QuestionItem extends React.PureComponent {
       choicesHeight: 0,
     };
   };
-
-  static styles = StyleSheet.create({
-    //card container
-    container: {
-      flex: 1,
-      backgroundColor: 'white',
-      margin: 12,
-      borderRadius: 20,
-      ...Platform.select({
-        //ios card shadow
-        ios: {
-          shadowColor: 'black',
-          shadowRadius: 5,
-          shadowOpacity: 0.5,
-          shadowOffset: {  
-            width: 2,  
-            height: 4,  
-          },
-          //extra bottom space
-          ...ifIphoneX({
-            marginBottom: getBottomSpace(),
-          }),
-        },
-        //android card shadow
-        android: {
-          elevation: 15,
-        }
-      }),
-    }
-  });
 
   /** returns the matching answer from answers array, otherwise returns undefined*/
   getMatchedAnswer(){
@@ -623,8 +631,8 @@ class QuestionItem extends React.PureComponent {
     //pass props to callback
     onPressChoice && onPressChoice({...choicesProps, ...questionItemProps});
   };
-  
-  render(){
+
+  _renderContents(){
     const { styles } = QuestionItem;
     const { index, onPressImage, base64Images } = this.props;
     const { choicesHeight } = this.state;
@@ -640,7 +648,7 @@ class QuestionItem extends React.PureComponent {
     const matchedAnswer = this.getMatchedAnswer();
 
     return(
-      <View style={styles.container}>
+      <Fragment>
         <Question
           question={questionText}
           bottomSpace={this.state.choicesHeight}
@@ -651,8 +659,27 @@ class QuestionItem extends React.PureComponent {
           onLayout={this._handleChoicesOnLayout}
           {...{choices, answer, matchedAnswer}}
         />
-      </View>
+      </Fragment>
     );
+  };
+  
+  render(){
+    const { styles } = QuestionItem;
+  
+    switch (Platform.OS) {
+      case 'ios': return (
+        <View style={styles.wrapper}>
+          <View style={styles.container}>
+            {this._renderContents()}
+          </View>
+        </View>
+      );
+      case 'android': return (
+        <View style={styles.container}>
+          {this._renderContents()}
+        </View>
+      );
+    };
   };  
 };
 

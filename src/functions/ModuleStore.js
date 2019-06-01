@@ -221,7 +221,7 @@ export class ModuleStore {
       //read from store
       const data = await store.get(ModuleStore.KEY);
       //wrap raw data for vscode autocomplete and fill in missing properties
-      const modules = ModuleItemModel.wrapArray(data);
+      const modules = ModuleItemModel.wrapArray(data || []);
 
       //update local/cache variable
       _modules = modules;

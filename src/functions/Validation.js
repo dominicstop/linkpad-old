@@ -10,5 +10,5 @@ export function validatePassword(pass = '', includeMessage = false){
 /** returns false when password is empty */
 export function validateNotEmpty(text, includeMessage = false){
   const re = /^[a-zA-Z]+(([',. -][a-zA-Z ])?[a-zA-Z]*)*$/;
-  return re.test(text); 
+  return re.test(text || ''); 
 }
