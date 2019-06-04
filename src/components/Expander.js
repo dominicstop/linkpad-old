@@ -7,6 +7,7 @@ import { PURPLE } from '../Colors';
 import _ from 'lodash';
 import { Icon } from 'react-native-elements';
 import Animated, { Easing } from 'react-native-reanimated';
+import { setStateAsync } from '../functions/Utils';
 const { set, cond, block, add, Value, timing, interpolate, and, or, onChange, eq, call, Clock, clockRunning, startClock, stopClock, concat, color, divide, multiply, sub, lessThan, abs, modulo, round, debug, clock } = Animated;
 
 export class TextExpander extends React.PureComponent {
@@ -21,7 +22,8 @@ export class TextExpander extends React.PureComponent {
 
   static defaultProps = {
     initCollpased: false,
-    showHeader   : true ,
+    showHeader   : true,
+    unmountWhenCollapsed: false,
   };
 
   static styles = StyleSheet.create({
@@ -89,14 +91,16 @@ export class TextExpander extends React.PureComponent {
     this.layoutHeight = -1;
     this.isHeightMeasured = false;
     this.state = {
-      mount: true,
+      mount: !props.unmountWhenCollapsed,
       isExpanded: !isCollapsed,
     };
   };
 
   _handleOnLayout = ({nativeEvent}) => {
+    const { unmountWhenCollapsed } = this.props;
     const { height } = nativeEvent.layout;
-    if(this.layoutHeight == -1){
+
+    if(this.layoutHeight == -1 && !unmountWhenCollapsed){
       this.layoutHeight = height;
       
       this.position.setValue(0);
@@ -105,9 +109,15 @@ export class TextExpander extends React.PureComponent {
   };
 
   expand = async (expand) => {
-    const { isExpanded } = this.state;
+    const { unmountWhenCollapsed } = this.props;
+    const { isExpanded, mount } = this.state;
 
-    if(!this.isHeightMeasured){
+    if(!mount && expand){
+      await setStateAsync(this, {mount: true});
+      this.position.setValue(0);
+    };
+
+    if(!this.isHeightMeasured || unmountWhenCollapsed){
       //get current height of expanded
       const height = await new Promise(resolve => {
         this.contentContainer.measure((x, y, w, h) => resolve(h));
@@ -117,14 +127,14 @@ export class TextExpander extends React.PureComponent {
       this.isHeightMeasured = true;
       //set animated height values
       this.heightExpanded.setValue(height);
+
     };
 
-    const config = {
+    const animation = timing(this.progress, {
       duration: 300,
       toValue : expand? 100 : 0,
       easing  : Easing.inOut(Easing.ease),
-    };
-    const animation = timing(this.progress, config);
+    });
 
     if(isExpanded != expand){
       //start animation

@@ -1,6 +1,7 @@
 import React, { Fragment } from 'react';
 import { View, LayoutAnimation, ScrollView, ViewPropTypes, Text, TouchableOpacity, AsyncStorage, StyleSheet, Platform , Alert, TouchableNativeFeedback, Clipboard, FlatList, ActivityIndicator, Dimensions, Switch, InteractionManager, StatusBar } from 'react-native';
 import PropTypes from 'prop-types';
+import EventEmitter from 'events';
 
 import { ViewWithBlurredHeader, IconText, Card, AnimateInView, IconFooter, AnimatedListItem } from '../components/Views';
 import { AndroidHeader } from '../components/AndroidHeader';
@@ -894,6 +895,7 @@ class ScoreBar extends React.PureComponent {
 class ResultItem extends React.PureComponent {
   static propTypes = {
     index: PropTypes.number,
+    initIndex: PropTypes.number,
     answerStats: PropTypes.object,
     scoreHistory: PropTypes.array,
     choicesCount: PropTypes.array,
@@ -1050,6 +1052,40 @@ class ResultItem extends React.PureComponent {
       },
     }),
   });
+
+  constructor(props){
+    super(props);
+
+    const isFirst = (props.index    == props.initIndex);
+    const isList  = (props.viewMode == VIEW_MODES.LIST);
+
+    this.state = {
+      mount: isFirst || isList,
+    };
+  };
+
+  componentWillMount() {
+    const { EVENTS } = CustomQuizExamResultQAScreen;
+    const { emitter } = this.props;
+
+    //subscribe to events
+    if(emitter){
+      emitter.addListener(
+        EVENTS.onIndexChanged,
+        this._handleOnIndexChanged
+      );
+    };
+  };
+
+  _handleOnIndexChanged = ({index}) => {
+    const { mount } = this.state;
+    const props = this.props;
+
+    const isFocused = (props.index == index);
+    if(!mount && isFocused){
+      this.setState({mount: true});
+    };
+  };
 
   _renderHeder(){
     const { styles } = ResultItem;
@@ -1335,7 +1371,7 @@ class ResultItem extends React.PureComponent {
 
   _renderContent(){
     const { styles } = ResultItem;
-    const { question, viewMode } = this.props;
+    const { question, index, initIndex, viewMode } = this.props;
     const questionWrapped = QuestionItem.wrap(question);
 
     const textQuestion    = questionWrapped.question    || "No Question";
@@ -1343,13 +1379,14 @@ class ResultItem extends React.PureComponent {
 
     const expanderProps = {
       ...(viewMode === VIEW_MODES.CAROUSEL && {
-        initCollpased: true,
+        //dont collapse if it's the first item
+        initCollpased       : index != initIndex,
+        unmountWhenCollapsed: index != initIndex,
       }),
     };
 
     return(
       <Fragment>
-        {this._renderHeder()}
         <Divider style={styles.dividerTop}/>
         <TextExpander 
           renderHeader={this._renderQuestionHeader}
@@ -1401,10 +1438,12 @@ class ResultItem extends React.PureComponent {
   render(){
     const { styles } = ResultItem;
     const { viewMode } = this.props;
+    const { mount } = this.state;
 
     switch (viewMode) {
       case VIEW_MODES.LIST: return (
         <Card>
+          {this._renderHeder()}
           {this._renderContent()}
         </Card>
       );
@@ -1415,7 +1454,14 @@ class ResultItem extends React.PureComponent {
             contentInset={{top: 10, bottom: 10}}
             contentOffset={{y: -10}}
           >
-            {this._renderContent()}
+            {this._renderHeder()}
+            {mount && <Animatable.View
+              animation={'fadeIn'}
+              duration={400}
+              useNativeDriver={true}
+            >
+              {this._renderContent()}
+            </Animatable.View>}
           </ScrollView>
         </Card>
       );
@@ -1462,6 +1508,12 @@ export class CustomQuizExamResultQAScreen extends React.PureComponent {
     QAList: 'questionAnswersList',
     /** which item to show */
     initIndex: 'initIndex',
+  };
+
+  /** event emitter event types */
+  static EVENTS = {
+    /** Carousel: called when a new item is in focus */
+    onIndexChanged: 'onIndexChanged',
   };
 
   /** combines all qa across all of the results into 1 qa item */
@@ -1571,10 +1623,11 @@ export class CustomQuizExamResultQAScreen extends React.PureComponent {
     const { NAV_PARAMS } = CustomQuizExamResultQAScreen;
     const { navigation } = props;
 
+    this.emitter = new EventEmitter();
     //get data from prev. screen - quiz results
     const quizResults = navigation.getParam(NAV_PARAMS.quizResults, []);
     const itemIndex   = navigation.getParam(NAV_PARAMS.initIndex  , 0 );
-
+    
     this.state = {
       data: [],
       totalResults: quizResults.length,
@@ -1601,7 +1654,6 @@ export class CustomQuizExamResultQAScreen extends React.PureComponent {
         //hide loading indicator
         await this.container.fadeOutUp(300);
         await setStateAsync(this, {data: QAStatsList, loading: LOAD_STATE.SUCCESS});
-        await timeout(250);
         await this.container.fadeInUp(500);
 
       } catch(error){
@@ -1639,18 +1691,28 @@ export class CustomQuizExamResultQAScreen extends React.PureComponent {
     };
   };
 
+  _handleOnSnap = (index) => {
+    const { EVENTS } = CustomQuizExamResultQAScreen;
+    this.emitter.emit(EVENTS.onIndexChanged, {index});
+  };
+
   _keyExtractor = (item, index) => {
     return(item.questionID || index);
   };
 
   _renderItem = ({item, index}) => {
+    const { NAV_PARAMS } = CustomQuizExamResultQAScreen;
+    const { navigation } = this.props;
     const { totalResults, viewMode } = this.state;
     const { answerStats, scoreHistory, choicesCount, durations, totalDurations, answer, hasMatchedAnswer, question, questionID } = item;
 
+    const initIndex = navigation.getParam(NAV_PARAMS.initIndex, 0);
+
     return(
       <ResultItem 
+        emitter={this.emitter}
         //pass down items
-        {...{index, viewMode, answerStats, scoreHistory, choicesCount, durations, totalDurations, answer, hasMatchedAnswer, question, questionID, totalResults}}
+        {...{index, initIndex, viewMode, answerStats, scoreHistory, choicesCount, durations, totalDurations, answer, hasMatchedAnswer, question, questionID, totalResults}}
       />
     );
   };
@@ -1754,12 +1816,15 @@ export class CustomQuizExamResultQAScreen extends React.PureComponent {
         <Carousel
           ref={r => this._carousel = r }
           renderItem={this._renderItem}
+          onSnapToItem={this._handleOnSnap}
+          shouldOptimizeUpdates={true}
           //scrollview props
           showsHorizontalScrollIndicator={true}
           bounces={true}
           lockScrollWhileSnapping={true}
           //pass down props
-          {...{data, firstItem, ...carouseProps}}/>
+          {...{data, firstItem, ...carouseProps}}
+        />
       );
     };
   };
