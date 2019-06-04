@@ -6,7 +6,7 @@ import NavigationService from '../NavigationService';
 import { plural } from '../functions/Utils';
 import { ROUTES, HEADER_HEIGHT , STYLES} from '../Constants';
 import { PURPLE, RED } from '../Colors';
-import { CustomQuizStore } from '../functions/CustomQuizStore';
+import { CustomQuizStore, CustomQuiz } from '../functions/CustomQuizStore';
 
 import { ViewWithBlurredHeader, IconFooter, Card, AnimatedListItem } from '../components/Views';
 import { PlatformTouchableIconButton } from '../components/Buttons';
@@ -334,9 +334,16 @@ class CustomQuizList extends React.PureComponent {
     },
   });
 
-  _handleOnPressQuiz = (quiz) => {
+  _handleOnPressQuiz = (quizItem) => {
+    const quiz = CustomQuiz.wrap(quizItem);
+    //randomize question order
+    const randomized = CustomQuiz.randomizeQuestionOrder(quiz);
+
     //navigate to custom quiz exam screen
-    NavigationService.navigateApp(ROUTES.CustomQuizExamScreen, {quiz});
+    NavigationService.navigateApp(
+      ROUTES.CustomQuizExamScreen, {
+        quiz: randomized,
+    });
   };
 
   _keyExtractor(item, index){

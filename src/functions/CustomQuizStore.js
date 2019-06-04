@@ -39,6 +39,17 @@ export class CustomQuiz {
     return items.map((item) => CustomQuiz.wrap(item));
   };
 
+  static randomizeQuestionOrder(quiz){
+    const quizItem = CustomQuiz.wrap(quiz); 
+    const questions = quizItem.questions || [];
+    const shuffled = shuffleArray(questions);
+
+    return {
+      ...quizItem,
+      questions: shuffled,
+    };
+  };
+
   constructor(data = CustomQuiz.structure){
     this.data = CustomQuiz.wrap(data);
   };

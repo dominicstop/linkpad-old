@@ -23,6 +23,7 @@ import * as Animatable from 'react-native-animatable';
 import { Icon } from 'react-native-elements';
 import {CustomQuiz, CustomQuizStore} from '../functions/CustomQuizStore';
 import { CustomQuizExamResultQAScreen } from './CustomQuizExamResultQAScreen';
+import { QuizQuestion } from '../models/Quiz';
 
 //custom header left component
 class CancelButton extends React.PureComponent {
@@ -278,9 +279,31 @@ class CustomQuizExamScreen extends React.Component {
       justifyContent: 'center',
     },
   });
+  
+  
+  static mapQuestionIDtoIndex(questions){
+    const questionItems = QuizQuestion.wrapArray(questions);
 
+    return questionItems.map((question, index) => {
+      const { indexID_module, indexID_subject, indexID_question } = question;
+      return ({
+        index, 
+        questionID: `${indexID_module}-${indexID_subject}-${indexID_question}`,
+      });
+    });
+  };
+  
   constructor(props){
-    super(props);
+    super(props)
+    const { mapQuestionIDtoIndex } = CustomQuizExamScreen;
+    const { navigation } = props;
+
+    //get data from previous screen: ExamScreen
+    const quiz = navigation.getParam('quiz' , {});
+    //wrap quiz to make sure all properties exists
+    this.quiz = CustomQuiz.wrap(quiz);
+    //map each question's index to it's corresponding question id
+    this.indexIDMap = mapQuestionIDtoIndex(quiz.questions);
 
     this.didShowAlert = false;
     this.durations = [];
@@ -353,16 +376,21 @@ class CustomQuizExamScreen extends React.Component {
   };
 
   /** record how much time is spend on each item */
-  recordDuration(index){
-    const nextSnap = { index, timestamp: Date.now() };
+  recordDuration(index, questionID){
+    const nextSnap = { 
+      index, 
+      questionID,
+      timestamp: Date.now(),
+    };
 
     if(this.prevSnap){
       const prevSnap = this.prevSnap;
       this.prevSnap = nextSnap;
 
       this.durations.push({
+        questionID,
         index: prevSnap.index,
-        duration: nextSnap.timestamp - prevSnap.timestamp,
+        duration: (nextSnap.timestamp - prevSnap.timestamp),
         //extra/misc data 
         timestampPrev: prevSnap.timestamp,
         timestampNext: nextSnap.timestamp,
@@ -399,7 +427,9 @@ class CustomQuizExamScreen extends React.Component {
 
   _handleOnSnapToItem = (index) => {
     References && References.HeaderTitle.setIndex(index + 1);
-    this.recordDuration(index);
+
+    const { questionID } = this.indexIDMap[index];
+    this.recordDuration(index, questionID);
   };
 
   _onPressFinishAlertCancel = () => {
@@ -472,14 +502,7 @@ class CustomQuizExamScreen extends React.Component {
 
   _renderContent(){
     const { styles } = CustomQuizExamScreen;
-    const { navigation } = this.props;
     const { loading } = this.state;
-    
-    //wrap quiz to make sure all properties exists
-    const quiz = CustomQuiz.wrap(
-      //get data from previous screen: ExamScreen
-      navigation.getParam('quiz' , {})
-    );
 
     switch (loading) {
       case LOAD_STATE.SUCCESS: return (
@@ -492,13 +515,13 @@ class CustomQuizExamScreen extends React.Component {
         >
           <CustomQuizList
             ref={r => this.customQuizList = r}
+            quiz={this.quiz}
             onSnapToItem={this._handleOnSnapToItem}
             onAnsweredAllQuestions={this._handleOnAnsweredAllQuestions}
             onNewAnswerSelected={this._handleOnNewAnswerSelected}
             onPressQuestionItem={this._handleOnPressQuestionItem}
             onPressImage={this._handleOnPressImage}
             base64Images={this.base64Images}
-            {...{quiz}}
           />
         </Animatable.View>
       );

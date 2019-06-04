@@ -1535,6 +1535,10 @@ export class CustomQuizExamResultScreen extends React.Component {
     },
   });
 
+  static NAV_PARAMS = {
+
+  };
+
   static matchQuestionsWithAnswers(questions, answers, durations){
     let items = {};
     durations.forEach(item => {
@@ -1677,6 +1681,8 @@ export class CustomQuizExamResultScreen extends React.Component {
       const quizResults = await CustomQuizResultsStore.read();
       //filter results that belong to this quiz
       const filtered = quizResults.filter((result) => result.indexID_quiz == indexID_quiz);
+
+      Clipboard.setString(JSON.stringify(filtered));
 
       //save quiz results and update loading state
       this.setState({

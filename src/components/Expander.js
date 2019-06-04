@@ -11,14 +11,17 @@ const { set, cond, block, add, Value, timing, interpolate, and, or, onChange, eq
 
 export class TextExpander extends React.PureComponent {
   static propTypes = {
-    initCollpased       : PropTypes.bool  ,
-    renderHeader        : PropTypes.func  ,
-    contentContainer    : PropTypes.object,
-    unmountWhenCollapsed: PropTypes.bool  ,
+    renderHeader    : PropTypes.func  ,
+    contentContainer: PropTypes.object,
+    //options
+    initCollpased       : PropTypes.bool,
+    showHeader          : PropTypes.bool,
+    unmountWhenCollapsed: PropTypes.bool,
   };
 
   static defaultProps = {
     initCollpased: false,
+    showHeader   : true ,
   };
 
   static styles = StyleSheet.create({
@@ -191,9 +194,10 @@ export class TextExpander extends React.PureComponent {
   };
 
   render(){
+    const { showHeader } = this.props;
     return(
       <Fragment>
-        {this._renderHeader()}
+        {showHeader && this._renderHeader()}
         {this._renderContent()}
       </Fragment>
     );
@@ -210,8 +214,8 @@ export class ContentExpander extends React.PureComponent {
   };
 
   static defaultProps = {
-    initCollpased: true,
-    renderHeader : true,
+    initCollpased: false,
+    renderHeader : true ,
   };
 
   static styles = StyleSheet.create({

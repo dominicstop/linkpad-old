@@ -1,5 +1,5 @@
 import React, { Fragment } from 'react';
-import { View, LayoutAnimation, ScrollView, ViewPropTypes, Text, TouchableOpacity, AsyncStorage, StyleSheet, Platform , Alert, TouchableNativeFeedback, Clipboard, FlatList, ActivityIndicator, Dimensions, Switch, InteractionManager } from 'react-native';
+import { View, LayoutAnimation, ScrollView, ViewPropTypes, Text, TouchableOpacity, AsyncStorage, StyleSheet, Platform , Alert, TouchableNativeFeedback, Clipboard, FlatList, ActivityIndicator, Dimensions, Switch, InteractionManager, StatusBar } from 'react-native';
 import PropTypes from 'prop-types';
 
 import { ViewWithBlurredHeader, IconText, Card, AnimateInView, IconFooter, AnimatedListItem } from '../components/Views';
@@ -15,6 +15,7 @@ import { Header, NavigationEvents } from 'react-navigation';
 import { Divider, Icon } from 'react-native-elements';
 import SegmentedControlTab from "react-native-segmented-control-tab";
 import TimeAgo from 'react-native-timeago';
+import Carousel from 'react-native-snap-carousel';
 
 import * as shape from 'd3-shape'
 import { BarChart, Grid, XAxis, YAxis } from 'react-native-svg-charts'
@@ -30,6 +31,8 @@ import { ModuleStore } from '../functions/ModuleStore';
 import { ModuleItemModel, QuestionItem, SubjectItem } from '../models/ModuleModels';
 import { TextExpander, ContentExpander } from '../components/Expander';
 import { TransitionAB } from '../components/Transitioner';
+import { ifIphoneX, getStatusBarHeight } from 'react-native-iphone-x-helper';
+import { StickyHeader } from '../components/StyledComponents';
 const { set, cond, block, add, Value, timing, interpolate, and, or, onChange, eq, call, Clock, clockRunning, startClock, stopClock, concat, color, divide, multiply, sub, lessThan, abs, modulo, round, debug, clock } = Animated;
 
 const headerTitle = (props) => <CustomHeader 
@@ -38,6 +41,11 @@ const headerTitle = (props) => <CustomHeader
   size={22}
   {...props}  
 />
+
+const VIEW_MODES = {
+  'LIST'    : 'LIST'    ,
+  'CAROUSEL': 'CAROUSEL',
+};
 
 class TouchableViewPager extends React.PureComponent {
   constructor(props){
@@ -896,9 +904,23 @@ class ResultItem extends React.PureComponent {
     totalDurations: PropTypes.object,
     questionID: PropTypes.string,
     totalResults: PropTypes.number,
+    viewMode: PropTypes.string,
   };
 
   static styles = StyleSheet.create({
+    carouselCard: {
+      flex: 1,
+      //remove existing styles
+      paddingVertical: 0, 
+      paddingHorizontal: 0, 
+      //overwrite exisint styles
+      marginTop: 12, 
+      marginBottom: 12,
+      marginHorizontal: 12,
+    },
+    scrollview: {
+      paddingHorizontal: 12,
+    },
     //divider styles
     divider: {
       marginVertical: 8,
@@ -1311,44 +1333,93 @@ class ResultItem extends React.PureComponent {
     );
   };
 
-  render(){
+  _renderContent(){
     const { styles } = ResultItem;
-    const { question } = this.props;
+    const { question, viewMode } = this.props;
     const questionWrapped = QuestionItem.wrap(question);
 
     const textQuestion    = questionWrapped.question    || "No Question";
     const textExplanation = questionWrapped.explanation || "No Explanation Available.";
 
+    const expanderProps = {
+      ...(viewMode === VIEW_MODES.CAROUSEL && {
+        initCollpased: true,
+      }),
+    };
+
     return(
-      <Card>
+      <Fragment>
         {this._renderHeder()}
         <Divider style={styles.dividerTop}/>
-        <TextExpander renderHeader={this._renderQuestionHeader}>
+        <TextExpander 
+          renderHeader={this._renderQuestionHeader}
+          {...expanderProps}
+        >
           <Text style={styles.expanderText}>{textQuestion}</Text>
         </TextExpander>
+
         <Divider style={styles.divider}/>
-        <TextExpander renderHeader={this._renderExplanationHeader}>
+        <TextExpander 
+          renderHeader={this._renderExplanationHeader}
+          {...expanderProps}
+        >
           <Text style={styles.expanderText}>{textExplanation}</Text>
         </TextExpander>
+
         <Divider style={styles.divider}/>
-        <TextExpander renderHeader={this._renderAnswerHeader}>
+        <TextExpander 
+          renderHeader={this._renderAnswerHeader}
+          {...expanderProps}
+        >
           {this._renderAnswer()}
         </TextExpander>
+
         <Divider style={styles.divider}/>
-        <ContentExpander renderHeader={this._renderStatsHeader}>
+        <ContentExpander 
+          renderHeader={this._renderStatsHeader}
+          {...expanderProps}
+        >
           <View style={styles.expanderContainer}>
             {this._renderStatsDuration()}
             <Divider style={styles.divider}/>
             {this._renderStatsAnswer()}
           </View>
         </ContentExpander>
+
         <Divider style={styles.divider}/>
-        <ContentExpander renderHeader={this._renderHistoryHeader}>
+        <ContentExpander 
+          renderHeader={this._renderHistoryHeader}
+          {...expanderProps}
+        >
           {this._renderHistory()}
         </ContentExpander>
         <Divider style={styles.divider}/>
-      </Card>
+      </Fragment>
     );
+  };
+
+  render(){
+    const { styles } = ResultItem;
+    const { viewMode } = this.props;
+
+    switch (viewMode) {
+      case VIEW_MODES.LIST: return (
+        <Card>
+          {this._renderContent()}
+        </Card>
+      );
+      case VIEW_MODES.CAROUSEL: return (
+        <Card style={styles.carouselCard}>
+          <ScrollView 
+            style={styles.scrollview}
+            contentInset={{top: 10, bottom: 10}}
+            contentOffset={{y: -10}}
+          >
+            {this._renderContent()}
+          </ScrollView>
+        </Card>
+      );
+    };
   };
 };
 
@@ -1390,7 +1461,7 @@ export class CustomQuizExamResultQAScreen extends React.PureComponent {
     /** the current QA list */
     QAList: 'questionAnswersList',
     /** which item to show */
-    initIndex: 'initIndex'
+    initIndex: 'initIndex',
   };
 
   /** combines all qa across all of the results into 1 qa item */
@@ -1508,8 +1579,8 @@ export class CustomQuizExamResultQAScreen extends React.PureComponent {
       data: [],
       totalResults: quizResults.length,
       ...((itemIndex == 0)
-        ? {loading: LOAD_STATE.LOADING, initialNumToRender: 6            }
-        : {loading: LOAD_STATE.INITIAL, initialNumToRender: itemIndex + 1}
+        ? {loading: LOAD_STATE.LOADING, viewMode: VIEW_MODES.LIST    }
+        : {loading: LOAD_STATE.INITIAL, viewMode: VIEW_MODES.CAROUSEL}
       ),
     };
   };
@@ -1527,28 +1598,11 @@ export class CustomQuizExamResultQAScreen extends React.PureComponent {
         const QAList      = CustomQuizExamResultQAScreen.combineSameQuestionsAndAnswers(quizResults);
         const QAStatsList = CustomQuizExamResultQAScreen.appendAnswerStats(QAList);
 
-        //update flatlist data and mount
-        if(itemIndex == 0){
-          //hide loading indicator
-          await this.container.fadeOutUp(300);
-          await setStateAsync(this, {data: QAStatsList, loading: LOAD_STATE.SUCCESS});
-          await timeout(250);
-          await this.container.fadeInUp(500);
-
-        } else {
-          await setStateAsync(this, {data: QAStatsList, loading: LOAD_STATE.LOADING});
-          await timeout(500);
-          this.flatlist.scrollToIndex({
-            index: itemIndex, 
-            animated: false,
-            ...Platform.select({ios: {viewOffset: HEADER_HEIGHT}}),
-          });
-
-          await timeout(750);
-          await this.container.fadeOutUp(300);
-          await setStateAsync(this, {loading: LOAD_STATE.SUCCESS, initialNumToRender: 6});
-          await this.container.fadeInUp(500);
-        };
+        //hide loading indicator
+        await this.container.fadeOutUp(300);
+        await setStateAsync(this, {data: QAStatsList, loading: LOAD_STATE.SUCCESS});
+        await timeout(250);
+        await this.container.fadeInUp(500);
 
       } catch(error){
         this.setState({loading: LOAD_STATE.ERROR});
@@ -1590,13 +1644,13 @@ export class CustomQuizExamResultQAScreen extends React.PureComponent {
   };
 
   _renderItem = ({item, index}) => {
-    const { totalResults } = this.state;
+    const { totalResults, viewMode } = this.state;
     const { answerStats, scoreHistory, choicesCount, durations, totalDurations, answer, hasMatchedAnswer, question, questionID } = item;
 
     return(
       <ResultItem 
         //pass down items
-        {...{index, answerStats, scoreHistory, choicesCount, durations, totalDurations, answer, hasMatchedAnswer, question, questionID, totalResults}}
+        {...{index, viewMode, answerStats, scoreHistory, choicesCount, durations, totalDurations, answer, hasMatchedAnswer, question, questionID, totalResults}}
       />
     );
   };
@@ -1634,15 +1688,57 @@ export class CustomQuizExamResultQAScreen extends React.PureComponent {
   };
 
   _renderContents(){
-    const { styles } = CustomQuizExamResultQAScreen;
-    const { data, initialNumToRender } = this.state;
+    const { NAV_PARAMS } = CustomQuizExamResultQAScreen;
+    const { navigation } = this.props;
+    const { data, viewMode } = this.state;
 
     const { mount, hidden } = this.getStateFromMode();
     const opacity = hidden? 0 : 1;
     if(!mount) return null;
 
-    return (
-      <Fragment>
+    //get data from prev. screen
+    const firstItem = navigation.getParam(NAV_PARAMS.initIndex, 0 );
+
+    //get screen height/width
+    const dimensions   = Dimensions.get('window');
+    const screenHeight = dimensions.height;
+    const screenWidth  = dimensions.width ;
+    
+    //ui values for carousel
+    const headerHeight = Platform.select({
+      ios    : Header.HEIGHT,
+      android: Header.HEIGHT + StatusBar.currentHeight,
+    });
+
+    const carouseProps = {
+      enableSnap: true,
+      scrollEnabled: true,
+      snapToAlignment: 'center',
+      itemHeight: ifIphoneX(
+        screenHeight - headerHeight - getStatusBarHeight(),
+        screenHeight - headerHeight,
+      ),
+      //platform specific props
+      ...Platform.select({
+        //swipe vertical on ios
+        ios: {
+          sliderHeight: screenHeight,
+          activeSlideAlignment: 'end',
+          vertical: true,
+        },
+        //swipe horizontally on android
+        android: {
+          sliderHeight: screenHeight - headerHeight,
+          sliderWidth : screenWidth,
+          itemWidth   : screenWidth,
+          vertical: false,
+          activeSlideAlignment: 'center'
+        }
+      }),
+    };
+
+    switch (viewMode) {
+      case VIEW_MODES.LIST: return (
         <FlatList
           ref={r => this.flatlist = r}
           style={{opacity}}
@@ -1651,10 +1747,21 @@ export class CustomQuizExamResultQAScreen extends React.PureComponent {
           //adjust top distance
           contentInset ={{top: HEADER_HEIGHT}}
           contentOffset={{x: 0, y: -HEADER_HEIGHT}}
-          {...{data, initialNumToRender}}
+          {...{data}}
         />
-      </Fragment>
-    );
+      );
+      case VIEW_MODES.CAROUSEL: return(
+        <Carousel
+          ref={r => this._carousel = r }
+          renderItem={this._renderItem}
+          //scrollview props
+          showsHorizontalScrollIndicator={true}
+          bounces={true}
+          lockScrollWhileSnapping={true}
+          //pass down props
+          {...{data, firstItem, ...carouseProps}}/>
+      );
+    };
   };
 
   render(){
