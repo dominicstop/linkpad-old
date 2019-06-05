@@ -1652,9 +1652,12 @@ export class CustomQuizExamResultQAScreen extends React.PureComponent {
         const QAStatsList = CustomQuizExamResultQAScreen.appendAnswerStats(QAList);
 
         //hide loading indicator
-        await this.container.fadeOutUp(300);
+        await this.container.fadeOutUp(400);
         await setStateAsync(this, {data: QAStatsList, loading: LOAD_STATE.SUCCESS});
-        await this.container.fadeInUp(500);
+        await timeout(1000);
+        this._carousel.triggerRenderingHack();
+        this._carousel.snapToItem (itemIndex, false, false);
+        await this.container.fadeInUp(400);
 
       } catch(error){
         this.setState({loading: LOAD_STATE.ERROR});
@@ -1773,9 +1776,8 @@ export class CustomQuizExamResultQAScreen extends React.PureComponent {
     });
 
     const carouseProps = {
-      enableSnap: true,
-      scrollEnabled: true,
-      snapToAlignment: 'center',
+      //enableSnap: true,
+      //scrollEnabled: true,
       itemHeight: ifIphoneX(
         screenHeight - headerHeight - getStatusBarHeight(),
         screenHeight - headerHeight,
@@ -1784,16 +1786,17 @@ export class CustomQuizExamResultQAScreen extends React.PureComponent {
       ...Platform.select({
         //swipe vertical on ios
         ios: {
+          vertical: true,
           sliderHeight: screenHeight,
           activeSlideAlignment: 'end',
-          vertical: true,
+          contentInset: {top: HEADER_HEIGHT},
         },
         //swipe horizontally on android
         android: {
+          vertical: false,
           sliderHeight: screenHeight - headerHeight,
           sliderWidth : screenWidth,
           itemWidth   : screenWidth,
-          vertical: false,
           activeSlideAlignment: 'center'
         }
       }),
@@ -1818,10 +1821,11 @@ export class CustomQuizExamResultQAScreen extends React.PureComponent {
           renderItem={this._renderItem}
           onSnapToItem={this._handleOnSnap}
           shouldOptimizeUpdates={true}
-          //scrollview props
-          showsHorizontalScrollIndicator={true}
-          bounces={true}
           lockScrollWhileSnapping={true}
+          //scrollview props
+          initialNumToRender={firstItem}
+          showsVerticalScrollIndicator={true}
+          bounces={true}
           //pass down props
           {...{data, firstItem, ...carouseProps}}
         />

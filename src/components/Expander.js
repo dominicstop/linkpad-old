@@ -219,7 +219,6 @@ export class ContentExpander extends React.PureComponent {
     renderHeader: PropTypes.func,
     contentContainer: PropTypes.object,
     //options
-    renderHeader: PropTypes.bool,
     initCollpased: PropTypes.bool,
   };
 
