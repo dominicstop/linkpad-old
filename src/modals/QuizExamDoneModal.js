@@ -4,7 +4,7 @@ import { DangerZone } from 'expo';
 import PropTypes from 'prop-types';
 
 import { STYLES, FONT_STYLES } from '../Constants';
-import { PURPLE, GREY, BLUE, GREEN } from '../Colors';
+import { PURPLE, GREY, BLUE, GREEN, RED, ORANGE, AMBER } from '../Colors';
 import { setStateAsync, timeout, addLeadingZero } from '../functions/Utils';
 
 import { MODAL_DISTANCE_FROM_TOP, MODAL_EXTRA_HEIGHT, SwipableModal, ModalBackground, ModalTopIndicator } from '../components/SwipableModal';
@@ -19,7 +19,7 @@ import Chroma from 'chroma-js'
 import { Icon, Divider } from 'react-native-elements';
 
 import * as Animatable from 'react-native-animatable';
-import { QuizAnswer, QuizQuestion } from '../models/Quiz';
+import { QuizAnswer, QuizQuestion, QUIZ_LABELS } from '../models/Quiz';
 import { isIphoneX, getBottomSpace } from 'react-native-iphone-x-helper';
 
 import { BlurViewWrapper, StickyHeader, DetailRow, DetailColumn, ModalBottomTwoButton, ModalTitle, StickyHeaderCollapsable, ModalSection, ExpanderHeader, NumberIndicator } from '../components/StyledComponents';
@@ -516,9 +516,10 @@ class QuestionItem extends React.PureComponent {
     timestampAnswered: PropTypes.number,
     //style
     indicatorColor: PropTypes.string,
-    //data
+    //data - QuizAnswer
     answerID  : PropTypes.string,
     userAnswer: PropTypes.string,
+    label     : PropTypes.string,
     question  : PropTypes.object,
     isCorrect : PropTypes.bool  ,
     isLast    : PropTypes.bool  ,
@@ -581,12 +582,19 @@ class QuestionItem extends React.PureComponent {
 
   _renderQuestion(){
     const { styles } = QuestionItem;
-    const { index, currentIndex } = this.props;
-    const props = this.props;
-    const question = QuizQuestion.wrap(props.question);
+    const { index, label, currentIndex, indicatorColor } = this.props;
+    const question = QuizQuestion.wrap(this.props.question);
 
     const isSelected = (index == currentIndex);
-    const color = isSelected? BLUE.A700 : props.indicatorColor;
+    const isSkipped  = (label == QUIZ_LABELS.SKIPPPED);
+    const isMarked   = (label == QUIZ_LABELS.MARKED  );
+
+    const color = (
+      isSelected? BLUE .A700 : 
+      isSkipped ? RED  .A700 : 
+      isMarked  ? AMBER.A700 : indicatorColor
+    );
+
     const questionStyle = {
       ...(isSelected && {
         fontSize: 19,
@@ -611,12 +619,19 @@ class QuestionItem extends React.PureComponent {
 
   _renderDetails(){
     const { styles } = QuestionItem;
-    const { userAnswer, index, currentIndex, timestampAnswered } = this.props;
+    const { userAnswer, index, label, currentIndex, timestampAnswered } = this.props;
 
     const isSelected = (index == currentIndex);
+    const isSkipped  = (label == QUIZ_LABELS.SKIPPPED);
+
     const answerStyle = {
-      ...(isSelected && {
+      ...(isSelected && { 
         fontSize: 19,
+        color: BLUE[900],
+      }),
+      ...(isSkipped && {
+        fontWeight: '700',
+        color: RED[700],
       }),
     };
 
@@ -626,7 +641,7 @@ class QuestionItem extends React.PureComponent {
       <View style={styles.answerContainer}>
         <Text style={[styles.answer, answerStyle]} numberOfLines={1}>
           <Text style={styles.answerLabel}>{'Answer: '}</Text>
-          {userAnswer || 'N/A'}
+          {isSkipped? 'Skipped' : userAnswer || 'N/A'}
         </Text>
         <Text style={styles.answerTime}>{answerTime}</Text>
       </View>

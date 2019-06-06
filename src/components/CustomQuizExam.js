@@ -74,6 +74,10 @@ class ChoiceItem extends React.PureComponent {
     });
   };
 
+  _handleOnLongPress = () => {
+
+  };
+
   _renderChoiceText(){
     const { styles } = ChoiceItem;
     const { index, selectedIndex, choice } = this.props;
@@ -685,9 +689,9 @@ class QuestionOverlay extends React.PureComponent {
       marginLeft: 15,
     },
     iconContainer: {
-      width: 35,
-      height: 35,
-      borderRadius: 40/2,
+      width: 45,
+      height: 45,
+      borderRadius: 45/2,
       backgroundColor: PURPLE.A700,
       alignItems: 'center',
       justifyContent: 'center',
@@ -766,7 +770,7 @@ class QuestionOverlay extends React.PureComponent {
             iconStyle={styles.icon}
             name={'question'}
             type={'font-awesome'}
-            size={23}
+            size={24}
             color={'white'}
           />
         </Animatable.View>
@@ -1157,8 +1161,21 @@ export class CustomQuizList extends React.Component {
     );
 
     if(matchIndex != -1){
+      const prevLabel = answers[matchIndex].label;
+      const isMarked  = (label     == QUIZ_LABELS.MARKED);
+      const wasMarked = (prevLabel == QUIZ_LABELS.MARKED);
+
       //replace existing answer
-      answers[matchIndex] = new_answer;
+      answers[matchIndex] = {
+        ...new_answer,
+        //append the prev. answer if only marking
+        ...(isMarked && { userAnswer: answers[matchIndex].userAnswer }),
+        //append prev. marked 
+        ...(wasMarked && { label: QUIZ_LABELS.MARKED }),
+        //remove label if marking and already marked
+        ...(isMarked && wasMarked && { label: null }),
+      };
+      //update answers
       this.answers = answers;
 
     } else {
@@ -1195,7 +1212,8 @@ export class CustomQuizList extends React.Component {
 
   /** QuestionItem - overlay: */
   _handleOnPressSkip = async ({question, isLast, index}) => {
-    const { onNewAnswerSelected } = this.props;
+    const { questionList } = this.state;
+    const currentIndex = questionList.length - 1;
 
     if(isLast){
       Alert.alert(
@@ -1203,7 +1221,7 @@ export class CustomQuizList extends React.Component {
         "There are no more questions to skip."
       );
 
-    } else {
+    } else if(index == currentIndex){
       //add answer with delay for animations to finish
       await Promise.all([
         this.addQuestionToList(),
@@ -1217,12 +1235,25 @@ export class CustomQuizList extends React.Component {
         isCorrect: false,
         label: QUIZ_LABELS.SKIPPPED,
       });
+
+    } else {
+      this._carousel.snapToNext(true, true);
+      Alert.alert(
+        "Already Skipped",
+        "Cannot skip question"
+      );
     };
   };
 
   /** QuestionItem - overlay: */
-  _handleOnPressBookmark = () => {
-    
+  _handleOnPressBookmark = ({question, index}) => {
+    this.addAnswer({
+      userAnswer: null, 
+      isCorrect: false,
+      label: QUIZ_LABELS.MARKED,
+      //pass down question
+      question,
+    });
   };
 
   /** QuestionItem - overlay: called when overlay is visible */
