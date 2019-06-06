@@ -1,5 +1,5 @@
 import React, { Fragment } from 'react';
-import { View, LayoutAnimation, ScrollView, ViewPropTypes, Text, TouchableOpacity, AsyncStorage, StyleSheet, FlatList, Dimensions, Clipboard, Platform, StatusBar, ActivityIndicator, Image } from 'react-native';
+import { View, LayoutAnimation, ScrollView, ViewPropTypes, Text, TouchableOpacity, AsyncStorage, StyleSheet, FlatList, Dimensions, Clipboard, Platform, StatusBar, ActivityIndicator, Image, TouchableWithoutFeedback } from 'react-native';
 import PropTypes from 'prop-types';
 
 import _ from 'lodash';
@@ -13,10 +13,10 @@ import { Icon } from 'react-native-elements';
 import { ifIphoneX, getStatusBarHeight, getBottomSpace } from 'react-native-iphone-x-helper';
 
 import { getLetter , shuffleArray, setStateAsync, timeout, hexToRgbA, getTimestamp, isBase64Image, isEmpty} from '../functions/Utils';
-import { PURPLE, RED } from '../Colors';
+import { PURPLE, RED, GREY, YELLOW, ORANGE, AMBER, BLUE } from '../Colors';
 import { QuizAnswer , QuizQuestion } from '../models/Quiz';
 import { CustomQuiz } from '../functions/CustomQuizStore';
-import { LOAD_STATE } from '../Constants';
+import { LOAD_STATE, FONT_STYLES } from '../Constants';
 import { BlurViewWrapper } from './StyledComponents';
 
 /** Used in Choices: shows a single choice item */
@@ -276,7 +276,9 @@ class QuestionImage extends React.PureComponent {
   static propTypes = {
     photofilename: PropTypes.string,
     photouri     : PropTypes.string,
-    onPressImage : PropTypes.func,
+    //events
+    onPressImage    : PropTypes.func,
+    onLongPressImage: PropTypes.func,
   };
 
   static styles = StyleSheet.create({
@@ -366,6 +368,11 @@ class QuestionImage extends React.PureComponent {
     });
   };
 
+  _handleImageOnLongPress = () => {
+    const { onLongPressImage } = this.props;
+    onLongPressImage && onLongPressImage();
+  };
+
   _renderImage(){
     const { styles } = QuestionImage;
     const { containerStyle, imageStyle } = this.props;
@@ -376,6 +383,7 @@ class QuestionImage extends React.PureComponent {
       <TouchableOpacity
         style={[styles.container, containerStyle]}
         onPress={this._handleImageOnPress}
+        onLongPress={this._handleImageOnLongPress}
         activeOpacity={0.85}
       >
         <Animatable.Image
@@ -443,7 +451,9 @@ class Question extends React.PureComponent {
     index         : PropTypes.number,
     photofilename : PropTypes.string,
     photouri      : PropTypes.string,
-    onPressImage  : PropTypes.func  ,
+    //events
+    onPressImage: PropTypes.func,
+    onLongPress : PropTypes.func,
   };
 
   static styles = StyleSheet.create({
@@ -451,14 +461,18 @@ class Question extends React.PureComponent {
       flex: 1,
       ...Platform.select({
         ios: {
-          paddingHorizontal: 10,
+          marginTop: 10,
           paddingBottom: 10,
+          borderRadius: 15,
+          marginHorizontal: 10,
         },
         android: {
           padding: 10,
           marginBottom: 10,
         },
       }),
+    },
+    contentScrollview: {  
     },
     question: {
       flex: 1,
@@ -492,13 +506,22 @@ class Question extends React.PureComponent {
     });
   };
 
+  _handleOnLongPress = () => {
+    const { onLongPress } = this.props;
+    onLongPress && onLongPress();
+  };
+
   _renderQuestion(){
     const { styles } = Question;
     const { question, index } = this.props;
 
     return(
       <Fragment>
-        <Text style={styles.question}>
+        <Text 
+          style={styles.question}
+          onLongPress={this._handleOnLongPress}
+          suppressHighlighting={true}
+        >
           <Text style={styles.number}>{index + 1}. </Text>
           {question || '( No question to display )'}
         </Text>
@@ -526,16 +549,296 @@ class Question extends React.PureComponent {
     return(
       <ScrollView 
         style={styles.scrollview}
+        contentContainerStyle={styles.contentScrollview}
         alwaysBounceVertical={false}
         {...PlatformProps}
       >
         {this._renderQuestion()}
         <QuestionImage 
           onPressImage={this._handleOnPressImage}
+          onLongPressImage={this._handleOnLongPress}
           {...{photofilename, photouri, base64Images}}
         />
         <View style={styles.spacer}/>
       </ScrollView>
+    );
+  };
+};
+
+class Option extends React.PureComponent {
+  static styles = StyleSheet.create({
+    container: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    iconContainer: {
+      width: 65,
+      height: 65,
+      alignSelf: 'stretch',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    icon: {
+      ...Platform.select({
+        ios: {
+          shadowColor: 'white',
+          shadowRadius: 7,
+          shadowOpacity: 0.25,
+        },
+      }),
+    },
+    textContainer: {
+      flex: 1,
+      alignSelf: 'stretch',
+      justifyContent: 'center',
+      paddingLeft: 15,
+    },
+    title: {
+      fontSize: 17,
+      color: 'white',
+      fontWeight: '800',
+    },
+    subtitle: {
+      fontSize: 16,
+      color: 'white',
+      fontWeight: '200',
+    },
+  });
+
+  render(){
+    const { styles } = Option;
+    const { props } = this;
+
+    const containerStyle = {
+      ...(props.hasBorder && {
+        borderBottomColor: 'rgba(0,0,0,0.25)',
+        borderBottomWidth: 1,
+      })
+    };
+
+    return(
+      <TouchableOpacity 
+        style={[styles.container, containerStyle]}
+        activeOpacity={0.75}
+        {...props}
+      >
+        <Animatable.View 
+          style={[styles.iconContainer, {backgroundColor: props.color}]}
+          animation={'pulse'}
+          duration={2 * 1000}
+          iterationCount={'infinite'}
+          iterationDelay={1000}
+          useNativeDriver={true}
+        >
+          <Icon
+            iconStyle={styles.icon}
+            name={props.iconName}
+            type={props.iconType}
+            color={'white'}
+            size={28}
+          />
+        </Animatable.View>
+        <View style={styles.textContainer}>
+          <Text style={styles.title}>
+            {props.title || 'N/A'}
+          </Text>
+          <Text style={styles.subtitle}>
+            {props.subtitle || 'N/A'}
+          </Text>
+        </View>
+      </TouchableOpacity>
+    );
+  };
+};
+
+class QuestionOverlay extends React.PureComponent {
+  static styles = StyleSheet.create({
+    container: {
+      flex: 1,
+      padding: 10,
+      alignItems: 'center',
+      justifyContent: 'center',
+      ...Platform.select({
+        ios: {
+          backgroundColor: 'rgba(255,255,255,0.3)',
+        },
+      }),
+    },
+    controlsContainer: {
+      overflow: 'hidden',
+      borderRadius: 18,
+      alignSelf: 'stretch',
+      backgroundColor: 'rgba(0,0,0,0.4)'
+    },
+    //title styles
+    titleContainer: {
+      flexDirection: 'row',
+      paddingHorizontal: 12,
+      paddingVertical: 15,
+      alignItems: 'center',
+      backgroundColor: 'rgba(0,0,0,0.2)',
+      borderBottomColor: 'rgba(0,0,0,0.25)',
+      borderBottomWidth: 1,
+    },
+    textContainer: {
+      flex: 1,
+      marginLeft: 15,
+    },
+    iconContainer: {
+      width: 35,
+      height: 35,
+      borderRadius: 40/2,
+      backgroundColor: PURPLE.A700,
+      alignItems: 'center',
+      justifyContent: 'center',
+      ...Platform.select({
+        ios: {
+          shadowColor: PURPLE.A700,
+          shadowRadius: 7,
+          shadowOpacity: 0.15,
+          shadowOffset: { 
+            height: 2,
+            width: 1,
+          },
+        },
+      }),
+    },
+    icon: {
+      ...Platform.select({
+        ios: {
+          shadowColor: 'white',
+          shadowRadius: 7,
+          shadowOpacity: 0.6,
+        },
+      }),
+    },
+    title: {
+      color: 'white',
+      ...Platform.select({
+        ios: {
+          fontSize: 22, 
+          fontWeight: '800',
+          shadowColor: 'white',
+          shadowRadius: 5,
+          shadowOpacity: 0.15,
+        },
+        android: {
+          fontWeight: '900',
+          fontSize: 26, 
+        },
+      }),
+    },
+    subtitle: {
+      color: 'white',
+      ...FONT_STYLES.subtitle1,
+      ...Platform.select({
+        ios: {
+          marginTop: -1,
+          fontWeight: '400',
+        },
+        android: {
+          fontWeight: '100',
+        },
+      }),
+    },
+  });
+
+  _handleOnPressCancel = async () => {
+    const { onPressCancel } = this.props;
+    await this.container.fadeOutDown(250);
+    onPressCancel && onPressCancel();
+  };
+
+  _renderTitle(){
+    const { styles } = QuestionOverlay;
+
+    return(
+      <View style={styles.titleContainer}>
+        <Animatable.View
+          animation={'pulse'}
+          iterationCount={'infinite'}
+          iterationDelay={1000}
+          duration={1000 * 7}
+          useNativeDriver={true}
+        >
+          <Icon
+            containerStyle={styles.iconContainer}
+            iconStyle={styles.icon}
+            name={'question'}
+            type={'font-awesome'}
+            size={23}
+            color={'white'}
+          />
+        </Animatable.View>
+        <View style={styles.textContainer}>
+          <Text numberOfLines={1} style={styles.title}>
+            {'Options'}
+          </Text>
+          <Text numberOfLines={1} style={styles.subtitle}>
+            {'What do you want to do?'}
+          </Text>
+        </View>
+      </View>
+    );
+  };
+
+  _renderOptions(){
+    const { styles } = QuestionOverlay;
+    const { props } = this;
+
+    return(
+      <Fragment>
+        <Option
+          title={'Skip'}
+          subtitle={'Go to the next question'}
+          iconName={'md-close-circle'}
+          iconType={'ionicon'}
+          color={RED.A700}
+          hasBorder={true}
+          onPress={props.onPressSkip}
+        />
+        <Option
+          title={'Bookmark'}
+          subtitle={'Mark the current question'}
+          iconName={'md-add-circle'}
+          iconType={'ionicon'}
+          color={AMBER.A700}
+          hasBorder={true}
+          onPress={props.onPressBookmark}
+        />
+        <Option
+          title={'Cancel'}
+          subtitle={'Go back to the question'}
+          iconName={'md-remove-circle'}
+          iconType={'ionicon'}
+          color={BLUE.A700}
+          onPress={this._handleOnPressCancel}
+        />
+      </Fragment>
+    );
+  };
+
+  render(){
+    const { styles } = QuestionOverlay;
+    return(
+      <TouchableWithoutFeedback onPress={this._handleOnPressCancel}>
+        <BlurViewWrapper
+          wrapperStyle={{flex: 1}}
+          containerStyle={styles.container}
+        >
+          <Animatable.View 
+            style={styles.controlsContainer}
+            ref={r => this.container = r}
+            animation={'fadeInUp'}
+            delay={250}
+            duration={300}
+            useNativeDriver={true}
+          >
+            {this._renderTitle()}
+            {this._renderOptions()}
+          </Animatable.View>
+        </BlurViewWrapper>
+      </TouchableWithoutFeedback>
     );
   };
 };
@@ -548,11 +851,22 @@ class QuestionItem extends React.PureComponent {
     index         : PropTypes.number,
     onPressChoice : PropTypes.func  ,
     answers       : PropTypes.array ,
-    //pass down to Question Component
-    onPressImage: PropTypes.func,
+    //events
+    onPressSkip    : PropTypes.func,
+    onPressBookmark: PropTypes.func,
+    onOverlayShow  : PropTypes.func,
+    onOverlayHide  : PropTypes.func,
+    onPressImage   : PropTypes.func,
   };
 
   static styles = StyleSheet.create({
+    overlayWrapper: {
+      position: 'absolute', 
+      top: 0,
+      bottom: 0,
+      left: 0,
+      right: 0,
+    },
     //card container
     wrapper: {
       //ios only style
@@ -560,7 +874,6 @@ class QuestionItem extends React.PureComponent {
       margin: 12,
       backgroundColor: 'white',
       borderRadius: 20,
-      paddingTop: 10,
       //ios card shadow
       shadowColor: 'black',
       shadowRadius: 5,
@@ -597,6 +910,7 @@ class QuestionItem extends React.PureComponent {
     // note: sometimes questionItem is unmounted when list becomes to big
     this.state = {
       choicesHeight: 0,
+      showOverlay: false,
     };
   };
 
@@ -616,6 +930,18 @@ class QuestionItem extends React.PureComponent {
     });
   };
 
+  hideOverlay = async () => {
+    const { onOverlayHide } = this.props;
+    const { showOverlay } = this.state;
+    const overlay = this.overlay;
+
+    if(showOverlay){
+      overlay && await overlay.fadeOut(300);
+      this.setState({showOverlay: false});
+      onOverlayHide && onOverlayHide();
+    };
+  };
+
   _handleChoicesOnLayout = ({nativeEvent}) => {
     const { choicesHeight } = this.state;
     const { height } = nativeEvent.layout;
@@ -632,10 +958,59 @@ class QuestionItem extends React.PureComponent {
     onPressChoice && onPressChoice({...choicesProps, ...questionItemProps});
   };
 
+  _handleOnLongPress = () => {
+    const { onOverlayShow } = this.props;
+    const { showOverlay } = this.state;
+    if(!showOverlay){
+      this.setState({showOverlay: true});
+      onOverlayShow && onOverlayShow();
+    };
+  };
+
+  /** overlay: skip*/
+  _handleOnPressSkip = async () => {
+    const { onPressSkip, question, index } = this.props;
+    await this.hideOverlay();
+    onPressSkip && onPressSkip({question, index});
+  };
+
+  /** overlay: bookmark */
+  _handleOnPressBookmark = async () => {
+    const { onPressBookmark, question, index } = this.props;
+    await this.hideOverlay();
+    onPressBookmark && onPressBookmark({question, index});
+  };
+
+  /** overlay: cancel - hide overlay */
+  _handleOnPressCancel = () => {
+    this.hideOverlay();
+  };
+
+  _renderOverlay() {
+    const { styles } = QuestionItem;
+    const { showOverlay } = this.state;
+    if(!showOverlay) return null;
+
+    return(
+      <Animatable.View
+        ref={r => this.overlay = r}
+        style={styles.overlayWrapper}
+        animation={'fadeIn'}
+        duration={300}
+        useNativeDriver={true}
+      >
+        <QuestionOverlay
+          onPressSkip={this._handleOnPressSkip}
+          onPressBookmark={this._handleOnPressBookmark}
+          onPressCancel={this._handleOnPressCancel}
+        />
+      </Animatable.View>
+    );
+  };
+
   _renderContents(){
     const { styles } = QuestionItem;
     const { index, onPressImage, base64Images } = this.props;
-    const { choicesHeight } = this.state;
 
     //wrap question object prop to prevent missing properties + vscode intellisense
     const question = QuizQuestion.wrap(this.props.question);
@@ -651,6 +1026,7 @@ class QuestionItem extends React.PureComponent {
       <Fragment>
         <Question
           question={questionText}
+          onLongPress={this._handleOnLongPress}
           bottomSpace={this.state.choicesHeight}
           {...{index, photofilename, photouri, onPressImage, base64Images}}
         />
@@ -671,6 +1047,7 @@ class QuestionItem extends React.PureComponent {
         <View style={styles.wrapper}>
           <View style={styles.container}>
             {this._renderContents()}
+            {this._renderOverlay()}
           </View>
         </View>
       );
@@ -706,7 +1083,7 @@ export class CustomQuizList extends React.Component {
 
     //wrap custom quiz to prevent missing properties
     const custom_quiz = CustomQuiz.wrap(props.quiz);
-    //extract quations from custom quiz
+    //extract questions from custom quiz
     const questions = custom_quiz.questions || [];
     //assign questions as property
     this.questions = [...questions];
@@ -715,6 +1092,7 @@ export class CustomQuizList extends React.Component {
       // the current questions to display
       // initialize question list with first item from quiz
       questionList: [this.questions.pop()],
+      scrollEnabled: true,
     };
   };
 
@@ -788,7 +1166,7 @@ export class CustomQuizList extends React.Component {
   };
 
   //----- event handlers -----
-  /** QuestionItem: called when a choice has been selected */
+  /** QuestionItem - choices: called when a choice has been selected */
   _handleOnPressChoice = async ({prevSelected, choice, answer, isCorrect, question, isLast, index}) => {
     const { onAnsweredAllQuestions, onNewAnswerSelected } = this.props;
 
@@ -813,10 +1191,35 @@ export class CustomQuizList extends React.Component {
     this.addAnswer({question, userAnswer: choice, isCorrect});
   };
 
+  /** QuestionItem - overlay: */
+  _handleOnPressSkip = () => {
+
+  };
+
+  /** QuestionItem - overlay: */
+  _handleOnPressBookmark = () => {
+
+  };
+
+  /** QuestionItem - overlay: called when overlay is visible */
+  _handleOnOverlayShow = () => {
+    const { scrollEnabled } = this.state;
+    if(scrollEnabled){
+      this.setState({scrollEnabled: false});
+    };
+  };
+
+  /** QuestionItem - overlay: called when overlay is hidden */
+  _handleOnOverlayHide = () => {
+    const { scrollEnabled } = this.state;
+    if(scrollEnabled){
+      this.setState({scrollEnabled: true});
+    };
+  };
+
   //----- render -----
   _renderItem = ({item, index}) => {
     const { onPressImage, quiz, base64Images } = this.props;
-    const answers = this.answers;
 
     //wrap quiz and extract questions
     const { questions } = CustomQuiz.wrap(quiz);
@@ -827,13 +1230,19 @@ export class CustomQuizList extends React.Component {
       <QuestionItem
         question={item}
         onPressChoice={this._handleOnPressChoice}
-        {...{isLast, index, answers, onPressImage, base64Images}}
+        onPressSkip={this._handleOnPressSkip}
+        onPressBookmark={this._handleOnPressBookmark}
+        onOverlayShow={this._handleOnOverlayShow}
+        onOverlayHide={this._handleOnOverlayHide}
+        answers={this.answers}
+        {...{isLast, index, onPressImage, base64Images}}
       />
     );
   };
 
   render(){
     const { styles } = CustomQuizList;
+    const { scrollEnabled } = this.state;
     const { ...otherProps } = this.props;
 
     //get screen height/width
@@ -882,10 +1291,10 @@ export class CustomQuizList extends React.Component {
           renderItem={this._renderItem}
           //scrollview props
           showsHorizontalScrollIndicator={true}
-          bounces={true}
+          bounces={this.state.scrollEnabled}
           lockScrollWhileSnapping={true}
           //pass down props
-          {...carouseProps}
+          {...{scrollEnabled, ...carouseProps}}
         />
       </View>
     );
