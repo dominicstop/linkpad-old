@@ -89,13 +89,19 @@ export class QuizQuestion {
   };
 };
 
+export const QUIZ_LABELS = {
+  'SKIPPPED': 'SKIPPPED',
+  'MARKED'  : 'MARKED'  ,
+};
+
 export class QuizAnswer {
   static structure = {
     answerID          : '',
     userAnswer        : '',
     isCorrect         : false,
     timestampAnswered : -1,
-    question          : QuizQuestion.structure,
+    question          : QuizQuestion.wrap({}),
+    label             : '',
   };
   
   /** wrap object with QuizAnswer.structure to prevent missing properties and enable VSCODE type intellesense */

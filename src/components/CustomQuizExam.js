@@ -1,5 +1,5 @@
 import React, { Fragment } from 'react';
-import { View, LayoutAnimation, ScrollView, ViewPropTypes, Text, TouchableOpacity, AsyncStorage, StyleSheet, FlatList, Dimensions, Clipboard, Platform, StatusBar, ActivityIndicator, Image, TouchableWithoutFeedback } from 'react-native';
+import { View, LayoutAnimation, ScrollView, ViewPropTypes, Text, TouchableOpacity, AsyncStorage, StyleSheet, FlatList, Dimensions, Clipboard, Platform, StatusBar, ActivityIndicator, Image, TouchableWithoutFeedback, Alert } from 'react-native';
 import PropTypes from 'prop-types';
 
 import _ from 'lodash';
@@ -14,7 +14,7 @@ import { ifIphoneX, getStatusBarHeight, getBottomSpace } from 'react-native-ipho
 
 import { getLetter , shuffleArray, setStateAsync, timeout, hexToRgbA, getTimestamp, isBase64Image, isEmpty} from '../functions/Utils';
 import { PURPLE, RED, GREY, YELLOW, ORANGE, AMBER, BLUE } from '../Colors';
-import { QuizAnswer , QuizQuestion } from '../models/Quiz';
+import { QuizAnswer , QuizQuestion, QUIZ_LABELS } from '../models/Quiz';
 import { CustomQuiz } from '../functions/CustomQuizStore';
 import { LOAD_STATE, FONT_STYLES } from '../Constants';
 import { BlurViewWrapper } from './StyledComponents';
@@ -969,9 +969,9 @@ class QuestionItem extends React.PureComponent {
 
   /** overlay: skip*/
   _handleOnPressSkip = async () => {
-    const { onPressSkip, question, index } = this.props;
+    const { onPressSkip, question, index, isLast } = this.props;
     await this.hideOverlay();
-    onPressSkip && onPressSkip({question, index});
+    onPressSkip && onPressSkip({question, isLast, index});
   };
 
   /** overlay: bookmark */
@@ -1138,13 +1138,15 @@ export class CustomQuizList extends React.Component {
   };
 
   /** inserts a new answer to the list, otherwise overwrites prev answer */
-  addAnswer({question, userAnswer, isCorrect}){
+  addAnswer({question, userAnswer, isCorrect, label}){
     //wrap object for vscode types/autocomplete
     const new_answer = QuizAnswer.wrap({
       //set timestamp of when question was answered
       timestampAnswered: getTimestamp(true),
+      //if skipped and has answer, remover label
+      label: (userAnswer && label == QUIZ_LABELS.SKIPPPED)? null : label,
       //append params to object
-      question, userAnswer, isCorrect
+      question, userAnswer, isCorrect,
     });
     
     //wrap array for vscode autocomplete
@@ -1192,13 +1194,35 @@ export class CustomQuizList extends React.Component {
   };
 
   /** QuestionItem - overlay: */
-  _handleOnPressSkip = () => {
+  _handleOnPressSkip = async ({question, isLast, index}) => {
+    const { onNewAnswerSelected } = this.props;
 
+    if(isLast){
+      Alert.alert(
+        "Last Question",
+        "There are no more questions to skip."
+      );
+
+    } else {
+      //add answer with delay for animations to finish
+      await Promise.all([
+        this.addQuestionToList(),
+        timeout(400)
+      ]);
+
+      this._carousel.snapToNext();
+      this.addAnswer({
+        question, 
+        userAnswer: null, 
+        isCorrect: false,
+        label: QUIZ_LABELS.SKIPPPED,
+      });
+    };
   };
 
   /** QuestionItem - overlay: */
   _handleOnPressBookmark = () => {
-
+    
   };
 
   /** QuestionItem - overlay: called when overlay is visible */

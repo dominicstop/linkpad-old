@@ -1066,10 +1066,10 @@ class ResultItem extends React.PureComponent {
 
   componentWillMount() {
     const { EVENTS } = CustomQuizExamResultQAScreen;
-    const { emitter } = this.props;
+    const { emitter, viewMode } = this.props;
 
     //subscribe to events
-    if(emitter){
+    if(emitter && viewMode == VIEW_MODES.CAROUSEL){
       emitter.addListener(
         EVENTS.onIndexChanged,
         this._handleOnIndexChanged
@@ -1078,6 +1078,7 @@ class ResultItem extends React.PureComponent {
   };
 
   _handleOnIndexChanged = ({index}) => {
+    const { EVENTS } = CustomQuizExamResultQAScreen;
     const { mount } = this.state;
     const props = this.props;
 
@@ -1085,6 +1086,9 @@ class ResultItem extends React.PureComponent {
     if(!mount && isFocused){
       this.setState({mount: true});
     };
+
+    //let handler = this._handleOnIndexChanged;
+    //props.emitter.removeListener(EVENTS.onIndexChanged, handler);
   };
 
   _renderHeder(){
@@ -1623,10 +1627,13 @@ export class CustomQuizExamResultQAScreen extends React.PureComponent {
     const { NAV_PARAMS } = CustomQuizExamResultQAScreen;
     const { navigation } = props;
 
-    this.emitter = new EventEmitter();
     //get data from prev. screen - quiz results
     const quizResults = navigation.getParam(NAV_PARAMS.quizResults, []);
     const itemIndex   = navigation.getParam(NAV_PARAMS.initIndex  , 0 );
+
+    //config emitter
+    this.emitter = new EventEmitter();
+    this.emitter.setMaxListeners(quizResults.length);
     
     this.state = {
       data: [],
@@ -1641,6 +1648,8 @@ export class CustomQuizExamResultQAScreen extends React.PureComponent {
   componentDidMount(){
     const { NAV_PARAMS } = CustomQuizExamResultQAScreen;
     const { navigation } = this.props;
+    const { viewMode } = this.state;
+
     //get data from prev. screen - quiz results
     const quizResults = navigation.getParam(NAV_PARAMS.quizResults, []);
     const itemIndex   = navigation.getParam(NAV_PARAMS.initIndex  , 0 );
@@ -1652,12 +1661,17 @@ export class CustomQuizExamResultQAScreen extends React.PureComponent {
         const QAStatsList = CustomQuizExamResultQAScreen.appendAnswerStats(QAList);
 
         //hide loading indicator
-        await this.container.fadeOutUp(400);
-        await setStateAsync(this, {data: QAStatsList, loading: LOAD_STATE.SUCCESS});
-        await timeout(1000);
-        this._carousel.triggerRenderingHack();
-        this._carousel.snapToItem (itemIndex, false, false);
-        await this.container.fadeInUp(400);
+        //await this.container.fadeOutUp(400);
+        
+        if(viewMode == VIEW_MODES.CAROUSEL){
+          await setStateAsync(this, {data: QAStatsList, loading: LOAD_STATE.LOADING});
+          await timeout(1000);
+          this._carousel.triggerRenderingHack();
+          this._carousel.snapToItem(itemIndex, false, false);
+
+        } else if(viewMode == VIEW_MODES.LIST){
+          await setStateAsync(this, {data: QAStatsList});
+        };
 
       } catch(error){
         this.setState({loading: LOAD_STATE.ERROR});
@@ -1699,6 +1713,11 @@ export class CustomQuizExamResultQAScreen extends React.PureComponent {
     this.emitter.emit(EVENTS.onIndexChanged, {index});
   };
 
+  _handleItemOnAnimationBegin = async () => {
+    await this.loading.fadeOutUp(300);
+    this.setState({loading: LOAD_STATE.SUCCESS});
+  };
+
   _keyExtractor = (item, index) => {
     return(item.questionID || index);
   };
@@ -1708,16 +1727,34 @@ export class CustomQuizExamResultQAScreen extends React.PureComponent {
     const { navigation } = this.props;
     const { totalResults, viewMode } = this.state;
     const { answerStats, scoreHistory, choicesCount, durations, totalDurations, answer, hasMatchedAnswer, question, questionID } = item;
-
+    
     const initIndex = navigation.getParam(NAV_PARAMS.initIndex, 0);
+    const style = {
+      ...(viewMode == VIEW_MODES.CAROUSEL && {flex: 1})
+    };
 
-    return(
+    return ((index == initIndex)?(
+      <Animatable.View
+        onAnimationBegin={this._handleItemOnAnimationBegin}
+        animation={'fadeInUp'}
+        delay={1000}
+        duration={500}
+        useNativeDriver={true}
+        {...{style}}
+      >
+        <ResultItem 
+          emitter={this.emitter}
+          //pass down items
+          {...{index, initIndex, viewMode, answerStats, scoreHistory, choicesCount, durations, totalDurations, answer, hasMatchedAnswer, question, questionID, totalResults}}
+        />
+      </Animatable.View>
+    ):(
       <ResultItem 
         emitter={this.emitter}
         //pass down items
         {...{index, initIndex, viewMode, answerStats, scoreHistory, choicesCount, durations, totalDurations, answer, hasMatchedAnswer, question, questionID, totalResults}}
       />
-    );
+    ));
   };
 
   _renderLoading(){
@@ -1726,13 +1763,21 @@ export class CustomQuizExamResultQAScreen extends React.PureComponent {
     if(!loading) return null;
 
     return (
-      <View style={styles.loadingContainer}>
+      <Animatable.View 
+        style={styles.loadingContainer}
+        ref={r => this.loading = r}
+        animation={'fadeInUp'}
+        duration={500}
+        useNativeDriver={true}
+      >
         <ActivityIndicator
           size={'small'}
           color={'white'}
         />
-        <Text style={styles.loadingText}>Loading</Text>
-      </View>
+        <Text style={styles.loadingText}>
+          {'Loading'}
+        </Text>
+      </Animatable.View>
     );
   };
 
@@ -1809,9 +1854,10 @@ export class CustomQuizExamResultQAScreen extends React.PureComponent {
           style={{opacity}}
           renderItem={this._renderItem}
           keyExtractor={this._keyExtractor}
+          initialNumToRender={3}
           //adjust top distance
-          contentInset ={{top: HEADER_HEIGHT}}
-          contentOffset={{x: 0, y: -HEADER_HEIGHT}}
+          contentInset ={{top: HEADER_HEIGHT + 10}}
+          contentOffset={{x: 0, y: -HEADER_HEIGHT + 10}}
           {...{data}}
         />
       );
@@ -1836,15 +1882,8 @@ export class CustomQuizExamResultQAScreen extends React.PureComponent {
   render(){
     return(
       <ViewWithBlurredHeader hasTabBar={false}>
-        <Animatable.View
-          ref={r => this.container = r}
-          animation={'fadeInUp'}
-          duration={500}
-          useNativeDriver={true}
-        >
-          {this._renderContents()}
-          {this._renderLoading ()}
-        </Animatable.View>
+        {this._renderContents()}
+        {this._renderLoading ()}
       </ViewWithBlurredHeader>
     );
   };
