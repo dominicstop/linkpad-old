@@ -51,7 +51,7 @@ export default class AuthLoadingScreen extends React.Component {
       if(isLoggedIn) await this._loadData();
 
       this.animateOut();
-      navigation.navigate(route);
+      navigation.navigate(ROUTES.TesterRoute);
 
     } catch(error) {
       Alert.alert(

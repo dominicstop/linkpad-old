@@ -209,6 +209,7 @@ export class DetailColumn extends React.PureComponent {
     help        : PropTypes.bool,
     helpTitle   : PropTypes.string,
     helpSubtitle: PropTypes.string,
+    disableGlow : PropTypes.bool,
     //styles
     titleStyle   : PropTypes.object,
     subtitleStyle: PropTypes.object,
@@ -260,6 +261,14 @@ export class DetailColumn extends React.PureComponent {
         },
       }),
     },
+    noGlow: {
+      shadowRadius: 0, 
+      shadowOpacity: 0,
+      shadowOffset:{  
+        width: 0,  
+        height: 0,  
+      }, 
+    },
   });
 
   _handleOnPress = () => {
@@ -302,6 +311,7 @@ export class DetailColumn extends React.PureComponent {
           },
         }),
       }),
+      ...(props.disableGlow && styles.noGlow),
     };
 
     return props.help? (
@@ -328,6 +338,10 @@ export class DetailColumn extends React.PureComponent {
 export class NumberIndicator extends React.PureComponent {
   static propTypes = {
     value: PropTypes.oneOfType([
+      PropTypes.number,
+      PropTypes.string,
+    ]),
+    suffix: PropTypes.oneOfType([
       PropTypes.number,
       PropTypes.string,
     ]),
@@ -369,7 +383,7 @@ export class NumberIndicator extends React.PureComponent {
 
   render(){
     const { styles } = NumberIndicator;
-    const { size, value, color, initFontSize, diffFontSize, adjustFontSize } = this.props;
+    const { size, value, suffix, color, initFontSize, diffFontSize, adjustFontSize } = this.props;
     
     const length = (value + '').length - 1;
     const textStyle = {
@@ -391,7 +405,7 @@ export class NumberIndicator extends React.PureComponent {
           numberOfLines={1}
           style={[styles.text, textStyle, this.props.textStyle]}
         >
-          {value}
+          {value + (suffix || '')}
         </Text>
       </View>
     );

@@ -47,6 +47,7 @@
     "react-native-super-grid": "^3.0.4",
     "react-native-svg-charts": "^5.2.0",
     "react-native-swiper": "^1.5.13",
+    "react-native-tab-view": "^2.5.0",
     "react-native-timeago": "^0.4.0",
     "react-navigation": "^2.13.0",
     "react-navigation-backhandler": "^1.1.1",

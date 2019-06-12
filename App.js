@@ -12,6 +12,7 @@ import { ROUTES } from './src/Constants';
 import { DrawerStackContainer         } from './src/screens/Drawer';
 import { PracticeExamStackContainer   } from './src/screens/PracticeExamScreen';
 import { CustomQuizExamStackContainer } from './src/screens/CustomQuizExamScreen';
+import { TestScreen                   } from './src/screens/TestScreen';
 
 import AuthLoadingScreen from './src/screens/AuthLoadingScreen';
 import AuthScreen        from './src/screens/AuthScreen';
@@ -40,6 +41,7 @@ const AppStack = createStackNavigator({
     [ROUTES.HomeRoute           ]: DrawerStackContainer,
     [ROUTES.PracticeExamRoute   ]: PracticeExamStackContainer,
     [ROUTES.CustomQuizExamScreen]: CustomQuizExamStackContainer,
+    [ROUTES.TesterRoute         ]: TestScreen,
   },{
     headerMode: 'hidden',
     initialRouteName: ROUTES.HomeRoute,
@@ -80,7 +82,7 @@ export const RootNavigator = createSwitchNavigator({
 export default class App extends React.Component {
   static router = RootNavigator.router;
 
-  componentDidMount(){
+  async componentDidMount(){
     StatusBar.setBarStyle('light-content');
   };
 
