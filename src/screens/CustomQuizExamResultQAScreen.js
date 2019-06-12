@@ -1447,7 +1447,7 @@ class ResultItem extends React.PureComponent {
     switch (viewMode) {
       case VIEW_MODES.LIST: return (
         <Card>
-          {this._renderHeder()}
+          {this._renderHeder  ()}
           {this._renderContent()}
         </Card>
       );

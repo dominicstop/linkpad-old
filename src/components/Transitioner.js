@@ -3,6 +3,7 @@ import { View, LayoutAnimation, ScrollView, ViewPropTypes, Text, TouchableOpacit
 import PropTypes from 'prop-types';
 
 import Animated, { Easing } from 'react-native-reanimated';
+import { timeout } from '../functions/Utils';
 const { set, cond, block, add, Value, timing, interpolate, and, or, onChange, eq, call, Clock, clockRunning, startClock, stopClock, concat, color, divide, multiply, sub, lessThan, abs, modulo, round, debug, clock } = Animated;
 
 
@@ -24,7 +25,9 @@ export class TransitionAB extends React.PureComponent {
   constructor(props){
     super(props);
 
-    this.progress = new Value(0);
+    const showLastFirst = props.showLastFirst;
+
+    this.progress = new Value(showLastFirst? 100 : 0);
     //final height for each trans item
     this.heightA = new Value(-1);
     this.heightB = new Value(-1);
@@ -47,21 +50,55 @@ export class TransitionAB extends React.PureComponent {
 
     this.layoutHeightA = -1;
     this.layoutHeightB = -1;
-    this.inital = false;
+    this.inital = showLastFirst;
+
+    this.state = {
+      mountA: true,
+      mountB: true,
+    };
   };
 
-  transition(inital){
+  async transition(inital){
+    const { handlePointerEvents, onTransition } = this.props;
+
     if(this.inital != inital){
       const config = {
         duration: 300,
         toValue : this.inital? 0 : 100,
         easing  : Easing.inOut(Easing.ease),
       };
+
+      handlePointerEvents && this.setState({
+        mountA: true,
+        mountB: true,
+      });
   
       //start animation
       const animation = timing(this.progress, config);
       animation.start();
       this.inital = !this.inital;
+
+      //call callback
+      onTransition && onTransition(this.inital);
+
+      if(handlePointerEvents){
+        await timeout(300);
+        this.setState({
+          mountA: !inital,
+          mountB:  inital,
+        });
+      };
+    };
+  };
+
+  async componentDidMount(){
+    const { handlePointerEvents, showLastFirst } = this.props;
+    if(handlePointerEvents){
+      await timeout(250);
+      this.setState({
+        mountA: !showLastFirst,
+        mountB:  showLastFirst,
+      });
     };
   };
 
@@ -83,7 +120,7 @@ export class TransitionAB extends React.PureComponent {
 
   render(){
     const { styles } = TransitionAB;
-    const { children } = this.props;
+    const { mountA, mountB } = this.state;
     const props = this.props
 
     const containerStyle = {
@@ -100,12 +137,12 @@ export class TransitionAB extends React.PureComponent {
       <Animated.View style={[styles.container, containerStyle, props.containerStyle]}>
         <Animated.View style={[styles.transContainer, transAStyle]}>
           <View onLayout={this._handleOnLayoutA}>
-            {children[0]}
+            {mountA && props.children[0]}
           </View>
         </Animated.View>
         <Animated.View style={[styles.transContainer, transBStyle]}>
           <View onLayout={this._handleOnLayoutB}>
-            {children[1]}
+            {mountB && props.children[1]}
           </View>
         </Animated.View>
       </Animated.View>

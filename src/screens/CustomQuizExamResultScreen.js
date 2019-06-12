@@ -28,6 +28,7 @@ import { QuestionItem } from '../models/ModuleModels';
 import { PlatformTouchableIconButton } from '../components/Buttons';
 import { CustomQuizExamResultQAScreen } from './CustomQuizExamResultQAScreen';
 const { set, cond, block, Value, timing, interpolate, and, or, onChange, eq, call, Clock, clockRunning, startClock, stopClock, debug, divide, multiply } = Animated;
+import { TabView, SceneMap } from 'react-native-tab-view';
 
 //declare animations
 Animatable.initializeRegistryWithDefinitions({
@@ -919,15 +920,13 @@ class ScoreProgressCard extends React.PureComponent {
 
   _renderChart() {
     const { MODE } = ScoreProgressCard;
-    const { showRecent, mountChart } = this.state;
+    const { showRecent, mountChart, showSwitch } = this.state;
     if(!mountChart) return null;
 
-    const items = this.correctData.length;
-
+    
     const { data } = this.getStateFromMode();
-
+    const items = data.length;
     const contentInset = { top: 20, bottom: 20 };
-    const bandwidth = 50;
 
     const Gradient = () => (
       <Defs key={'gradient'}>
@@ -942,7 +941,11 @@ class ScoreProgressCard extends React.PureComponent {
     
     const chartStyle = {
       flex: 1, 
-      width: showRecent? null : (screenWidth - 80) + (10 * items)      
+      width: (
+        !showSwitch? items * 15 :
+        showRecent? null : 
+        (screenWidth - 80) + (10 * items)
+      )    
     };
 
     return (
@@ -1536,7 +1539,20 @@ export class CustomQuizExamResultScreen extends React.Component {
   });
 
   static NAV_PARAMS = {
-
+    /** bool - save result upon navigating, false equals viewing only */
+    saveResult: 'saveResult',
+    /** array - questions + answers */
+    questionAnswersList: 'questionAnswersList',
+    /** obj - correct, incorrect etc. */
+    results: 'results',
+    /** obj - min, max, avg. etc. */
+    timeStats: 'timeStats',
+    /** timestamp started */
+    startTime: 'startTime',
+    /** timestamp ended */
+    endTime: 'endTime',
+    /** obj - custom quiz data */
+    quiz: 'quiz',
   };
 
   static matchQuestionsWithAnswers(questions, answers, durations){
@@ -1615,19 +1631,18 @@ export class CustomQuizExamResultScreen extends React.Component {
 
     const { navigation } = props;
     //get data from previous screen: CustomQuizExamScreen
-    const questionList       = navigation.getParam('questionList', []);
-    const questionsRemaining = navigation.getParam('questions'   , []);
-    const durations          = navigation.getParam('durations'   , []);
-    const answers            = navigation.getParam('answers'     , []);
+    const questionList       = navigation.getParam('questionList', []); //
+    const questionsRemaining = navigation.getParam('questions'   , []); //
+    const durations          = navigation.getParam('durations'   , []); //
+    const answers            = navigation.getParam('answers'     , []); //
     //store data from prev. screen
-    this.timeStats = navigation.getParam('timeStats', null);
-    this.startTime = navigation.getParam('startTime', null);
-    this.endTime   = navigation.getParam('endTime'  , null);
+    this.timeStats = navigation.getParam('timeStats', null); //
+    this.startTime = navigation.getParam('startTime', null); //
+    this.endTime   = navigation.getParam('endTime'  , null); //
     this.quiz      = navigation.getParam('quiz'     , null);
 
     //combine questionList and questionsRemaining
     const questions = [...questionList, ...questionsRemaining];
-    this.questions = questions;
 
     //combine answers and duration with each question - used for showing the list of questions answered
     const questionAnswersList = CustomQuizExamResultScreen.matchQuestionsWithAnswers(questions, answers, durations);
