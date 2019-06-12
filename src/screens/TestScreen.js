@@ -25,6 +25,8 @@ import { setStateAsync, timeout } from '../functions/Utils';
 /**
  * [x] TODO: refactor mode % 2 - move to longpresshandler
  * [ ] TODO: add animation to header when changing between selected chart items 
+ * [x] TODO: add tooltip to CorrectTab bar graph
+ * [ ] TODO: add button to header to switch/toggle betw. modes using Modal/Picker
  */
 
 //#region ------ SHARED CHART FUNC/CONST ------
@@ -178,6 +180,31 @@ const CorrectLine = ({ line }) => (
   />
 );
 
+const XYGrid = ({ x, y, data, ticks }) => (
+  <G>
+      {ticks.map(tick => (
+        <Line
+          key={ tick }
+          x1={ '0%' }
+          x2={ '100%' }
+          y1={ y(tick) }
+          y2={ y(tick) }
+          stroke={ 'rgba(0,0,0,0.1)' }
+        />
+      ))}
+      {data.map((_, index) => (
+        <Line
+          key={ index }
+          y1={ '0%' }
+          y2={ '100%' }
+          x1={ x(index) }
+          x2={ x(index) }
+          stroke={ 'rgba(0,0,0,0.1)' }
+        />
+      ))}
+  </G>
+);
+
 /** CorrectTab - line chart: circular indicators */
 const CorrectLineDecorator = ({ x, y, data, onPress, onLongPress, selectedIndex }) => {
   return data.map((value, index) => {
@@ -213,6 +240,40 @@ const CorrectLineDecorator = ({ x, y, data, onPress, onLongPress, selectedIndex 
     );
   });
 };
+
+/** CorrectTab - bar chart: circular tooltip indicator */
+const CorrectBarToolTip = ({ x, y, height, width, data, selectedIndex }) => {
+  const radius = 6;
+  const items = data.length;
+  const bandwidth = (width / items);
+
+  const { value, extraData } = data[selectedIndex];
+  //0 = top, height = bottom
+  const upperBounds = (radius * 2) + 10;
+  const lowerBounds = (height - upperBounds);
+
+  const yPos = (
+    y(value) > lowerBounds? lowerBounds :
+    y(value) < upperBounds? upperBounds : y(value)
+  );
+
+  return (
+    <G
+      x={ x(selectedIndex) + (bandwidth/2) }
+      key={ 'tooltip' }
+      //onPress={() => {}}
+    > 
+      <Circle
+        y={yPos}
+        r={radius}
+        stroke={GREEN[900]}
+        strokeWidth={ 2 }
+        fill={ 'white' }
+      />
+    </G>
+  );
+};
+
 //#endregion ------ 
 
 //#region ------ STYLED COMPONENTS ------ 
@@ -344,6 +405,7 @@ class SummaryTab extends React.PureComponent {
 
   _handleOnLongPressBar = async () => {
     const { mode } = this.state;
+    const nextMode = ((mode + 1) % 2);
 
     //hide chart, mount/show loading
     await Promise.all([
@@ -352,7 +414,7 @@ class SummaryTab extends React.PureComponent {
     ]);
 
     //change chart
-    await setStateAsync(this, {mode: (mode + 1 % 2)});
+    await setStateAsync(this, {mode: nextMode});
     await timeout(300);
 
     //hide loading, show chart
@@ -407,8 +469,8 @@ class SummaryTab extends React.PureComponent {
 
     const { CORRECT, WRONG, SKIPPED } = TYPES;
     const keys = (
-      (mode == 0)? [ CORRECT, WRONG   , SKIPPED] :
-      (mode == 1)? [ WRONG   , CORRECT, SKIPPED] : null
+      (mode == 0)? [ CORRECT, WRONG  , SKIPPED] :
+      (mode == 1)? [ WRONG  , CORRECT, SKIPPED] : null
     );
 
     const { width } = Dimensions.get('screen');
@@ -692,7 +754,7 @@ class CorrectTab extends React.PureComponent {
 
   _renderChart(){
     const { MODES } = CorrectTab;
-    const { showRecent, selectedIndex, mode } = this.state;
+    const { showRecent, selected, selectedIndex, mode } = this.state;
 
     const data = (showRecent
       ? this.data.slice(-10)
@@ -744,7 +806,7 @@ class CorrectTab extends React.PureComponent {
             yAccessor={({item}) => item[TYPES.CORRECT].value}
             {...sharedChartProps}
           >
-            <Grid/>
+            <XYGrid/>         
             <CorrectLine/>
             <CorrectGradient/>
             <CorrectLineDecorator 
@@ -762,7 +824,8 @@ class CorrectTab extends React.PureComponent {
             yAccessor={({item}) => item.value}
             {...sharedChartProps}
           >
-            <Grid/>
+            <Grid/>         
+            {selected && <CorrectBarToolTip {...{selectedIndex}}/>}
             <CorrectGradient/>
           </BarChart>
           <XAxis
