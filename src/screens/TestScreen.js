@@ -23,7 +23,8 @@ import { NumberIndicator, DetailColumn, DetailRow } from '../components/StyledCo
 import { setStateAsync, timeout } from '../functions/Utils';
 
 /**
- * [x] todo: refactor mode % 2 - move to longpresshandler
+ * [x] TODO: refactor mode % 2 - move to longpresshandler
+ * [ ] TODO: add animation to header when changing between selected chart items 
  */
 
 //#region ------ SHARED CHART FUNC/CONST ------
@@ -67,9 +68,9 @@ const TAB_ROUTES = {
 };
 
 const TYPES = { 
-  CORRECT: 'CORRECT',
-  SKIPPED : 'SKIPPED' ,
-  WRONG   : 'WRONG'   ,
+  CORRECT: 'CORRECT' ,
+  SKIPPED: 'SKIPPED' ,
+  WRONG  : 'WRONG'   ,
 };
 
 const CONSTANTS = {
@@ -92,7 +93,7 @@ const CONSTANTS = {
   },
 };
 
-function stackItem({type, value, extraData, onPress, onLongPress, addOnPress, addFill}){
+const stackItem = ({type, value, extraData, onPress, onLongPress, addOnPress, addFill}) => {
   //colors
   const colorsRed   = Chroma.scale([RED  .A700, RED  .A400]).colors(100);
   const colorsGreen = Chroma.scale([GREEN.A700, GREEN.A400]).colors(100);
@@ -127,13 +128,9 @@ const StackedToolTip = ({ x, y, height, width, data, selectedIndex }) => {
   const items = data.length;
   const bandwidth = (width / items);
 
-  const { CORRECT, WRONG, SKIPPED } = data[selectedIndex];
-  const totalItems = CORRECT.value + WRONG.value + SKIPPED.value;
-  const total = CORRECT.value + WRONG.value;
-  const score = (total / totalItems);
-
-  //compute height based on score
-  const yComputed = (height - (height * score)) + (radius/2);
+  const { CORRECT, WRONG } = data[selectedIndex];
+  //compute y pos based on score
+  const yComputed = y(CORRECT.value + WRONG.value);
 
   //0 = top, height = bottom
   const upperBounds = (radius * 2) + 10;
@@ -253,9 +250,9 @@ class SummaryTab extends React.PureComponent {
       const { correct, incorrect, unaswered } = result.results;
 
       const sharedParams= {
-        extraData   : {...result}, 
-        onPress    : () => {this._handleOnPressBar    ()}, 
-        onLongPress: () => {this._handleOnLongPressBar()}, 
+        extraData  : {...result}, 
+        onPress    : this._handleOnPressBar    , 
+        onLongPress: this._handleOnLongPressBar, 
         addOnPress : true,
         addFill    : true,
       };
@@ -392,7 +389,7 @@ class SummaryTab extends React.PureComponent {
     });
 
     this.setState({
-      selected: sameItem? null : next,
+      selected     : sameItem? null : next,
       selectedIndex: match,
     });
   };
