@@ -23,7 +23,7 @@ import { NumberIndicator, DetailColumn, DetailRow } from '../components/StyledCo
 import { setStateAsync, timeout } from '../functions/Utils';
 
 /**
- * todo: refactor mode % 2 - move to longpresshandler
+ * [x] todo: refactor mode % 2 - move to longpresshandler
  */
 
 //#region ------ SHARED CHART FUNC/CONST ------
@@ -67,7 +67,7 @@ const TAB_ROUTES = {
 };
 
 const TYPES = { 
-  CORRRECT: 'CORRRECT',
+  CORRECT: 'CORRECT',
   SKIPPED : 'SKIPPED' ,
   WRONG   : 'WRONG'   ,
 };
@@ -109,7 +109,7 @@ function stackItem({type, value, extraData, onPress, onLongPress, addOnPress, ad
         }),  
         ...(addFill && {
           fill: (
-            (type == TYPES.CORRRECT)? colorsGreen[value - 1] :
+            (type == TYPES.CORRECT)? colorsGreen[value - 1] :
             (type == TYPES.WRONG   )? colorsRed  [value - 1] :
             (type == TYPES.SKIPPED )? 'rgba(0, 0, 0, 0)'     : null
           ),
@@ -127,9 +127,9 @@ const StackedToolTip = ({ x, y, height, width, data, selectedIndex }) => {
   const items = data.length;
   const bandwidth = (width / items);
 
-  const { CORRRECT, WRONG, SKIPPED } = data[selectedIndex];
-  const totalItems = CORRRECT.value + WRONG.value + SKIPPED.value;
-  const total = CORRRECT.value + WRONG.value;
+  const { CORRECT, WRONG, SKIPPED } = data[selectedIndex];
+  const totalItems = CORRECT.value + WRONG.value + SKIPPED.value;
+  const total = CORRECT.value + WRONG.value;
   const score = (total / totalItems);
 
   //compute height based on score
@@ -184,7 +184,7 @@ const CorrectLine = ({ line }) => (
 /** CorrectTab - line chart: circular indicators */
 const CorrectLineDecorator = ({ x, y, data, onPress, onLongPress, selectedIndex }) => {
   return data.map((value, index) => {
-    const { value: correctValue, extraData } = value[TYPES.CORRRECT];
+    const { value: correctValue, extraData } = value[TYPES.CORRECT];
     const isActive = (selectedIndex == index);
 
     const radius = isActive? 7 : 4.5;
@@ -199,7 +199,7 @@ const CorrectLineDecorator = ({ x, y, data, onPress, onLongPress, selectedIndex 
     //onpress callback params
     const params = {
       value, 
-      type: TYPES.CORRRECT, 
+      type: TYPES.CORRECT, 
       ...(extraData || {}),
     };
   
@@ -254,14 +254,14 @@ class SummaryTab extends React.PureComponent {
 
       const sharedParams= {
         extraData   : {...result}, 
-        onPress    : this._handleOnPressBar, 
-        onLongPress: this._handleOnLongPressBar, 
+        onPress    : () => {this._handleOnPressBar    ()}, 
+        onLongPress: () => {this._handleOnLongPressBar()}, 
         addOnPress : true,
         addFill    : true,
       };
 
       return {
-        ...stackItem({type: TYPES.CORRRECT, value: correct  , ...sharedParams}),
+        ...stackItem({type: TYPES.CORRECT , value: correct  , ...sharedParams}),
         ...stackItem({type: TYPES.WRONG   , value: incorrect, ...sharedParams}),
         ...stackItem({type: TYPES.SKIPPED , value: unaswered, ...sharedParams}),
       };
@@ -355,7 +355,7 @@ class SummaryTab extends React.PureComponent {
     ]);
 
     //change chart
-    await setStateAsync(this, {mode: mode + 1});
+    await setStateAsync(this, {mode: (mode + 1 % 2)});
     await timeout(300);
 
     //hide loading, show chart
@@ -386,7 +386,7 @@ class SummaryTab extends React.PureComponent {
     );
 
     const match = data.findIndex(item => {
-      const correct = item[TYPES.CORRRECT];
+      const correct = item[TYPES.CORRECT];
       const result = CustomQuizResultItem.wrap(correct.extraData);
       return (result.endTime == next.endTime);
     });
@@ -408,11 +408,10 @@ class SummaryTab extends React.PureComponent {
     const items = data.length;
     const colors = [ RED.A700, GREEN.A700, ];
 
-    const { CORRRECT, WRONG, SKIPPED } = TYPES;
-    const MODE = (mode % 2);
+    const { CORRECT, WRONG, SKIPPED } = TYPES;
     const keys = (
-      (MODE == 0)? [ CORRRECT, WRONG   , SKIPPED] :
-      (MODE == 1)? [ WRONG   , CORRRECT, SKIPPED] : null
+      (mode == 0)? [ CORRECT, WRONG   , SKIPPED] :
+      (mode == 1)? [ WRONG   , CORRECT, SKIPPED] : null
     );
 
     const { width } = Dimensions.get('screen');
@@ -498,7 +497,10 @@ class SummaryTab extends React.PureComponent {
 };
 
 class CorrectTab extends React.PureComponent {
-  static MODES = 2;
+  static MODES = {
+    'CHART_LINE': 0,
+    'CHART_BAR' : 1,
+  };
 
   constructor(props){
     super(props);
@@ -536,12 +538,11 @@ class CorrectTab extends React.PureComponent {
     const { MODES } = CorrectTab;
     const { results } = this.props.screenProps;
     const quiz_results = CustomQuizResultItem.wrapArray(results);
-    const MODE = (mode % MODES);
     
     return quiz_results.map(result => {
       const { correct, incorrect, unaswered } = result.results;
 
-      if(MODE == 0){
+      if(mode == MODES.CHART_LINE){
         const sharedParams = {
           extraData : {...result},
           addOnPress: false,
@@ -549,14 +550,14 @@ class CorrectTab extends React.PureComponent {
         };
 
         return {
-          ...stackItem({type: TYPES.CORRRECT, value: correct  , ...sharedParams}),
+          ...stackItem({type: TYPES.CORRECT, value: correct  , ...sharedParams}),
           ...stackItem({type: TYPES.WRONG   , value: incorrect, ...sharedParams}),
           ...stackItem({type: TYPES.SKIPPED , value: unaswered, ...sharedParams}),
         };
 
-      } else if(MODE == 1){
+      } else if(mode == MODES.CHART_BAR){
         const params = {
-          type : TYPES.CORRRECT, 
+          type : TYPES.CORRECT, 
           value: correct       ,
           //pass down extra data
           ...(result || {}),
@@ -631,10 +632,9 @@ class CorrectTab extends React.PureComponent {
   };
 
   _handleOnPressItem = (resultItem) => {
-    const { MODES } = CorrectTab;
     const { EVENTS } = StatsCard;
+    const { MODES } = CorrectTab;
     const { selected, showRecent, mode } = this.state;
-    const MODE = (mode % MODES);
     
     if(this.emitter){
       this.emitter.emit(EVENTS.onPressChartItem, resultItem); 
@@ -652,8 +652,8 @@ class CorrectTab extends React.PureComponent {
 
     const match = data.findIndex(item => {
       const result = CustomQuizResultItem.wrap(
-        (MODE == 0)? item[TYPES.CORRRECT].extraData :
-        (MODE == 1)? item.extraData                 : null
+        (mode == MODES.CHART_LINE)? item[TYPES.CORRECT].extraData :
+        (mode == MODES.CHART_BAR )? item.extraData                : null
       );
 
       return (result.endTime == next.endTime);
@@ -666,8 +666,11 @@ class CorrectTab extends React.PureComponent {
   };
 
   _handleOnLongPressItem = async () => {
+    const { MODES } = CorrectTab;
     const { mode } = this.state;
-    const nextMode = (mode + 1);
+
+    const modes = Object.keys(MODES).length;
+    const nextMode = ((mode + 1) % modes);
 
     //hide chart, mount/show loading
     await Promise.all([
@@ -691,6 +694,7 @@ class CorrectTab extends React.PureComponent {
   };
 
   _renderChart(){
+    const { MODES } = CorrectTab;
     const { showRecent, selectedIndex, mode } = this.state;
 
     const data = (showRecent
@@ -734,14 +738,13 @@ class CorrectTab extends React.PureComponent {
       ...{data},
     };
 
-    const MODE = (mode % 2);
     return (
-      (MODE == 0)? (
+      (mode == MODES.CHART_LINE)? (
         <TouchableOpacity {...buttonProps}>
           <AreaChart
             svg={{ fill: 'url(#gradient)' }}
             curve={shape.curveNatural}
-            yAccessor={({item}) => item[TYPES.CORRRECT].value}
+            yAccessor={({item}) => item[TYPES.CORRECT].value}
             {...sharedChartProps}
           >
             <Grid/>
@@ -755,7 +758,7 @@ class CorrectTab extends React.PureComponent {
           </AreaChart>
           <XAxis {...sharedXAxisProps}/>
         </TouchableOpacity>
-      ):(MODE == 1)? (
+      ):(mode == MODES.CHART_BAR)? (
         <TouchableOpacity {...buttonProps}>
           <BarChart
             svg={{strokeWidth: 2, fill: 'url(#gradient)'}}
@@ -765,6 +768,10 @@ class CorrectTab extends React.PureComponent {
             <Grid/>
             <CorrectGradient/>
           </BarChart>
+          <XAxis
+            scale={scale.scaleBand}
+            {...sharedXAxisProps}  
+          />
         </TouchableOpacity>
       ):(null)
     );
