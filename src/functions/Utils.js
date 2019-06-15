@@ -257,4 +257,26 @@ export function countOccurences(item = '', items = []){
 
 function lerp(a, b, n) {
   return (1 - n) * a + n * b;
-}
+};
+
+function call(callback){
+  return callback && callback();
+};
+
+function SWITCH(condition, mapping){
+  /** EX: USAGE
+    const test = SWITCH(mode, {
+      [ENUM.VALUE_A]: () => {
+        const a = 1 + 1;
+        return 'some_value';
+      },
+      [ENUM.VALUE_B]: () => {
+        const a = 1 + 1;
+        return 'some_value';
+      },
+      ['DEFAULT']: () => {
+        return null;
+      }
+    }); 
+  */
+};
