@@ -5,16 +5,17 @@ import { StyleSheet, View, Text, Platform, TouchableOpacity, Alert } from 'react
 import PropTypes from 'prop-types';
 
 import * as Animatable from 'react-native-animatable';
-import { BlurView } from 'expo';
+import { BlurView, LinearGradient } from 'expo';
 import { isIphoneX } from 'react-native-iphone-x-helper';
 
 import { Icon, } from 'react-native-elements';
-import { FONT_STYLES, FONT_NAMES } from '../Constants';
-import { PURPLE, GREY, RED, BLUE, } from '../Colors';
+import { FONT_STYLES, FONT_NAMES, STYLES } from '../Constants';
+import { PURPLE, GREY, RED, BLUE, INDIGO } from '../Colors';
 import { IconButton } from './Buttons';
 import { ContentExpander } from './Expander';
 
 import Animated, { Easing } from 'react-native-reanimated';
+import PlatformTouchable from './Touchable';
 const { Value, interpolate, concat, set, onChange } = Animated;
 
 /** renders View on android */
@@ -780,6 +781,226 @@ export const ExpanderHeader = (props) => {
   );
 };
 
-export class TapToCycleText extends React.PureComponent {
+class TapToCycleText extends React.PureComponent {
 
+};
+
+
+export class PlatformButton extends React.PureComponent {
+  static propTypes = {
+    //content
+    title   : PropTypes.string,
+    subtitle: PropTypes.string,
+    //options - config/customize
+    customContent: PropTypes.bool  ,
+    showChevron  : PropTypes.bool  ,
+    showIcon     : PropTypes.bool  ,
+    alignment    : PropTypes.string,
+    //options - colors related
+    fgColor      : PropTypes.string,
+    bgColor      : PropTypes.string,
+    reverseColors: PropTypes.bool  ,
+    //options - gradient related
+    gradientColors: PropTypes.array,
+    isBgGradient  : PropTypes.bool,
+    gradientProps : PropTypes.object,
+    //options - style adj/shortcuts
+    iconDistance: PropTypes.number,
+    borderRadius: PropTypes.number,
+    addShadow   : PropTypes.bool  ,
+    //icon related props
+    iconContainerStyle: PropTypes.string,
+    iconName          : PropTypes.string,
+    iconType          : PropTypes.string,
+    iconSize          : PropTypes.number,
+    //style props
+    containerStyle: PropTypes.object,
+    textStyle: PropTypes.object,
+    subtitleStyle: PropTypes.object,
+    titleStyle: PropTypes.object,
+    subtitleStyle: PropTypes.object,
+    middleContainerStyle: PropTypes.object,
+  };
+
+  static defaultProps = {
+    //options
+    customContent: false,
+    showChevron  : false,
+    showIcon     : true ,
+    //options - colors related
+    fgColor      : 'white'    ,
+    bgColor      : PURPLE.A700,
+    reverseColors: false      ,
+    //options - gradient related
+    isBgGradient  : false,
+    gradientColors: [PURPLE.A700, INDIGO.A700],
+    //options - style adj/shortcuts
+    iconDistance: 7,
+    borderRadius: 12,
+    addShadow: true,
+  };
+
+  static ALIGNMENT = {
+    'CENTER' : 'CENTER' ,
+    'LEFT'   : 'LEFT'   ,
+    'RIGHT'  : 'RIGHT'  ,
+  };
+
+  static styles = StyleSheet.create({
+    container: {
+      margin: 10,
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingVertical: 9,
+      paddingHorizontal: 14,
+    },
+    middleContainer: {
+    },
+    gradient: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingVertical: 9,
+      paddingHorizontal: 14,
+    },
+    title: {
+      fontSize: 17,
+      fontWeight: '600',
+    },
+  });
+
+  getAlignment(){
+    const { ALIGNMENT } = PlatformButton;
+    const { showChevron, showIcon, subtitle, alignment } = this.props;
+
+    return(
+      showChevron? ALIGNMENT.STRETCH :
+      subtitle   ? ALIGNMENT.LEFT    :
+      alignment  ? alignment         :
+      showIcon   ? ALIGNMENT.CENTER  : ALIGNMENT.LEFT
+    );
+  };
+
+  _renderMiddle(){
+    const { styles, ALIGNMENT } = PlatformButton;
+    const { title, subtitle, ...props } = this.props;
+
+    const alignment = this.getAlignment();
+    const middleContainerStyle = {
+      ...((props.showChevron || alignment == ALIGNMENT.LEFT) && {
+        flex: 1,
+      }),
+    };
+
+    const textStyle = {
+      color: props.fgColor,
+    };
+    
+    return props.customContent? (
+      props.children
+    ): subtitle? (
+      <View style={[styles.middleContainer, middleContainerStyle, props.middleContainerStyle]}>
+        <Text style={[styles.title, textStyle, props.titleStyle]}>
+          {title}
+        </Text>
+        <Text style={[styles.subtitle, textStyle, props.subtitleStyle]}>
+          {subtitle}
+        </Text>
+      </View>
+    ):(
+      <Text style={[styles.title, textStyle, middleContainerStyle, props.titleStyle]}>
+        {title}
+      </Text>
+    );
+  };
+
+
+  _renderContent(){
+    const { styles, ALIGNMENT } = PlatformButton;
+    const { ...props } = this.props;
+
+    const alignment = this.getAlignment();
+    const iconContainerStyle = {
+      marginRight: props.iconDistance,
+      ...(alignment == ALIGNMENT.RIGHT && {
+        flex: 1,
+      }),
+    };
+
+    return(
+      <Fragment>
+        {props.showIcon && <Icon
+          containerStyle={[props.iconContainerStyle, iconContainerStyle]}
+          //pass down icon props
+          name ={props.iconName}
+          type ={props.iconType}
+          color={props.fgColor }
+          size ={props.iconSize}
+        />}
+        {this._renderMiddle()}
+        {props.showChevron && <Icon
+          containerStyle={[props.iconContainerStyle, iconContainerStyle]}
+          //pass down icon props
+          name ={'chevron-right'}
+          type ={'feather'}
+          color={props.fgColor }
+          size ={props.iconSize}
+        />}
+      </Fragment>
+    );
+  };
+
+  render(){
+    const { ALIGNMENT } = PlatformButton;
+    const { styles } = PlatformButton;
+    const props = this.props;
+    
+    const alignment = this.getAlignment();
+    const containerStyle = {
+      backgroundColor: props.bgColor,
+      borderRadius   : props.borderRadius,
+      ...( props.addShadow     && STYLES.mediumShadow),
+      ...(!props.isBgGradient  && styles.container   ),
+      ...(!props.customContent && {
+        justifyContent: (
+          alignment == ALIGNMENT.CENTER? 'center'     :
+          alignment == ALIGNMENT.LEFT  ? 'flex-start' :
+          alignment == ALIGNMENT.RIGHT ? 'flex-end'   : null
+        ),
+      }),
+    };
+
+    const CONTENT = (props.isBgGradient? (
+      <LinearGradient
+        style={[styles.gradient, containerStyle]}
+        colors={props.gradientColors}
+        start={{ x: 0, y: 1 }}
+        end  ={{ x: 1, y: 1 }}
+        {...props.gradientProps}
+      >
+        {this._renderContent()}
+      </LinearGradient>
+    ):(
+      this._renderContent())
+    );
+    
+    return Platform.select({
+      ios: (
+        <TouchableOpacity 
+          style={[containerStyle, props.containerStyle]}
+          activeOpacity={0.8}
+          {...props}
+        >
+          {CONTENT}
+        </TouchableOpacity>
+      ),
+      android: (
+        <PlatformTouchable 
+          style={[containerStyle, props.containerStyle]}
+          {...props}
+        >
+          {CONTENT}
+        </PlatformTouchable>
+      ),
+    });
+  };
 };

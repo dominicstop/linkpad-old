@@ -1,5 +1,5 @@
-import React, {Fragment} from 'react';
-import { Text, View, ScrollView, Dimensions, StyleSheet, Switch, TouchableOpacity, ActivityIndicator, Clipboard, Platform } from 'react-native';
+import React, { Fragment, Children } from 'react';
+import { Text, View, ScrollView, Dimensions, StyleSheet, Switch, TouchableOpacity, ActivityIndicator, Clipboard, Platform, TouchableWithoutFeedback } from 'react-native';
 import PropTypes from 'prop-types';
 import EventEmitter from 'events';
 
@@ -14,12 +14,14 @@ import { createMaterialTopTabNavigator, NavigationEvents } from 'react-navigatio
 import { Divider, Icon } from 'react-native-elements';
 import * as shape from 'd3-shape';
 
+import { Portal } from 'react-native-paper';
+
 import { TransitionAB } from '../components/Transitioner';
 import { GREEN, RED, PURPLE, GREY, BLUE, LIGHT_GREEN } from '../Colors';
 import { CustomQuiz } from '../functions/CustomQuizStore';
 import { CustomQuizResultItem } from '../functions/CustomQuizResultsStore';
-import { Card } from '../components/Views';
-import { NumberIndicator, DetailColumn, DetailRow } from '../components/StyledComponents';
+import { Card, IconText } from '../components/Views';
+import { NumberIndicator, DetailColumn, DetailRow, BlurViewWrapper, PlatformButton, ModalTitle } from '../components/StyledComponents';
 import { setStateAsync, timeout } from '../functions/Utils';
 
 /**
@@ -27,11 +29,12 @@ import { setStateAsync, timeout } from '../functions/Utils';
  * [x] TODO: add tooltip to CorrectTab bar graph
  * [x] TODO: add stacked chart mode to Summary tab
  * [x] TODO: add tooltip to stacked chart mode to Summary tab
+ * [-] TODO: add button to header to switch/toggle betw. modes using Modal/Picker
  * [ ] TODO: add animation to header when changing between selected chart items 
  * [ ] TODO: implement long press summary tab to toggle mode
  * [ ] TODO: implement header details change based on active tab
- * [ ] TODO: add button to header to switch/toggle betw. modes using Modal/Picker
  * [ ] FIX : fix indicator and header selected state getting out of sync
+ * [ ] FIX : fix yaxis/incorrect in summarytab being inconsintent between modes
  */
 
 //#region ------ SHARED CHART FUNC/CONST ------
@@ -169,10 +172,11 @@ const StackedBarToolTip = ({ x, y, height, width, data, selectedIndex }) => {
 /** SummaryTab - area chart: shown for each data point*/
 const StackedAreaDecorator = ({ x, y, height, width, data, selectedIndex, values, onPress, onLongPress }) => {
   return values.map((value, index) => {
-    const CORRECT = value['CORRECT'];
-    const WRONG   = value['WRONG'  ];
-    const SKIPEED = value['SKIPPED'];
+    const CORRECT = value[TYPES.CORRECT];
+    const WRONG   = value[TYPES.WRONG  ];
+    const SKIPEED = value[TYPES.SKIPPED];
 
+    //extract values
     const correct = CORRECT.value || 0;
     const wrong   = WRONG  .value || 0;
     const skipped = SKIPEED.value || 0;
@@ -352,6 +356,247 @@ const LoadingIndicator = React.forwardRef((props, ref) => {
 });
 //#endregion ------ 
 
+class ModeSelectorModal extends React.PureComponent {
+  static propTypes = {
+    onPressOption: PropTypes.func,
+    activeMode   : PropTypes.number,
+  };
+
+  static styles = StyleSheet.create({
+    rootContainer: {
+      position: 'absolute',
+      width: '100%',
+      height: '100%',
+    },
+    overlay: {
+      position: 'absolute',
+      width: '100%',
+      height: '100%',
+      backgroundColor: 'rgba(0,0,0,0.25)',
+    },
+    topSpacer: {
+      flex: 1,
+    },
+    topContainer: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: 10,
+    },
+    bottomContainer: {
+      backgroundColor: 'white',
+      padding: 10,
+    },
+    controlContainer: {
+      flex: 0,
+      alignSelf: 'stretch',
+      marginHorizontal: 0,
+      marginVertical: 0,
+      borderRadius: 13,
+    },
+    //header styles
+    headerContainer: {
+      marginTop: 3,
+      marginBottom: 10,
+    },
+    headerTitle: {
+      flex: 0,
+    },
+    headerSubtitle: {
+      flex: 0,
+      marginTop: -2,
+    },
+  });
+
+  constructor(props){
+    super(props);
+
+    this.state = {
+      mount: true,
+      mode: -1,
+    };
+  };
+
+  showModal = async ({visible, mode}) => {
+    const { mount } = this.state;
+    const didChange = (mount != visible);
+
+    if(!visible && didChange){
+      await Promise.all([
+        this.overlay         && this.overlay        .fadeOut    (500),
+        this.topContainer    && this.topContainer   .fadeOutDown(400),
+        this.bottomContainer && this.bottomContainer.fadeOutDown(300),
+      ]);
+      this.setState({mount: false, mode}); 
+
+    } else if(visible && didChange) {
+      this.setState({mount: true, mode}); 
+    };
+  };
+
+  _handleOnPress = (params) => {
+    const { onPressOption } = this.props;
+    onPressOption && onPressOption(params);
+  };
+
+  _handleOnPressCancel = () => {
+    this.showModal(false);
+  };
+
+  _renderControls(){
+    const { styles } = ModeSelectorModal;
+    const { children, activeMode } = this.props;
+
+    return(
+      <Card style={styles.controlContainer}>
+        <ModalTitle
+          title={'Chart Mode'}
+          subtitle={"Change the current chart style. "}
+          iconStyle={{marginTop: 2}}
+          iconName={'md-eye'}
+          iconType={'ionicon'}
+          containerStyle={styles.headerContainer}
+          titleStyle={styles.headerTitle}
+          subtitleStyle={styles.headerSubtitle}
+        />
+        {Children.map(children, (child, index) => {
+          const item = React.cloneElement(child, {
+            index, activeMode,
+            onPress: this._handleOnPress,
+          });
+          return(
+            <Fragment>
+              {(index == 0) && <Divider/>}
+              {item}
+              <Divider/>
+            </Fragment>
+          );
+        })}
+      </Card>
+    );
+  };
+
+  render(){
+    const { styles } = ModeSelectorModal;
+    const { mount } = this.state;
+    if(!mount) return null;
+
+    const spacerProps = {
+      style  : styles.topSpacer,
+      onPress: this._handleOnPressCancel,
+    };
+    
+    return(
+      <View style={styles.rootContainer}>
+        <Animatable.View 
+          style={styles.overlay}
+          ref={r => this.overlay = r}
+          animation={'fadeIn'}
+          duration={500}
+          useNativeDriver={true}
+        />
+        <TouchableOpacity {...spacerProps}/>        
+        <Animatable.View 
+          style={styles.topContainer}
+          ref={r => this.topContainer = r}
+          animation={'fadeInUp'}
+          duration={300}
+          useNativeDriver={true}
+        >
+          {this._renderControls()}
+        </Animatable.View>
+        <TouchableOpacity {...spacerProps}/>
+        <Animatable.View 
+          style={styles.bottomContainer}
+          ref={r => this.bottomContainer = r}
+          animation={'fadeInUp'}
+          duration={200}
+          useNativeDriver={true}
+        >
+          <PlatformButton
+            title={'Cancel'}
+            iconName={'ios-close-circle'}
+            iconType={'ionicon'}
+            isBgGradient={true}
+            onPress={this._handleOnPressCancel}
+          />
+        </Animatable.View>
+      </View>
+    );
+  };
+};
+
+class ModeSelectorOption extends React.PureComponent {
+  static propTypes = {
+    mode      : PropTypes.number,
+    index     : PropTypes.number,
+    title     : PropTypes.string,
+    subtitle  : PropTypes.string,
+    activeMode: PropTypes.number,
+    //callback events
+    onPress: PropTypes.func,
+  };
+
+  static styles = StyleSheet.create({
+    container: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingVertical: 5,
+    },
+    textContainer: {
+      marginLeft: 12,
+    },
+    title: {
+      fontSize: 17,
+      fontWeight: '600',
+      color: PURPLE[900],
+    },
+    subtitle: {
+      fontSize: 16,
+      fontWeight: '300',
+    },
+  });
+
+  _handleOnPress = () => {
+    const { onPress, ...otherProps } = this.props;
+    //pass down props as params to callback
+    onPress && onPress({...otherProps});
+  };
+
+  render(){
+    const { styles } = ModeSelectorOption;
+    const { title, subtitle, mode, activeMode } = this.props;
+
+    const name = (mode == activeMode
+      ? 'ios-radio-button-on'
+      : 'ios-radio-button-off'
+    );
+
+    return(
+      <TouchableOpacity 
+        style={styles.container}
+        onPress={this._handleOnPress}
+        activeOpacity={0.75}
+      >
+        <Icon
+          type={'ionicon'}
+          color={PURPLE.A700}
+          size={28}
+          {...{name}}
+        />
+        <View style={styles.textContainer}>
+          <Text style={styles.title}>
+            {title}
+          </Text>
+          <Text style={styles.subtitle}>
+            {subtitle}
+          </Text>
+        </View>
+      </TouchableOpacity>
+    );
+  };
+};
+
 class SummaryTab extends React.PureComponent {
   static MODES = {
     'CHART_BAR'    : 0,
@@ -387,6 +632,10 @@ class SummaryTab extends React.PureComponent {
         EVENTS.onPressHeaderClose,
         this._handleOnPressHeaderClose
       );
+      this.emitter.addListener(
+        EVENTS.onPressHeaderChartMode,
+        this._handleOnPressChangeChartMode
+      );
     };
   };
 
@@ -403,7 +652,7 @@ class SummaryTab extends React.PureComponent {
         case MODES.CHART_BAR_ALT: return (() => {
           const sharedParams= {
             extraData  : {...result}, 
-            onPress    : this._handleOnPressBar    , 
+            onPress    : this._handleOnPressItem    , 
             onLongPress: this._handleOnLongPressBar, 
             addOnPress : true,
             addFill    : true,
@@ -425,6 +674,33 @@ class SummaryTab extends React.PureComponent {
         })();
       };
     });
+  };
+
+  toggleMode = async () => {
+    const { MODES } = SummaryTab;
+    const { mode } = this.state;
+
+    const modes = Object.keys(MODES).length;
+    const nextMode = ((mode + 1) % modes);
+
+    //hide chart, mount/show loading
+    await Promise.all([
+      this.container && this.container.fadeOut(400),
+      setStateAsync(this, {showLoading: true})
+    ]);
+
+    //change chart
+    this.data = this.processData(nextMode);
+    await setStateAsync(this, {mode: nextMode});
+    await timeout(300);
+
+    //hide loading, show chart
+    await Promise.all([
+      this.container && this.container.fadeIn(300)   ,
+      this.loading   && this.loading  .fadeOutUp(400),
+    ]);
+    //unmount loading
+    await setStateAsync(this, {showLoading: false});
   };
 
   /** navigation events: focus */
@@ -480,34 +756,28 @@ class SummaryTab extends React.PureComponent {
     };
   };
 
-  _handleOnLongPressBar = async () => {
-    const { MODES } = SummaryTab;
-    const { mode } = this.state;
-
-    const modes = Object.keys(MODES).length;
-    const nextMode = ((mode + 1) % modes);
-
-    //hide chart, mount/show loading
-    await Promise.all([
-      this.container && this.container.fadeOut(400),
-      setStateAsync(this, {showLoading: true})
-    ]);
-
-    //change chart
-    this.data = this.processData(nextMode);
-    await setStateAsync(this, {mode: nextMode});
-    await timeout(300);
-
-    //hide loading, show chart
-    await Promise.all([
-      this.container && this.container.fadeIn(300),
-      this.loading.fadeOutUp(400),
-    ]);
-    //unmount loading
-    await setStateAsync(this, {showLoading: false});
+  /** emiiter: header change chart button */
+  _handleOnPressChangeChartMode = () => {
+    const { isFocused, mode } = this.state;
+    if(isFocused){
+      this.modeModal.showModal({visible: true, mode});
+    };
   };
 
-  _handleOnPressBar = (resultItem) => {
+  _handleOnPressOption = ({mode}) => {
+    const { MODES } = SummaryTab;
+    alert(mode);
+  };
+
+  _handleOnLongPressChart = () => {
+    this.toggleMode();
+  };
+
+  _handleOnLongPressBar = async () => {
+    this.toggleMode();
+  };
+
+  _handleOnPressItem = (resultItem) => {
     const { EVENTS } = StatsCard;
     const { MODES } = SummaryTab;
     const { selected, showRecent, mode } = this.state;
@@ -565,14 +835,18 @@ class SummaryTab extends React.PureComponent {
     const card_width = (width - (12 * 2));
     const expanded_width = items * 30;
 
-    const style = (showRecent? {
-      flex: 1,
-      height: '100%',
-    }:{
-      width: (expanded_width > card_width)? expanded_width : '100%',
-      height: '100%',
-      paddingRight: 15,
-    });  
+    const buttonProps = {
+      activeOpacity: 1,
+      onLongPress: this._handleOnLongPressChart,
+      style: (showRecent? {
+        flex: 1,
+        height: '100%',
+      }:{
+        width: (expanded_width > card_width)? expanded_width : '100%',
+        height: '100%',
+        paddingRight: 15,
+      }),
+    };
 
     const contentInset = { top: 0, bottom: 7 };
     const sharedChartProps = {
@@ -596,7 +870,7 @@ class SummaryTab extends React.PureComponent {
     switch (mode) {
       case MODES.CHART_BAR    : 
       case MODES.CHART_BAR_ALT: return(
-        <View {...{style}}>
+        <TouchableOpacity {...buttonProps}>
           <StackedBarChart
             valueAccessor={ ({ item, key }) => item[key].value }
             {...sharedChartProps}
@@ -611,7 +885,7 @@ class SummaryTab extends React.PureComponent {
             scale={scale.scaleBand}
             {...sharedXAxisProps}
           />
-        </View>
+        </TouchableOpacity>
       );
       case MODES.CHART_AREA: return(() => {
         // note: stackedarea does not have full support for decorators
@@ -620,23 +894,53 @@ class SummaryTab extends React.PureComponent {
         const values  = (showRecent? altData.slice(-10) : altData);
         
         return(
-          <View {...{style}}>
+          <TouchableOpacity {...buttonProps}>
             <StackedAreaChart
               curve={ shape.curveMonotoneX }
               {...sharedChartProps}
             >
               <Grid/>
               <StackedAreaDecorator 
-                onPress    ={this._handleOnPressBar    }
+                onPress    ={this._handleOnPressItem    }
                 onLongPress={this._handleOnLongPressBar}
                 {...{values, data, selectedIndex}}
               />
             </StackedAreaChart>
             <XAxis {...sharedXAxisProps}/>
-          </View>
+          </TouchableOpacity>
         );
       })();
     };
+  };
+
+  _renderOverlay(){
+    const { MODES } = SummaryTab;
+    const { mode: activeMode } = this.state;
+    return(
+      <Portal>
+        <ModeSelectorModal 
+          ref={r => this.modeModal = r}
+          onPressOption={this._handleOnPressOption}
+          {...{activeMode}}
+        >
+          <ModeSelectorOption
+            title={'Bar Chart'}
+            subtitle={'Correct and wrong answers'}
+            mode={MODES.CHART_BAR}
+          />
+          <ModeSelectorOption
+            title={'Bar Chart (Reversed)'}
+            subtitle={'Wrong and correct answers'}
+            mode={MODES.CHART_BAR_ALT}
+          />
+          <ModeSelectorOption
+            title={'Line Chart'}
+            subtitle={'Line chart'}
+            mode={MODES.CHART_AREA}
+          />
+        </ModeSelectorModal>
+      </Portal>
+    );
   };
 
   render(){
@@ -651,6 +955,7 @@ class SummaryTab extends React.PureComponent {
 
     return(
       <Fragment>
+        {this._renderOverlay()}
         <NavigationEvents
           onDidFocus={this._handleOnDidFocus}
           onDidBlur ={this._handleOnDidBlur }
@@ -915,10 +1220,8 @@ class CorrectTab extends React.PureComponent {
     const sharedChartProps = {
       style: { flex: 1 },
       numberOfTicks: 10 ,
-      min : 0  , 
-      max : 100,
-      yMin: 0  , 
-      yMax: 100,
+      min : 0, max : 100,
+      yMin: 0, yMax: 100,
       ...{data, contentInset}
     };
     const sharedXAxisProps = {
@@ -928,8 +1231,8 @@ class CorrectTab extends React.PureComponent {
       ...{data},
     };
 
-    return (
-      (mode == MODES.CHART_LINE)? (
+    switch (mode) {
+      case MODES.CHART_LINE: return(
         <TouchableOpacity {...buttonProps}>
           <AreaChart
             svg={{ fill: 'url(#gradient)' }}
@@ -948,7 +1251,8 @@ class CorrectTab extends React.PureComponent {
           </AreaChart>
           <XAxis {...sharedXAxisProps}/>
         </TouchableOpacity>
-      ):(mode == MODES.CHART_BAR)? (
+      );
+      case MODES.CHART_BAR: return(
         <TouchableOpacity {...buttonProps}>
           <BarChart
             svg={{strokeWidth: 2, fill: 'url(#gradient)'}}
@@ -964,8 +1268,8 @@ class CorrectTab extends React.PureComponent {
             {...sharedXAxisProps}  
           />
         </TouchableOpacity>
-      ):(null)
-    );
+      );
+    };
   };
 
   render(){
@@ -1269,12 +1573,22 @@ class StatsCard extends React.PureComponent {
       flex: 1,
       marginRight: 10,
     },
+    //header button styles
+    buttonTitle: {
+      fontSize: 15,
+      fontWeight: '500'
+    },
+    buttonSubtitle: {
+      fontSize: 14,
+      fontWeight: '200',
+    },
   });
 
   static EVENTS = {
-    onPressChartItem  : 'onPressChartItem'  ,
-    onChangeShowRecent: 'onChangeShowRecent',
-    onPressHeaderClose: 'onPressHeaderClose',
+    onPressChartItem      : 'onPressChartItem'      ,
+    onChangeShowRecent    : 'onChangeShowRecent'    ,
+    onPressHeaderClose    : 'onPressHeaderClose'    ,
+    onPressHeaderChartMode: 'onPressHeaderChartMode',
   };
 
   constructor(props){
@@ -1344,6 +1658,14 @@ class StatsCard extends React.PureComponent {
     };
   };
 
+  _handleOnPressChangeChartMode = () => {
+    const { EVENTS } = StatsCard; 
+    const { selected } = this.state;   
+    if(this.emitter && !selected){
+      this.emitter.emit(EVENTS.onPressHeaderChartMode); 
+    };
+  };
+
   _renderInactive(){
     const { styles } = StatsCard;
     const { showRecent: value } = this.state;
@@ -1386,6 +1708,18 @@ class StatsCard extends React.PureComponent {
             {'Tap on an item inside the chart to view more details. Long press on thr chart to toggle between modes.'}
           </Text>
         </View>
+        <Divider style={styles.divider}/>        
+        <PlatformButton
+          title={'Change Chart Mode'}
+          subtitle={'Change the style of the chart'}
+          iconDistance={12}
+          iconName={'md-eye'}
+          iconType={'ionicon'}
+          isBgGradient={true}
+          titleStyle={styles.buttonTitle}
+          subtitleStyle={styles.buttonSubtitle}
+          onPress={this._handleOnPressChangeChartMode}
+        />
       </Fragment>
     );
   };
@@ -1429,13 +1763,15 @@ class StatsCard extends React.PureComponent {
       >
         <Card style={styles.wrapper}>
           <View style={styles.container}>
-            {this._renderHeader()}
-            <View style={styles.tabContainer}>
-              <TabNavigator
-                navigation={this.props.navigation}
-                {...{screenProps}}
-              />
-            </View>
+            <Portal.Host>
+              {this._renderHeader()}
+              <View style={styles.tabContainer}>
+                <TabNavigator
+                  navigation={this.props.navigation}
+                  {...{screenProps}}
+                />
+              </View>
+            </Portal.Host>
           </View>
         </Card>
       </Animatable.View>
@@ -1450,7 +1786,7 @@ export class TestScreen extends React.Component {
     const json = require('../../test_data/quiz_results.json');
 
     return(
-      <ScrollView style={{paddingTop: 100}}>
+      <ScrollView  contentContainerStyle={{paddingTop: 100, paddingBottom: 100}}>
         <StatsCard 
           results={json}
           navigation={this.props.navigation}
