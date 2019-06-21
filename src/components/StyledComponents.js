@@ -566,6 +566,8 @@ export class ModalTitle extends React.PureComponent {
     iconName: PropTypes.string,
     iconType: PropTypes.string,
     iconSize: PropTypes.number,
+    //options
+    outerGlow: PropTypes.bool,
     //style
     iconStyle         : PropTypes.object,
     titleStyle        : PropTypes.object,
@@ -575,9 +577,10 @@ export class ModalTitle extends React.PureComponent {
   }; 
 
   static defaultProps = {
-    title   : 'Title',
-    subtitle: 'Subtitle',
-    iconSize: 23,
+    title    : 'Title',
+    subtitle : 'Subtitle',
+    iconSize : 23,
+    outerGlow: true,
   };
   
   static styles = StyleSheet.create({
@@ -652,8 +655,15 @@ export class ModalTitle extends React.PureComponent {
     const { styles } = ModalTitle;
     const props = this.props;
 
+    const outerGlowStyle = {
+      ...(!props.outerGlow && {
+        shadowRadius : 0,
+        shadowOpacity: 0,
+      }),
+    };
+
     return(
-      <View style={[styles.container, props.containerStyle]}>
+      <View style={[styles.container, outerGlowStyle, props.containerStyle]}>
         <Animatable.View
           animation={'pulse'}
           iterationCount={'infinite'}
@@ -662,7 +672,7 @@ export class ModalTitle extends React.PureComponent {
           useNativeDriver={true}
         >
           <Icon
-            containerStyle={[styles.iconContainer, props.iconContainerStyle]}
+            containerStyle={[styles.iconContainer, outerGlowStyle, props.iconContainerStyle]}
             iconStyle={[styles.icon, props.iconStyle]}
             name={props.iconName}
             type={props.iconType}
@@ -671,7 +681,7 @@ export class ModalTitle extends React.PureComponent {
           />
         </Animatable.View>
         <View style={styles.textContainer}>
-          <Text numberOfLines={1} style={[styles.title, props.titleStyle]}>
+          <Text numberOfLines={1} style={[styles.title, outerGlowStyle, props.titleStyle]}>
             {props.title}
           </Text>
           <Text numberOfLines={1} style={[styles.subtitle, props.subtitleStyle]}>

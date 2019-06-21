@@ -29,12 +29,12 @@ import { setStateAsync, timeout } from '../functions/Utils';
  * [x] TODO: add tooltip to CorrectTab bar graph
  * [x] TODO: add stacked chart mode to Summary tab
  * [x] TODO: add tooltip to stacked chart mode to Summary tab
- * [-] TODO: add button to header to switch/toggle betw. modes using Modal/Picker
+ * [x] TODO: add button to header to switch/toggle betw. modes using Modal/Picker
+ * [x] TODO: implement header details change based on active tab
+ * [-] TODO: implement long press summary tab to toggle mode
  * [ ] TODO: add animation to header when changing between selected chart items 
- * [ ] TODO: implement long press summary tab to toggle mode
- * [ ] TODO: implement header details change based on active tab
- * [ ] FIX : fix indicator and header selected state getting out of sync
- * [ ] FIX : fix yaxis/incorrect in summarytab being inconsintent between modes
+ * [-] FIX : fix indicator and header selected state getting out of sync
+ * [-] FIX : fix yaxis/incorrect in summarytab being inconsintent between modes
  */
 
 //#region ------ SHARED CHART FUNC/CONST ------
@@ -134,7 +134,7 @@ const stackItem = ({type, value, extraData, onPress, onLongPress, addOnPress, ad
 
 //#region ------ CHART COMPONENTS ------ 
 /** SummaryTab - bar chart: shown when a chart is selected/active */
-const StackedBarToolTip = ({ x, y, height, width, data, selectedIndex }) => {
+const SummaryBarToolTip = ({ x, y, height, width, data, selectedIndex }) => {
   const radius = 6;
   const items = data.length;
   const bandwidth = (width / items);
@@ -144,7 +144,7 @@ const StackedBarToolTip = ({ x, y, height, width, data, selectedIndex }) => {
   const yComputed = y(CORRECT.value + WRONG.value);
 
   //0 = top, height = bottom
-  const upperBounds = (radius * 2) + 10;
+  const upperBounds = (radius * 2) + 5;
   const lowerBounds = (height - upperBounds);
 
   const yPos = (
@@ -170,50 +170,90 @@ const StackedBarToolTip = ({ x, y, height, width, data, selectedIndex }) => {
 };
 
 /** SummaryTab - area chart: shown for each data point*/
-const StackedAreaDecorator = ({ x, y, height, width, data, selectedIndex, values, onPress, onLongPress }) => {
-  return values.map((value, index) => {
-    const CORRECT = value[TYPES.CORRECT];
-    const WRONG   = value[TYPES.WRONG  ];
-    const SKIPEED = value[TYPES.SKIPPED];
-
-    //extract values
-    const correct = CORRECT.value || 0;
-    const wrong   = WRONG  .value || 0;
-    const skipped = SKIPEED.value || 0;
-
-    const items = (correct + wrong + skipped);
-    const total = (correct + wrong);
-    const score = (correct / items);
-
-    const params = { 
-      type     : TYPES.CORRECT    ,
-      extraData: CORRECT.extraData,
-      //pass down
-      ...CORRECT.extraData,
-    };
-        
-    const props = (index == selectedIndex)? {
-      r     : 6          ,
-      stroke: 'white'    ,
-      fill  : PURPLE.A700,
-    }:{
-      r     : 4          ,
-      stroke: PURPLE[300],
-      fill  :  'white'   ,
-    };
-
-    return (
-      <Circle
-        key={index}
-        cx={x(index)}
-        cy={y(total)}
-        strokeWidth={ 2 }      
-        onPress    ={() => onPress     && onPress    (params)}
-        onLongPress={() => onLongPress && onLongPress(params)}
-        {...props}
-      />
+class SummaryAreaDecorator extends React.Component {
+  static propTypes = {
+    //chart props
+    x     : PropTypes.func, 
+    y     : PropTypes.func, 
+    height: PropTypes.number, 
+    width : PropTypes.number, 
+    data  : PropTypes.array , 
+    values: PropTypes.array , 
+    //custom props
+    selectedIndex: PropTypes.number, 
+    onPress      : PropTypes.func, 
+    onLongPress  : PropTypes.func,
+  };
+  
+  shouldComponentUpdate(nextProps){
+    const { props: prevProps } = this;
+    return(
+      prevProps.selectedIndex != nextProps.selectedIndex ||
+      prevProps.data  .length != nextProps.data  .length ||
+      prevProps.values.length != nextProps.values.length 
     );
-  });
+  };
+
+  render(){
+    const { x, y, values, selectedIndex, onPress, onLongPress } = this.props;
+    return values.map((value, index) => {
+      const CORRECT = value[TYPES.CORRECT];
+      const WRONG   = value[TYPES.WRONG  ];
+      const SKIPEED = value[TYPES.SKIPPED];
+  
+      //extract values
+      const correct = CORRECT.value || 0;
+      const wrong   = WRONG  .value || 0;
+      const skipped = SKIPEED.value || 0;
+  
+      const items = (correct + wrong + skipped);
+      const total = (correct + wrong);
+      const score = (correct / items);
+  
+      const params = { 
+        type     : TYPES.CORRECT    ,
+        extraData: CORRECT.extraData,
+        //pass down
+        ...CORRECT.extraData,
+      };
+          
+      const rectSize = 30;
+      const props = (index == selectedIndex)? {
+        r     : 8          ,
+        stroke: 'white'    ,
+        fill  : PURPLE.A700,
+      }:{
+        r     : 5          ,
+        stroke: PURPLE[300],
+        fill  :  'white'   ,
+      };
+  
+      return(
+        <G
+          key={`${index}-parent`}
+          x={x(index) - (rectSize/2)}
+          y={y(total) - (rectSize/2)}
+        >
+          <Circle
+            key={`${index}-childB`}
+            cx={(rectSize/2)}
+            cy={(rectSize/2)}
+            key={index}
+            strokeWidth={ 2 }      
+            {...props}
+          />
+          <Rect
+            key={`${index}-childA`}
+            width={rectSize}
+            height={rectSize}
+            fill={'rgba(0,0,0,0)'}
+            onPress    ={() => onPress     && onPress    (params)}
+            onLongPress={() => onLongPress && onLongPress(params)}
+          />
+        </G>
+      );
+    });
+  };
 };
 
 /** CorrectTab - line chart: green gradient bg*/
@@ -238,35 +278,36 @@ const CorrectLine = ({ line }) => (
 
 const XYGrid = ({ x, y, data, ticks }) => (
   <G>
-      {ticks.map(tick => (
-        <Line
-          key={ tick }
-          x1={ '0%' }
-          x2={ '100%' }
-          y1={ y(tick) }
-          y2={ y(tick) }
-          stroke={ 'rgba(0,0,0,0.1)' }
-        />
-      ))}
-      {data.map((_, index) => (
-        <Line
-          key={ index }
-          y1={ '0%' }
-          y2={ '100%' }
-          x1={ x(index) }
-          x2={ x(index) }
-          stroke={ 'rgba(0,0,0,0.1)' }
-        />
-      ))}
+    {ticks.map(tick => (
+      <Line
+        key={ tick }
+        x1={ '0%' }
+        x2={ '100%' }
+        y1={ y(tick) }
+        y2={ y(tick) }
+        stroke={ 'rgba(0,0,0,0.1)' }
+      />
+    ))}
+    {data.map((_, index) => (
+      <Line
+        key={ index }
+        y1={ '0%' }
+        y2={ '100%' }
+        x1={ x(index) }
+        x2={ x(index) }
+        stroke={ 'rgba(0,0,0,0.1)' }
+      />
+    ))}
   </G>
 );
 
 /** CorrectTab - line chart: circular indicators */
 const CorrectLineDecorator = ({ x, y, data, onPress, onLongPress, selectedIndex }) => {
-  return data.map((value, index) => {
+  return data.map((value, index) => { 
     const { value: correctValue, extraData } = value[TYPES.CORRECT];
     const isActive = (selectedIndex == index);
 
+    const rectSize = 30;
     const radius = isActive? 7 : 4.5;
     const props = (isActive? {
       stroke: 'white',
@@ -282,17 +323,31 @@ const CorrectLineDecorator = ({ x, y, data, onPress, onLongPress, selectedIndex 
       type: TYPES.CORRECT, 
       ...(extraData || {}),
     };
-  
-    return (
-      <Circle
-        r={radius}
-        key={index}
-        cx={x(index)}
-        cy={y(correctValue)}
-        onPress    ={() => {onPress     && onPress    (params)}}
-        onLongPress={() => {onLongPress && onLongPress(params)}}
-        {...props}
-      />
+
+    return(
+      <G
+        key={`${index}-parent`}
+        x={x(index       ) - (rectSize/2)}
+        y={y(correctValue) - (rectSize/2)}
+      >
+        <Circle
+          r={radius}
+          key={`${index}-childB`}
+          cx={(rectSize/2)}
+          cy={(rectSize/2)}
+          key={index}
+          strokeWidth={ 2 }      
+          {...props}
+        />
+        <Rect
+          key={`${index}-childA`}
+          width={rectSize}
+          height={rectSize}
+          fill={'rgba(0,0,0,0)'}
+          onPress    ={() => onPress     && onPress    (params)}
+          onLongPress={() => onLongPress && onLongPress(params)}
+        />
+      </G>
     );
   });
 };
@@ -330,6 +385,130 @@ const CorrectBarToolTip = ({ x, y, height, width, data, selectedIndex }) => {
   );
 };
 
+/** WrongTab - bar chart: shown when a chart is selected/active */
+const WrongBarToolTip = ({ x, y, height, width, data, selectedIndex }) => {
+  const radius = 6;
+  const items = data.length;
+  const bandwidth = (width / items);
+
+  const WRONG   = data[selectedIndex][TYPES.WRONG  ];
+  const SKIPPED = data[selectedIndex][TYPES.SKIPPED];
+
+  //compute y pos based on score
+  const yComputed = y(SKIPPED.value + WRONG.value);
+
+  //0 = top, height = bottom
+  const upperBounds = (radius * 2) + 5;
+  const lowerBounds = (height - upperBounds);
+
+  const yPos = (
+    yComputed > lowerBounds? lowerBounds :
+    yComputed < upperBounds? upperBounds : yComputed
+  );
+
+  return (
+    <G
+      x={ x(selectedIndex) + (bandwidth/2) }
+      key={ 'tooltip' }
+      //onPress={() => {}}
+    > 
+      <Circle
+        y={yPos}
+        r={radius}
+        stroke={ 'rgb(134, 65, 244)' }
+        strokeWidth={ 2 }
+        fill={ 'white' }
+      />
+    </G>
+  );
+};
+
+/** WrongTab - area chart: shown for each data point*/
+class WrongAreaDecorator extends React.Component {
+  static propTypes = {
+    //chart props
+    x     : PropTypes.func, 
+    y     : PropTypes.func, 
+    height: PropTypes.number, 
+    width : PropTypes.number, 
+    data  : PropTypes.array , 
+    values: PropTypes.array , 
+    //custom props
+    selectedIndex: PropTypes.number, 
+    onPress      : PropTypes.func, 
+    onLongPress  : PropTypes.func,
+  };
+  
+  shouldComponentUpdate(nextProps){
+    const { props: prevProps } = this;
+    return(
+      prevProps.selectedIndex != nextProps.selectedIndex ||
+      prevProps.data  .length != nextProps.data  .length ||
+      prevProps.values.length != nextProps.values.length 
+    );
+  };
+
+  render(){
+    const { x, y, values, selectedIndex, onPress, onLongPress } = this.props;
+    return values.map((value, index) => {
+      const CORRECT = value[TYPES.CORRECT];
+      const WRONG   = value[TYPES.WRONG  ];
+      const SKIPEED = value[TYPES.SKIPPED];
+  
+      //extract values
+      const correct = CORRECT.value || 0;
+      const wrong   = WRONG  .value || 0;
+      const skipped = SKIPEED.value || 0;
+  
+      const items = (correct + wrong + skipped);
+      const total = (correct + wrong);
+      const score = (correct / items);
+  
+      const params = { 
+        type     : TYPES.CORRECT    ,
+        extraData: CORRECT.extraData,
+        //pass down
+        ...CORRECT.extraData,
+      };
+          
+      const rectSize = 30;
+      const props = (index == selectedIndex)? {
+        r     : 8          ,
+        stroke: 'white'    ,
+        fill  : PURPLE.A700,
+      }:{
+        r     : 5          ,
+        stroke: PURPLE[300],
+        fill  :  'white'   ,
+      };
+  
+      return(
+        <G
+          key={`${index}-parent`}
+          x={x(index) - (rectSize/2)}
+          y={y(total) - (rectSize/2)}
+        >
+          <Circle
+            key={`${index}-childB`}
+            cx={(rectSize/2)}
+            cy={(rectSize/2)}
+            key={index}
+            strokeWidth={ 2 }      
+            {...props}
+          />
+          <Rect
+            key={`${index}-childA`}
+            width={rectSize}
+            height={rectSize}
+            fill={'rgba(0,0,0,0)'}
+            onPress    ={() => onPress     && onPress    (params)}
+            onLongPress={() => onLongPress && onLongPress(params)}
+          />
+        </G>
+      );
+    });
+  };
+};
 //#endregion ------ 
 
 //#region ------ STYLED COMPONENTS ------ 
@@ -392,6 +571,7 @@ class ModeSelectorModal extends React.PureComponent {
       alignSelf: 'stretch',
       marginHorizontal: 0,
       marginVertical: 0,
+      paddingVertical: 15,
       borderRadius: 13,
     },
     //header styles
@@ -412,7 +592,7 @@ class ModeSelectorModal extends React.PureComponent {
     super(props);
 
     this.state = {
-      mount: true,
+      mount: false,
       mode: -1,
     };
   };
@@ -423,11 +603,12 @@ class ModeSelectorModal extends React.PureComponent {
 
     if(!visible && didChange){
       await Promise.all([
-        this.overlay         && this.overlay        .fadeOut    (500),
-        this.topContainer    && this.topContainer   .fadeOutDown(400),
-        this.bottomContainer && this.bottomContainer.fadeOutDown(300),
+        this.overlay         && this.overlay        .fadeOut     (750),
+        this.topContainer    && this.topContainer   .fadeOutDown (400),
+        this.bottomContainer && this.bottomContainer.slideOutDown(300),
       ]);
-      this.setState({mount: false, mode}); 
+      //hide and reset mode
+      this.setState({mount: false, mode: -1}); 
 
     } else if(visible && didChange) {
       this.setState({mount: true, mode}); 
@@ -436,6 +617,7 @@ class ModeSelectorModal extends React.PureComponent {
 
   _handleOnPress = (params) => {
     const { onPressOption } = this.props;
+    this.showModal(false);
     onPressOption && onPressOption(params);
   };
 
@@ -458,6 +640,7 @@ class ModeSelectorModal extends React.PureComponent {
           containerStyle={styles.headerContainer}
           titleStyle={styles.headerTitle}
           subtitleStyle={styles.headerSubtitle}
+          outerGlow={false}
         />
         {Children.map(children, (child, index) => {
           const item = React.cloneElement(child, {
@@ -492,7 +675,7 @@ class ModeSelectorModal extends React.PureComponent {
           style={styles.overlay}
           ref={r => this.overlay = r}
           animation={'fadeIn'}
-          duration={500}
+          duration={1000}
           useNativeDriver={true}
         />
         <TouchableOpacity {...spacerProps}/>        
@@ -509,7 +692,7 @@ class ModeSelectorModal extends React.PureComponent {
         <Animatable.View 
           style={styles.bottomContainer}
           ref={r => this.bottomContainer = r}
-          animation={'fadeInUp'}
+          animation={'slideInUp'}
           duration={200}
           useNativeDriver={true}
         >
@@ -541,7 +724,7 @@ class ModeSelectorOption extends React.PureComponent {
     container: {
       flexDirection: 'row',
       alignItems: 'center',
-      paddingVertical: 5,
+      paddingVertical: 8,
     },
     textContainer: {
       marginLeft: 12,
@@ -636,6 +819,10 @@ class SummaryTab extends React.PureComponent {
         EVENTS.onPressHeaderChartMode,
         this._handleOnPressChangeChartMode
       );
+      this.emitter.addListener(
+        EVENTS.onPressChartItem,
+        this._handleOnPressChartItem
+      );
     };
   };
 
@@ -676,12 +863,10 @@ class SummaryTab extends React.PureComponent {
     });
   };
 
-  toggleMode = async () => {
-    const { MODES } = SummaryTab;
+  setMode = async (nextMode) => {
     const { mode } = this.state;
-
-    const modes = Object.keys(MODES).length;
-    const nextMode = ((mode + 1) % modes);
+    const didModeChange = (mode != nextMode);
+    if(!didModeChange) return null;
 
     //hide chart, mount/show loading
     await Promise.all([
@@ -701,6 +886,15 @@ class SummaryTab extends React.PureComponent {
     ]);
     //unmount loading
     await setStateAsync(this, {showLoading: false});
+  };
+
+  toggleMode = async () => {
+    const { MODES } = SummaryTab;
+    const { mode } = this.state;
+
+    const modes = Object.keys(MODES).length;
+    const nextMode = ((mode + 1) % modes);
+    await this.setMode(nextMode);
   };
 
   /** navigation events: focus */
@@ -752,7 +946,10 @@ class SummaryTab extends React.PureComponent {
   _handleOnPressHeaderClose = () => {
     const { selected } = this.state;
     if(selected){
-      this.setState({selected: null});
+      this.setState({
+        selected     : null,
+        selectedIndex: null
+      });
     };
   };
 
@@ -764,9 +961,19 @@ class SummaryTab extends React.PureComponent {
     };
   };
 
+  /** emiiter: when a chart item is pressed in a tab */
+  _handleOnPressChartItem = ({data, index, route}) => {
+    if(route != TAB_ROUTES.SUMMARY){
+      this.setState({
+        selected     : data ,
+        selectedIndex: index,
+      });
+    };
+  };
+  
   _handleOnPressOption = ({mode}) => {
     const { MODES } = SummaryTab;
-    alert(mode);
+    this.setMode(mode);
   };
 
   _handleOnLongPressChart = () => {
@@ -781,10 +988,6 @@ class SummaryTab extends React.PureComponent {
     const { EVENTS } = StatsCard;
     const { MODES } = SummaryTab;
     const { selected, showRecent, mode } = this.state;
-    
-    if(this.emitter){
-      this.emitter.emit(EVENTS.onPressChartItem, resultItem); 
-    };
 
     const prev = CustomQuizResultItem.wrap(selected  );
     const next = CustomQuizResultItem.wrap(resultItem);
@@ -805,6 +1008,14 @@ class SummaryTab extends React.PureComponent {
       const result = CustomQuizResultItem.wrap(extraData);
       return (result.endTime == next.endTime);
     });
+
+    if(this.emitter){
+      this.emitter.emit(EVENTS.onPressChartItem, {
+        data : resultItem,
+        route: TAB_ROUTES.SUMMARY,
+        index: match,
+      }); 
+    };
 
     this.setState({
       selected     : sameItem? null : next,
@@ -879,7 +1090,7 @@ class SummaryTab extends React.PureComponent {
               ? <Grid/>
               : <XYGrid belowChart={true}/>
             }
-            {selected && <StackedBarToolTip {...{selectedIndex}}/>}
+            {selected && <SummaryBarToolTip {...{selectedIndex}}/>}
           </StackedBarChart>
           <XAxis
             scale={scale.scaleBand}
@@ -900,8 +1111,8 @@ class SummaryTab extends React.PureComponent {
               {...sharedChartProps}
             >
               <Grid/>
-              <StackedAreaDecorator 
-                onPress    ={this._handleOnPressItem    }
+              <SummaryAreaDecorator 
+                onPress    ={this._handleOnPressItem   }
                 onLongPress={this._handleOnLongPressBar}
                 {...{values, data, selectedIndex}}
               />
@@ -935,7 +1146,7 @@ class SummaryTab extends React.PureComponent {
           />
           <ModeSelectorOption
             title={'Line Chart'}
-            subtitle={'Line chart'}
+            subtitle={'Stacked area line chart'}
             mode={MODES.CHART_AREA}
           />
         </ModeSelectorModal>
@@ -1009,7 +1220,7 @@ class CorrectTab extends React.PureComponent {
       selected: null,
       selectedIndex: null,
       showLoading: false,
-      isFocused: true,
+      isFocused: false,
       showRecent: true,
     };
   };
@@ -1026,6 +1237,14 @@ class CorrectTab extends React.PureComponent {
         EVENTS.onPressHeaderClose,
         this._handleOnPressHeaderClose
       );
+      this.emitter.addListener(
+        EVENTS.onPressHeaderChartMode,
+        this._handleOnPressChangeChartMode
+      );
+      this.emitter.addListener(
+        EVENTS.onPressChartItem,
+        this._handleOnPressChartItem
+      );
     };
   };
 
@@ -1037,6 +1256,7 @@ class CorrectTab extends React.PureComponent {
     return quiz_results.map(result => {
       const { correct, incorrect, unaswered } = result.results;
 
+      //todo: convert to switch
       if(mode == MODES.CHART_LINE){
         const sharedParams = {
           extraData : {...result},
@@ -1053,7 +1273,7 @@ class CorrectTab extends React.PureComponent {
       } else if(mode == MODES.CHART_BAR){
         const params = {
           type : TYPES.CORRECT, 
-          value: correct       ,
+          value: correct      ,
           //pass down extra data
           ...(result || {}),
         };
@@ -1070,8 +1290,43 @@ class CorrectTab extends React.PureComponent {
     });
   };
 
+  setMode = async (nextMode) => {
+    const { mode } = this.state;
+    const didModeChange = (mode != nextMode);
+    if(!didModeChange) return null;
+
+    //hide chart, mount/show loading
+    await Promise.all([
+      this.container && this.container.fadeOut(400),
+      setStateAsync(this, {showLoading: true})
+    ]);
+
+    //change chart
+    this.data = this.processData(nextMode);
+    await setStateAsync(this, {mode: nextMode});
+    await timeout(300);
+
+    //hide loading, show chart
+    await Promise.all([
+      this.container && this.container.fadeIn(300)   ,
+      this.loading   && this.loading  .fadeOutUp(400),
+    ]);
+    //unmount loading
+    await setStateAsync(this, {showLoading: false});
+  };
+
+  toggleMode = async () => {
+    const { MODES } = CorrectTab;
+    const { mode } = this.state;
+
+    const modes = Object.keys(MODES).length;
+    const nextMode = ((mode + 1) % modes);
+    await this.setMode(nextMode);
+  };
+
+  //#region ------ event handlers ------
   /** navigation events: focus */
-  _handleOnDidFocus = () => {
+  _handleOnDidFocus = async () => {
     const { isFocused } = this.state;
     if(!isFocused){
       this.setState({isFocused: true});
@@ -1107,7 +1362,7 @@ class CorrectTab extends React.PureComponent {
         //hide loading, show chart
         await Promise.all([
           this.container && this.container.fadeIn(300),
-          this.loading.fadeOutUp(400),
+          this.loading   && this.loading.fadeOutUp(400),
         ]);
         //unmount loading
         await setStateAsync(this, {showLoading: false})
@@ -1126,15 +1381,36 @@ class CorrectTab extends React.PureComponent {
     };
   };
 
+  /** emiiter: header change chart button */
+  _handleOnPressChangeChartMode = () => {
+    const { isFocused, mode } = this.state;
+    if(isFocused){
+      this.modeModal.showModal({visible: true, mode});
+    };
+  };
+
+  /** emiiter: when a chart item is pressed in a tab */
+  _handleOnPressChartItem = ({data, index, route}) => {
+    if(route != TAB_ROUTES.CORRECT){
+      this.setState({
+        selected     : data ,
+        selectedIndex: index,
+      });
+    };
+  };
+
+  /** overlay - ModeSelectorModal: onpress mode */
+  _handleOnPressOption = ({mode}) => {
+    const { MODES } = CorrectTab;
+    this.setMode(mode);
+  };
+
+  /** chart - Decorators/Bar: onpress */
   _handleOnPressItem = (resultItem) => {
     const { EVENTS } = StatsCard;
     const { MODES } = CorrectTab;
     const { selected, showRecent, mode } = this.state;
-    
-    if(this.emitter){
-      this.emitter.emit(EVENTS.onPressChartItem, resultItem); 
-    };
-
+  
     const prev = CustomQuizResultItem.wrap(selected  );
     const next = CustomQuizResultItem.wrap(resultItem);
     //if the prev and next selected are the same item
@@ -1153,6 +1429,14 @@ class CorrectTab extends React.PureComponent {
 
       return (result.endTime == next.endTime);
     });
+
+    if(this.emitter){
+      this.emitter.emit(EVENTS.onPressChartItem, {
+        data : resultItem,
+        route: TAB_ROUTES.CORRECT,
+        index: match,
+      }); 
+    };
 
     this.setState({
       selected     : sameItem? null : next ,
@@ -1186,6 +1470,32 @@ class CorrectTab extends React.PureComponent {
     ]);
     //unmount loading
     await setStateAsync(this, {showLoading: false});
+  };
+  //#endregion
+
+  _renderOverlay(){
+    const { MODES } = CorrectTab;
+    const { mode: activeMode } = this.state;
+    return(
+      <Portal>
+        <ModeSelectorModal 
+          ref={r => this.modeModal = r}
+          onPressOption={this._handleOnPressOption}
+          {...{activeMode}}
+        >
+          <ModeSelectorOption
+            title={'Bar Chart'}
+            subtitle={'Correct answers bar chart'}
+            mode={MODES.CHART_BAR}
+          />
+          <ModeSelectorOption
+            title={'Line Chart'}
+            subtitle={'Correct answers line chart'}
+            mode={MODES.CHART_LINE}
+          />
+        </ModeSelectorModal>
+      </Portal>
+    );
   };
 
   _renderChart(){
@@ -1277,6 +1587,7 @@ class CorrectTab extends React.PureComponent {
 
     return(
       <Fragment>
+        {this._renderOverlay()}
         <NavigationEvents
           onDidFocus={this._handleOnDidFocus}
           onDidBlur ={this._handleOnDidBlur }
@@ -1314,11 +1625,420 @@ class CorrectTab extends React.PureComponent {
 };
 
 class WrongTab extends React.PureComponent {
-  render(){
-    return(
-      <View style={{flex: 1, backgroundColor: 'red', width: 100, height: 100}}>
+  static MODES = {
+    'CHART_BAR'    : 0,
+    'CHART_BAR_ALT': 1,
+    'CHART_AREA'   : 2,
+  };
 
-      </View>
+  constructor(props){
+    super(props);
+
+    this.emitter = props.screenProps.emitter;
+    this.data    = this.processData(0);
+
+    this.state = {
+      selected: null,
+      selectedIndex: -1,
+      showRecent: true,
+      isFocused: false,
+      showLoading: false,
+      mode: 0,
+    };
+  };
+
+  componentDidMount(){
+    const { EVENTS } = StatsCard;
+
+    if(this.emitter){
+      this.emitter.addListener(
+        EVENTS.onChangeShowRecent,
+        this._handleOnChangeShowRecent
+      );
+      this.emitter.addListener(
+        EVENTS.onPressHeaderClose,
+        this._handleOnPressHeaderClose
+      );
+      this.emitter.addListener(
+        EVENTS.onPressHeaderChartMode,
+        this._handleOnPressChangeChartMode
+      );
+      this.emitter.addListener(
+        EVENTS.onPressChartItem,
+        this._handleOnPressChartItem
+      );
+    };
+  };
+
+  processData = (mode) => {
+    const { MODES } = WrongTab;
+    const { results } = this.props.screenProps;
+    const quiz_results = CustomQuizResultItem.wrapArray(results);
+    
+    return quiz_results.map(result => {
+      const { correct, incorrect, unaswered } = result.results;
+
+      switch (mode) {
+        case MODES.CHART_BAR    :
+        case MODES.CHART_BAR_ALT:
+          const sharedParams= {
+            extraData  : {...result}, 
+            onPress    : this._handleOnPressItem   , 
+            onLongPress: this._handleOnLongPressBar, 
+            addOnPress : true ,
+            addFill    : false,
+          };
+    
+          return {
+            ...stackItem({type: TYPES.CORRECT , value: correct  , ...sharedParams}),
+            ...stackItem({type: TYPES.WRONG   , value: incorrect, ...sharedParams}),
+            ...stackItem({type: TYPES.SKIPPED , value: unaswered, ...sharedParams}),
+          };
+
+        case MODES.CHART_AREA: return {
+          [TYPES.CORRECT]: Math.abs(correct   || 0),
+          [TYPES.WRONG  ]: Math.abs(incorrect || 0),
+          //not shown inside chart
+          extraData: {...result},
+        };
+      };
+    });
+  };
+
+  setMode = async (nextMode) => {
+    const { mode } = this.state;
+    const didModeChange = (mode != nextMode);
+    if(!didModeChange) return null;
+
+    //hide chart, mount/show loading
+    await Promise.all([
+      this.container && this.container.fadeOut(400),
+      setStateAsync(this, {showLoading: true})
+    ]);
+
+    //change chart
+    this.data = this.processData(nextMode);
+    await setStateAsync(this, {mode: nextMode});
+    await timeout(300);
+
+    //hide loading, show chart
+    await Promise.all([
+      this.container && this.container.fadeIn(300)   ,
+      this.loading   && this.loading  .fadeOutUp(400),
+    ]);
+    //unmount loading
+    await setStateAsync(this, {showLoading: false});
+  };
+
+  toggleMode = async () => {
+    const { MODES } = WrongTab;
+    const { mode } = this.state;
+
+    const modes = Object.keys(MODES).length;
+    const nextMode = ((mode + 1) % modes);
+    await this.setMode(nextMode);
+  };
+
+  /** navigation events: focus */
+  _handleOnDidFocus = () => {
+    const { isFocused } = this.state;
+    if(!isFocused){
+      this.setState({isFocused: true});
+    };
+  };
+
+  /** navigation events: blurred */
+  _handleOnDidBlur = () => {
+    const { isFocused } = this.state;
+    if(isFocused){
+      this.setState({isFocused: false});
+    };
+  };
+
+  /** emiiter: header recent switch toggle */
+  _handleOnChangeShowRecent = async (value) => {
+    const { showRecent, isFocused } = this.state;
+    const didChange = (value != showRecent);
+
+    if(didChange){
+      //hide chart, mount/show loading
+      isFocused && await Promise.all([
+        this.container && this.container.fadeOut(400),
+        setStateAsync(this, {showLoading: true})
+      ]);
+
+      //change chart
+      await timeout(100);
+      await setStateAsync(this, {showRecent: value});
+      await timeout(300);
+      
+      if(isFocused){
+        //hide loading, show chart
+        await Promise.all([
+          this.container && this.container.fadeIn(300),
+          this.loading.fadeOutUp(400),
+        ]);
+        //unmount loading
+        await setStateAsync(this, {showLoading: false})
+      };
+    };
+  };
+
+  /** emiiter: header close button */
+  _handleOnPressHeaderClose = () => {
+    const { selected } = this.state;
+    if(selected){
+      this.setState({
+        selected     : null,
+        selectedIndex: null
+      });
+    };
+  };
+
+  /** emiiter: header change chart button */
+  _handleOnPressChangeChartMode = () => {
+    const { isFocused, mode } = this.state;
+    if(isFocused){
+      this.modeModal.showModal({visible: true, mode});
+    };
+  };
+
+  /** emiiter: when a chart item is pressed in a tab */
+  _handleOnPressChartItem = ({data, index, route}) => {
+    if(route != TAB_ROUTES.WRONG){
+      this.setState({
+        selected     : data ,
+        selectedIndex: index,
+      });
+    };
+  };
+
+  _handleOnPressOption = ({mode}) => {
+    const { MODES } = WrongTab;
+    this.setMode(mode);
+  };
+
+  _handleOnLongPressChart = () => {
+    this.toggleMode();
+  };
+
+  _handleOnLongPressBar = async () => {
+    this.toggleMode();
+  };
+
+  _handleOnPressItem = (resultItem) => {
+    const { EVENTS } = StatsCard;
+    const { MODES } = WrongTab;
+    const { selected, showRecent, mode } = this.state;
+
+    const prev = CustomQuizResultItem.wrap(selected  );
+    const next = CustomQuizResultItem.wrap(resultItem);
+    //if the prev and next selected are the same item
+    const sameItem = (prev.timestampSaved == next.timestampSaved);
+    
+    const data = (showRecent
+      ? this.data.slice(-10)
+      : this.data  
+    );
+
+    const match = data.findIndex(item => {
+      const extraData = (mode == MODES.CHART_AREA
+        ? item.extraData
+        : item[TYPES.CORRECT].extraData
+      );
+
+      const result = CustomQuizResultItem.wrap(extraData);
+      return (result.endTime == next.endTime);
+    });
+
+    if(this.emitter){
+      this.emitter.emit(EVENTS.onPressChartItem, {
+        data : resultItem,
+        route: TAB_ROUTES.WRONG,
+        index: match,
+      }); 
+    };
+
+    this.setState({
+      selected     : sameItem? null : next,
+      selectedIndex: match,
+    });
+  };
+
+  _renderChart(){
+    const { MODES } = WrongTab;
+    const { showRecent, mode, selected, selectedIndex } = this.state;
+
+    const data = (showRecent
+      ? this.data.slice(-10)
+      : this.data
+    );
+
+    const items = data.length;
+    const { CORRECT, WRONG, SKIPPED } = TYPES;
+
+    const [keys, colors] = (
+      (mode == MODES.CHART_BAR    )? [[SKIPPED, WRONG  , CORRECT], [GREY[300], RED .A700 , 'transparent']] :
+      (mode == MODES.CHART_BAR_ALT)? [[WRONG  , SKIPPED, CORRECT], [RED .A700, GREY [300], 'transparent']] :
+      (mode == MODES.CHART_AREA   )? [[CORRECT, WRONG  ,        ], [RED .A700, GREY [300],              ]] : null
+    );
+
+    const { width } = Dimensions.get('screen');
+    const card_width = (width - (12 * 2));
+    const expanded_width = items * 30;
+
+    const buttonProps = {
+      activeOpacity: 1,
+      onLongPress: this._handleOnLongPressChart,
+      style: (showRecent? {
+        flex: 1,
+        height: '100%',
+      }:{
+        width: (expanded_width > card_width)? expanded_width : '100%',
+        height: '100%',
+        paddingRight: 15,
+      }),
+    };
+
+    const contentInset = { top: 0, bottom: 7 };
+    const sharedChartProps = {
+      style: { flex: 1 },
+      numberOfTicks: 10 ,
+      min : 0, max : 100,
+      yMin: 0, yMax: 100,
+      //pass down as props
+      ...{data, keys, colors, contentInset}
+    };
+    const sharedXAxisProps = {
+      formatLabel: (value, index) => index + 1,
+      svg: {
+        fill: 'grey', 
+        fontSize: 12
+      },
+      //pass down as props
+      ...{data}
+    };
+
+    switch (mode) {
+      case MODES.CHART_BAR    : 
+      case MODES.CHART_BAR_ALT: return(
+        <TouchableOpacity {...buttonProps}>
+          <StackedBarChart
+            valueAccessor={ ({ item, key }) => item[key].value }
+            {...sharedChartProps}
+          >
+            {(mode == MODES.CHART_BAR)
+              ? <Grid/>
+              : <XYGrid belowChart={true}/>
+            }
+            {selected && <WrongBarToolTip {...{selectedIndex}}/>}
+          </StackedBarChart>
+          <XAxis
+            scale={scale.scaleBand}
+            {...sharedXAxisProps}
+          />
+        </TouchableOpacity>
+      );
+      case MODES.CHART_AREA: return(() => {
+        // note: stackedarea does not have full support for decorators
+        // so i have to manually compute the pos of the points :/
+        const altData = this.processData(MODES.CHART_BAR);
+        const values  = (showRecent? altData.slice(-10) : altData);
+        
+        return(
+          <TouchableOpacity {...buttonProps}>
+            <StackedAreaChart
+              curve={ shape.curveMonotoneX }
+              {...sharedChartProps}
+            >
+              <Grid/>
+              <WrongAreaDecorator 
+                onPress    ={this._handleOnPressItem   }
+                onLongPress={this._handleOnLongPressBar}
+                {...{values, data, selectedIndex}}
+              />
+            </StackedAreaChart>
+            <XAxis {...sharedXAxisProps}/>
+          </TouchableOpacity>
+        );
+      })();
+    };
+  };
+
+  _renderOverlay(){
+    const { MODES } = WrongTab;
+    const { mode: activeMode } = this.state;
+    return(
+      <Portal>
+        <ModeSelectorModal 
+          ref={r => this.modeModal = r}
+          onPressOption={this._handleOnPressOption}
+          {...{activeMode}}
+        >
+          <ModeSelectorOption
+            title={'Bar Chart'}
+            subtitle={'Skipped and wrong answers'}
+            mode={MODES.CHART_BAR}
+          />
+          <ModeSelectorOption
+            title={'Bar Chart (Reversed)'}
+            subtitle={'Wrong and skipped answers'}
+            mode={MODES.CHART_BAR_ALT}
+          />
+          <ModeSelectorOption
+            title={'Line Chart'}
+            subtitle={'Stacked area line chart'}
+            mode={MODES.CHART_AREA}
+          />
+        </ModeSelectorModal>
+      </Portal>
+    );
+  };
+
+  render(){
+    const { MODES } = WrongTab;
+    const { mode, showRecent, showLoading } = this.state;
+
+    const keys = [TYPES.CORRECT, TYPES.WRONG];
+    const data = (mode == MODES.CHART_AREA
+      ? StackedAreaChart.extractDataPoints(this.data, keys)
+      : this.data
+    ); 
+
+    return(
+      <Fragment>
+        {this._renderOverlay()}
+        <NavigationEvents
+          onDidFocus={this._handleOnDidFocus}
+          onDidBlur ={this._handleOnDidBlur }
+        />
+        <Animatable.View
+          style={sharedStyles.wrapper}
+          ref={r => this.container = r}
+          useNativeDriver={true}
+        >
+          <YAxis
+            formatLabel={ value => `${value}%` }
+            {...{data, ...CONSTANTS.yAxisProps}}
+          />
+          {showRecent? (
+            <View style={sharedStyles.container}>
+              {this._renderChart()}
+            </View>
+          ):(
+            <ScrollView
+              horizontal={true}
+              style={sharedStyles.scrollview}
+            >
+              {this._renderChart()}
+            </ScrollView>
+          )}
+        </Animatable.View>
+        <LoadingIndicator
+          ref={r => this.loading = r}
+          {...{showLoading}}
+        />
+      </Fragment>
     );
   };
 };
@@ -1346,9 +2066,11 @@ const TabNavigator = createMaterialTopTabNavigator({
   }
 );
 
-class StatsHeader extends React.PureComponent {
+class StatsHeader extends React.Component {
   static propTypes = {
-    selected: PropTypes.object,
+    index: PropTypes.number,
+    data : PropTypes.object,
+    route: PropTypes.string,
   };
 
   static styles = StyleSheet.create({
@@ -1387,9 +2109,9 @@ class StatsHeader extends React.PureComponent {
 
   _renderHeader(){
     const { styles } = StatsHeader;
-    const { selected } = this.props;
+    const { data } = this.props;
 
-    const result = CustomQuizResultItem.wrap(selected);
+    const result = CustomQuizResultItem.wrap(data);
     const { results } = result;
 
     const correct = results? results.correct : 0;
@@ -1436,14 +2158,16 @@ class StatsHeader extends React.PureComponent {
   };
 
   _renderDetails(){
-    const { selected } = this.props;
-
-    const result = CustomQuizResultItem.wrap(selected);
+    const { index, data, route } = this.props;
+    
+    const result = CustomQuizResultItem.wrap(data);
     const { results, startTime, endTime } = result;
 
     //score
-    const correct = results? results.correct : 0;
-    const total   = results? results.total   : 0;
+    const correct = results? results.correct   : 0;
+    const wrong   = results? results.incorrect : 0;
+    const skipped = results? results.unaswered : 0;
+    const total   = results? results.total     : 0;
 
     //compute duration
     const diffTime  = endTime - startTime;
@@ -1451,40 +2175,69 @@ class StatsHeader extends React.PureComponent {
     const duration  = moment.utc(diffMills).format("HH:mm:ss");
 
     const marginTop = 10;
-    return(
-      <Fragment>
-        <DetailRow>
-          <DetailColumn
-            title={'Total Score: '}
-            subtitle={`${correct}/${total} items`}
-            help={true}
-            helpTitle={'Total Scrore'}
-            helpSubtitle={'Your score over the total amount of items'}
-            backgroundColor={PURPLE.A700}
-            disableGlow={true}
-          />
-          <DetailColumn 
-            title={'Duration: '}
-            subtitle={duration}
-            help={true}
-            helpTitle={'Total Duration'}
-            helpSubtitle={'Tells you how much time elapsed during the quiz.'}
-            backgroundColor={PURPLE.A700}
-            disableGlow={true}
-          />
-        </DetailRow>
-      </Fragment>
-    );
+    switch (route) {
+      case TAB_ROUTES.WRONG: return(
+        <Fragment>
+          <DetailRow>
+            <DetailColumn
+              title={'Wrong: '}
+              subtitle={`${wrong} items`}
+              help={true}
+              helpTitle={'Total Scrore'}
+              helpSubtitle={'Your score over the total amount of items'}
+              backgroundColor={PURPLE.A700}
+              disableGlow={true}
+            />
+            <DetailColumn 
+              title={'Skipped: '}
+              subtitle={`${skipped} items`}
+              help={true}
+              helpTitle={'Total Skipped'}
+              helpSubtitle={'Tells you how much time elapsed during the quiz.'}
+              backgroundColor={PURPLE.A700}
+              disableGlow={true}
+            />
+          </DetailRow>
+        </Fragment>
+      );
+      default: return(
+        <Fragment>
+          <DetailRow>
+            <DetailColumn
+              title={'Total Score: '}
+              subtitle={`${correct}/${total} items`}
+              help={true}
+              helpTitle={'Total Scrore'}
+              helpSubtitle={'Your score over the total amount of items'}
+              backgroundColor={PURPLE.A700}
+              disableGlow={true}
+            />
+            <DetailColumn 
+              title={'Duration: '}
+              subtitle={duration}
+              help={true}
+              helpTitle={'Total Duration'}
+              helpSubtitle={'Tells you how much time elapsed during the quiz.'}
+              backgroundColor={PURPLE.A700}
+              disableGlow={true}
+            />
+          </DetailRow>
+        </Fragment>
+      );
+    };
   };
 
   render(){
     const { styles } = StatsHeader;
     return(
-      <Fragment>
+      <Animatable.View
+        ref={r => this.container = r}
+        useNativeDriver={true}
+      >
         {this._renderHeader()}
         <Divider style={styles.divider}/>
         {this._renderDetails()}
-      </Fragment>
+      </Animatable.View>
     );
   };
 };
@@ -1617,8 +2370,8 @@ class StatsCard extends React.PureComponent {
 
   _handleOnPressChartItem = async (params) => {
     const { selected } = this.state;
-    const prev = CustomQuizResultItem.wrap(selected);
-    const next = CustomQuizResultItem.wrap(params  );
+    const prev = CustomQuizResultItem.wrap((selected || {}).data);
+    const next = CustomQuizResultItem.wrap((params   || {}).data);
 
     //if the prev and next selected are the same item
     const sameItem = (prev.timestampSaved == next.timestampSaved);
@@ -1629,7 +2382,7 @@ class StatsCard extends React.PureComponent {
       this.setState({selected: null});
 
     } else{
-      await setStateAsync(this, {selected: next});
+      await setStateAsync(this, {selected: params});
       this.transitioner.transition(!sameItem);
     };
   };
@@ -1652,6 +2405,10 @@ class StatsCard extends React.PureComponent {
 
     //collapse header
     this.transitioner.transition(false);
+    this.setState({
+      selected     : null,
+      selectedIndex: null,
+    });
     
     if(this.emitter){
       this.emitter.emit(EVENTS.onPressHeaderClose); 
@@ -1705,7 +2462,7 @@ class StatsCard extends React.PureComponent {
             delay={2000}
           />
           <Text style={styles.headerDesc}>
-            {'Tap on an item inside the chart to view more details. Long press on thr chart to toggle between modes.'}
+            {'Tap on an item inside the chart to view more details. Tap on the same item to dismiss.'}
           </Text>
         </View>
         <Divider style={styles.divider}/>        
@@ -1726,7 +2483,7 @@ class StatsCard extends React.PureComponent {
 
   _renderHeader(){
     const { styles } = StatsCard;
-    const { selected } = this.state;
+    const { data, index, route } = this.state.selected || {};
 
     return(
       <View style={styles.headerContainer}>
@@ -1739,7 +2496,7 @@ class StatsCard extends React.PureComponent {
             {this._renderInactive()}
             <StatsHeader
               onPressClose={this._handleOnPressClose}
-              {...{selected}}  
+              {...{data, index, route}}
             />
           </TransitionAB>
         </View>
