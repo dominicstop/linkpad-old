@@ -31,8 +31,8 @@ import { setStateAsync, timeout } from '../functions/Utils';
  * [x] TODO: add tooltip to stacked chart mode to Summary tab
  * [x] TODO: add button to header to switch/toggle betw. modes using Modal/Picker
  * [x] TODO: implement header details change based on active tab
+ * [x] TODO: add animation to header when changing between selected chart items 
  * [-] TODO: implement long press summary tab to toggle mode
- * [ ] TODO: add animation to header when changing between selected chart items 
  * [-] FIX : fix indicator and header selected state getting out of sync
  * [-] FIX : fix yaxis/incorrect in summarytab being inconsintent between modes
  */
@@ -2066,7 +2066,7 @@ const TabNavigator = createMaterialTopTabNavigator({
   }
 );
 
-class StatsHeader extends React.Component {
+class StatsHeader extends React.PureComponent {
   static propTypes = {
     index: PropTypes.number,
     data : PropTypes.object,
@@ -2106,6 +2106,26 @@ class StatsHeader extends React.Component {
       alignSelf: 'flex-start',
     },
   });
+
+  async componentDidUpdate(prevProps, prevState){
+    const props = this.props;
+
+    // note: the contents/ui has already been changed when the animation
+    // is started. Fix by using the emitter or use another lifecycle method
+
+    const didIndexChange = (props.index != prevProps.index);
+    const didRouteChange = (props.route != prevProps.route);
+    const didChange      = (didIndexChange  || didRouteChange);
+
+    if(didChange && (prevProps.index > props.index)){
+      await this.container.fadeOutRight(200);
+      await this.container.fadeInLeft  (200);
+
+    } else if(didChange && (prevProps.index < props.index)){
+      await this.container.fadeOutLeft(200);
+      await this.container.fadeInRight(200);
+    };
+  };
 
   _renderHeader(){
     const { styles } = StatsHeader;
