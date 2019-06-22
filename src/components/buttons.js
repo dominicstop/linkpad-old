@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, ViewPropTypes, TextProps, Lay
 import PropTypes from 'prop-types';
 
 import * as Animatable from 'react-native-animatable';
-import { LinearGradient } from 'expo';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Icon } from 'react-native-elements';
 import PlatformTouchable from './Touchable';
 import { STYLES } from '../Constants';

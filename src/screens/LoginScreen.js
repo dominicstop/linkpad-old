@@ -20,7 +20,8 @@ import * as Animatable from 'react-native-animatable';
 import KeyboardSpacer from 'react-native-keyboard-spacer';
 import { Icon } from 'react-native-elements';
 import { NavigationEvents } from 'react-navigation';
-import { BlurView, LinearGradient } from 'expo';
+import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur';
 
 import Animated, { Easing } from 'react-native-reanimated';
 const { set, cond, block, add, Value, timing, interpolate, and, or, onChange, eq, call, Clock, clockRunning, startClock, stopClock, concat, color, divide, multiply, sub, lessThan, abs, modulo, round, debug, floor, clock, defined } = Animated;
@@ -242,7 +243,7 @@ class InputForm extends React.PureComponent {
       </Animatable.View>
     );
   };
-};
+}
 
 class Expander extends React.PureComponent {
   static propTypes = {
@@ -386,7 +387,7 @@ class Expander extends React.PureComponent {
       </Animated.View>
     );
   };
-};
+}
 
 class ProgressBar extends React.PureComponent {
   static propTypes = {
@@ -729,7 +730,7 @@ class ProgressBar extends React.PureComponent {
       </View>
     );
   };
-};
+}
 
 class SigninForm extends React.PureComponent {
   static propTypes = {
@@ -937,7 +938,7 @@ class SigninForm extends React.PureComponent {
       </Expander>
     );
   };
-};
+}
 
 class WelcomeUser extends React.PureComponent {
   static propTypes = {
@@ -1108,7 +1109,7 @@ class WelcomeUser extends React.PureComponent {
       </Expander>
     );
   };
-};
+}
 
 class Downloading extends React.PureComponent {
   static propTypes = {
@@ -1367,7 +1368,7 @@ class Downloading extends React.PureComponent {
       </Fragment>
     );
   };
-};
+}
 
 class FormHeader extends React.PureComponent {
   static propTypes = {
@@ -1529,7 +1530,7 @@ class FormHeader extends React.PureComponent {
       </View>
     );
   };
-};
+}
 
 export default class LoginScreen extends React.Component {
   static navigationOptions = {
@@ -1892,4 +1893,4 @@ export default class LoginScreen extends React.Component {
       </View>
     );
   };
-};
+}

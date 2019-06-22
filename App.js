@@ -1,6 +1,6 @@
 import React from 'react';
 import { StatusBar, UIManager } from 'react-native';
-import { Constants as ExpoConstants } from 'expo';
+import ExpoConstants from 'expo-constants';
 
 import { createSwitchNavigator, createStackNavigator } from 'react-navigation';
 import { useScreens } from 'react-native-screens';
@@ -44,7 +44,7 @@ const AppStack = createStackNavigator({
     [ROUTES.TesterRoute         ]: TestScreen,
   },{
     headerMode: 'hidden',
-    initialRouteName: ROUTES.HomeRoute,
+    initialRouteName: ROUTES.TesterRoute,
     navigationOptions: {
       gesturesEnabled: false,
     },

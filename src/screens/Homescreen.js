@@ -26,7 +26,7 @@ import * as Animatable from 'react-native-animatable';
 import { createBottomTabNavigator, createStackNavigator } from 'react-navigation';
 import { createMaterialBottomTabNavigator } from 'react-navigation-material-bottom-tabs';
 import { Icon } from 'react-native-elements';
-import { LinearGradient } from 'expo';
+import { LinearGradient } from 'expo-linear-gradient';
 
 /**
  * each tab has a shared header because tabnav is wrapped inside a stack

@@ -3,12 +3,13 @@ import { Text, View, ViewPropTypes, Platform, StyleSheet, StatusBar, TouchableNa
 import PropTypes from 'prop-types';
 import { STYLES } from '../Constants';
 
+import * as Animatable from 'react-native-animatable';
 import { withNavigation } from 'react-navigation';
 import { Icon     } from 'react-native-elements';
 import { Header   } from 'react-navigation';
-import { BlurView } from 'expo';
-import * as Animatable from 'react-native-animatable';
-import { LinearGradient } from 'expo';
+
+import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur';
 
 class BackButton extends React.PureComponent {
   static propTypes = {

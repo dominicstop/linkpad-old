@@ -15,7 +15,7 @@ export class UserModel {
   };
 
   static wrap(user = UserModel.structure){
-    return {...UserModel.structure, ...user || {}};
+    return {...UserModel.structure, ...(user || {})};
   };
 };
 

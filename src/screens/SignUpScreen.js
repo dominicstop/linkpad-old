@@ -6,7 +6,7 @@ import { IconButton } from '../components/Buttons';
 import { validateEmail, validatePassword, validateNotEmpty } from '../functions/Validation';
 import { setStateAsync, timeout } from '../functions/Utils';
 
-import { BlurView } from 'expo';
+import { BlurView } from 'expo-blur';
 import _ from 'lodash';
 import { AndroidBackHandler } from 'react-navigation-backhandler';
 import {  NavigationEvents } from 'react-navigation';

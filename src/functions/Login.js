@@ -143,6 +143,6 @@ export class LoginResponseModel {
   };
 
   static wrap(response = LoginResponseModel.structure){
-    return {...LoginResponseModel.structure, ...response || {}};
+    return {...LoginResponseModel.structure, ...(response || {})};
   };
 };

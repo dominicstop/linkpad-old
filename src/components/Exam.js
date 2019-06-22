@@ -15,11 +15,11 @@ import      Carousel   from 'react-native-snap-carousel';
 import    { Header   } from 'react-navigation';
 import    { Divider  } from 'react-native-elements';
 
-import { DangerZone } from 'expo';
+import Lottie from 'lottie-react-native';
+
 import _ from 'lodash';
 import {STYLES} from '../Constants';
 import { SubjectItem, ModuleItemModel, QuestionItem } from '../models/ModuleModels';
-const { Lottie } = DangerZone;
 
 const questionShape = {
   question: PropTypes.string,

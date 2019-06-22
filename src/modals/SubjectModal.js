@@ -3,7 +3,7 @@ import { StyleSheet, View, Dimensions, Image, Text, TouchableOpacity, ScrollView
 import PropTypes from 'prop-types';
 
 import Animated, { Easing } from 'react-native-reanimated';
-import { BlurView } from 'expo';
+import { BlurView } from 'expo-blur';
 
 import   Interactable                   from '../components/Interactable';
 import { AnimatedCollapsable          } from '../components/Buttons';

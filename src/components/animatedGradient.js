@@ -6,7 +6,7 @@ import {timeout} from '../functions/Utils';
 
 import _ from 'lodash';
 import Chroma from 'chroma-js'
-import { LinearGradient } from 'expo';
+import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { Easing } from 'react-native-reanimated';
 const { set, cond, startClock, stopClock, clockRunning, block, add, Value, Clock, timing, concat, interpolate } = Animated;
 const {height, width} = Dimensions.get('window');

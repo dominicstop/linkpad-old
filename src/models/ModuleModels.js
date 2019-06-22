@@ -150,14 +150,14 @@ export class SubjectItem {
 
   /** wrap object with SubjectItem.structure to prevent missing properties and enable VSCODE type intellesense */
   static wrap(data = SubjectItem.structure){
-    return ({
+    return {
       //assign default properties w/ default values
       ...SubjectItem.structure,
       //remove all default values and replace w/ null
       ...replacePropertiesWithNull(SubjectItem.structure),
       //combine with obj from param
-      ...data || {},
-    });
+      ...(data || {}),
+    };
   };
 
   /** wraps each element in an array to make sure */
@@ -285,14 +285,14 @@ export class ModuleItemModel {
 
   /** makes sure all of module's properties exists and assigns default values */
   static wrap(module = ModuleItemModel.structure){
-    return ({
+    return {
       //assign default properties w/ default values
       ...ModuleItemModel.structure,
       //remove all default values and replace w/ null
       ...replacePropertiesWithNull(ModuleItemModel.structure),
       //combine with obj from param
-      ...module || {},
-    });
+      ...(module || {}),
+    };
   };
 
   /** wraps each element in an array to make sure */

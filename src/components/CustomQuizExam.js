@@ -7,7 +7,9 @@ import * as Animatable from 'react-native-animatable';
 import Carousel from 'react-native-snap-carousel';
 import { validateNotEmpty } from '../functions/Validation';
 
-import { LinearGradient, FileSystem, BlurView } from 'expo';
+import { BlurView } from 'expo-blur';
+import * as FileSystem from 'expo-file-system';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Header } from 'react-navigation';
 import { Icon } from 'react-native-elements';
 import { ifIphoneX, getStatusBarHeight, getBottomSpace } from 'react-native-iphone-x-helper';
@@ -141,7 +143,7 @@ class ChoiceItem extends React.PureComponent {
       </TouchableOpacity>
     );
   };
-};
+}
 
 /** Used in QuestionItem: shows a list of choices */
 class Choices extends React.PureComponent {
@@ -273,7 +275,7 @@ class Choices extends React.PureComponent {
       );
     };
   };
-};
+}
 
 /** Used in Question: shows the quesion's image */
 class QuestionImage extends React.PureComponent {
@@ -446,7 +448,7 @@ class QuestionImage extends React.PureComponent {
       case LOAD_STATE.ERROR  : return this._loadError    ();
     };
   };
-};
+}
 
 /** Used in QuestionItem: shows the question text + image */
 class Question extends React.PureComponent {
@@ -567,7 +569,7 @@ class Question extends React.PureComponent {
       </ScrollView>
     );
   };
-};
+}
 
 class Option extends React.PureComponent {
   static styles = StyleSheet.create({
@@ -653,7 +655,7 @@ class Option extends React.PureComponent {
       </TouchableOpacity>
     );
   };
-};
+}
 
 class QuestionOverlay extends React.PureComponent {
   static styles = StyleSheet.create({
@@ -845,7 +847,7 @@ class QuestionOverlay extends React.PureComponent {
       </TouchableWithoutFeedback>
     );
   };
-};
+}
 
 /** Used in CustomQuizList: shows a card w/ question text + image */
 class QuestionItem extends React.PureComponent {
@@ -1062,7 +1064,7 @@ class QuestionItem extends React.PureComponent {
       );
     };
   };  
-};
+}
 
 export class CustomQuizList extends React.Component {
   static propTypes = {
@@ -1354,4 +1356,4 @@ export class CustomQuizList extends React.Component {
       </View>
     );
   };
-};
+}

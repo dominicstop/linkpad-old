@@ -17,7 +17,7 @@ import { PlatformTouchableIconButton, RippleBorderButton, IconButton } from '../
 
 import * as Animatable from 'react-native-animatable';
 import KeyboardSpacer from 'react-native-keyboard-spacer';
-import { BlurView } from 'expo';
+import { BlurView } from 'expo-blur';
 import { NavigationEvents, Header } from 'react-navigation';
 import { Divider, Icon } from 'react-native-elements';
 

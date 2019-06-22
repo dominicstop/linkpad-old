@@ -29,14 +29,14 @@ export class QuestionAnswerItem {
   };
 
   static wrap(data = QuestionAnswerItem.structure){
-    return ({
+    return {
       //assign default properties w/ default values
       ...QuestionAnswerItem.structure,
       //remove all default values and replace w/ null
       ...replacePropertiesWithNull(QuestionAnswerItem.structure),
       //combine with obj from param
-      ...data || {},
-    });
+      ...(data || {}),
+    };
   };
 
   static wrapArray(items = [QuestionAnswerItem.structure]){
@@ -67,14 +67,14 @@ export class CustomQuizResultItem {
   };
   
   static wrap(data = CustomQuizResultItem.structure){
-    return ({
+    return {
       //assign default properties w/ default values
       ...CustomQuizResultItem.structure,
       //remove all default values and replace w/ null
       ...replacePropertiesWithNull(CustomQuizResultItem.structure),
       //combine with obj from param
-      ...data || {},
-    });
+      ...(data || {}),
+    };
   };
 
   static wrapArray(items = [CustomQuizResultItem.structure]){

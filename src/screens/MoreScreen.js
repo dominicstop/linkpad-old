@@ -16,7 +16,8 @@ import { setStateAsync } from '../functions/Utils';
 import { Header, createStackNavigator } from 'react-navigation';
 import { Icon, Divider } from 'react-native-elements';
 
-import { DocumentPicker, FileSystem } from 'expo';
+import * as FileSystem from 'expo-file-system';
+import * as DocumentPicker from 'expo-document-picker';
 
 const HeaderProps = {
   headerTransparent: true,
@@ -147,7 +148,7 @@ export class MoreScreen extends React.Component {
       </ViewWithBlurredHeader>
     );
   };
-};
+}
 
 export const styles = StyleSheet.create({
   userDetail: {

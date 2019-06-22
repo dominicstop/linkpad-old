@@ -1,4 +1,4 @@
-import { FileSystem } from 'expo';
+import * as FileSystem from 'expo-file-system';
 
 import store from 'react-native-simple-store';
 import _ from 'lodash';

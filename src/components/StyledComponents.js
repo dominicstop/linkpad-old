@@ -5,7 +5,8 @@ import { StyleSheet, View, Text, Platform, TouchableOpacity, Alert } from 'react
 import PropTypes from 'prop-types';
 
 import * as Animatable from 'react-native-animatable';
-import { BlurView, LinearGradient } from 'expo';
+import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur';
 import { isIphoneX } from 'react-native-iphone-x-helper';
 
 import { Icon, } from 'react-native-elements';
@@ -149,7 +150,7 @@ export class StickyHeader extends React.PureComponent {
       </BlurViewWrapper>
     );
   };
-};
+}
 
 /** 
  * wraps each children inside a column 
@@ -196,7 +197,7 @@ export class DetailRow extends React.PureComponent {
       </View>
     );
   };
-};
+}
 
 /** 
  * wraps each children inside a column 
@@ -334,7 +335,7 @@ export class DetailColumn extends React.PureComponent {
       </Fragment>
     );
   };
-};
+}
 
 export class NumberIndicator extends React.PureComponent {
   static propTypes = {
@@ -411,7 +412,7 @@ export class NumberIndicator extends React.PureComponent {
       </View>
     );
   };
-};
+}
 
 /** 
  * renders 2 buttons that is usually used on the bottom of a modal
@@ -552,7 +553,7 @@ export class ModalBottomTwoButton extends React.PureComponent {
       </View>
     );
   };
-};
+}
 
 /** 
  * renders an icon with a title and subtitle w/ default styling meant to be used for a swipable modal
@@ -691,7 +692,7 @@ export class ModalTitle extends React.PureComponent {
       </View>
     );
   };
-};
+}
 
 /** 
  * wraps children with a styled view for a section inside a modal
@@ -728,7 +729,7 @@ export class ModalSection extends React.PureComponent {
       </View>
     );
   };
-};
+}
 
 export const ExpanderHeader = (props) => {
   const styles = StyleSheet.create({
@@ -793,7 +794,7 @@ export const ExpanderHeader = (props) => {
 
 class TapToCycleText extends React.PureComponent {
 
-};
+}
 
 
 export class PlatformButton extends React.PureComponent {
@@ -1013,4 +1014,4 @@ export class PlatformButton extends React.PureComponent {
       ),
     });
   };
-};
+}

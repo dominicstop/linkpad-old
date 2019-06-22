@@ -1,5 +1,5 @@
 import React from 'react';
-import { Font } from 'expo';
+import * as Font from 'expo-font';
 import { StyleSheet, Text, View, ActivityIndicator, AsyncStorage, Dimensions, Alert, Image } from 'react-native';
 import PropTypes from 'prop-types';
 
@@ -40,7 +40,7 @@ export default class AuthLoadingScreen extends React.Component {
       //animate in and authenticate
       const [user] = await Promise.all([
         this._authenticate (),
-        this._loadIconFonts(),
+        //this._loadIconFonts(),
         this._loadTextFonts(),
       ]);
 
@@ -101,6 +101,7 @@ export default class AuthLoadingScreen extends React.Component {
   };
 
   async _loadIconFonts(){
+    /*
     await Font.loadAsync({
       'Material Design Icons': require("@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/MaterialCommunityIcons.ttf" ),
       'Material Icons'       : require("@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/MaterialIcons.ttf"  ),
@@ -111,6 +112,7 @@ export default class AuthLoadingScreen extends React.Component {
       'Ionicons'             : require('@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/Ionicons.ttf'       ),
       'Entypo'               : require('@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/Entypo.ttf'         ),
     });
+    */
   };
 
   async _loadTextFonts(){

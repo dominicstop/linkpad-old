@@ -13,7 +13,8 @@ import { ResourcesStore } from '../functions/ResourcesStore';
 import { UserStore, UserModel } from '../functions/UserStore';
 
 import { DrawerItems, NavigationActions } from 'react-navigation';
-import { BlurView, LinearGradient } from 'expo';
+import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur';
 import * as Animatable from 'react-native-animatable';
 import { Icon, Divider } from 'react-native-elements';
 import {STYLES} from '../Constants';
@@ -148,7 +149,7 @@ export class CustomDrawer extends React.PureComponent {
       </BlurView>
     );
   }
-};
+}
 
 const headerStyles = StyleSheet.create({
   containerHeader: {

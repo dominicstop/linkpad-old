@@ -2,9 +2,9 @@
 import React, { Fragment } from 'react';
 import PropTypes from 'prop-types';
 import { View, Platform } from 'react-native';
-import { DangerZone } from 'expo';
+
 import {timeout} from '../functions/Utils';
-let { Lottie } = DangerZone;
+import Lottie from 'lottie-react-native';
 
 export default class LottieCircle extends React.PureComponent {
   static propTypes = {

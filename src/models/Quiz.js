@@ -20,14 +20,14 @@ export class QuizQuestion {
 
   /** wrap object with QuizQuestion.structure to prevent missing properties and enable VSCODE type intellesense */
   static wrap(data = QuizQuestion.structure){
-    return ({
+    return {
       //assign default properties w/ default values
       ...QuizQuestion.structure,
       //remove all default values and replace w/ null
       ...replacePropertiesWithNull(QuizQuestion.structure),
       //combine with obj from param
-      ...data || {},
-    });
+      ...(data || {}),
+    };
   };
 
   /** wraps each element in an array to make sure */
@@ -106,7 +106,7 @@ export class QuizAnswer {
   
   /** wrap object with QuizAnswer.structure to prevent missing properties and enable VSCODE type intellesense */
   static wrap(data = QuizAnswer.structure){
-    return ({
+    return {
       //assign default properties w/ default values
       ...QuizAnswer.structure,
       //remove all default values and replace w/ null
@@ -115,8 +115,8 @@ export class QuizAnswer {
       isCorrect: data.isCorrect || (data.userAnswer == data.question.answer),
       answerID : data.answerID  || ((question) => `${question.indexID_module}-${question.indexID_subject}-${question.indexID_question}`)(data.question),
       //combine with obj from param
-      ...data || {},
-    });
+      ...(data || {}),
+    };
   };
 
   /** wraps each element in an array to make sure */

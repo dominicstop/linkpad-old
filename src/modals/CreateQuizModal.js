@@ -11,14 +11,15 @@ import { ModuleItemModel } from '../models/ModuleModels';
 import { MODAL_DISTANCE_FROM_TOP, MODAL_EXTRA_HEIGHT, SwipableModal, ModalBackground, ModalTopIndicator } from '../components/SwipableModal';
 import { IconText, AnimateInView } from '../components/Views';
 
-import { BlurView, LinearGradient, DangerZone } from 'expo';
-import { Icon, Divider } from 'react-native-elements';
+import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur';
+import Lottie from 'lottie-react-native'
 
 import * as Animatable  from 'react-native-animatable';
 import { isIphoneX, ifIphoneX } from 'react-native-iphone-x-helper';
+import { Icon, Divider } from 'react-native-elements';
 import Animated, { Easing } from 'react-native-reanimated';
 
-const { Lottie } = DangerZone;
 const { Value, timing, interpolate } = Animated;
 
 
@@ -68,7 +69,7 @@ class CheckAnimation extends React.PureComponent {
       />
     );
   };
-};
+}
 
 //shows the module title
 class ModalSectionHeader extends React.PureComponent {
@@ -157,7 +158,7 @@ class ModalSectionHeader extends React.PureComponent {
       android: this._renderAndroid(),
     });
   };
-};
+}
 
 //shows the subject item
 class ModalSectionItem extends React.PureComponent {
@@ -210,24 +211,24 @@ class ModalSectionItem extends React.PureComponent {
       ios: {
         type: 'ionicon',
         size: 26,
-        ...isSelected? {
+        ...(isSelected ? {
           name: 'ios-checkmark-circle',
           color: PURPLE[500],
         } : {
           name: 'ios-radio-button-off',
           color: PURPLE[200],
-        },
+        }),
       },
       android: {
         type: 'ionicon',
         size: 26,
-        ...isSelected? {
+        ...(isSelected ? {
           name: 'ios-checkmark-circle',
           color: PURPLE[500],
         } : {
           name: 'ios-radio-button-off',
           color: PURPLE[200],
-        },
+        }),
       },
     });
 
@@ -273,7 +274,7 @@ class ModalSectionItem extends React.PureComponent {
       </TouchableOpacity>
     );
   };
-};
+}
 
 class ModalAddButton extends React.PureComponent {
   static propTypes = {
@@ -409,7 +410,7 @@ class ModalAddButton extends React.PureComponent {
       </Animated.View>
     );
   };
-};
+}
 
 class ModalTitle extends React.PureComponent {
   static styles = StyleSheet.create({
@@ -588,7 +589,7 @@ class ModalTitle extends React.PureComponent {
       </View>      
     );
   };
-};
+}
 
 class ModalContents extends React.PureComponent {
   static propTypes = {
@@ -762,7 +763,7 @@ class ModalContents extends React.PureComponent {
       </View>
     );
   };
-};
+}
 
 export class CreateQuizModal extends React.PureComponent {
   static styles = StyleSheet.create({
@@ -921,4 +922,4 @@ export class CreateQuizModal extends React.PureComponent {
       </SwipableModal>
     );
   };
-};
+}

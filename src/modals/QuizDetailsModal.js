@@ -11,7 +11,8 @@ import { MODAL_DISTANCE_FROM_TOP, MODAL_EXTRA_HEIGHT, SwipableModal, ModalBackgr
 import { IconText, AnimateInView } from '../components/Views';
 import { PlatformTouchableIconButton } from '../components/Buttons';
 
-import { LinearGradient, DangerZone } from 'expo';
+import Lottie from 'lottie-react-native'
+import { LinearGradient } from 'expo-linear-gradient';
 import { Icon, Divider } from 'react-native-elements';
 
 import * as _Reanimated from 'react-native-reanimated';
@@ -20,8 +21,6 @@ import KeyboardSpacer from 'react-native-keyboard-spacer';
 
 import {CustomQuizStore} from '../functions/CustomQuizStore';
 import { isIphoneX, ifIphoneX } from 'react-native-iphone-x-helper';
-
-const { Lottie } = DangerZone;
 
 const { Easing } = _Reanimated;
 const Reanimated = _Reanimated.default;
@@ -73,7 +72,7 @@ class CheckAnimation extends React.PureComponent {
       />
     );
   };
-};
+}
 
 class FormTitle extends React.PureComponent {
   static styles = StyleSheet.create({
@@ -259,7 +258,7 @@ class FormTitle extends React.PureComponent {
       </Fragment>
     );
   };
-};
+}
 
 class FormDescription extends React.PureComponent {
   static styles = StyleSheet.create({
@@ -460,7 +459,7 @@ class FormDescription extends React.PureComponent {
       </Fragment>
     );
   };
-};
+}
 
 class Stepper extends React.PureComponent {
   static propTypes = {
@@ -776,7 +775,7 @@ class Stepper extends React.PureComponent {
       </View>
     );
   };
-};
+}
 
 class ModalContents extends React.PureComponent {
   static propTypes = {
@@ -959,7 +958,7 @@ class ModalContents extends React.PureComponent {
       </View>
     );
   };
-};
+}
 
 export class QuizDetailsModal extends React.PureComponent {
   static styles = StyleSheet.create({
@@ -1196,4 +1195,4 @@ export class QuizDetailsModal extends React.PureComponent {
       </SwipableModal>
     );
   };
-};
+}

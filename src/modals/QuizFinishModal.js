@@ -12,7 +12,10 @@ import { MODAL_DISTANCE_FROM_TOP, MODAL_EXTRA_HEIGHT, SwipableModal, ModalBackgr
 import { IconText, AnimateInView, Card } from '../components/Views';
 import { IconButton } from '../components/Buttons';
 
-import { BlurView, LinearGradient, DangerZone } from 'expo';
+import Lottie from 'lottie-react-native'
+
+import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur';
 import { Icon, Divider } from 'react-native-elements';
 import * as Animatable from 'react-native-animatable';
 import {  } from 'react-native-paper';
@@ -20,7 +23,6 @@ import NavigationService from '../NavigationService';
 import { ifIphoneX, isIphoneX } from 'react-native-iphone-x-helper';
 import { SubjectItem } from '../models/ModuleModels';
 
-const { Lottie } = DangerZone;
 
 const Screen = {
   width : Dimensions.get('window').width ,
@@ -68,7 +70,7 @@ class CheckAnimation extends React.PureComponent {
       />
     );
   };
-};
+}
 
 class ModalContents extends React.PureComponent {
   static propTypes = {
@@ -402,7 +404,7 @@ class ModalContents extends React.PureComponent {
       </View>
     );
   };
-};
+}
 
 export class QuizFinishModal extends React.PureComponent {
   static styles = StyleSheet.create({
@@ -520,4 +522,4 @@ export class QuizFinishModal extends React.PureComponent {
       </SwipableModal>
     );
   };
-};
+}

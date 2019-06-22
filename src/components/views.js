@@ -7,10 +7,11 @@ import { STYLES } from '../Constants';
 import { getStatusBarHeight, getBottomSpace, isIphoneX } from 'react-native-iphone-x-helper';
 import { Icon } from 'react-native-elements';
 import { Header } from 'react-navigation';
-import { BlurView } from 'expo';
 import * as Animatable from 'react-native-animatable';
-import { LinearGradient } from 'expo';
 import {timeout} from '../functions/Utils';
+
+import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur';
 
 const overlayOpacity = 0.4
 //declare animations
@@ -137,7 +138,7 @@ export class IconText extends React.PureComponent {
       childrenCount == 0 ? IconText : Wrapper
     );
   };
-};
+}
 
 export class Card extends React.PureComponent {
   static styles = StyleSheet.create({
@@ -305,7 +306,7 @@ export class AnimatedListItem extends React.PureComponent {
       : this._renderNormal   ()
     );
   };
-};
+}
 
 //wraps childern and animates with delay stagger
 export class AnimateInView extends React.PureComponent {
@@ -339,7 +340,7 @@ export class AnimateInView extends React.PureComponent {
       </Animatable.View>
     );
   };
-};
+}
 
 export class FlipView extends React.PureComponent {
   static propTypes = {
@@ -455,7 +456,7 @@ export class FlipView extends React.PureComponent {
       </Animatable.View>
     );
   }
-};
+}
 
 export class IconFooter extends React.PureComponent {
   static propTypes = {
@@ -536,7 +537,7 @@ export class IconFooter extends React.PureComponent {
       );
     };
   };
-};
+}
 
 export class ImageFromStorage extends React.PureComponent {
   static propTypes = {
@@ -601,4 +602,4 @@ export class ImageFromStorage extends React.PureComponent {
     );
     
   };
-};
+}

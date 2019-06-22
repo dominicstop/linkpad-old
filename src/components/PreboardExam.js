@@ -15,8 +15,7 @@ import * as Animatable from 'react-native-animatable';
 import      Carousel   from 'react-native-snap-carousel';
 import { Header } from 'react-navigation';
 import { Icon } from 'react-native-elements';
-import { DangerZone } from 'expo';
-const { Lottie } = DangerZone;
+import Lottie from 'lottie-react-native'
 
 export class ExamModuleItem extends React.PureComponent {
   static propTypes = {

@@ -8,7 +8,7 @@ import { CustomHeader } from '../components/Header' ;
 
 import _ from 'lodash';
 import * as Animatable from 'react-native-animatable';
-import { FileSystem } from 'expo';
+import * as FileSystem from 'expo-file-system';
 import { Header, NavigationEvents  } from 'react-navigation';
 import { Divider } from 'react-native-elements';
 
