@@ -10,6 +10,7 @@ import { Header } from 'react-navigation';
 import * as Animatable from 'react-native-animatable';
 import {timeout} from '../functions/Utils';
 
+import * as FileSystem from 'expo-file-system';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 
@@ -561,7 +562,7 @@ export class ImageFromStorage extends React.PureComponent {
 
   async componentDidMount(){
     const { fileURI } = this.props;
-    const uri = await Expo.FileSystem.readAsStringAsync(fileURI);
+    const uri = await FileSystem.readAsStringAsync(fileURI);
     this.setState({uri});
   };
 

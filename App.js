@@ -21,7 +21,7 @@ import NavigationService from './src/NavigationService';
 const expoVersion = ExpoConstants.expoVersion;
 const version     = parseFloat(expoVersion.slice(0,4));
 
-if(version <= 2.1){
+if(version <= 2.11){
   //use native navigation
   useScreens();
 
@@ -44,7 +44,7 @@ const AppStack = createStackNavigator({
     [ROUTES.TesterRoute         ]: TestScreen,
   },{
     headerMode: 'hidden',
-    initialRouteName: ROUTES.TesterRoute,
+    initialRouteName: ROUTES.HomeRoute,
     navigationOptions: {
       gesturesEnabled: false,
     },

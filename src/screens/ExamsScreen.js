@@ -16,6 +16,7 @@ import * as Animatable from 'react-native-animatable';
 import TimeAgo from 'react-native-timeago';
 import { Divider, Icon } from 'react-native-elements';
 import { Header, NavigationEvents } from 'react-navigation';
+import { PlatformButton, NumberIndicator } from '../components/StyledComponents';
 
 
 // shown when no exams have been created yet
@@ -144,18 +145,9 @@ class ExamHeader extends React.PureComponent {
         },
       })
     },
-    buttonWrapper: {
-      backgroundColor: PURPLE.A700,
-      marginTop: 15,
+    divider: {
+      margin: 13,
     },
-    buttonContainer: {
-      padding: 12,
-    },
-    buttonText: {
-      color: 'white',
-      fontSize: 17,
-      fontWeight: '600',
-    }
   });
 
   constructor(props){
@@ -201,30 +193,6 @@ class ExamHeader extends React.PureComponent {
     );
   };
 
-  _renderButton(){
-    const { styles } = ExamHeader;
-
-    //button text
-    const text = (global.usePlaceholder
-      ? 'Euismod Cursus Nullam'
-      : 'Create Custom Quiz'
-    );
-
-    return(
-      <PlatformTouchableIconButton
-        onPress={this._handleOnPressButton}
-        wrapperStyle={[styles.buttonWrapper, STYLES.lightShadow]}
-        containerStyle={styles.buttonContainer}
-        textStyle={styles.buttonText}
-        iconName={'plus-circle'}
-        iconColor={'white'}
-        iconType={'feather'}
-        iconSize={24}
-        {...{text}}
-      />
-    );
-  };
-
   render() {
     const { styles } = ExamHeader;
     
@@ -242,8 +210,17 @@ class ExamHeader extends React.PureComponent {
         {...{animation}}
       >
         {this._renderDescription()}
-        <Divider/>
-        {this._renderButton()}
+        <Divider style={styles.divider}/>
+        <PlatformButton
+          title={'Create Quiz'}
+          subtitle={'Create a new cutom quiz'}
+          onPress={this._handleOnPressButton}
+          iconName={'ios-add-circle'}
+          iconType={'ionicon'}
+          iconDistance={10}
+          isBgGradient={true}
+          showChevron={true}
+        />
       </Animatable.View>
     );
   };
@@ -251,6 +228,7 @@ class ExamHeader extends React.PureComponent {
 
 class CustomQuizItem extends React.PureComponent {
   static propTypes = {
+    index: PropTypes.number,
     quiz: PropTypes.object,
     onPressQuiz: PropTypes.func,
   }; 
@@ -260,9 +238,15 @@ class CustomQuizItem extends React.PureComponent {
       padding: 10,
       marginTop: 5,
     },
+    titleContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: 3,
+    },
     title: {
       fontSize: 20,
       fontWeight: '600',
+      marginLeft: 5,
     },
     description: {
       fontSize: 18,
@@ -281,7 +265,7 @@ class CustomQuizItem extends React.PureComponent {
   render(){
     const { styles } = CustomQuizItem;
 
-    const {quiz: {
+    const {index, quiz: {
       title            = "Uknown Title", 
       description      = "Uknown Description", 
       timestampCreated = 0, 
@@ -299,7 +283,16 @@ class CustomQuizItem extends React.PureComponent {
     return(
       <Card style={styles.container}>
         <TouchableOpacity onPress={this._handleOnPressQuiz}>
-          <Text style={styles.title}>{title}</Text>
+          <View style={styles.titleContainer}>
+            <NumberIndicator 
+              value={index + 1}
+              size={20}
+              initFontSize={14}
+            />
+            <Text style={styles.title}>
+              {title}
+            </Text>
+          </View>
           <Text style={styles.time} >
             {`${questionCount} ${plural(prefix, questionCount)} — `}
             <TimeAgo {...{time}}/>
@@ -364,7 +357,8 @@ class CustomQuizList extends React.PureComponent {
       >
         <CustomQuizItem 
           onPressQuiz={this._handleOnPressQuiz}
-          quiz={item}  
+          quiz={item}
+          {...{index}}
         />
       </AnimatedListItem>
     );

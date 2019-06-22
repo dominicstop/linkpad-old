@@ -2,6 +2,7 @@ import React from 'react';
 import { StyleSheet, Text, View, Platform, RefreshControl } from 'react-native';
 import PropTypes from 'prop-types';
 
+import { HEADER_HEIGHT, FONT_STYLES } from '../Constants';
 import { ModulesLastUpdated } from '../functions/MiscStore';
 import { timeout, setStateAsync} from '../functions/Utils';
 import { ModuleStore } from '../functions/ModuleStore';
@@ -9,11 +10,11 @@ import { ModuleStore } from '../functions/ModuleStore';
 import { ViewWithBlurredHeader, IconFooter, Card } from '../components/Views'  ;
 import { ModuleList } from '../components/Modules';
 
+import moment from 'moment';
 import * as Animatable from 'react-native-animatable';
-import TimeAgo from 'react-native-timeago';
 import { Header, NavigationEvents } from 'react-navigation';
 import { Divider } from 'react-native-elements';
-import {HEADER_HEIGHT, FONT_STYLES} from '../Constants';
+import { DetailRow, DetailColumn } from '../components/StyledComponents';
 
 
 class ModulesHeader extends React.PureComponent {
@@ -67,24 +68,30 @@ class ModulesHeader extends React.PureComponent {
     const time = lastUpdated * 1000;
     const moduleCount = modules.length || '--';
 
-    const Time = (props) => (lastUpdated?
-      <TimeAgo {...props} {...{time}}/> :
-      <Text    {...props}>
-        {'--:--'}
-      </Text>
+    const timeText = (lastUpdated
+      ? moment(time).fromNow()
+      : 'N/A'
     );
 
     return(
-      <View style={{flexDirection: 'row'}}>
-        <View style={{flex: 1}}>
-          <Text numberOfLines={1} style={FONT_STYLES.detailTitle   }>{'Modules: '}</Text>
-          <Text numberOfLines={1} style={FONT_STYLES.detailSubtitle}>{`${moduleCount} items`}</Text>
-        </View>
-        <View style={{flex: 1}}>
-          <Text numberOfLines={1} style={FONT_STYLES.detailTitle   }>{'Updated: '}</Text>
-          <Time numberOfLines={1} style={FONT_STYLES.detailSubtitle}/>              
-        </View>
-      </View>
+      <DetailRow>
+        <DetailColumn
+          title={'Modules'}
+          subtitle={`${moduleCount} items`}
+          help={true}
+          helpTitle={'Module Count'}
+          helpSubtitle={'Number of modules available.'}
+          disableGlow={true}
+        />
+         <DetailColumn
+          title={'Updated'}
+          subtitle={timeText}
+          help={true}
+          helpTitle={'Time Updated'}
+          helpSubtitle={'When was the module list last refreshed.'}
+          disableGlow={true}
+        />
+      </DetailRow>
     );
   };
 

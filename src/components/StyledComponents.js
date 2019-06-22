@@ -250,7 +250,7 @@ export class DetailColumn extends React.PureComponent {
       color: 'white',
       ...Platform.select({
         ios: {
-          fontWeight: '100',
+          fontWeight: '200',
           shadowColor: 'white', 
           shadowRadius: 7, 
           shadowOpacity: 0.4,
@@ -289,11 +289,12 @@ export class DetailColumn extends React.PureComponent {
     const hasChildren = (childrenCount > 0);
 
     return hasChildren? (
-      <Text style={[styles.subtitle, props.subtitleStyle]}>
-        {props.children}
-      </Text>
+      props.children
     ):(
-      <Text style={[styles.subtitle, props.subtitleStyle]}>
+      <Text 
+        style={[styles.subtitle, props.subtitleStyle]}
+        numberOfLines={1}
+      >
         {props.subtitle}
       </Text>
     );
@@ -321,14 +322,24 @@ export class DetailColumn extends React.PureComponent {
         onPress={this._handleOnPress}
         activeOpacity={0.75}
       >
-        <Text style={[styles.title, props.titleStyle]}>{props.title}</Text>
+        <Text 
+          style={[styles.title, props.titleStyle]}
+          numberOfLines={1} 
+        >
+          {props.title}
+        </Text>
         <View style={[styles.subtitleContainer, subtitleContainerStyle]}>
           {this._renderSubtitle()}
         </View>
       </TouchableOpacity>
     ):(
       <Fragment>
-        <Text style={[styles.title, props.titleStyle]}>{props.title}</Text>
+        <Text 
+          style={[styles.title, props.titleStyle]}
+          numberOfLines={1}
+        >
+          {props.title}
+        </Text>
         <View style={[styles.subtitleContainer, subtitleContainerStyle]}>
           {this._renderSubtitle()}
         </View>
@@ -359,10 +370,10 @@ export class NumberIndicator extends React.PureComponent {
 
   static defaultProps = {
     size          : 22         ,
-    color         : PURPLE[600],
+    color         : PURPLE.A700,
     adjustFontSize: true       ,
-    initFontSize  : 18         ,
-    diffFontSize  : 1          ,
+    initFontSize  : 15         ,
+    diffFontSize  : 2          ,
   };
 
   static styles = StyleSheet.create({
@@ -372,6 +383,7 @@ export class NumberIndicator extends React.PureComponent {
     },
     text: {
       color: 'white',
+      textAlign: 'center',
       ...Platform.select({
         ios: {
           fontWeight: '500',
@@ -844,7 +856,7 @@ export class PlatformButton extends React.PureComponent {
     reverseColors: false      ,
     //options - gradient related
     isBgGradient  : false,
-    gradientColors: [PURPLE.A700, INDIGO.A700],
+    gradientColors: [PURPLE.A700, '#3600ea'],
     //options - style adj/shortcuts
     iconDistance: 7,
     borderRadius: 12,
@@ -924,7 +936,6 @@ export class PlatformButton extends React.PureComponent {
     );
   };
 
-
   _renderContent(){
     const { styles, ALIGNMENT } = PlatformButton;
     const { ...props } = this.props;
@@ -949,12 +960,11 @@ export class PlatformButton extends React.PureComponent {
         />}
         {this._renderMiddle()}
         {props.showChevron && <Icon
-          containerStyle={[props.iconContainerStyle, iconContainerStyle]}
           //pass down icon props
           name ={'chevron-right'}
           type ={'feather'}
           color={props.fgColor }
-          size ={props.iconSize}
+          size={props.iconSize}
         />}
       </Fragment>
     );

@@ -44,14 +44,17 @@ export default class AuthLoadingScreen extends React.Component {
         this._loadTextFonts(),
       ]);
 
+      //lol this is temp
       const isLoggedIn = user.email != '';
-      const route = isLoggedIn? ROUTES.AppRoute : ROUTES.AuthRoute;
 
       //load modules and tips if logged in
       if(isLoggedIn) await this._loadData();
 
       this.animateOut();
-      navigation.navigate(ROUTES.TesterRoute);
+      navigation.navigate(isLoggedIn
+        ? ROUTES.AppRoute 
+        : ROUTES.AuthRoute
+      );
 
     } catch(error) {
       Alert.alert(

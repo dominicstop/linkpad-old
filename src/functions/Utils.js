@@ -1,4 +1,5 @@
 import { InteractionManager } from 'react-native';
+import * as FileSystem from 'expo-file-system';
 import chroma from 'chroma-js';
 import _ from 'lodash';
 import axios from 'axios';
@@ -136,13 +137,15 @@ export function isBase64Image(photouri){
 export async function createFolderIfDoesntExist(folder_uri){
   try {
     //get details of folder
-    const info = await Expo.FileSystem.getInfoAsync(folder_uri, {size: false, md5: false});
+    const info = await FileSystem.getInfoAsync(folder_uri, {size: false, md5: false});
     const { exists, isDirectory } = info;
+
+    console.log(info);
 
     const shouldMakeDirectory = (!exists && !isDirectory);
     if(shouldMakeDirectory){
       //create direcory
-      await Expo.FileSystem.makeDirectoryAsync(folder_uri);
+      await FileSystem.makeDirectoryAsync(folder_uri);
       _doesFolderExist = true;
     };
 

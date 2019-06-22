@@ -11,7 +11,9 @@ import { timeout, setStateAsync , plural} from '../functions/Utils';
 import { ResourcesStore       } from '../functions/ResourcesStore';
 import { ResourcesLastUpdated } from '../functions/MiscStore';
 import { ResourceModel } from '../models/ResourceModel';
+import { NumberIndicator, DetailColumn, DetailRow } from '../components/StyledComponents';
 
+import moment from 'moment';
 import _ from 'lodash';
 import * as Animatable from 'react-native-animatable';
 import { NavigationEvents } from 'react-navigation';
@@ -76,27 +78,6 @@ class HeaderCard extends React.PureComponent {
         },
       })
     },
-    detailTitle: Platform.select({
-      ios: {
-        fontSize: 17,
-        fontWeight: '500'
-      },
-      android: {
-        fontSize: 17,
-        fontWeight: '900'
-      }
-    }),
-    detailSubtitle: Platform.select({
-      ios: {
-        fontSize: 16,
-        fontWeight: '200'
-      },
-      android: {
-        fontSize: 16,
-        fontWeight: '100',
-        color: '#424242'
-      },
-    }),
   };
 
   constructor(props){
@@ -111,24 +92,30 @@ class HeaderCard extends React.PureComponent {
     const time  = lastUpdated * 1000;
     const count = resources.length || '--';
 
-    const Time = (props) => (lastUpdated?
-      <TimeAgo {...props} {...{time}}/> :
-      <Text    {...props}>
-        {'--:--'}
-      </Text>
+    const timeText = (lastUpdated
+      ? moment(time).fromNow()
+      : 'N/A'
     );
 
     return(
-      <View style={{flexDirection: 'row'}}>
-        <View style={{flex: 1}}>
-          <Text numberOfLines={1} style={styles.detailTitle   }>{'Resources: '}</Text>
-          <Text numberOfLines={1} style={styles.detailSubtitle}>{`${count} ${plural('item', count)}`}</Text>
-        </View>
-        <View style={{flex: 1}}>
-          <Text numberOfLines={1} style={styles.detailTitle   }>{'Updated: '}</Text>
-          <Time numberOfLines={1} style={styles.detailSubtitle}/>              
-        </View>
-      </View>
+      <DetailRow>
+        <DetailColumn
+          title={'Resources'}
+          subtitle={`${count} ${plural('item', count)}`}
+          help={true}
+          helpTitle={'Resource Count'}
+          helpSubtitle={'Number of resources available.'}
+          disableGlow={true}
+        />
+         <DetailColumn
+          title={'Updated'}
+          subtitle={timeText}
+          help={true}
+          helpTitle={'Time Updated'}
+          helpSubtitle={`The resources list was last refreshed ${timeText}.`}
+          disableGlow={true}
+        />
+      </DetailRow>
     );
   };
 
@@ -247,8 +234,9 @@ class EmptyCard extends React.PureComponent {
 
 class ResourceItem extends React.PureComponent { 
   static propTypes = {
+    index   : PropTypes.number,
     resource: PropTypes.object,
-    onPress : PropTypes.func,
+    onPress : PropTypes.func  ,
   };
 
   static styles = StyleSheet.create({
@@ -256,10 +244,16 @@ class ResourceItem extends React.PureComponent {
       marginVertical: 10,
       marginHorizontal: 15,
     },
+    titleContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
     textTitle: {
+      flex: 1,
       fontSize: 24, 
       fontWeight: 'bold',
-      color: PURPLE[1100]
+      color: PURPLE[1100],
+      marginLeft: 7,
     },
     textSubtitle: {
       fontSize: 16, 
@@ -290,7 +284,7 @@ class ResourceItem extends React.PureComponent {
 
   render(){
     const { styles } = ResourceItem;
-    const { resource } = this.props;
+    const { resource, index } = this.props;
 
     //wrap inside model
     const model = new ResourceModel(resource);
@@ -298,9 +292,12 @@ class ResourceItem extends React.PureComponent {
     return(
       <Card>      
         <TouchableOpacity onPress={this._handleOnPress}>
-          <Text style={styles.textTitle}>
-            {model.title}
-          </Text>
+          <View style={styles.titleContainer}>
+            <NumberIndicator value={index + 1}/>
+            <Text style={styles.textTitle}>
+              {model.title}
+            </Text>
+          </View>
           <Text style={styles.textSubtitle}>
             {`Last updated on ${model.dateposted}`}
           </Text>
@@ -333,7 +330,7 @@ export class ResourceList extends React.PureComponent {
     onPress && onPress(resource, resources);
   };
 
-  _renderItemResources = ({item, index}) => {
+  _renderItem = ({item, index}) => {
     const animation = Platform.select({
       ios    : 'fadeInUp',
       android: 'zoomIn'  ,
@@ -349,6 +346,7 @@ export class ResourceList extends React.PureComponent {
         <ResourceItem 
           resource={item}
           onPress={this._handleOnPress}
+          {...{index}}
         />
       </AnimatedListItem>
     );
@@ -367,7 +365,7 @@ export class ResourceList extends React.PureComponent {
         ref={r => this.flatlist = r}
         data={resources || []}
         keyExtractor={item => item.indexid + ''}
-        renderItem={this._renderItemResources}
+        renderItem={this._renderItem}
         ListEmptyComponent={this._renderEmpty}
         {...flatListProps}
       />

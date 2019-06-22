@@ -11,10 +11,11 @@ import { TipsLastUpdated } from '../functions/MiscStore';
 import { TipModel } from '../models/TipModel';
 
 import { ViewWithBlurredHeader, IconFooter, Card, AnimatedListItem } from '../components/Views';
+import { NumberIndicator, DetailRow, DetailColumn } from '../components/StyledComponents';
 
+import moment from 'moment';
 import _ from 'lodash';
 import * as Animatable from 'react-native-animatable';
-import TimeAgo from 'react-native-timeago';
 import { Header, NavigationEvents } from 'react-navigation';
 import { Divider } from 'react-native-elements';
 
@@ -76,27 +77,6 @@ class HeaderCard extends React.PureComponent {
         },
       })
     },
-    detailTitle: Platform.select({
-      ios: {
-        fontSize: 17,
-        fontWeight: '500'
-      },
-      android: {
-        fontSize: 17,
-        fontWeight: '900'
-      }
-    }),
-    detailSubtitle: Platform.select({
-      ios: {
-        fontSize: 16,
-        fontWeight: '200'
-      },
-      android: {
-        fontSize: 16,
-        fontWeight: '100',
-        color: '#424242'
-      },
-    }),
   };
 
   constructor(props){
@@ -111,24 +91,30 @@ class HeaderCard extends React.PureComponent {
     const time  = lastUpdated * 1000;
     const count = tips.length || '--';
 
-    const Time = (props) => (lastUpdated?
-      <TimeAgo {...props} {...{time}}/> :
-      <Text    {...props}>
-        {'--:--'}
-      </Text>
+    const timeText = (lastUpdated
+      ? moment(time).fromNow()
+      : 'N/A'
     );
 
     return(
-      <View style={{flexDirection: 'row'}}>
-        <View style={{flex: 1}}>
-          <Text numberOfLines={1} style={styles.detailTitle   }>{'Resources: '}</Text>
-          <Text numberOfLines={1} style={styles.detailSubtitle}>{`${count} ${plural('item', count)}`}</Text>
-        </View>
-        <View style={{flex: 1}}>
-          <Text numberOfLines={1} style={styles.detailTitle   }>{'Updated: '}</Text>
-          <Time numberOfLines={1} style={styles.detailSubtitle}/>              
-        </View>
-      </View>
+      <DetailRow>
+        <DetailColumn
+          title={'Tips'}
+          subtitle={`${count} ${plural('item', count)}`}
+          help={true}
+          helpTitle={'Tip Count'}
+          helpSubtitle={'Number of tips available.'}
+          disableGlow={true}
+        />
+         <DetailColumn
+          title={'Updated'}
+          subtitle={timeText}
+          help={true}
+          helpTitle={'Time Updated'}
+          helpSubtitle={`The tips list was last refreshed ${timeText}.`}
+          disableGlow={true}
+        />
+      </DetailRow>
     );
   };
 
@@ -257,10 +243,15 @@ class TipItem extends React.PureComponent {
       marginVertical: 10,
       marginHorizontal: 15,
     },
+    titleContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
     textTitle: {
       fontSize: 24, 
       fontWeight: 'bold',
-      color: PURPLE[1100]
+      color: PURPLE[1100],
+      marginLeft: 7,
     },
     textSubtitle: {
       fontSize: 16, 
@@ -291,7 +282,7 @@ class TipItem extends React.PureComponent {
 
   render(){
     const { styles } = TipItem;
-    const { tip } = this.props;
+    const { tip, index } = this.props;
 
     //wrap inside model
     const model = new TipModel(tip);
@@ -299,9 +290,12 @@ class TipItem extends React.PureComponent {
     return(
       <Card>      
         <TouchableOpacity onPress={this._handleOnPress}>
-          <Text style={styles.textTitle}>
-            {model.title}
-          </Text>
+          <View style={styles.titleContainer}>
+            <NumberIndicator value={index + 1}/>
+            <Text style={styles.textTitle}>
+              {model.title}
+            </Text>
+          </View>
           <Text style={styles.textSubtitle}>
             {`Last updated on ${model.dateposted}`}
           </Text>

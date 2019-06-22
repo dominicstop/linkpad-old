@@ -9,10 +9,10 @@ import { ModuleItemModel, SubjectItem } from '../models/ModuleModels';
 import _ from 'lodash';
 import * as Animatable from 'react-native-animatable';
 import Carousel from 'react-native-snap-carousel';
+
 import { NumberIndicator } from './StyledComponents';
 import { FONT_NAMES } from '../Constants';
 import { GREY } from '../Colors';
-
 
 export const subjectProps = {
   subjectID  : PropTypes.string,
