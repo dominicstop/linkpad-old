@@ -22,7 +22,7 @@ import { Icon, Divider } from 'react-native-elements';
 import { QuizAnswer, QuizQuestion, QUIZ_LABELS } from '../models/Quiz';
 import { isIphoneX, getBottomSpace } from 'react-native-iphone-x-helper';
 
-import { BlurViewWrapper, StickyHeader, DetailRow, DetailColumn, ModalBottomTwoButton, ModalTitle, StickyHeaderCollapsable, ModalSection, ExpanderHeader, NumberIndicator } from '../components/StyledComponents';
+import { BlurViewWrapper, StickyHeader, DetailRow, DetailColumn, ModalBottomTwoButton, ModalTitle, StickyHeaderCollapsable, ModalSection, ExpanderHeader, NumberIndicator, StickyCollapseHeader, StickyCollapsableScrollView, StyledSwipableModal } from '../components/StyledComponents';
 
 import Animated, { Easing } from 'react-native-reanimated';
 import { ContentExpander } from '../components/Expander';
@@ -909,9 +909,6 @@ export class QuizExamDoneModal extends React.PureComponent {
   };
 
   static styles = StyleSheet.create({
-    container: {
-      paddingBottom: MODAL_EXTRA_HEIGHT + MODAL_DISTANCE_FROM_TOP,
-    },
     //overlay styles
     overlayWrapper: {
       flex: 1,
@@ -936,78 +933,12 @@ export class QuizExamDoneModal extends React.PureComponent {
       //height: '100%', 
       //backgroundColor: 'red'
     },
-    //header styles
-    headerWrapper: {
-      ...Platform.select({
-        ios: {
-          position: 'absolute',
-          width: '100%',
-        },
-        android: {
-          borderBottomColor: GREY[900],
-        },
-      }),
-    },
-    headerContainer: {
-      paddingHorizontal: 7,
-      paddingBottom: 10,
-      ...Platform.select({
-        ios: {
-          borderBottomColor: GREY[100],
-          borderBottomWidth: 1,
-          backgroundColor: 'rgba(255,255,255, 0.5)',      
-        },
-        android: {
-          backgroundColor: 'rgba(255,255,255, 0.75)',      
-        },
-      }),
-    },
-    //content styles
-    scrollview: {
-      flex: 1,
-      paddingBottom: 75,
-    },
-    //footer styles
-    footerWrapper: {
-      position: 'absolute',
-      width: '100%',
-      bottom: 0,
-    },
-    footerContainer: {
-      ...Platform.select({
-        ios: {
-          backgroundColor: 'rgba(255,255,255,0.4)',
-          paddingVertical: 12,
-          paddingHorizontal: 10,
-          //border
-          borderColor: 'rgba(0,0,0,0.2)',
-          borderTopWidth: 1,
-          borderBottomWidth: 1,
-          //extra padding
-          ...(isIphoneX() && {
-            paddingBottom: getBottomSpace() + 10,
-          }),
-        },
-        android: {
-          backgroundColor: 'white',          
-          padding: 10,
-          height: 80,
-          elevation: 15,
-        },
-      }),
-    },
-    //list footer
-    listFooterContainer: {
-      marginBottom: 75
-    },
   });
 
   constructor(props){
     super(props);
 
     this.state = {
-      mountContent: false,
-      headerHeight: -1,
       //data from openModal
       currentIndex: -1,
       startTime: -1,
@@ -1017,41 +948,19 @@ export class QuizExamDoneModal extends React.PureComponent {
       quiz: null,
     };
 
-    this._deltaY = null;
     //callbacks
     this.onPressFinishButton = null;
     this.onPressQuestionItem = null;
   };
 
-  componentDidMount(){
-    const expandedHeight = (Screen.height - MODAL_DISTANCE_FROM_TOP);
-    const deltaY = this._modal._deltaY;
-
-    this.opacity = interpolate(deltaY, {
-      inputRange : [0, expandedHeight],
-      outputRange: [1, 0.5],
-      extrapolate: 'clamp',
-    });
-    this.scale = interpolate(deltaY, {
-      inputRange : [0, expandedHeight],
-      outputRange: [1, 0.95],
-      extrapolate: 'clamp',
-    });
-    this.translateX = interpolate(deltaY, {
-      inputRange : [0, expandedHeight],
-      outputRange: [1, 10],
-      extrapolate: 'clamp',
-    });
-  };
-
   //------ public functions ------
   openModal = async ({currentIndex, questionList, answers, questions, quiz, startTime}) => {
-    this.setState({
+    await setStateAsync(this, {
       mountContent: true, 
       //pass down to state
       currentIndex, questionList, answers, questions, quiz, startTime
     });
-    this._modal.showModal();
+    this.modal.openModal();
   };
 
   resetPrevTimestamps = () => {
@@ -1059,26 +968,6 @@ export class QuizExamDoneModal extends React.PureComponent {
   };
 
   //#region ------ events/handlers ------
-  /** from _renderHeader */
-  _handleHeaderOnLayout = ({nativeEvent}) => {
-    const { headerHeight } = this.state;
-    const { height } = nativeEvent.layout;
-
-    if(headerHeight == -1){
-      this.setState({headerHeight: height});
-    };
-  };
-
-  /** from _renderContent: scrolllview */
-  _handleOnEndReached = () => {
-    this.footer.show();
-  };
-
-  _handleOnModalHide = () => {
-    //reset state
-    this.setState({mountContent: false, });
-  };
-
   /** from _renderContent: QuestionItem*/
   _handleOnPressQuestion = async ({index}) => {
     await this._modal.hideModal();
@@ -1093,6 +982,7 @@ export class QuizExamDoneModal extends React.PureComponent {
     const overlayOpacity = Platform.select({
       ios: 0.5, android: 0.7,
     });
+
     this.overlay.transitionTo({opacity: overlayOpacity}, 500);
     this.checkOverlay.start();
     await timeout(750);
@@ -1102,158 +992,9 @@ export class QuizExamDoneModal extends React.PureComponent {
     this.onPressFinishButton && this.onPressFinishButton({timeStats});
   };
 
-  /** from _renderFooter */
-  _handleOnPressCancel = () => {
-    this._modal.hideModal();
-  };
-
   //#endregion 
-  //#region ------ render functions ------
-  /** shows a check animation */
-  _renderHeader(){
-    const { styles } = QuizExamDoneModal;
-
-    const style = {
-      opacity: this.opacity,
-      transform: [
-        { translateX: this.translateX },
-        { scale     : this.scale      },
-      ],
-    };
-
-    return(
-      <BlurViewWrapper
-        wrapperStyle={styles.headerWrapper}
-        containerStyle={styles.headerContainer}
-        onLayout={this._handleHeaderOnLayout}
-      >
-        <ModalTopIndicator/>
-        <Animated.View {...{style}}>
-          <ModalTitle
-            title={'Custom Quiz Details'}
-            subtitle={"When you're done, press finish. "}
-            iconStyle={{marginTop: 2}}
-            iconName={'ios-book'}
-            iconType={'ionicon'}
-          />
-        </Animated.View>
-      </BlurViewWrapper>
-    );
-  };
-
-  /** bottom buttons */
-  _renderFooter(){
-    const { styles } = QuizExamDoneModal;
-
-    return(
-      <Animatable.View
-        style={styles.footerWrapper}
-        animation={'slideInUp'}
-        duration={500}
-        delay={300}
-        useNativeDriver={true}
-      >
-        <BlurViewWrapper
-          containerStyle={styles.footerContainer}
-          intensity={100}
-          tint={'default'}
-        >
-          <ModalBottomTwoButton
-            leftText={'Finish'}
-            rightText={'Cancel'}
-            onPressLeft={this._handleOnPressFinish}
-            onPressRight={this._handleOnPressCancel}
-          />
-        </BlurViewWrapper>
-      </Animatable.View>
-    );
-  };
-
-  /** bottom heart icon */
-  _renderListFooter = () => {
-    const { styles } = QuizExamDoneModal;
-    return(
-      <View style={styles.listFooterContainer}>
-        <IconFooter 
-          hide={false}
-          delay={3000}
-        />
-      </View>
-    );
-  };
-
-  _renderContent(){
-    const { styles } = QuizExamDoneModal;
-    const { headerHeight, quiz, startTime, answers, questions, currentIndex, questionList } = this.state;
-    
-    if(headerHeight == -1) return null;
-    const maxIndex = (questions || []).length + (questionList || []).length;
-
-    const style = {
-      flex: 1,
-      opacity: this.opacity,
-    };
-
-    const PlatformProps = {
-      ...Platform.select({
-        ios: {
-          contentInset :{top: headerHeight},
-          contentOffset:{x: 0, y: -headerHeight},
-        },
-      }),
-    };
-
-    return(
-      <Animatable.View
-        style={{flex: 1}}
-        animation={'fadeInUp'}
-        duration={500}
-        useNativeDriver={true}
-      >
-        <Animated.View {...{style}}>
-          <ScrollView
-            style={styles.scrollview}
-            stickyHeaderIndices={[0, 2]}
-            onEndReached={this._handleOnEndReached}
-            {...PlatformProps}
-          >
-            <StickyHeader
-              title={'Quiz Details'}
-              subtitle={'Details about the current quiz.'}
-              iconName={'message-circle'}
-              iconType={'feather'}
-            />
-            <QuizDetails {...{quiz}}/>
-
-            <StickyHeader
-              title={'Quiz Statistics'}
-              subtitle={'How well are you doing so far?'}
-              iconName={'eye'}
-              iconType={'feather'}
-            />
-            <QuizStats
-              ref={r => this.quizStats = r}
-              {...{quiz, startTime, answers, questions}}
-            />
-            
-            <StickyHeader
-              title={'Questions & Answers'}
-              subtitle ={'Overview of your answer.'}
-              iconName={'list'}
-              iconType={'feather'}
-            />
-            <QuestionList
-              onPressQuestion={this._handleOnPressQuestion}
-              {...{currentIndex, maxIndex, answers}}
-            />
-            {this._renderListFooter()}
-          </ScrollView>
-        </Animated.View>
-      </Animatable.View>
-    );
-  };
-  
-  _renderOverlay(){
+  //#region ------ render functions ------  
+  _renderOverlay = () => {
     const { styles } = QuizExamDoneModal;
     
     return (
@@ -1275,21 +1016,64 @@ export class QuizExamDoneModal extends React.PureComponent {
 
   render(){
     const { styles } = QuizExamDoneModal;
-    const { mountContent } = this.state;
+    const { quiz: _quiz, startTime, answers, questions, currentIndex, questionList } = this.state;
+    
+    const quiz = CustomQuiz.wrap(_quiz);
+    const maxIndex = (questions || []).length + (questionList || []).length;
 
     return(
-      <SwipableModal 
-        ref={r => this._modal = r}
-        onModalShow={this._handleOnModalShow}
-        onModalHide={this._handleOnModalHide}
+      <StyledSwipableModal
+        ref={r => this.modal = r}
+        renderOverlay={this._renderOverlay}
+        //header styles
+        headerTitle={'Custom Quiz Details'}
+        headerSubtitle={'Press finish to save and end this session'}
+        headerIconName={'ios-book'}
+        headerIconType={'ionicon'}
+        headerIconStyle={{marginTop: 2}}
+        //footer buttons
+        onPressLeft={this._handleOnPressFinish}
       >
-        <ModalBackground style={styles.container}>
-          {mountContent && this._renderContent()}
-          {mountContent && this._renderHeader ()}
-          {mountContent && this._renderFooter ()}
-          {mountContent && this._renderOverlay()}
-        </ModalBackground>
-      </SwipableModal>
+        <StickyCollapsableScrollView>
+          <StickyCollapseHeader
+            title={'Quiz Details'}
+            subtitle={'Details about the current quiz.'}
+            iconName={'message-circle'}
+            iconType={'feather'}
+          />
+          <QuizDetails {...{quiz}}/>
+
+          <StickyCollapseHeader
+            title={'Quiz Details'}
+            subtitle={'Details about the current quiz.'}
+            iconName={'message-circle'}
+            iconType={'feather'}
+          />
+          <QuizDetails {...{quiz}}/>
+
+          <StickyCollapseHeader
+            title={'Quiz Statistics'}
+            subtitle={'How well are you doing so far?'}
+            iconName={'eye'}
+            iconType={'feather'}
+          />
+          <QuizStats
+            ref={r => this.quizStats = r}
+            {...{quiz, startTime, answers, questions}}
+          />
+          
+          <StickyCollapseHeader
+            title={'Questions & Answers'}
+            subtitle ={'Overview of your answer.'}
+            iconName={'list'}
+            iconType={'feather'}
+          />
+          <QuestionList
+            onPressQuestion={this._handleOnPressQuestion}
+            {...{currentIndex, maxIndex, answers}}
+          />
+        </StickyCollapsableScrollView>
+      </StyledSwipableModal>
     );
   };
   //#endregion 

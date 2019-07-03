@@ -457,22 +457,22 @@ export class ExamsScreen extends React.Component {
   };
 
   _handleOnPressQuiz = (quizItem) => {
-    const { screenProps } = this.props;
-
+    const { screenProps, navigation } = this.props;
     const modal = screenProps[SCREENPROPS_KEYS.getRefViewCustomQuizModal]();
+
     modal.openModal({
       quiz: quizItem,
+      onPressStart: () => {
+        //randomize question order
+        const randomized = CustomQuiz.randomizeQuestionOrder(quizItem);
+
+        //navigate to custom quiz exam screen
+        navigation && navigation.navigate(
+          ROUTES.CustomQuizExamScreen, 
+          { quiz: randomized }
+        );
+      },
     });
-
-    //const quiz = CustomQuiz.wrap(quizItem);
-    //randomize question order
-    //const randomized = CustomQuiz.randomizeQuestionOrder(quiz);
-
-    //navigate to custom quiz exam screen
-    //NavigationService.navigateApp(
-    //  ROUTES.CustomQuizExamScreen, {
-    //    quiz: randomized,
-    //});
   };
 
   render(){

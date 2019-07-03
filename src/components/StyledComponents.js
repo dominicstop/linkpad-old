@@ -18,6 +18,7 @@ import PlatformTouchable from './Touchable';
 
 import Animated, { Easing } from 'react-native-reanimated';
 import { setStateAsync } from '../functions/Utils';
+import { IconFooter } from './Views';
 
 const { Value, interpolate, concat, timing } = Animated;
 const Screen = {
@@ -461,11 +462,11 @@ export class ModalBottomTwoButton extends React.PureComponent {
 
   static defaultProps = {
     iconSize     : 24,
-    iconColor    : 'white',
-    leftIconName : 'pencil-square-o',
-    leftIconType : 'font-awesome',
-    rightIconName: 'close',
-    rightIconType: 'simple-line-icon',
+    iconColor    : 'rgba(255,255,255,0.9)',
+    leftIconName : 'ios-checkmark-circle',
+    leftIconType : 'ionicon',
+    rightIconName: 'ios-close-circle',
+    rightIconType: 'ionicon',
   };
 
   static styles = (() => {
@@ -500,6 +501,15 @@ export class ModalBottomTwoButton extends React.PureComponent {
           },
         }),
       },
+      buttonIcon: {
+        shadowColor: 'white',
+        shadowRadius: 5,
+        shadowOpacity: 0.25,
+        shadowOffset: {  
+          width: 1,  
+          height: 1,  
+        },
+      },
       //left/right button styles
       leftButtonStyle: {
         borderTopLeftRadius: borderRadius, 
@@ -508,8 +518,8 @@ export class ModalBottomTwoButton extends React.PureComponent {
         ...Platform.select({
           ios: {
             shadowColor: PURPLE.A700, 
-            shadowRadius: 5, 
-            shadowOpacity: 0.6,
+            shadowRadius: 6, 
+            shadowOpacity: 0.25,
             shadowOffset:{ 
               width: -1,
               height: 3,  
@@ -524,8 +534,8 @@ export class ModalBottomTwoButton extends React.PureComponent {
         ...Platform.select({
           ios: {
             shadowColor: RED.A700, 
-            shadowRadius: 5, 
-            shadowOpacity: 0.5,
+            shadowRadius: 6, 
+            shadowOpacity: 0.25,
             shadowOffset:{  
               width: 1,  
               height: 3,  
@@ -544,6 +554,7 @@ export class ModalBottomTwoButton extends React.PureComponent {
       iconSize : props.iconSize,
       iconColor: props.iconColor,
       textStyle: [styles.buttonText, props.buttonTextStyle],
+      iconStyle: styles.buttonIcon,
       activeOpacity: 0.75,
       ...props.buttonProps,
     };
@@ -1043,9 +1054,15 @@ export class StyledSwipableModal extends React.PureComponent {
     headerIconType : PropTypes.string,
     headerIconStyle: PropTypes.object,
     //footer props
-    buttonTitle    : PropTypes.string,
-    buttonIconName : PropTypes.string,
-    buttonIconType : PropTypes.string,
+    buttonLeftTitle    : PropTypes.string,
+    buttonLeftIconName : PropTypes.string,
+    buttonLeftIconType : PropTypes.string,
+    buttonRightTitle   : PropTypes.string,
+    buttonRightIconName: PropTypes.string,
+    buttonRightIconType: PropTypes.string,
+    //callbacks/events
+    onPressLeft  : PropTypes.func,
+    onPressCancel: PropTypes.func,
     //render functions
     renderHeader : PropTypes.func,
     renderBody   : PropTypes.func,
@@ -1190,8 +1207,16 @@ export class StyledSwipableModal extends React.PureComponent {
   };
 
   /** from _renderFooter */
+  _handleOnPressLeft = () => {
+    const { onPressLeft } = this.props;
+    onPressLeft && onPressLeft();
+  };
+
+  /** from _renderFooter */
   _handleOnPressCancel = () => {
+    const { onPressCancel } = this.props;
     this.modal.hideModal();
+    onPressCancel && onPressCancel();
   };
   //#endregion 
 
@@ -1235,6 +1260,7 @@ export class StyledSwipableModal extends React.PureComponent {
     const { children } = this.props;
     const { mountContent, headerHeight, footerHeight } = this.state;
 
+    if((headerHeight == -1) || (footerHeight == -1)) return null;
     const childCount = React.Children.count(children);
     
     const style = {
@@ -1288,9 +1314,10 @@ export class StyledSwipableModal extends React.PureComponent {
         >
           {renderFooter? renderFooter():(
             <ModalBottomTwoButton
-              leftText={'Finish'}
-              rightText={'Cancel'}
-              onPressLeft={this._handleOnPressFinish}
+              //pass down props and assign default values
+              leftText ={props.buttonLeftText  || 'Start' }
+              rightText={props.buttonRightText || 'Cancel'}
+              onPressLeft={this._handleOnPressLeft}
               onPressRight={this._handleOnPressCancel}
             />
           )}
@@ -1338,12 +1365,16 @@ export class StyledSwipableModal extends React.PureComponent {
 
 /** used in conjunction with StickyCollapsableScrollView */
 export class StickyCollapseHeader extends React.PureComponent {
+  static propTypes = {
+    arrowColor: PropTypes.string,
+  };
+
   static styles = StyleSheet.create({
     arrowContainer: {
       width: 25,
       height: 25,
       borderRadius: 25/2,
-      backgroundColor: PURPLE[500],
+      backgroundColor: INDIGO.A200,
       alignItems: 'center',
       justifyContent: 'center',
     },
@@ -1402,8 +1433,10 @@ export class StickyCollapseHeader extends React.PureComponent {
 
   _renderRight = () => {
     const { styles } = StickyCollapseHeader;
+    const { arrowColor } = this.props;
 
     const arrowContainerStyle = {
+      ...(arrowColor && {backgroundColor: arrowColor}),
       opacity: this.opacity,
       transform: [
         { rotate: concat(this.rotation, 'deg') },
@@ -1455,6 +1488,16 @@ export class StickyCollapseHeader extends React.PureComponent {
  * returned an array or is generated using funcs or a stateless func comp.
  */
 export class StickyCollapsableScrollView extends React.PureComponent {
+
+  _renderFooter(){
+    return(
+      <IconFooter
+        hide={false}
+        delay={3000}
+      />
+    );
+  };
+
   render(){
     const { children, ...props } = this.props;
 
@@ -1477,6 +1520,7 @@ export class StickyCollapsableScrollView extends React.PureComponent {
             }),
           })}
         )}
+        {this._renderFooter()}
       </ScrollView>
     );
   };

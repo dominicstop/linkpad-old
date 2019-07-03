@@ -305,19 +305,22 @@ export class ViewCustomQuizModal extends React.Component {
   };
 
   //------ public functions ------
-  openModal = async ({quiz, results}) => {
+  openModal = async ({quiz, results, onPressStart}) => {
+    //assign onpress callback to button
+    this._handleOnPressStart = () => {
+      onPressStart && onPressStart();
+    };
+
     await setStateAsync(this, {
       mountContent: true,
       selectedQuiz: quiz,
     });
+
     this.modal.openModal();
   };
 
   //#region ------ events/handlers ------
-  /** from _renderContent: scrolllview */
-  _handleOnEndReached = () => {
-    this.footer.show();
-  };
+
   //#endregion 
 
   //#region ------ render functions ------
@@ -332,10 +335,13 @@ export class ViewCustomQuizModal extends React.Component {
     return(
       <StyledSwipableModal
         ref={r => this.modal = r}
+        //header styles
         headerSubtitle={'Press start to begin quiz'}
         headerIconName={'ios-book'}
         headerIconType={'ionicon'}
         headerIconStyle={{marginTop: 2}}
+        //footer buttons
+        onPressLeft={this._handleOnPressStart}
         {...{headerTitle}}
       >
         <StickyCollapsableScrollView>
@@ -346,7 +352,6 @@ export class ViewCustomQuizModal extends React.Component {
             iconType={'feather'}
           />
           <QuizDetails {...{quiz}}/>
-
 
           <StickyCollapseHeader
             title={'Coverage'}

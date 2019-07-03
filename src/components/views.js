@@ -491,10 +491,11 @@ export class IconFooter extends React.PureComponent {
   };
 
   _renderHeart(){
-    const { delay } = this.props;
+    const { delay, ...props } = this.props;
 
     return(
       <Animatable.View
+        style={{paddingBottom: 50}}
         animation={'pulse'}
         duration={1000}
         easing={'ease-in-out'}
@@ -516,27 +517,22 @@ export class IconFooter extends React.PureComponent {
   render(){
     if(!this.state.mount) return null;
     const { delay, animation, animateIn } = this.props;
-    
-    if(animateIn){
-      return (
-        <Animatable.View 
-          style={{paddingBottom: 50}}
-          easing={'ease-in-out'}
-          duration={750}
-          useNativeDriver={true}
-          {...{animation, delay}}
-        >
-          {this._renderHeart()}
-        </Animatable.View>
-      );
 
-    } else {
-      return (
-        <View style={{paddingBottom: 50}}>
-          {this._renderHeart()}
-        </View>
-      );
-    };
+    return animateIn? (
+      <Animatable.View 
+        style={{paddingBottom: 50}}
+        easing={'ease-in-out'}
+        duration={750}
+        useNativeDriver={true}
+        {...{animation, delay}}
+      >
+        {this._renderHeart()}
+      </Animatable.View>
+    ):(
+      <View style={{paddingBottom: 50}}>
+        {this._renderHeart()}
+      </View>
+    );
   };
 }
 

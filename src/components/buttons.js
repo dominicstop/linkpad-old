@@ -26,6 +26,7 @@ export class IconButton extends React.PureComponent {
     iconColor: PropTypes.string,
     iconType : PropTypes.string,
     iconSize : PropTypes.number,
+    iconStyle: PropTypes.object,
     iconProps: PropTypes.object,
     //style props
     containerStyle    : PropTypes.any,
@@ -59,13 +60,14 @@ export class IconButton extends React.PureComponent {
   });
 
   getProps(){
-    const { text, subtitle, iconName, iconColor, iconType, iconSize, containerStyle, wrapperStyle, textStyle, children, iconProps, subtitleStyle, textContainerStyle, ...otherProps} = this.props;
+    const { text, subtitle, iconName, iconColor, iconType, iconSize, iconStyle, containerStyle, wrapperStyle, textStyle, children, iconProps, subtitleStyle, textContainerStyle, ...otherProps} = this.props;
     return{
       iconProps: {
         name : iconName , 
         color: iconColor, 
         type : iconType ,
         size : iconSize ,
+        iconStyle,
         ...iconProps
       },
       styleProps: {
