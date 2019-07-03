@@ -224,7 +224,6 @@ export class ContentExpander extends React.PureComponent {
 
   static defaultProps = {
     initCollpased: false,
-    renderHeader : true ,
   };
 
   static styles = StyleSheet.create({
@@ -264,7 +263,7 @@ export class ContentExpander extends React.PureComponent {
     this.status          = new Value(0);
 
     this.height = interpolate(this.progress, {
-      inputRange : [0, 99.99, 100],
+      inputRange : [0, 99.999, 100],
       outputRange: [0, this.heightExpanded, -1],
       extrapolate: 'clamp',
     });

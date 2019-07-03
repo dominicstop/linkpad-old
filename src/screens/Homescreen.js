@@ -1,7 +1,7 @@
 import React, { Fragment } from 'react';
 import { View, Platform, StyleSheet } from 'react-native';
 
-import Constants, { STYLES, ROUTES } from '../Constants';
+import Constants, { STYLES, ROUTES, SCREENPROPS_KEYS } from '../Constants';
 import { CustomHeader  } from '../components/Header' ;
 import { AndroidHeader } from '../components/AndroidHeader';
 
@@ -27,6 +27,7 @@ import { createBottomTabNavigator, createStackNavigator } from 'react-navigation
 import { createMaterialBottomTabNavigator } from 'react-navigation-material-bottom-tabs';
 import { Icon } from 'react-native-elements';
 import { LinearGradient } from 'expo-linear-gradient';
+import { ViewCustomQuizModal } from '../modals/ViewCustomQuizModal';
 
 /**
  * each tab has a shared header because tabnav is wrapped inside a stack
@@ -293,12 +294,13 @@ export class Homescreen extends React.PureComponent {
           navigation={this.props.navigation}
           screenProps={{
             ...this.props.screenProps,
-            getRefSubjectModal    : () => this.subjectModal    ,
-            getRefCreateQuizModal : () => this.createQuizModal ,
-            getRefQuizDetailsModal: () => this.quizDetailsModal,
-            getRefQuizFinishModal : () => this.quizFinishModal ,
-            getAppStackNavigation : () => this.props.navigation,
-            setDrawerSwipe: this.setDrawerSwipe,
+            [SCREENPROPS_KEYS.getRefSubjectModal       ]: () => this.subjectModal       ,
+            [SCREENPROPS_KEYS.getRefCreateQuizModal    ]: () => this.createQuizModal    ,
+            [SCREENPROPS_KEYS.getRefQuizDetailsModal   ]: () => this.quizDetailsModal   ,
+            [SCREENPROPS_KEYS.getRefQuizFinishModal    ]: () => this.quizFinishModal    ,
+            [SCREENPROPS_KEYS.getRefViewCustomQuizModal]: () => this.viewCustomQuizModal,
+            [SCREENPROPS_KEYS.getAppStackNavigation    ]: () => this.props.navigation   ,
+            [SCREENPROPS_KEYS.setDrawerSwipe           ]: this.setDrawerSwipe,
           }}
         />
       </Animatable.View>
@@ -308,9 +310,10 @@ export class Homescreen extends React.PureComponent {
   _renderModals(){
     return(
       <Fragment>
-        <SubjectModal     ref={r => this.subjectModal     = r}/>
-        <CreateQuizModal  ref={r => this.createQuizModal  = r}/>
-        <QuizDetailsModal ref={r => this.quizDetailsModal = r}/>
+        <SubjectModal        ref={r => this.subjectModal        = r}/>
+        <CreateQuizModal     ref={r => this.createQuizModal     = r}/>
+        <QuizDetailsModal    ref={r => this.quizDetailsModal    = r}/>
+        <ViewCustomQuizModal ref={r => this.viewCustomQuizModal = r}/>
         <QuizFinishModal  
           ref={r => this.quizFinishModal = r}
           style={{backgroundColor: 'rgb(170, 170, 170)'}}

@@ -1,23 +1,29 @@
-
-
 import React, { Component, Fragment } from 'react';
-import { StyleSheet, View, Text, Platform, TouchableOpacity, Alert } from 'react-native';
+import { StyleSheet, View, Text, Platform, TouchableOpacity, Alert, Dimensions, ScrollView } from 'react-native';
 import PropTypes from 'prop-types';
 
 import * as Animatable from 'react-native-animatable';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
-import { isIphoneX } from 'react-native-iphone-x-helper';
-
+import { isIphoneX, getBottomSpace } from 'react-native-iphone-x-helper';
 import { Icon, } from 'react-native-elements';
+
 import { FONT_STYLES, FONT_NAMES, STYLES } from '../Constants';
 import { PURPLE, GREY, RED, BLUE, INDIGO } from '../Colors';
+
+import { MODAL_DISTANCE_FROM_TOP, MODAL_EXTRA_HEIGHT, SwipableModal, ModalBackground, ModalTopIndicator } from './SwipableModal';
 import { IconButton } from './Buttons';
 import { ContentExpander } from './Expander';
+import PlatformTouchable from './Touchable';
 
 import Animated, { Easing } from 'react-native-reanimated';
-import PlatformTouchable from './Touchable';
-const { Value, interpolate, concat, set, onChange } = Animated;
+import { setStateAsync } from '../functions/Utils';
+
+const { Value, interpolate, concat, timing } = Animated;
+const Screen = {
+  width : Dimensions.get('window').width ,
+  height: Dimensions.get('window').height,
+};
 
 /** renders View on android */
 export const BlurViewWrapper = (props) => {
@@ -150,7 +156,7 @@ export class StickyHeader extends React.PureComponent {
       </BlurViewWrapper>
     );
   };
-}
+};
 
 /** 
  * wraps each children inside a column 
@@ -197,7 +203,7 @@ export class DetailRow extends React.PureComponent {
       </View>
     );
   };
-}
+};
 
 /** 
  * wraps each children inside a column 
@@ -346,7 +352,7 @@ export class DetailColumn extends React.PureComponent {
       </Fragment>
     );
   };
-}
+};
 
 export class NumberIndicator extends React.PureComponent {
   static propTypes = {
@@ -424,7 +430,7 @@ export class NumberIndicator extends React.PureComponent {
       </View>
     );
   };
-}
+};
 
 /** 
  * renders 2 buttons that is usually used on the bottom of a modal
@@ -565,7 +571,7 @@ export class ModalBottomTwoButton extends React.PureComponent {
       </View>
     );
   };
-}
+};
 
 /** 
  * renders an icon with a title and subtitle w/ default styling meant to be used for a swipable modal
@@ -581,7 +587,7 @@ export class ModalTitle extends React.PureComponent {
     iconSize: PropTypes.number,
     //options
     outerGlow: PropTypes.bool,
-    //style
+    //styles
     iconStyle         : PropTypes.object,
     titleStyle        : PropTypes.object,
     subtitleStyle     : PropTypes.object,
@@ -704,7 +710,7 @@ export class ModalTitle extends React.PureComponent {
       </View>
     );
   };
-}
+};
 
 /** 
  * wraps children with a styled view for a section inside a modal
@@ -741,7 +747,7 @@ export class ModalSection extends React.PureComponent {
       </View>
     );
   };
-}
+};
 
 export const ExpanderHeader = (props) => {
   const styles = StyleSheet.create({
@@ -806,7 +812,7 @@ export const ExpanderHeader = (props) => {
 
 class TapToCycleText extends React.PureComponent {
 
-}
+};
 
 
 export class PlatformButton extends React.PureComponent {
@@ -1024,4 +1030,454 @@ export class PlatformButton extends React.PureComponent {
       ),
     });
   };
-}
+};
+
+export class StyledSwipableModal extends React.PureComponent {
+  static propTypes = {
+    innerRef: PropTypes.func,
+    showOverlay: PropTypes.bool,
+    //header props
+    headerTitle    : PropTypes.string,
+    headerSubtitle : PropTypes.string,
+    headerIconName : PropTypes.string,
+    headerIconType : PropTypes.string,
+    headerIconStyle: PropTypes.object,
+    //footer props
+    buttonTitle    : PropTypes.string,
+    buttonIconName : PropTypes.string,
+    buttonIconType : PropTypes.string,
+    //render functions
+    renderHeader : PropTypes.func,
+    renderBody   : PropTypes.func,
+    renderFooter : PropTypes.func,
+    renderOverlay: PropTypes.func,
+  };
+
+  static styles = StyleSheet.create({
+    container: {
+      paddingBottom: MODAL_EXTRA_HEIGHT + MODAL_DISTANCE_FROM_TOP,
+    },
+    //header styles
+    headerWrapper: {
+      ...Platform.select({
+        ios: {
+          position: 'absolute',
+          width: '100%',
+        },
+        android: {
+          borderBottomColor: GREY[900],
+        },
+      }),
+    },
+    headerContainer: {
+      paddingHorizontal: 7,
+      paddingBottom: 10,
+      ...Platform.select({
+        ios: {
+          borderBottomColor: GREY[100],
+          borderBottomWidth: 1,
+          backgroundColor: 'rgba(255,255,255, 0.5)',      
+        },
+        android: {
+          backgroundColor: 'rgba(255,255,255, 0.75)',      
+        },
+      }),
+    },
+    //body styles
+    scrollview: {
+      flex: 1,
+      paddingBottom: 75,
+    },
+    //footer styles
+    footerWrapper: {
+      position: 'absolute',
+      width: '100%',
+      bottom: 0,
+    },
+    footerContainer: {
+      ...Platform.select({
+        ios: {
+          backgroundColor: 'rgba(255,255,255,0.4)',
+          paddingVertical: 12,
+          paddingHorizontal: 10,
+          //border
+          borderColor: 'rgba(0,0,0,0.2)',
+          borderTopWidth: 1,
+          borderBottomWidth: 1,
+          //extra padding
+          ...(isIphoneX() && {
+            paddingBottom: getBottomSpace() + 10,
+          }),
+        },
+        android: {
+          backgroundColor: 'white',          
+          padding: 10,
+          height: 80,
+          elevation: 15,
+        },
+      }),
+    },
+  });
+
+  constructor(props){
+    super(props);
+    this._deltaY = null;
+    this.state = {
+      mountContent: false,
+      headerHeight: -1,
+      footerHeight: -1,
+    };
+  };
+
+  componentDidMount(){
+    const expandedHeight = (Screen.height - MODAL_DISTANCE_FROM_TOP);
+    const deltaY = this.modal._deltaY;
+
+    this.opacity = interpolate(deltaY, {
+      inputRange : [0, expandedHeight],
+      outputRange: [1, 0.5],
+      extrapolate: 'clamp',
+    });
+    this.scale = interpolate(deltaY, {
+      inputRange : [0, expandedHeight],
+      outputRange: [1, 0.95],
+      extrapolate: 'clamp',
+    });
+    this.translateX = interpolate(deltaY, {
+      inputRange : [0, expandedHeight],
+      outputRange: [1, 10],
+      extrapolate: 'clamp',
+    });
+  };
+
+  getModalRef = () => {
+    return this.modal;
+  };
+
+  openModal = async () => {
+    await setStateAsync(this, {mountContent: true});
+    this.modal.showModal();
+  };
+
+  //#region ------ events/handlers ------
+  /** from _renderHeader */
+  _handleHeaderOnLayout = ({nativeEvent}) => {
+    const { headerHeight } = this.state;
+    const { height } = nativeEvent.layout;
+
+    if(headerHeight == -1){
+      this.setState({headerHeight: height});
+    };
+  };
+
+  _handleFooterOnLayout = ({nativeEvent}) => {
+    const { footerHeight } = this.state;
+    const { height } = nativeEvent.layout;
+
+    if(footerHeight == -1){
+      this.setState({footerHeight: height});
+    };
+  };
+
+  /** from _renderContent: scrolllview */
+  _handleOnEndReached = () => {
+    this.footer.show();
+  };
+
+  _handleOnModalHide = () => {
+    //reset state
+    this.setState({mountContent: false});
+  };
+
+  /** from _renderFooter */
+  _handleOnPressCancel = () => {
+    this.modal.hideModal();
+  };
+  //#endregion 
+
+  //#region ------ render functions ------
+  _renderHeader(){
+    const { styles } = StyledSwipableModal;
+    const { renderHeader, ...props} = this.props;
+
+    const style = {
+      opacity: this.opacity,
+      transform: [
+        { translateX: this.translateX },
+        { scale     : this.scale      },
+      ],
+    };
+
+    return(
+      <BlurViewWrapper
+        wrapperStyle={styles.headerWrapper}
+        containerStyle={styles.headerContainer}
+        onLayout={this._handleHeaderOnLayout}
+      >
+        <ModalTopIndicator/>
+        <Animated.View {...{style}}>
+          {renderHeader? (renderHeader()):(
+            <ModalTitle
+              title    ={props.headerTitle    }
+              subtitle ={props.headerSubtitle }
+              iconName ={props.headerIconName }
+              iconType ={props.headerIconType }
+              iconStyle={props.headerIconStyle}
+            />
+          )}
+        </Animated.View>
+      </BlurViewWrapper>
+    );
+  };
+
+  _renderBody(){
+    const { styles } = StyledSwipableModal;
+    const { children } = this.props;
+    const { mountContent, headerHeight, footerHeight } = this.state;
+
+    const childCount = React.Children.count(children);
+    
+    const style = {
+      flex: 1,
+      opacity: this.opacity,
+    };
+
+    const scrollviewProps = {
+      style: styles.scrollview,
+      ...Platform.select({
+        ios: {
+          contentInset : {top: headerHeight, bottom: footerHeight},
+          contentOffset: {x: 0, y: -headerHeight},
+        },
+      }),
+    };
+
+    return(
+      <Animatable.View
+        style={{flex: 1}}
+        animation={'fadeInUp'}
+        duration={500}
+        useNativeDriver={true}
+      >
+        <Animated.View {...{style}}>
+          {(mountContent && childCount > 0) && 
+            React.cloneElement(children, scrollviewProps)
+          }
+        </Animated.View>
+      </Animatable.View>
+    );
+  };
+
+  _renderFooter(){
+    const { styles } = StyledSwipableModal;
+    const { renderFooter, ...props} = this.props;
+
+    return(
+      <Animatable.View
+        style={styles.footerWrapper}
+        animation={'fadeInUp'}
+        duration={500}
+        delay={300}
+        useNativeDriver={true}
+      >
+        <BlurViewWrapper
+          containerStyle={styles.footerContainer}
+          onLayout={this._handleFooterOnLayout}
+          intensity={100}
+          tint={'default'}
+        >
+          {renderFooter? renderFooter():(
+            <ModalBottomTwoButton
+              leftText={'Finish'}
+              rightText={'Cancel'}
+              onPressLeft={this._handleOnPressFinish}
+              onPressRight={this._handleOnPressCancel}
+            />
+          )}
+        </BlurViewWrapper>
+      </Animatable.View>
+    );
+  };
+
+  render(){
+    const { styles } = StyledSwipableModal;
+    const { renderOverlay, ...props} = this.props;
+
+    return(
+      <SwipableModal 
+        ref={r => this.modal = r}
+        onModalShow={props.onModalShow}
+        onModalHide={props.onModalHide}
+        snapPoints ={props.snapPoints }
+        {...props}
+      >
+        <ModalBackground style={styles.container}>
+          {renderOverlay && renderOverlay()}
+          {Platform.select({
+            ios: (
+              <Fragment>
+                {this._renderBody  ()}
+                {this._renderHeader()}
+                {this._renderFooter()}
+              </Fragment>
+            ),
+            android: (
+              <Fragment>
+                {this._renderHeader()}
+                {this._renderBody  ()}
+                {this._renderFooter()}
+              </Fragment>
+            ),
+          })}
+        </ModalBackground>
+      </SwipableModal>
+    );
+  };
+  //#endregion 
+};
+
+/** used in conjunction with StickyCollapsableScrollView */
+export class StickyCollapseHeader extends React.PureComponent {
+  static styles = StyleSheet.create({
+    arrowContainer: {
+      width: 25,
+      height: 25,
+      borderRadius: 25/2,
+      backgroundColor: PURPLE[500],
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+  });
+
+  constructor(props){
+    super(props);
+
+    this.progress = new Value(100);
+    this.opacity = interpolate(this.progress, {
+      inputRange : [0, 100],
+      outputRange: [0.8, 1],
+      extrapolate: 'clamp',
+    });
+    this.scale = interpolate(this.progress, {
+      inputRange : [0, 100],
+      outputRange: [0.95, 1],
+      extrapolate: 'clamp',
+    });
+    this.rotation = interpolate(this.progress, {
+      inputRange : [0, 100],
+      outputRange: [0, 180],
+      extrapolate: 'clamp',
+    });
+
+    this.state = {
+      isExpanded: true,
+    };
+  };
+
+  expand = async (expand) => {
+    const { isExpanded } = this.state;
+
+    const config = {
+      duration: 300,
+      toValue : expand? 100 : 0,
+      easing  : Easing.inOut(Easing.ease),
+    };
+    
+    if(isExpanded != expand){
+      //start animation
+      const animation = timing(this.progress, config);
+      animation.start();
+      this.setState({isExpanded: !isExpanded});
+    };
+  };
+
+
+  _handleOnPress = () => {
+    const { onPress } = this.props;
+    const { isExpanded } = this.state;
+
+    this.expand(!isExpanded);
+    onPress && onPress();
+  };
+
+  _renderRight = () => {
+    const { styles } = StickyCollapseHeader;
+
+    const arrowContainerStyle = {
+      opacity: this.opacity,
+      transform: [
+        { rotate: concat(this.rotation, 'deg') },
+        { scale: this.scale},
+      ],
+    };
+
+    return(
+      <Animated.View style={[styles.arrowContainer, arrowContainerStyle]}>
+        <Icon
+          name={'chevron-down'}
+          type={'feather'}
+          color={'white'}
+          size={17}
+        />
+      </Animated.View>
+    );
+  };
+
+  render(){
+    const { onPress, ...props } = this.props;
+    return(
+      <TouchableOpacity
+        onPress={this._handleOnPress}
+        activeOpacity={1}
+      >
+        <StickyHeader
+          renderRightComponent={this._renderRight}
+          {...props}
+        />
+      </TouchableOpacity>
+    );
+  };
+};
+
+/** 
+ * this component is used to make a scrollview w/ sticky section headers
+ * w/ expandable and collapsable content when you tap on the headers
+ * 
+ * USAGE:
+ * every even component i.e 0, 2 etc., should be a StickyCollapseHeader
+ * every odd  component i.e 1, 3 etc., is wrapped inside a ContentExpander
+ * 
+ * NOTE:
+ * When a component return an array of Comps i.e [<A/>, <B/>], a scrollview
+ * and thus, by extension the comp. tree still considers it as 1 component
+ * becuase it wraps it inside a fragment. Thus, the prev. attempts of a single 
+ * comp. that contained both the header and expander did not work even if it 
+ * returned an array or is generated using funcs or a stateless func comp.
+ */
+export class StickyCollapsableScrollView extends React.PureComponent {
+  render(){
+    const { children, ...props } = this.props;
+
+    const childCount = React.Children.count(children);
+    const range = [...Array(childCount).keys()];
+    const stickyHeaderIndices = range.filter(i => (i % 2) == 0);
+
+    return(
+      <ScrollView {...{stickyHeaderIndices, ...props}}>
+        {React.Children.map(children, (child, index) => {
+          const isHeader = ((index % 2) == 0);
+          return React.cloneElement((isHeader? child : (
+            //wrap child after stickyheader inside a expander
+            <ContentExpander>{child}</ContentExpander>
+          )), {
+            ref: r => this[index] = r,
+            //stickyheader specific props
+            ...(isHeader && {
+              onPress: () => this[index + 1].toggle(),
+            }),
+          })}
+        )}
+      </ScrollView>
+    );
+  };
+};

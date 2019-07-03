@@ -37,6 +37,16 @@ export const ROUTES = {
   CreateQuizRoute  : 'CreateQuizRoute'  ,
 };
 
+export const SCREENPROPS_KEYS = {
+  getRefSubjectModal       : 'getRefSubjectModal'       ,
+  getRefCreateQuizModal    : 'getRefCreateQuizModal'    ,
+  getRefQuizDetailsModal   : 'getRefQuizDetailsModal'   ,
+  getRefQuizFinishModal    : 'getRefQuizFinishModal'    ,
+  getRefViewCustomQuizModal: 'getRefViewCustomQuizModal',
+  getAppStackNavigation    : 'getAppStackNavigation'    ,
+  setDrawerSwipe           : 'setDrawerSwipe'           ,
+};
+
 export const HEADER_HEIGHT = Header.HEIGHT + (
   isIphoneX()? getStatusBarHeight(false) : 0
 );
@@ -204,6 +214,10 @@ export const FONT_STYLES = StyleSheet.create({
   },
   heading6: {
     fontSize: 20,
+  },
+  heading7: {
+    fontSize: 18,
+    fontWeight: '500',
   },
   subtitle1: {
     fontSize: 16,

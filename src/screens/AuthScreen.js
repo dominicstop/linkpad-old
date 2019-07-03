@@ -51,6 +51,7 @@ export default class AuthScreen extends React.Component {
     imageBG: {
       width: '100%',
       height: '100%',
+      opacity: 0.75,
     },
     gradientBG: {
       position: 'absolute',

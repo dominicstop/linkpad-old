@@ -26,7 +26,7 @@ import { isIphoneX, ifIphoneX, getStatusBarHeight, getBottomSpace } from 'react-
 import { SwipableModal, ModalTopIndicator, ModalBackground, MODAL_DISTANCE_FROM_TOP, MODAL_EXTRA_HEIGHT } from '../components/SwipableModal';
 
 
-import { BlurViewWrapper, StickyHeader, DetailRow, DetailColumn, ModalBottomTwoButton } from '../components/StyledComponents';
+import { ModalSection, StickyHeader, DetailRow, DetailColumn, ModalBottomTwoButton, StyledSwipableModal, StickyCollapsableScrollView, StickyCollapseHeader } from '../components/StyledComponents';
 
 const Screen = {
   width : Dimensions.get('window').width ,
@@ -795,7 +795,7 @@ class SubjectDetails extends React.PureComponent {
     const lastupdated = subject.lastupdated || "N/A";
 
     return(
-      <View style={[styles.container, containerStyle]}>
+      <ModalSection>
         <ContentExpander renderHeader={this._renderHeader}>
           <Text style={styles.description}>{description}</Text>
         </ContentExpander>
@@ -810,7 +810,7 @@ class SubjectDetails extends React.PureComponent {
             subtitle={`${questions} ${plural('item', questions)}`}
           />
         </DetailRow>
-      </View>
+      </ModalSection>
     );
   };
 };
@@ -860,10 +860,9 @@ class PreviousSession extends React.PureComponent {
 
   render(){
     const { styles, imageSource: source } = PreviousSession;
-    const { containerStyle } = this.props;
 
     return(
-      <View style={[containerStyle, styles.container]}>
+      <ModalSection containerStyle={styles.container}>
         <Animatable.Image
           style={sharedStyles.image}
           {...{source, ...sharedImageProps}}
@@ -872,7 +871,7 @@ class PreviousSession extends React.PureComponent {
           <Text style={styles.title   }>No Previous Session</Text>
           <Text style={styles.subtitle}>If you couldn't answer everthing, we'll save your progress so you can come back to it later.</Text>
         </View>
-      </View>
+      </ModalSection>
     );
   };
 };
@@ -925,7 +924,7 @@ class Grades extends React.PureComponent {
     const { containerStyle } = this.props;
 
     return(
-      <View style={[containerStyle, styles.container]}>
+      <ModalSection containerStyle={[containerStyle, styles.container]}>
         <Animatable.Image
           style={sharedStyles.image}
           {...{source, ...sharedImageProps}}
@@ -934,110 +933,17 @@ class Grades extends React.PureComponent {
           <Text style={styles.title   }>No Grades Available</Text>
           <Text style={styles.subtitle}>Your grades will be available here once you've completed a practice exam.</Text>
         </View>
-      </View>
+      </ModalSection>
     );
   };
 };
 
 export class SubjectModal extends React.PureComponent {
-  static propTypes = {
-
-  };
-
   static styles = StyleSheet.create({
-    container: {
-      paddingBottom: MODAL_EXTRA_HEIGHT + MODAL_DISTANCE_FROM_TOP,
-    },
-    //header styles
-    headerWrapper: {
-      ...Platform.select({
-        ios: {
-          position: 'absolute',
-          width: '100%',
-          borderBottomColor: 'rgba(0,0,0,0.15)',
-          borderBottomWidth: 1,
-        },
-        android: {
-          borderBottomColor: GREY[900],
-        },
-      }),
-    },
-    headerContainer: {
-      paddingHorizontal: 10,
-      paddingBottom: 10,
-      ...Platform.select({
-        ios: {
-          backgroundColor: 'rgba(255,255,255, 0.5)',      
-        },
-        android: {
-          backgroundColor: 'rgba(255,255,255, 0.75)',      
-        },
-      }),
-    },
-    headerContentContainer: {
-      flexDirection: 'row',
-      alignItems: 'center',
-    },
-    headerTextContainer: {
-      flex: 1,
-      marginLeft: 7,
-    },
-    headerTitle: {
-      color: PURPLE[700],
-      ...FONT_STYLES.heading5,
-      ...Platform.select({
-        ios: {
-          flex: 1,      
-          fontWeight: '700',
-          shadowColor: PURPLE[700],
-          shadowRadius: 5,
-          shadowOpacity: 0.15,
-        },
-        android: {
-          fontWeight: '900',
-        },
-      }),
-    },
-    headerSubtitle: {
-      ...FONT_STYLES.subtitle1,
-      ...Platform.select({
-        ios: {
-          flex: 1,
-
-          fontWeight: '200',
-        },
-        android: {
-          fontWeight: '100',
-        },
-      }),
-    },
     //content styles
     scrollview: {
       flex: 1,
       paddingBottom: 75,
-    },
-    sectionContainer: {
-      paddingHorizontal: 10,
-      paddingTop: 10,
-      ...Platform.select({
-        ios: {
-          backgroundColor: 'rgba(255,255,255, 0.6)',
-          paddingBottom: 13,
-          marginBottom: 15,
-          borderBottomColor: 'rgba(0,0,0,0.15)',
-          borderBottomWidth: 1,
-        },
-        android: {
-          backgroundColor: 'white',
-          paddingBottom: 40,
-        },
-      })
-    },
-    //footer styles
-    footerWrapper: {
-      position: 'absolute',
-      width: '100%',
-      bottom: 0,
     },
     footerContainer: {
       ...Platform.select({
@@ -1060,19 +966,13 @@ export class SubjectModal extends React.PureComponent {
           elevation: 15,
         },
       }),
-    },
-    //list footer
-    listFooterContainer: {
-      marginBottom: 75
-    },
+    },  
   });
 
   constructor(props){
     super(props);
 
     this.state = {
-      mountContent: false,
-      headerHeight: -1,
       moduleData: null,
       subjectData: null,
     };
@@ -1080,30 +980,12 @@ export class SubjectModal extends React.PureComponent {
 
   //------ functions ------
   openSubjectModal = (moduleData, subjectData) => {
-    this.setState({
-      moduleData, subjectData, 
-      mountContent: true
-    });
-
-    this._modal.showModal();
+    this.setState({moduleData, subjectData});
+    this.modal.openModal();
   };
 
   closeSubjectModal = () => {
-    this._modal.showModal();
-  };
-
-  isModalVisible = () => {
-    const { mountContent } = this.state;
-    return mountContent;
-  };
-
-  _handleHeaderOnLayout = ({nativeEvent}) => {
-    const { headerHeight } = this.state;
-    const { height } = nativeEvent.layout;
-
-    if(headerHeight == -1){
-      this.setState({headerHeight: height});
-    };
+    this.modal.openModal();
   };
 
   _handleOnEndReached = () => {
@@ -1111,163 +993,66 @@ export class SubjectModal extends React.PureComponent {
   };
 
   //------ render ------
-  _renderHeader(){
+  render(){
     const { styles } = SubjectModal;
     const { moduleData, subjectData } = this.state;
 
     const module  = ModuleItemModel.wrap(moduleData );
     const subject = SubjectItem    .wrap(subjectData);
 
-    const modulename  = module .modulename  || 'Unknown Module';
-    const subjectname = subject.subjectname || 'Unknown Module';
+    const headerTitle    = subject.subjectname || 'Unknown Module';
+    const headerSubtitle = module .modulename  || 'Unknown Module';
 
     return(
-      <BlurViewWrapper
-        wrapperStyle={styles.headerWrapper}
-        containerStyle={styles.headerContainer}
-        onLayout={this._handleHeaderOnLayout}
+      <StyledSwipableModal
+        ref={r => this.modal = r}
+        headerSubtitle={'Press start to begin quiz'}
+        headerIconName={'ios-book'}
+        headerIconType={'ionicon'}
+        headerIconStyle={{marginTop: 2}}
+        {...{headerTitle, headerSubtitle}}
       >
-        <ModalTopIndicator/>
-        <View style={styles.headerContentContainer}>
-          <Icon
-            containerStyle={sharedStyles.iconContainer}
-            name={'notebook'}
-            type={'simple-line-icon'}
-            color={PURPLE.A700}
-            size={26}
+        <StickyCollapsableScrollView
+          style={styles.scrollview}
+          stickyHeaderIndices={[0,2,4]}
+          onEndReached={this._handleOnEndReached}
+        >
+          <StickyCollapseHeader
+            title={'Subject Details'}
+            subtitle={'Information about the current subject.'}
+            iconContainer={sharedStyles.iconContainer}
+            iconName={'file-text'}
+            iconType={'feather'}
+            iconContainer={sharedStyles.iconContainer}
           />
-          <View style={styles.headerTextContainer}>
-            <Text numberOfLines={1} style={styles.headerTitle   }>{subjectname}</Text>
-            <Text numberOfLines={1} style={styles.headerSubtitle}>{modulename }</Text>
-          </View>
-        </View>
-      </BlurViewWrapper>
-    );
-  };
+          <SubjectDetails
+            containerStyle={styles.sectionContainer}
+            {...{subjectData}}
+          />
+          <StickyCollapseHeader
+            title={'Previous Session'}
+            subtitle={'Praesent commodo cursus magna, vel sceler'}
+            iconContainer={sharedStyles.iconContainer}
+            iconName={'clock'}
+            iconType={'feather'}
+          />
+          <PreviousSession
+            containerStyle={styles.sectionContainer}          
+          />
+          <StickyCollapseHeader
+            title={'Grades'}
+            subtitle ={'Previous grades'}
+            iconContainer={sharedStyles.iconContainer}
+            iconName={'bar-chart'}
+            iconType={'feather'}
+          />
+          <Grades
+            containerStyle={styles.sectionContainer}          
+          />
 
-  _renderFooter(){
-    const { styles } = SubjectModal;
-
-    return(
-      <BlurViewWrapper
-        wrapperStyle={styles.footerWrapper}
-        containerStyle={styles.footerContainer}
-        intensity={100}
-        tint={'default'}
-      >
-        <ModalBottomTwoButton
-          leftText={'Start'}
-          rightText={'Cancel'}
-          onPressLeft={this._handleOnPressStart}
-          onPressRight={this._handleOnPressCancel}
-        />
-      </BlurViewWrapper>
-    );
-  };
-
-  _renderListFooter = () => {
-    const { styles } = SubjectModal;
-    return(
-      <View style={styles.listFooterContainer}>
-        <IconFooter 
-          hide={false}
-          delay={3000}
-        />
-      </View>
-    );
-  };
-
-  _renderContent(){
-    const { styles } = SubjectModal;
-    const { headerHeight, moduleData, subjectData } = this.state;
-    if(headerHeight == -1) return null;
-
-    const PlatformProps = {
-      ...Platform.select({
-        ios: {
-          contentInset :{top: headerHeight},
-          contentOffset:{x: 0, y: -headerHeight},
-        },
-      }),
-    };
-
-    return(
-      <ScrollView
-        style={styles.scrollview}
-        stickyHeaderIndices={[0,2,4]}
-        onEndReached={this._handleOnEndReached}
-        {...PlatformProps}
-      >
-        <StickyHeader
-          title={'Subject Details'}
-          subtitle={'Information about the current subject.'}
-          iconContainer={sharedStyles.iconContainer}
-          iconName={'file-text'}
-          iconType={'feather'}
-          iconContainer={sharedStyles.iconContainer}
-        />
-        <SubjectDetails
-          containerStyle={styles.sectionContainer}
-          {...{subjectData}}
-        />
-        <StickyHeader
-          title={'Previous Session'}
-          subtitle={'Praesent commodo cursus magna, vel sceler'}
-          iconContainer={sharedStyles.iconContainer}
-          iconName={'clock'}
-          iconType={'feather'}
-        />
-        <PreviousSession
-          containerStyle={styles.sectionContainer}          
-        />
-        <StickyHeader
-          title={'Grades'}
-          subtitle ={'Previous grades'}
-          iconContainer={sharedStyles.iconContainer}
-          iconName={'bar-chart'}
-          iconType={'feather'}
-        />
-        <Grades
-          containerStyle={styles.sectionContainer}          
-        />
-        {this._renderListFooter()}
-      </ScrollView>
-    );
-  };
-
-  _renderPlatform(){
-    const { mountContent } = this.state;
-    return Platform.select({
-      ios: (
-        <Fragment>
-          {mountContent && this._renderContent()}
-          {mountContent && this._renderHeader ()}
-          {mountContent && this._renderFooter ()}
-        </Fragment>
-      ),
-      android: (
-        <Fragment>
-          {mountContent && this._renderHeader ()}
-          {mountContent && this._renderContent()}
-          {mountContent && this._renderFooter ()}
-        </Fragment>
-      ),
-    });
-  };
-
-  render(){
-    const { styles } = SubjectModal;
-
-    return(
-      <SwipableModal 
-        ref={r => this._modal = r}
-        onModalShow={this._handleOnModalShow}
-        onModalHide={this._handleOnModalHide}
-      >
-        <ModalBackground style={styles.container}>
-          {this._renderPlatform()}
-        </ModalBackground>
-      </SwipableModal>
+          <IconFooter hide={false}/>
+        </StickyCollapsableScrollView>
+      </StyledSwipableModal>
     );
   };
 };

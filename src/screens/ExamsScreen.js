@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 
 import NavigationService from '../NavigationService';
 import { plural } from '../functions/Utils';
-import { ROUTES, HEADER_HEIGHT , STYLES} from '../Constants';
+import { ROUTES, HEADER_HEIGHT , STYLES, SCREENPROPS_KEYS} from '../Constants';
 import { PURPLE, RED } from '../Colors';
 import { CustomQuizStore, CustomQuiz } from '../functions/CustomQuizStore';
 
@@ -17,7 +17,6 @@ import TimeAgo from 'react-native-timeago';
 import { Divider, Icon } from 'react-native-elements';
 import { Header, NavigationEvents } from 'react-navigation';
 import { PlatformButton, NumberIndicator } from '../components/StyledComponents';
-
 
 // shown when no exams have been created yet
 class EmptyCard extends React.PureComponent {
@@ -307,7 +306,8 @@ class CustomQuizItem extends React.PureComponent {
 
 class CustomQuizList extends React.PureComponent {
   static propTypes = {
-    quizes: PropTypes.array,
+    quizes     : PropTypes.array,
+    onPressQuiz: PropTypes.func,
   };
 
   static defaultProps = {
@@ -328,15 +328,8 @@ class CustomQuizList extends React.PureComponent {
   });
 
   _handleOnPressQuiz = (quizItem) => {
-    const quiz = CustomQuiz.wrap(quizItem);
-    //randomize question order
-    const randomized = CustomQuiz.randomizeQuestionOrder(quiz);
-
-    //navigate to custom quiz exam screen
-    NavigationService.navigateApp(
-      ROUTES.CustomQuizExamScreen, {
-        quiz: randomized,
-    });
+    const { onPressQuiz } = this.props;
+    onPressQuiz && onPressQuiz(quizItem);
   };
 
   _keyExtractor(item, index){
@@ -458,9 +451,28 @@ export class ExamsScreen extends React.Component {
     this.setState({quizes});
   };
 
-  handleOnPressCreateQuiz = () => {
+  _handleOnPressCreateQuiz = () => {
     const { navigation } = this.props;
     navigation && navigation.navigate(ROUTES.CreateQuizRoute);
+  };
+
+  _handleOnPressQuiz = (quizItem) => {
+    const { screenProps } = this.props;
+
+    const modal = screenProps[SCREENPROPS_KEYS.getRefViewCustomQuizModal]();
+    modal.openModal({
+      quiz: quizItem,
+    });
+
+    //const quiz = CustomQuiz.wrap(quizItem);
+    //randomize question order
+    //const randomized = CustomQuiz.randomizeQuestionOrder(quiz);
+
+    //navigate to custom quiz exam screen
+    //NavigationService.navigateApp(
+    //  ROUTES.CustomQuizExamScreen, {
+    //    quiz: randomized,
+    //});
   };
 
   render(){
@@ -476,8 +488,11 @@ export class ExamsScreen extends React.Component {
           contentInset ={{top: HEADER_HEIGHT}}
           contentOffset={{x: 0, y: -HEADER_HEIGHT}}
         >
-          <ExamHeader onPress={this.handleOnPressCreateQuiz}/>
-          <CustomQuizList {...{quizes}}/>
+          <ExamHeader onPress={this._handleOnPressCreateQuiz}/>
+          <CustomQuizList
+            onPressQuiz={this._handleOnPressQuiz} 
+            {...{quizes}}
+          />
         </ScrollView>
       </ViewWithBlurredHeader>
     );

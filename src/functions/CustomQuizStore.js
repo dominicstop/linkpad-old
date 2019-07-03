@@ -20,6 +20,8 @@ export class CustomQuiz {
     itemsPerSubject  : -1,
     maxItemsQuiz     : -1,
     distributeEqually: false,
+    subjects         : SubjectItem.wrapArray([]),
+    subjectIDs       : [],
   };
 
   /** wrap object with CustomQuiz.structure to prevent missing properties and enable VSCODE type intellesense */
@@ -93,9 +95,18 @@ export class CustomQuiz {
 
 export class CreateCustomQuiz {
   static createQuiz({title = '', description = '', selected = [], itemsPerSubject = -1, maxItemsQuiz = -1, shouldDistributeEqually = false}){
+    const selectedSubjs = SubjectItem.wrapArray(selected);
+    
+    const uniqueSubjectIDs = [...new Set(selectedSubjs.map(subj => subj.indexid))];
+    const uniqueSubjects = selectedSubjs.filter(subject => {
+      const match = uniqueSubjectIDs.find(id => (id === subject.indexid));
+      //add to array if has match, otherwise skip
+      return match !== undefined;
+    });
+
+
     //append indexid's from subj to questions for identification
-    const subjects = selected.map(item => {
-      const subject = SubjectItem.wrap(item);
+    const subjects = selectedSubjs.map(subject => {
       //extract indexid from subject
       const { indexid, indexID_module, questions } = subject;
 
@@ -127,8 +138,10 @@ export class CreateCustomQuiz {
     const sliced   = shuffled.slice(0, maxItemsQuiz)
 
     const customQuiz = new CustomQuiz({
-      questions: sliced,
+      questions   : sliced,
       indexID_quiz: getTimestamp(),
+      subjects    : uniqueSubjects,
+      subjectIDs  : uniqueSubjectIDs,
       //pass down items
       title, description, itemsPerSubject, maxItemsQuiz, shouldDistributeEqually
     });

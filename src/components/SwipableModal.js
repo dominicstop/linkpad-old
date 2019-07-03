@@ -32,6 +32,7 @@ export const MODAL_DISTANCE_FROM_TOP = Platform.select({
   ios: isIphoneX()? (getStatusBarHeight() + SPACING) : (20 + SPACING),
   android: StatusBar.currentHeight + SPACING,
 });
+
 export const MODAL_EXTRA_HEIGHT = 300;
 
 
@@ -125,31 +126,6 @@ export class ModalBackground extends React.PureComponent {
 };
 
 export class SwipableModal extends React.PureComponent {
-  static styles = StyleSheet.create({
-    float: {
-      position: 'absolute',
-      top: 0,
-      bottom: 0,
-      left: 0,
-      right: 0,
-    },
-    wrapper: {
-      position: 'absolute', 
-      width: '100%', 
-      height: '100%'
-    },
-    panelContainer: {
-      height: Screen.height + MODAL_EXTRA_HEIGHT,
-      shadowOffset: { width: -5, height: 0 },
-      shadowRadius: 5,
-      shadowOpacity: 0.4,
-    },
-    panel: {
-      flex: 1,
-      overflow: 'hidden',
-    },
-  });
-  
   static snapPoints = {
     fullscreen: { y: MODAL_DISTANCE_FROM_TOP },
     halfscreen: { y: Screen.height - (Screen.height * 0.6) },
@@ -174,6 +150,31 @@ export class SwipableModal extends React.PureComponent {
       bottom: -(Screen.height + MODAL_EXTRA_HEIGHT - 80)
     },
   };
+
+  static styles = StyleSheet.create({
+    float: {
+      position: 'absolute',
+      top: 0,
+      bottom: 0,
+      left: 0,
+      right: 0,
+    },
+    wrapper: {
+      position: 'absolute', 
+      width: '100%', 
+      height: '100%'
+    },
+    panelContainer: {
+      height: Screen.height + MODAL_EXTRA_HEIGHT,
+      shadowOffset: { width: -5, height: 0 },
+      shadowRadius: 5,
+      shadowOpacity: 0.4,
+    },
+    panel: {
+      flex: 1,
+      overflow: 'hidden',
+    },
+  });
 
   constructor(props) {
     super(props);
@@ -265,6 +266,9 @@ export class SwipableModal extends React.PureComponent {
 
   _renderShadow = () => {
     const { styles } = SwipableModal;
+    const deltaY = this._deltaY;
+
+    const finalPosition = (Screen.height - MODAL_DISTANCE_FROM_TOP);
     const shadowOpacity = Platform.select({
       ios: 0.5, android: 0.75,
     });
@@ -272,11 +276,18 @@ export class SwipableModal extends React.PureComponent {
     //shadow behind panel
     const shadowStyle = {
       backgroundColor: 'black',
-      opacity: this._deltaY.interpolate({
-        inputRange: [0, Screen.height - 100],
+      opacity: deltaY.interpolate({
+        inputRange : [0, finalPosition],
         outputRange: [shadowOpacity, 0],
-        extrapolateRight: 'clamp',
+        extrapolate: 'clamp',
       }),
+      ...Platform.select({
+        ios: {
+          transform: [
+            {translateY: Animated.sub(deltaY, (Screen.height - 15))},
+          ],
+        }
+      })
     };
 
     return(
@@ -284,7 +295,7 @@ export class SwipableModal extends React.PureComponent {
         ref={r => this.modalShadow = r}
         style={styles.float}
         animation={'fadeIn'}
-        duration={750}
+        duration={1000}
         useNativeDriver={true}
       >
         <Animated.View
