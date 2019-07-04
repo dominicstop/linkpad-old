@@ -204,13 +204,14 @@ class QuizSubjectList extends React.PureComponent {
     itemCountContainer: {
       paddingHorizontal: 7,
       paddingVertical: 3,
-      backgroundColor: PURPLE.A200,
+      borderColor: PURPLE.A400,
+      borderWidth: 1,
       borderRadius: 10,
       marginBottom: 2,
     },
     itemCount: {
-      color: 'white',
-      fontWeight: '200',
+      color: PURPLE.A400,
+      fontWeight: '400',
     },
   });
 

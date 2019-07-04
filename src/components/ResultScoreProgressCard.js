@@ -1065,7 +1065,7 @@ class SummaryTab extends React.PureComponent {
       min : 0, max : 100,
       yMin: 0, yMax: 100,
       //pass down as props
-      ...{data, keys, colors, contentInset}
+      data, keys, colors, contentInset
     };
     const sharedXAxisProps = {
       formatLabel: (value, index) => index + 1,
@@ -1074,7 +1074,7 @@ class SummaryTab extends React.PureComponent {
         fontSize: 12
       },
       //pass down as props
-      ...{data}
+      data
     };
 
     switch (mode) {
@@ -1531,13 +1531,13 @@ class CorrectTab extends React.PureComponent {
       numberOfTicks: 10 ,
       min : 0, max : 100,
       yMin: 0, yMax: 100,
-      ...{data, contentInset}
+      data, contentInset,
     };
     const sharedXAxisProps = {
       style      : { marginTop: 2 },
       svg        : { fill: 'grey', fontSize: 12 },
       formatLabel: ( value, index ) => ( index + 1 ),
-      ...{data},
+      data,
     };
 
     switch (mode) {
@@ -1906,7 +1906,7 @@ class WrongTab extends React.PureComponent {
       min : 0, max : 100,
       yMin: 0, yMax: 100,
       //pass down as props
-      ...{data, keys, colors, contentInset}
+      data, keys, colors, contentInset,
     };
     const sharedXAxisProps = {
       formatLabel: (value, index) => index + 1,
@@ -1915,7 +1915,7 @@ class WrongTab extends React.PureComponent {
         fontSize: 12
       },
       //pass down as props
-      ...{data}
+      data,
     };
 
     switch (mode) {

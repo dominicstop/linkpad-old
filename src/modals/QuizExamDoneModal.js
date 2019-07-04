@@ -960,6 +960,7 @@ export class QuizExamDoneModal extends React.PureComponent {
       //pass down to state
       currentIndex, questionList, answers, questions, quiz, startTime
     });
+    
     this.modal.openModal();
   };
 
@@ -970,7 +971,9 @@ export class QuizExamDoneModal extends React.PureComponent {
   //#region ------ events/handlers ------
   /** from _renderContent: QuestionItem*/
   _handleOnPressQuestion = async ({index}) => {
-    await this._modal.hideModal();
+    const modal = this.modal.getModalRef();
+    await modal.hideModal();
+
     //callback assigned via ref
     this.onPressQuestionItem && this.onPressQuestionItem({index});
   };
@@ -986,7 +989,9 @@ export class QuizExamDoneModal extends React.PureComponent {
     this.overlay.transitionTo({opacity: overlayOpacity}, 500);
     this.checkOverlay.start();
     await timeout(750);
-    await this._modal.hideModal();
+
+    const modal = this.modal.getModalRef();
+    await modal.hideModal();
 
     //call callback and pass down params
     this.onPressFinishButton && this.onPressFinishButton({timeStats});
@@ -1026,23 +1031,16 @@ export class QuizExamDoneModal extends React.PureComponent {
         ref={r => this.modal = r}
         renderOverlay={this._renderOverlay}
         //header styles
-        headerTitle={'Custom Quiz Details'}
-        headerSubtitle={'Press finish to save and end this session'}
+        headerTitle={'Custom Quiz'}
+        headerSubtitle={'Press "End Quiz" to save and end this session'}
         headerIconName={'ios-book'}
         headerIconType={'ionicon'}
         headerIconStyle={{marginTop: 2}}
         //footer buttons
+        buttonLeftTitle={'End Quiz'}
         onPressLeft={this._handleOnPressFinish}
       >
         <StickyCollapsableScrollView>
-          <StickyCollapseHeader
-            title={'Quiz Details'}
-            subtitle={'Details about the current quiz.'}
-            iconName={'message-circle'}
-            iconType={'feather'}
-          />
-          <QuizDetails {...{quiz}}/>
-
           <StickyCollapseHeader
             title={'Quiz Details'}
             subtitle={'Details about the current quiz.'}

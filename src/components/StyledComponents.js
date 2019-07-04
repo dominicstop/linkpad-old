@@ -1315,7 +1315,7 @@ export class StyledSwipableModal extends React.PureComponent {
           {renderFooter? renderFooter():(
             <ModalBottomTwoButton
               //pass down props and assign default values
-              leftText ={props.buttonLeftText  || 'Start' }
+              leftText ={props.buttonLeftTitle  || 'Start' }
               rightText={props.buttonRightText || 'Cancel'}
               onPressLeft={this._handleOnPressLeft}
               onPressRight={this._handleOnPressCancel}
@@ -1339,7 +1339,6 @@ export class StyledSwipableModal extends React.PureComponent {
         {...props}
       >
         <ModalBackground style={styles.container}>
-          {renderOverlay && renderOverlay()}
           {Platform.select({
             ios: (
               <Fragment>
@@ -1356,6 +1355,7 @@ export class StyledSwipableModal extends React.PureComponent {
               </Fragment>
             ),
           })}
+          {renderOverlay && renderOverlay()}
         </ModalBackground>
       </SwipableModal>
     );
@@ -1374,7 +1374,7 @@ export class StickyCollapseHeader extends React.PureComponent {
       width: 25,
       height: 25,
       borderRadius: 25/2,
-      backgroundColor: INDIGO.A200,
+      backgroundColor: PURPLE.A200,
       alignItems: 'center',
       justifyContent: 'center',
     },
@@ -1493,7 +1493,7 @@ export class StickyCollapsableScrollView extends React.PureComponent {
     return(
       <IconFooter
         hide={false}
-        delay={3000}
+        animateIn={false}
       />
     );
   };
