@@ -98,6 +98,10 @@ export class StickyHeader extends React.PureComponent {
         },
       }),
     },
+    iconContainer: {
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
     textContainer: {
       flex: 1,
       marginLeft: 8,
@@ -107,7 +111,7 @@ export class StickyHeader extends React.PureComponent {
       color: PURPLE[900],
       ...Platform.select({
         ios: {
-          fontWeight: '600',
+          fontWeight: '700',
         },
         android: {
           fontWeight: '500',
@@ -142,11 +146,12 @@ export class StickyHeader extends React.PureComponent {
           useNativeDriver={true}
         >
           <Icon
-            containerStyle={props.iconContainer}
+            containerStyle={[styles.iconContainer, props.iconContainer]}
+            iconStyle={props.iconStyle}
             name={props.iconName}
             type={props.iconType}
             color={PURPLE.A700}
-            size={24}
+            size={25}
           />
         </Animatable.View>
         <View style={styles.textContainer}>

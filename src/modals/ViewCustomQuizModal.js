@@ -26,6 +26,7 @@ import { BlurViewWrapper, StickyHeader, DetailRow, DetailColumn, ModalBottomTwoB
 import Animated, { Easing } from 'react-native-reanimated';
 import { CustomQuiz, CustomQuizStore } from '../functions/CustomQuizStore';
 import { ContentExpander } from '../components/Expander';
+import { CustomQuizResultItem } from '../functions/CustomQuizResultsStore';
 const { interpolate, Value } = Animated; 
 
 
@@ -228,9 +229,10 @@ class QuizSubjectList extends React.PureComponent {
 
     const TITLE = (
       <View style={styles.titleContainer}>
-        <NumberIndicator 
+        <NumberIndicator
           value={index + 1}
-          size={18}  
+          initFontSize={14}
+          size={20}  
         />
         <Text 
           style={[FONT_STYLES.heading7, styles.itemTitle]}
@@ -280,12 +282,226 @@ class QuizSubjectList extends React.PureComponent {
         <FlatList
           data={quiz.subjects}
           renderItem={this._renderItem}
-          key={this._handleKeyExtractor}
+          keyExtractor={this._handleKeyExtractor}
         />
       </ModalSection>
     );
   };
 };
+
+class QuizResultItem extends React.PureComponent {
+  static styles = StyleSheet.create({
+    container: {
+      paddingVertical: 10,
+    },
+
+    titleSubtitleWrapper: {
+      flexDirection: 'row',
+    },
+    titleSubtitleContainer: {
+      flex: 1,
+    },
+
+    itemContainer: {
+      paddingVertical: 5,
+    },
+    titleContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    divider: {
+      backgroundColor: 'rgba(0,0,0,0.25)',
+    },
+    title: {
+      flex: 1,
+      marginLeft: 6,
+      color: PURPLE[1000],
+    },
+    detailsContainer: {
+      flexDirection: 'row',
+      marginTop: 3,
+      alignItems: 'center',
+    },
+    subtitle: {
+      flex: 1,
+      marginTop: 3,
+      fontWeight: '200'
+    },
+    indicator: {
+      fontWeight: '600',
+      color: PURPLE[1000],
+    },
+    resultContainer: {
+      alignSelf: 'center',
+      paddingHorizontal: 8,
+      paddingVertical: 4,
+      borderColor: PURPLE.A400,
+      borderWidth: 1,
+      borderRadius: 10,
+      marginBottom: 2,
+    },
+    resultText: {
+      color: PURPLE.A400,
+      fontWeight: '400',
+    },
+  });
+
+  _renderTitle(){
+    const { styles } = QuizResultItem;
+    const { result: _result, index } = this.props;
+    const result = CustomQuizResultItem.wrap(_result);
+
+    const date = moment(result.endTime);
+    const dateString1 = date.format('MMMM D Y, dddd');
+    const dateString2 = date.fromNow();
+
+    const { correct, total } = result.results;
+    const didPass = (((correct / total) * 100) > 50);
+    const scoreText = didPass? 'Passed' : 'Failed';
+    
+    //shows the date created
+    const TITLE = (
+      <View style={styles.titleContainer}>
+        <NumberIndicator
+          value={index + 1}
+          initFontSize={14}
+          size={20}  
+        />
+        <Text 
+          style={[FONT_STYLES.heading7, styles.title]}
+          numberOfLines={1}
+        >
+          {dateString1}
+        </Text>
+      </View>
+    );
+    
+    //shows the relative date created
+    const SUBTITLE = (
+      <Text style={[FONT_STYLES.subtitle1, styles.subtitle]}>
+        <Text style={styles.indicator}>{'Taken: '}</Text>
+        <Text>{dateString2}</Text>
+      </Text>
+    );
+
+    return (
+      <View style={styles.titleSubtitleWrapper}>
+        <View style={styles.titleSubtitleContainer}>
+          {TITLE}
+          {SUBTITLE}
+        </View>
+        <View style={styles.resultContainer}>
+          <Text style={styles.resultText}>{scoreText}</Text>
+        </View>
+      </View>
+    );
+  };
+
+  render(){
+    const { styles } = QuizResultItem;
+    return(
+      <View style={styles.container}>
+        {this._renderTitle()}
+      </View>
+    );
+  };
+};
+
+class QuizResultsList extends React.PureComponent {
+  static styles = StyleSheet.create({
+    container: {
+      paddingVertical: 0,
+      paddingBottom: 2,
+      paddingTop: 0,
+    },
+    //header styles
+    headerContainer: {
+      flexDirection: 'row',
+      paddingVertical: 5,
+      borderColor: GREY[200],
+      borderBottomWidth: 1,
+      alignItems: 'center',
+    },
+    headerImage: {
+      width : 80,
+      height: 80,
+    },
+    headerTextContainer: {
+      flex: 1,
+      justifyContent: 'flex-start',
+      marginLeft: 15,
+    },
+    headerTitle: {
+      fontSize: 18,
+      fontWeight: '700',
+      color: PURPLE[700],
+    },
+    headerSubtitle: {
+      fontSize: 16,
+      fontWeight: '300'
+    },
+  });
+
+  constructor(props){
+    super(props);
+    
+    this.headerImageActive = require('../../assets/icons/little-big-chart.png');
+  };
+
+  _handleKeyExtractor = (item, index) => {
+    return item.indexID_quiz || index;
+  };
+
+  _renderItem = ({item: result, index}) => {
+    const { quiz } = this.props;
+    return(
+      <QuizResultItem 
+        {...{index, result, quiz}}
+      />
+    );
+  };
+
+  _renderHeader = () => {
+    const { styles } = QuizResultsList;
+    const { } = this.props;
+
+    return(
+      <View style={styles.headerContainer}>
+        <Animatable.Image 
+          style={styles.headerImage}
+          source={this.headerImageActive}
+          animation={'pulse'}
+          iterationCount={'infinite'}
+          iterationDelay={1000}
+          duration={10000}
+          useNativeDriver={true}
+        />
+        <View style={styles.headerTextContainer}>
+          <Text style={styles.headerTitle   }>{'Showing last 10 results'}</Text>
+          <Text style={styles.headerSubtitle}>{'You can tap on an item to view all of the result details and data.'}</Text>
+        </View>
+      </View>
+    );
+  };
+
+  render(){
+    const { styles } = QuizResultsList; 
+    const { results: _results } = this.props;
+    const data = CustomQuizResultItem.wrapArray(_results);
+    
+    return(
+      <ModalSection containerStyle={styles.container}>
+        <FlatList
+          renderItem={this._renderItem}
+          keyExtractor={this._handleKeyExtractor}
+          ListHeaderComponent={this._renderHeader}
+          {...{data}}
+        />
+      </ModalSection>
+    );
+  };
+};
+
 
 export class ViewCustomQuizModal extends React.Component {
   static propTypes = {
@@ -301,7 +517,8 @@ export class ViewCustomQuizModal extends React.Component {
 
     this.state = {
       //data from openModal
-      selectedQuiz: null,
+      quiz   : null,
+      results: [],
     };
   };
 
@@ -314,7 +531,8 @@ export class ViewCustomQuizModal extends React.Component {
 
     await setStateAsync(this, {
       mountContent: true,
-      selectedQuiz: quiz,
+      //pass down to state
+      quiz, results,
     });
 
     this.modal.openModal();
@@ -328,9 +546,9 @@ export class ViewCustomQuizModal extends React.Component {
 
   render(){
     const { styles } = ViewCustomQuizModal;
-    const { selectedQuiz } = this.state;
+    const { quiz: _quiz, results } = this.state;
 
-    const quiz = CustomQuiz.wrap(selectedQuiz);
+    const quiz = CustomQuiz.wrap(_quiz);
     const headerTitle = quiz.title || 'Quiz Title N/A';
 
     return(
@@ -356,19 +574,19 @@ export class ViewCustomQuizModal extends React.Component {
 
           <StickyCollapseHeader
             title={'Coverage'}
-            subtitle={'list of the selected subjects'}
+            subtitle={'list of the selected subjects.'}
             iconName={'eye'}
             iconType={'feather'}
           />
           <QuizSubjectList {...{quiz}}/>
           
           <StickyCollapseHeader
-            title={'Questions & Answers'}
-            subtitle ={'Overview of your answer.'}
+            title={'Results History'}
+            subtitle ={'List of your previous quiz results.'}
             iconName={'list'}
             iconType={'feather'}
           />
-          <Text>test</Text>
+          <QuizResultsList {...{quiz, results}}/>          
         </StickyCollapsableScrollView>
       </StyledSwipableModal>
     );

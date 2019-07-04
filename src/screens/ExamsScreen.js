@@ -17,6 +17,7 @@ import TimeAgo from 'react-native-timeago';
 import { Divider, Icon } from 'react-native-elements';
 import { Header, NavigationEvents } from 'react-navigation';
 import { PlatformButton, NumberIndicator } from '../components/StyledComponents';
+import { CustomQuizResultsStore, CustomQuizResultItem, CustomQuizResults } from '../functions/CustomQuizResultsStore';
 
 // shown when no exams have been created yet
 class EmptyCard extends React.PureComponent {
@@ -431,24 +432,27 @@ export class ExamsScreen extends React.Component {
   constructor(props){
     super(props);
     this.state = {
-      quizes: [],
+      quizes : [],
+      results: [],
     };  
   };
 
   componentDidMount(){
-    this.getQuizes();    
+    this.loadData();    
   };
 
   componentDidFocus = () => {
     //enable drawer when this screen is active
     const { setDrawerSwipe, getRefSubjectModal } = this.props.screenProps;
     setDrawerSwipe(true);
-    this.getQuizes();
+    this.loadData();
   };
 
-  async getQuizes(){
-    const quizes = await CustomQuizStore.read();
-    this.setState({quizes});
+  async loadData(){
+    const quizes  = await CustomQuizStore       .read() || [];
+    const results = await CustomQuizResultsStore.read() || [];
+
+    this.setState({quizes, results});
   };
 
   _handleOnPressCreateQuiz = () => {
@@ -456,23 +460,31 @@ export class ExamsScreen extends React.Component {
     navigation && navigation.navigate(ROUTES.CreateQuizRoute);
   };
 
-  _handleOnPressQuiz = (quizItem) => {
+  _handleOnPressQuiz = (_quiz) => {
     const { screenProps, navigation } = this.props;
+    const { results: _results } = this.state;
     const modal = screenProps[SCREENPROPS_KEYS.getRefViewCustomQuizModal]();
 
-    modal.openModal({
-      quiz: quizItem,
-      onPressStart: () => {
-        //randomize question order
-        const randomized = CustomQuiz.randomizeQuestionOrder(quizItem);
+    const quiz    = CustomQuiz.wrap(_quiz);
+    const results = CustomQuizResultItem.wrapArray(_results);
 
-        //navigate to custom quiz exam screen
-        navigation && navigation.navigate(
-          ROUTES.CustomQuizExamScreen, 
-          { quiz: randomized }
-        );
-      },
-    });
+    //get results related to this quiz
+    const filtered = CustomQuizResults.filterByQuizID(quiz.indexID_quiz, results);
+
+    //gets called when the modal's footer start button is pressed
+    const onPressStart = () => {
+      //randomize question order
+      const randomized = CustomQuiz.randomizeQuestionOrder(quizItem);
+
+      //navigate to custom quiz exam screen
+      navigation && navigation.navigate(
+        ROUTES.CustomQuizExamScreen, 
+        { quiz: randomized }
+      );
+    };
+
+    //show ViewCustomQuizModal
+    modal.openModal({results: filtered, quiz, onPressStart});
   };
 
   render(){

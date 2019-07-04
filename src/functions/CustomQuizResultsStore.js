@@ -82,6 +82,16 @@ export class CustomQuizResultItem {
   };
 };
 
+/** collection of helper functions related to CustomQuizResults */
+export class CustomQuizResults {
+  /** filter out results that do not match quizID */
+  static filterByQuizID(quizID = '', results = []){
+    return results.filter(result => 
+      result.indexID_quiz == quizID
+    );
+  };
+};
+
 export class CustomQuizResultsStore {
   static get KEY(){
     return 'custom-quiz-results';
