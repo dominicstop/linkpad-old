@@ -474,7 +474,7 @@ export class ExamsScreen extends React.Component {
     //gets called when the modal's footer start button is pressed
     const onPressStart = () => {
       //randomize question order
-      const randomized = CustomQuiz.randomizeQuestionOrder(quizItem);
+      const randomized = CustomQuiz.randomizeQuestionOrder(quiz);
 
       //navigate to custom quiz exam screen
       navigation && navigation.navigate(

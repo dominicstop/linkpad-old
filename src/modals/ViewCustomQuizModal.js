@@ -3,7 +3,7 @@ import { StyleSheet, View, Text, TouchableOpacity, Platform, Animated as NativeA
 import PropTypes from 'prop-types';
 
 import { STYLES, FONT_STYLES } from '../Constants';
-import { PURPLE, GREY, BLUE, GREEN, RED, ORANGE, AMBER, INDIGO } from '../Colors';
+import { PURPLE, GREY, BLUE, GREEN, RED, ORANGE, AMBER, INDIGO, LIGHT_GREEN } from '../Colors';
 import { setStateAsync, timeout, addLeadingZero } from '../functions/Utils';
 
 import { MODAL_DISTANCE_FROM_TOP, MODAL_EXTRA_HEIGHT, SwipableModal, ModalBackground, ModalTopIndicator } from '../components/SwipableModal';
@@ -27,7 +27,13 @@ import Animated, { Easing } from 'react-native-reanimated';
 import { CustomQuiz, CustomQuizStore } from '../functions/CustomQuizStore';
 import { ContentExpander } from '../components/Expander';
 import { CustomQuizResultItem } from '../functions/CustomQuizResultsStore';
+import { LinearGradient } from 'expo-linear-gradient';
 const { interpolate, Value } = Animated; 
+
+const Screen = {
+  width : Dimensions.get('window').width ,
+  height: Dimensions.get('window').height,
+};
 
 
 class QuizDetails extends React.PureComponent {
@@ -290,18 +296,20 @@ class QuizSubjectList extends React.PureComponent {
 };
 
 class QuizResultItem extends React.PureComponent {
+  static VALUES = {
+    BAR_HEIGHT: 12,
+  };
+
   static styles = StyleSheet.create({
     container: {
       paddingVertical: 10,
     },
-
     titleSubtitleWrapper: {
       flexDirection: 'row',
     },
     titleSubtitleContainer: {
       flex: 1,
     },
-
     itemContainer: {
       paddingVertical: 5,
     },
@@ -344,6 +352,26 @@ class QuizResultItem extends React.PureComponent {
       color: PURPLE.A400,
       fontWeight: '400',
     },
+    scoreBarWrapper: {
+      opacity: 0.75,
+      marginTop: 5,
+      height: QuizResultItem.VALUES.BAR_HEIGHT,
+      borderRadius: QuizResultItem.VALUES.BAR_HEIGHT/2,
+      paddingVertical: 1.5,
+      paddingHorizontal: 2,
+      borderColor: PURPLE.A700,
+      borderWidth: 1,
+    },
+    scoreBarContainer: {
+      height: '100%',
+      borderRadius: QuizResultItem.VALUES.BAR_HEIGHT/2,
+      overflow: 'hidden',
+    },
+    scoreBar: {
+      position: 'absolute', 
+      width: Screen.width - 10, 
+      height: '100%'
+    },
   });
 
   _renderTitle(){
@@ -356,9 +384,9 @@ class QuizResultItem extends React.PureComponent {
     const dateString2 = date.fromNow();
 
     const { correct, total } = result.results;
-    const didPass = (((correct / total) * 100) > 50);
-    const scoreText = didPass? 'Passed' : 'Failed';
-    
+    const score = Math.floor((correct / total) * 100);
+    const scoreText = (score >= 50)? 'Passed' : 'Failed';
+  
     //shows the date created
     const TITLE = (
       <View style={styles.titleContainer}>
@@ -391,7 +419,35 @@ class QuizResultItem extends React.PureComponent {
           {SUBTITLE}
         </View>
         <View style={styles.resultContainer}>
-          <Text style={styles.resultText}>{scoreText}</Text>
+          <Text style={styles.resultText}>
+            {`${scoreText}: ${score}%`}
+          </Text>
+        </View>
+      </View>
+    );
+  };
+
+  _renderScoreBar(){
+    const { styles, VALUES } = QuizResultItem;
+    const { result: _result } = this.props;
+    const result = CustomQuizResultItem.wrap(_result);
+
+    const { correct, total } = result.results;
+    const score = Math.floor((correct / total) * 100);
+    
+    const scoreBarContainerStyle = {
+      width: (score < VALUES.BAR_HEIGHT)? VALUES.BAR_HEIGHT : `${score}%`,
+    };
+
+    return(
+      <View style={styles.scoreBarWrapper}>
+        <View style={[styles.scoreBarContainer, scoreBarContainerStyle]}>
+          <LinearGradient
+            style={styles.scoreBar}
+            colors={[PURPLE.A700, BLUE.A700]}
+            start={{ x: 0, y: 1 }}
+            end  ={{ x: 1, y: 1 }}
+          />
         </View>
       </View>
     );
@@ -401,13 +457,14 @@ class QuizResultItem extends React.PureComponent {
     const { styles } = QuizResultItem;
     return(
       <View style={styles.container}>
-        {this._renderTitle()}
+        {this._renderTitle   ()}
+        {this._renderScoreBar()}
       </View>
     );
   };
 };
 
-class QuizResultsList extends React.PureComponent {
+class QuizResultsList extends React.PureComponent {  
   static styles = StyleSheet.create({
     container: {
       paddingVertical: 0,
@@ -449,7 +506,7 @@ class QuizResultsList extends React.PureComponent {
   };
 
   _handleKeyExtractor = (item, index) => {
-    return item.indexID_quiz || index;
+    return item.endTime || index;
   };
 
   _renderItem = ({item: result, index}) => {
