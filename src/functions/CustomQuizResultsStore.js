@@ -126,23 +126,10 @@ export class CustomQuizResults {
       const questionID = `${question.indexID_module}-${question.indexID_subject}-${question.indexID_question}`;
       
       //find matching answer, otherwise returns undefined
-      const matchedAnswer = new_answers.find((answer) => {
-        console.log(`answerID  : ${answer.answerID}`);
-        console.log(`questionID: ${questionID}`);
-        console.log(`match     : ${questionID == answer.answerID}`);
-
-        return questionID == answer.answerID;
-      });
-
-      console.log('\n');
-
+      const matchedAnswer = new_answers.find((answer) => questionID == answer.answerID);
       //check if there is match
       const hasMatchedAnswer = (matchedAnswer != undefined);
-      
-      console.log(`questionID: ${questionID}`);
-      console.log(`hasMatchedAnswer: ${hasMatchedAnswer}`);
-      console.log('\n');
-      
+
       return({
         answer: matchedAnswer, //contains: timestampAnswered, userAnswer etc.
         hasMatchedAnswer     , //used to check if there's a matching answer
@@ -180,12 +167,6 @@ export class CustomQuizResults {
 
     const QAList  = CustomQuizResults.generateQAList({questions, answers, durations});
     const results = CustomQuizResults.generateResultFromQAList(QAList);
-
-    Clipboard.setString(JSON.stringify({
-      params   : {quiz: _quiz, timeStats, startTime, questions, answers, durations},
-      generated: {QAList, results},
-    }));
-    
 
     return CustomQuizResultItem.wrap({
       //pass down other info

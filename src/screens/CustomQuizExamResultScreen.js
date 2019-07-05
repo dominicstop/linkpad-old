@@ -1458,9 +1458,9 @@ export class CustomQuizExamResultScreen extends React.Component {
       <AnimateInView duration={500}>
         <ResultCard results={quizResult.results}/>
         <StatsCard
-          startTime={this.startTime}
-          endTime={this.endTime}
-          //pass down timestats properties as props
+          startTime={quizResult.startTime}
+          endTime={quizResult.endTime}
+          //timestamps={quizResult.}
           {...quizResult.timeStats}  
         />
         <ScoreProgressCard
