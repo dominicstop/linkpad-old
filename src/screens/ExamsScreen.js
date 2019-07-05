@@ -18,6 +18,7 @@ import { Divider, Icon } from 'react-native-elements';
 import { Header, NavigationEvents } from 'react-navigation';
 import { PlatformButton, NumberIndicator } from '../components/StyledComponents';
 import { CustomQuizResultsStore, CustomQuizResultItem, CustomQuizResults } from '../functions/CustomQuizResultsStore';
+import { CustomQuizExamResultScreen } from './CustomQuizExamResultScreen';
 
 // shown when no exams have been created yet
 class EmptyCard extends React.PureComponent {
@@ -475,7 +476,6 @@ export class ExamsScreen extends React.Component {
     const onPressStart = () => {
       //randomize question order
       const randomized = CustomQuiz.randomizeQuestionOrder(quiz);
-
       //navigate to custom quiz exam screen
       navigation && navigation.navigate(
         ROUTES.CustomQuizExamScreen, 
@@ -483,8 +483,23 @@ export class ExamsScreen extends React.Component {
       );
     };
 
+    //gets called when a quiz result is pressed in the modal
+    const onPressResultItem = ({index, result}) => {
+      const { NAV_PARAMS } = CustomQuizExamResultScreen;
+      //goto exam results screen and pass params
+      navigation && navigation.navigate(ROUTES.CustomQuizExamResultRoute, {
+        [NAV_PARAMS.customQuizResult]: result,
+        [NAV_PARAMS.saveResult      ]: false ,
+        [NAV_PARAMS.quiz            ]: quiz  ,
+      });
+    };
+
     //show ViewCustomQuizModal
-    modal.openModal({results: filtered, quiz, onPressStart});
+    modal.openModal({
+      results: filtered, quiz,
+      //pass down event callbacks 
+      onPressStart, onPressResultItem
+    });
   };
 
   render(){

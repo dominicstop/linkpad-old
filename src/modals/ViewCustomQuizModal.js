@@ -296,6 +296,13 @@ class QuizSubjectList extends React.PureComponent {
 };
 
 class QuizResultItem extends React.PureComponent {
+  static propTypes = {
+    index : PropTypes.number,
+    result: PropTypes.object,
+    //events
+    onPressItem: PropTypes.func,
+  };
+
   static VALUES = {
     BAR_HEIGHT: 12,
   };
@@ -374,6 +381,11 @@ class QuizResultItem extends React.PureComponent {
     },
   });
 
+  _handleOnPress = () => {
+    const { onPressItem, index, result } = this.props;
+    onPressItem && onPressItem({index, result});
+  };
+
   _renderTitle(){
     const { styles } = QuizResultItem;
     const { result: _result, index } = this.props;
@@ -420,7 +432,10 @@ class QuizResultItem extends React.PureComponent {
         </View>
         <View style={styles.resultContainer}>
           <Text style={styles.resultText}>
-            {`${scoreText}: ${score}%`}
+            {`${scoreText}: `}
+            <Text style={{fontWeight: '700'}}>
+              {`${score}%`}
+            </Text>
           </Text>
         </View>
       </View>
@@ -456,15 +471,26 @@ class QuizResultItem extends React.PureComponent {
   render(){
     const { styles } = QuizResultItem;
     return(
-      <View style={styles.container}>
+      <TouchableOpacity 
+        style={styles.container}
+        onPress={this._handleOnPress}
+        activeOpacity={0.75}
+      >
         {this._renderTitle   ()}
         {this._renderScoreBar()}
-      </View>
+      </TouchableOpacity>
     );
   };
 };
 
 class QuizResultsList extends React.PureComponent {  
+  static propTypes = {
+    quiz   : PropTypes.object,
+    results: PropTypes.array ,
+    //events
+    onPressItem: PropTypes.func,
+  };
+
   static styles = StyleSheet.create({
     container: {
       paddingVertical: 0,
@@ -506,14 +532,17 @@ class QuizResultsList extends React.PureComponent {
   };
 
   _handleKeyExtractor = (item, index) => {
-    return item.endTime || index;
+    const startTime = (item.startTime || index);
+    const endTime   = (item.endTime   || index);
+
+    return `${startTime}-${endTime}`;
   };
 
   _renderItem = ({item: result, index}) => {
-    const { quiz } = this.props;
+    const { quiz, onPressItem } = this.props;
     return(
-      <QuizResultItem 
-        {...{index, result, quiz}}
+      <QuizResultItem
+        {...{index, result, quiz, onPressItem}}
       />
     );
   };
@@ -580,10 +609,15 @@ export class ViewCustomQuizModal extends React.Component {
   };
 
   //------ public functions ------
-  openModal = async ({quiz, results, onPressStart}) => {
-    //assign onpress callback to button
+  openModal = async ({quiz, results, onPressStart, onPressResultItem}) => {
+    //assign onpress callback to footer button
     this._handleOnPressStart = () => {
       onPressStart && onPressStart();
+    };
+
+    //assign onpress callback to
+    this._handleOnPressResultItem = ({index, result}) => {
+      onPressResultItem && onPressResultItem({index, result});
     };
 
     await setStateAsync(this, {
@@ -643,7 +677,10 @@ export class ViewCustomQuizModal extends React.Component {
             iconName={'list'}
             iconType={'feather'}
           />
-          <QuizResultsList {...{quiz, results}}/>          
+          <QuizResultsList
+            onPressItem={this._handleOnPressResultItem}
+            {...{quiz, results}}  
+          />          
         </StickyCollapsableScrollView>
       </StyledSwipableModal>
     );

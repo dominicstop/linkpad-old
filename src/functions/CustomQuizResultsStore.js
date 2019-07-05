@@ -90,6 +90,93 @@ export class CustomQuizResults {
       result.indexID_quiz == quizID
     );
   };
+
+  /** maps the answers and durations to the corresponding question  */
+  static generateQAList(questions, answers, durations){
+    let items = {};
+    durations.forEach(item => {
+      if(items[item.index]){
+        //append to index
+        const {totalTime, viewCount} = items[item.index];
+        //accumulate values 
+        items[item.index] = {
+          totalTime: item.duration + totalTime,
+          viewCount: viewCount + 1,
+        };
+
+      } else {
+        //initialize the counters
+        items[item.index] = {
+          totalTime: item.duration || 0,
+          viewCount: 1,
+        };
+      };
+    });
+
+    //remove question from answer
+    const new_answers = answers.map((answer) => {
+      //extract questions
+      const { question, ...otherProperties } = answer;
+      //return answer without questions
+      return otherProperties;
+    });
+
+    return questions.map((question, index) => {
+      //used for checking if question matches answers
+      const questionID = `${question.indexID_module}-${question.indexID_subject}-${question.indexID_question}`;
+  
+      //find matching answer, otherwise returns undefined
+      const matchedAnswer = new_answers.find((answer) => questionID == answer.answerID);
+      //check if there is match
+      const hasMatchedAnswer = (matchedAnswer != undefined);
+  
+      return({
+        answer: matchedAnswer, //contains: timestampAnswered, userAnswer etc.
+        hasMatchedAnswer     , //used to check if there's a matching answer
+        questionID           , //used as unique id in list
+        question             , //question dewtails
+        //append computed durations
+        durations: {
+          data: durations, //save the raw data
+          hasDuration: items[index] != undefined,
+          ...(items[index] || {totalTime: null, viewCount: null}),
+        }
+      });
+    });
+  };
+
+  /** goes through each item in the list and creates a result obj */
+  static generateResultFromQAList(list){
+    const unanswered = list.filter(answer => !answer.hasMatchedAnswer);
+    const answered   = list.filter(answer =>  answer.hasMatchedAnswer);
+  
+    //viewCount answers that are correct/wrong etc.
+    const correct   = answered.reduce((acc, {answer}) => acc += answer.isCorrect? 1 : 0, 0);
+    const incorrect = answered.reduce((acc, {answer}) => acc += answer.isCorrect? 0 : 1, 0);
+    const unaswered = unanswered.length;
+  
+    //add everything to get total
+    const total = (correct + incorrect + unaswered);
+  
+    return({correct, incorrect, unaswered, total});
+  };
+
+  static createCustomQuizResult({quiz: _quiz, timeStats, startTime, questions, answers, durations}){
+    const { indexID_quiz } = CustomQuizResultItem.wrap(_quiz);
+    const currentTime = Date.now();
+
+    const QAList  = CustomQuizResults.generateQAList(questions, answers, durations);
+    const results = CustomQuizResults.generateResultFromQAList(QAList);
+
+    return CustomQuizResultItem.wrap({
+      //pass down other info
+      endTime            : currentTime,
+      timestampSaved     : `${indexID_quiz}-${currentTime}`,
+      questionAnswersList: QAList,
+      //pass down properties
+      results, indexID_quiz, timeStats, startTime
+    });
+  };
 };
 
 export class CustomQuizResultsStore {

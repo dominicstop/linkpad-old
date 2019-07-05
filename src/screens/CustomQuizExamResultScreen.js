@@ -21,7 +21,7 @@ import { LinearGradient, Stop, Defs, G } from 'react-native-svg'
 import { STYLES, ROUTES , HEADER_HEIGHT, LOAD_STATE} from '../Constants';
 import { plural, isEmpty, timeout , formatPercent, ifTrue, callIfTrue, setStateAsync} from '../functions/Utils';
 import { BLUE , GREY, PURPLE, RED, GREEN} from '../Colors';
-import {CustomQuizResultsStore,  CustomQuizResultItem} from '../functions/CustomQuizResultsStore';
+import {CustomQuizResultsStore,  CustomQuizResultItem, CustomQuizResults} from '../functions/CustomQuizResultsStore';
 
 import Animated, { Easing } from 'react-native-reanimated';
 import { QuestionItem } from '../models/ModuleModels';
@@ -31,6 +31,7 @@ const { set, cond, block, Value, timing, interpolate, and, or, onChange, eq, cal
 import { TabView, SceneMap } from 'react-native-tab-view';
 import { ScoreProgressCard } from '../components/ResultScoreProgressCard';
 import { ModalTitle } from '../components/StyledComponents';
+import { CustomQuiz } from '../functions/CustomQuizStore';
 
 //declare animations
 Animatable.initializeRegistryWithDefinitions({
@@ -1271,144 +1272,38 @@ export class CustomQuizExamResultScreen extends React.Component {
   static NAV_PARAMS = {
     /** bool - save result upon navigating, false equals viewing only */
     saveResult: 'saveResult',
-    /** array - questions + answers */
-    questionAnswersList: 'questionAnswersList',
-    /** obj - correct, incorrect etc. */
-    results: 'results',
-    /** obj - min, max, avg. etc. */
-    timeStats: 'timeStats',
-    /** timestamp started */
-    startTime: 'startTime',
-    /** timestamp ended */
-    endTime: 'endTime',
+    customQuizResult: 'customQuizResult',
     /** obj - custom quiz data */
     quiz: 'quiz',
   };
 
-  static matchQuestionsWithAnswers(questions, answers, durations){
-    let items = {};
-    durations.forEach(item => {
-      if(items[item.index]){
-        //append to index
-        const {totalTime, viewCount} = items[item.index];
-        //accumulate values 
-        items[item.index] = {
-          totalTime: item.duration + totalTime,
-          viewCount: viewCount + 1,
-        };
-
-      } else {
-        //initialize the counters
-        items[item.index] = {
-          totalTime: item.duration || 0,
-          viewCount: 1,
-        };
-      };
-    });
-
-    //remove question from answer
-    const new_answers = answers.map((answer) => {
-      //extract questions
-      const { question, ...otherProperties } = answer;
-      //return answer without questions
-      return otherProperties;
-    });
-
-    return questions.map((question, index) => {
-      //used for checking if question matches answers
-      const questionID = `${question.indexID_module}-${question.indexID_subject}-${question.indexID_question}`;
-  
-      //find matching answer, otherwise returns undefined
-      const matchedAnswer = new_answers.find((answer) => questionID == answer.answerID);
-      //check if there is match
-      const hasMatchedAnswer = (matchedAnswer != undefined);
-  
-      return({
-        answer: matchedAnswer, //contains: timestampAnswered, userAnswer etc.
-        hasMatchedAnswer     , //used to check if there's a matching answer
-        questionID           , //used as unique id in list
-        question             , //question dewtails
-        //append computed durations
-        durations: {
-          data: durations, //save the raw data
-          hasDuration: items[index] != undefined,
-          ...(items[index] || {totalTime: null, viewCount: null}),
-        }
-      });
-    });
-  };
-  
-  static countResults(list){
-    const unanswered = list.filter(answer => !answer.hasMatchedAnswer);
-    const answered   = list.filter(answer =>  answer.hasMatchedAnswer);
-  
-    //viewCount answers that are correct/wrong etc.
-    const correct   = answered.reduce((acc, {answer}) => acc += answer.isCorrect? 1 : 0, 0);
-    const incorrect = answered.reduce((acc, {answer}) => acc += answer.isCorrect? 0 : 1, 0);
-    const unaswered = unanswered.length;
-  
-    //add everything to get total
-    const total = (correct + incorrect + unaswered);
-  
-    return({correct, incorrect, unaswered, total});
-  };
-
   constructor(props){
     super(props);
+
     //for making sure error message is shown only once
     this.didShowError = false;
     this.quizResult = null;
-
-    const { navigation } = props;
-    //get data from previous screen: CustomQuizExamScreen
-    const questionList       = navigation.getParam('questionList', []); //
-    const questionsRemaining = navigation.getParam('questions'   , []); //
-    const durations          = navigation.getParam('durations'   , []); //
-    const answers            = navigation.getParam('answers'     , []); //
-    //store data from prev. screen
-    this.timeStats = navigation.getParam('timeStats', null); //
-    this.startTime = navigation.getParam('startTime', null); //
-    this.endTime   = navigation.getParam('endTime'  , null); //
-    this.quiz      = navigation.getParam('quiz'     , null);
-
-    //combine questionList and questionsRemaining
-    const questions = [...questionList, ...questionsRemaining];
-
-    //combine answers and duration with each question - used for showing the list of questions answered
-    const questionAnswersList = CustomQuizExamResultScreen.matchQuestionsWithAnswers(questions, answers, durations);
-    //viewCount right, wrong etc. answers
-    const results = CustomQuizExamResultScreen.countResults(questionAnswersList);
     
     this.state = {
-      questionAnswersList, results,
       quizResultSaved  : LOAD_STATE.LOADING,
       quizResultsLoaded: LOAD_STATE.LOADING,
-      quizResults: null,
       showLoading: true,
+      quizResults: [],
     };
   };
 
   async saveResults(){
-    try{
-      const { questionAnswersList, results } = this.state;
-      const { indexID_quiz } = this.quiz;
+    const { NAV_PARAMS } = CustomQuizExamResultScreen;
+    const { navigation } = this.props;
 
-      const quizResult = CustomQuizResultItem.wrap({
-        //pass down state
-        questionAnswersList, results,
-        //pass down other info
-        timeStats     : this.timeStats,
-        startTime     : this.startTime,
-        endTime       : this.endTime,
-        timestampSaved: Date.now(),
-        //pass down quiz id
-        indexID_quiz,
-      });
-      
+    //get data from previous screen
+    const quizResult = CustomQuizResultItem.wrap(
+      navigation.getParam(NAV_PARAMS.customQuizResult, null)
+    );
+
+    try{
       //save/store quiz result
       await CustomQuizResultsStore.insert(quizResult);
-      this.quizResult = quizResult;
-
       //update loading state
       this.setState({quizResultSaved: LOAD_STATE.SUCCESS});
 
@@ -1420,7 +1315,14 @@ export class CustomQuizExamResultScreen extends React.Component {
   };
 
   async loadQuizResults(){
-    const { indexID_quiz } = this.quiz;
+    const { NAV_PARAMS } = CustomQuizExamResultScreen;
+    const { navigation } = this.props;
+
+    //get data from previous screen
+    const { indexID_quiz } = CustomQuiz.wrap(
+      navigation.getParam(NAV_PARAMS.quiz, null)
+    );
+    
     try {
       //load prev. quiz results
       const quizResults = await CustomQuizResultsStore.read();
@@ -1534,20 +1436,31 @@ export class CustomQuizExamResultScreen extends React.Component {
   };
 
   _renderContents(){
-    const { results, questionAnswersList, quizResults, quizResultSaved, quizResultsLoaded } = this.state;
+    const { NAV_PARAMS } = CustomQuizExamResultScreen;
+    const { navigation } = this.props;
+    const { quizResults, quizResultSaved, quizResultsLoaded } = this.state;
+    
+    const didSave = (quizResultSaved   == LOAD_STATE.SUCCESS);
+    const didLoad = (quizResultsLoaded == LOAD_STATE.SUCCESS);
     //don't render while loading
-    if(quizResultSaved == LOAD_STATE.LOADING || quizResultsLoaded == LOAD_STATE.LOADING) return null;
+    if(!didSave || !didLoad) return null;
 
-    //destructure items from timestats
-    const { min, max, avg, sum, timestamps } = this.timeStats;
+    const quizResult = CustomQuizResultItem.wrap(
+      navigation.getParam(NAV_PARAMS.customQuizResult, null)
+    );
+
+    const quiz = CustomQuiz.wrap(
+      navigation.getParam(NAV_PARAMS.quiz, null)
+    );
 
     return(
       <AnimateInView duration={500}>
-        <ResultCard {...{results}}/>
+        <ResultCard results={quizResult.results}/>
         <StatsCard
           startTime={this.startTime}
           endTime={this.endTime}
-          {...{min, max, avg, sum, timestamps}}  
+          //pass down timestats properties as props
+          {...quizResult.timeStats}  
         />
         <ScoreProgressCard
           results={quizResults}
@@ -1555,7 +1468,7 @@ export class CustomQuizExamResultScreen extends React.Component {
         <AnswersListCard 
           onPressViewAllQuestions={this._handleOnPressViewAllQuestions}
           onPressNavigate={this._handleOnPressNavigate}
-          {...{questionAnswersList}}  
+          questionAnswersList={quizResult.questionAnswersList}
         />
         <IconFooter
           animateIn={false}

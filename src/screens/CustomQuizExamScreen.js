@@ -24,6 +24,7 @@ import { Icon } from 'react-native-elements';
 import {CustomQuiz, CustomQuizStore} from '../functions/CustomQuizStore';
 import { CustomQuizExamResultQAScreen } from './CustomQuizExamResultQAScreen';
 import { QuizQuestion } from '../models/Quiz';
+import { CustomQuizResults } from '../functions/CustomQuizResultsStore';
 
 //custom header left component
 class CancelButton extends React.PureComponent {
@@ -468,6 +469,7 @@ class CustomQuizExamScreen extends React.Component {
 
   //callback assigned from done modal
   _handleOnPressFinishButton = ({timeStats}) => {
+    const { NAV_PARAMS } = CustomQuizExamResultScreen;
     const { navigation } = this.props;
     const { startTime  } = this.state;
 
@@ -478,19 +480,23 @@ class CustomQuizExamScreen extends React.Component {
     //get data from previous screen: ExamScreen
     const quiz = navigation.getParam('quiz' , null);
 
-    const endTime = Date.now(); 
-    //data to be passed to the next screen
-    const params = {
-      questionList: this.customQuizList.getQuestionList(), //list of questions shown
-      answers     : this.customQuizList.getAnswers     (), //answered questions
-      questions   : this.customQuizList.getQuestions   (), //all questions in quiz
-      durations   : this.durations,
+    //create quiz result
+    const customQuizResult = CustomQuizResults.createCustomQuizResult({
+      answers  : this.customQuizList.getAnswers  (), //list of answered questions
+      questions: this.customQuizList.getQuestions(), //all questions in quiz
+      durations: this.durations,
       //pass down items
-      timeStats, startTime, endTime, quiz
-    };
+      quiz, startTime, timeStats,
+    });
+
+    Clipboard.setString(JSON.stringify(customQuizResult));
 
     //goto exam results screen and pass params
-    navigation && navigation.navigate(ROUTES.CustomQuizExamResultRoute, params);
+    navigation && navigation.navigate(ROUTES.CustomQuizExamResultRoute, {
+      [NAV_PARAMS.customQuizResult]: customQuizResult,
+      [NAV_PARAMS.saveResult      ]: true,
+      [NAV_PARAMS.quiz            ]: quiz,
+    });
   };
 
   _handleOnPressImage = ({question, index, base64Image, photofilename, photouri}) => {
