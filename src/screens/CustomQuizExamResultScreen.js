@@ -1297,13 +1297,14 @@ export class CustomQuizExamResultScreen extends React.Component {
     const { navigation } = this.props;
 
     //get data from previous screen
+    const shouldSave = navigation.getParam(NAV_PARAMS.saveResult, false);
     const quizResult = CustomQuizResultItem.wrap(
       navigation.getParam(NAV_PARAMS.customQuizResult, null)
     );
 
     try{
       //save/store quiz result
-      await CustomQuizResultsStore.insert(quizResult);
+      shouldSave && await CustomQuizResultsStore.insert(quizResult);
       //update loading state
       this.setState({quizResultSaved: LOAD_STATE.SUCCESS});
 

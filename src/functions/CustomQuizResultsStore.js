@@ -92,7 +92,7 @@ export class CustomQuizResults {
   };
 
   /** maps the answers and durations to the corresponding question  */
-  static generateQAList(questions, answers, durations){
+  static generateQAList({questions, answers, durations}){
     let items = {};
     durations.forEach(item => {
       if(items[item.index]){
@@ -124,12 +124,25 @@ export class CustomQuizResults {
     return questions.map((question, index) => {
       //used for checking if question matches answers
       const questionID = `${question.indexID_module}-${question.indexID_subject}-${question.indexID_question}`;
-  
+      
       //find matching answer, otherwise returns undefined
-      const matchedAnswer = new_answers.find((answer) => questionID == answer.answerID);
+      const matchedAnswer = new_answers.find((answer) => {
+        console.log(`answerID  : ${answer.answerID}`);
+        console.log(`questionID: ${questionID}`);
+        console.log(`match     : ${questionID == answer.answerID}`);
+
+        return questionID == answer.answerID;
+      });
+
+      console.log('\n');
+
       //check if there is match
       const hasMatchedAnswer = (matchedAnswer != undefined);
-  
+      
+      console.log(`questionID: ${questionID}`);
+      console.log(`hasMatchedAnswer: ${hasMatchedAnswer}`);
+      console.log('\n');
+      
       return({
         answer: matchedAnswer, //contains: timestampAnswered, userAnswer etc.
         hasMatchedAnswer     , //used to check if there's a matching answer
@@ -165,8 +178,14 @@ export class CustomQuizResults {
     const { indexID_quiz } = CustomQuizResultItem.wrap(_quiz);
     const currentTime = Date.now();
 
-    const QAList  = CustomQuizResults.generateQAList(questions, answers, durations);
+    const QAList  = CustomQuizResults.generateQAList({questions, answers, durations});
     const results = CustomQuizResults.generateResultFromQAList(QAList);
+
+    Clipboard.setString(JSON.stringify({
+      params   : {quiz: _quiz, timeStats, startTime, questions, answers, durations},
+      generated: {QAList, results},
+    }));
+    
 
     return CustomQuizResultItem.wrap({
       //pass down other info

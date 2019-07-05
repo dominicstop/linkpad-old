@@ -480,16 +480,18 @@ class CustomQuizExamScreen extends React.Component {
     //get data from previous screen: ExamScreen
     const quiz = navigation.getParam('quiz' , null);
 
+    //get the questions displayed and the remaining questions not displayed
+    const questionsRemaining = this.customQuizList.getQuestions   ();
+    const questionsDisplayed = this.customQuizList.getQuestionList();
+
     //create quiz result
     const customQuizResult = CustomQuizResults.createCustomQuizResult({
-      answers  : this.customQuizList.getAnswers  (), //list of answered questions
-      questions: this.customQuizList.getQuestions(), //all questions in quiz
+      answers  : this.customQuizList.getAnswers(),
+      questions: [...questionsRemaining, ...questionsDisplayed],
       durations: this.durations,
       //pass down items
       quiz, startTime, timeStats,
     });
-
-    Clipboard.setString(JSON.stringify(customQuizResult));
 
     //goto exam results screen and pass params
     navigation && navigation.navigate(ROUTES.CustomQuizExamResultRoute, {
