@@ -337,14 +337,24 @@ class QuizResultItem extends React.PureComponent {
       marginTop: 3,
       alignItems: 'center',
     },
+    subtitleContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginTop: 2,
+    },
     subtitle: {
       flex: 1,
       marginTop: 3,
-      fontWeight: '200'
+      fontWeight: '200',
+      marginLeft: 3,
     },
     indicator: {
       fontWeight: '600',
       color: PURPLE[1000],
+    },
+    subtitleTime: {
+      fontWeight: '100',
+      color: GREY[700],
     },
     resultContainer: {
       alignSelf: 'center',
@@ -392,8 +402,10 @@ class QuizResultItem extends React.PureComponent {
     const result = CustomQuizResultItem.wrap(_result);
 
     const date = moment(result.endTime);
+    const timeString  = date.format('LT');
     const dateString1 = date.format('MMMM D Y, dddd');
     const dateString2 = date.fromNow();
+
 
     const { correct, total } = result.results;
     const score = Math.floor((correct / total) * 100);
@@ -418,10 +430,25 @@ class QuizResultItem extends React.PureComponent {
     
     //shows the relative date created
     const SUBTITLE = (
-      <Text style={[FONT_STYLES.subtitle1, styles.subtitle]}>
-        <Text style={styles.indicator}>{'Taken: '}</Text>
-        <Text>{dateString2}</Text>
-      </Text>
+      <View style={styles.subtitleContainer}>
+        <Icon
+          name={'clock'}
+          type={'feather'}
+          size={16}
+          color={PURPLE.A700}
+        />
+        <Text style={[FONT_STYLES.subtitle1, styles.subtitle]}>
+          <Text style={styles.indicator}>
+            {'Taken: '}
+          </Text>
+          <Text>
+            {`${dateString2} `}
+          </Text>
+          <Text style={styles.subtitleTime}>
+            {`(${timeString})`}
+          </Text>
+        </Text>
+      </View>
     );
 
     return (
@@ -497,6 +524,9 @@ class QuizResultsList extends React.PureComponent {
       paddingBottom: 2,
       paddingTop: 0,
     },
+    divider: {
+      backgroundColor: 'rgba(0,0,0,0.4)',
+    },
     //header styles
     headerContainer: {
       flexDirection: 'row',
@@ -539,11 +569,16 @@ class QuizResultsList extends React.PureComponent {
   };
 
   _renderItem = ({item: result, index}) => {
+    const { styles } = QuizResultsList;
     const { quiz, onPressItem } = this.props;
+
     return(
-      <QuizResultItem
-        {...{index, result, quiz, onPressItem}}
-      />
+      <Fragment>
+        {(index != 0) && <Divider style={styles.divider}/>}
+        <QuizResultItem
+          {...{index, result, quiz, onPressItem}}
+        />
+      </Fragment>
     );
   };
 
@@ -587,7 +622,6 @@ class QuizResultsList extends React.PureComponent {
     );
   };
 };
-
 
 export class ViewCustomQuizModal extends React.Component {
   static propTypes = {
