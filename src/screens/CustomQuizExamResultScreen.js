@@ -1,37 +1,33 @@
 import React, { Fragment } from 'react';
-import { View, LayoutAnimation, ScrollView, ViewPropTypes, Text, TouchableOpacity, AsyncStorage, StyleSheet, Platform , Alert, TouchableNativeFeedback, Clipboard, FlatList, ActivityIndicator, Dimensions, Switch} from 'react-native';
+import { View, ScrollView, Text, TouchableOpacity, StyleSheet, Platform , Alert, FlatList, ActivityIndicator, Dimensions } from 'react-native';
 import PropTypes from 'prop-types';
-
-import { ViewWithBlurredHeader, IconText, Card, AnimateInView, IconFooter } from '../components/Views';
-import { AndroidHeader } from '../components/AndroidHeader';
-import { CustomHeader } from '../components/Header' ;
 
 import _ from 'lodash';
 import * as Animatable from 'react-native-animatable';
 import moment from "moment";
 import Pie from 'react-native-pie'
-import { Header, NavigationEvents } from 'react-navigation';
+import { NavigationEvents } from 'react-navigation';
 import { Divider, Icon } from 'react-native-elements';
-import SegmentedControlTab from "react-native-segmented-control-tab";
+import { LinearGradient } from 'expo-linear-gradient';
 
-import * as shape from 'd3-shape'
-import { BarChart, Grid, XAxis, YAxis } from 'react-native-svg-charts'
-import { LinearGradient, Stop, Defs, G } from 'react-native-svg'
+import { CustomQuizExamResultQAScreen } from './CustomQuizExamResultQAScreen';
+import { ViewWithBlurredHeader, IconText, Card, AnimateInView, IconFooter } from '../components/Views';
+import { AndroidHeader } from '../components/AndroidHeader';
+import { CustomHeader } from '../components/Header' ;
+import { PlatformTouchableIconButton } from '../components/Buttons';
+import { ScoreProgressCard } from '../components/ResultScoreProgressCard';
 
-import { STYLES, ROUTES , HEADER_HEIGHT, LOAD_STATE} from '../Constants';
-import { plural, isEmpty, timeout , formatPercent, ifTrue, callIfTrue, setStateAsync} from '../functions/Utils';
-import { BLUE , GREY, PURPLE, RED, GREEN} from '../Colors';
-import {CustomQuizResultsStore,  CustomQuizResultItem, CustomQuizResults} from '../functions/CustomQuizResultsStore';
+import { GREY, PURPLE, RED, GREEN} from '../Colors';
+import { STYLES, ROUTES, HEADER_HEIGHT, LOAD_STATE} from '../Constants';
+
+import { QuestionItem } from '../models/ModuleModels';
+
+import { CustomQuiz } from '../functions/CustomQuizStore';
+import { plural, isEmpty, formatPercent, setStateAsync} from '../functions/Utils';
+import { CustomQuizResultsStore,  CustomQuizResultItem, CustomQuizResults} from '../functions/CustomQuizResultsStore';
 
 import Animated, { Easing } from 'react-native-reanimated';
-import { QuestionItem } from '../models/ModuleModels';
-import { PlatformTouchableIconButton } from '../components/Buttons';
-import { CustomQuizExamResultQAScreen } from './CustomQuizExamResultQAScreen';
 const { set, cond, block, Value, timing, interpolate, and, or, onChange, eq, call, Clock, clockRunning, startClock, stopClock, debug, divide, multiply } = Animated;
-import { TabView, SceneMap } from 'react-native-tab-view';
-import { ScoreProgressCard } from '../components/ResultScoreProgressCard';
-import { ModalTitle } from '../components/StyledComponents';
-import { CustomQuiz } from '../functions/CustomQuizStore';
 
 //declare animations
 Animatable.initializeRegistryWithDefinitions({
@@ -42,36 +38,124 @@ Animatable.initializeRegistryWithDefinitions({
   },
 });
 
-const sharedStyles = StyleSheet.create({
-  //header styles
-  title: {
-    color: PURPLE[1200],
-    ...Platform.select({
-      ios: {
-        fontSize: 24, 
-        fontWeight: '800'
-      },
-      android: {
-        fontSize: 26, 
-        fontWeight: '900'
-      }
-    })
-  },
-  titleContainer: {
-  },
-  subtitle: {
-    flex: 1,
-    fontWeight: '200',
-    fontSize: 17,
-  },
-});
-
 const headerTitle = (props) => <CustomHeader 
   name={'info'}
   type={'simple-line-icon'}
   size={22}
   {...props}  
 />
+
+class CardWithHeader extends React.PureComponent {
+  static propTypes = {
+    title    : PropTypes.string,
+    subtitle : PropTypes.string,
+    iconName : PropTypes.string,
+    iconType : PropTypes.string,
+    iconStyle: PropTypes.object,
+  };
+
+  static styles = StyleSheet.create({
+    cardContainer: {
+      padding: 0,
+      paddingTop: 0,
+      paddingBottom: 0,
+      paddingHorizontal: 0,
+      paddingVertical: 0,
+    },
+    wrapperContainer: {
+      paddingHorizontal: 12, 
+      paddingTop: 12,
+      paddingBottom: 13,
+    },
+    //header styles
+    headerContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: 14,
+      paddingVertical: 10,
+      backgroundColor: PURPLE.A700,
+      borderBottomWidth: 1,
+      borderBottomColor: PURPLE[900],
+    },
+    headerTextContainer: {
+      marginLeft: 10,
+    },
+    title: {
+      color: 'white',
+      ...Platform.select({
+        ios: {
+          fontSize: 22, 
+          fontWeight: '800',
+          shadowColor: 'white',
+          shadowRadius: 4,
+          shadowOpacity: 0.25,
+        },
+        android: {
+          fontSize: 24, 
+          fontWeight: '900'
+        }
+      })
+    },
+    subtitle: {
+      color: 'white',
+      flex: 1,
+      fontWeight: '400',
+      fontSize: 16,
+    },
+    iconContainer: {
+      width : 40,
+      height: 40,
+      borderRadius: 40/2,
+      backgroundColor: 'white',
+      alignItems: 'center',
+      justifyContent: 'center',
+      shadowColor: 'white',
+      shadowRadius: 4,
+      shadowOpacity: 0.25,
+    },
+  });
+
+  _renderHeader(){
+    const { styles } = CardWithHeader;
+    const { title, subtitle, ...props } = this.props;
+    return(
+      <LinearGradient 
+        style={styles.headerContainer}
+        colors={[PURPLE.A400, PURPLE.A200]}
+        start={{ x: 0, y: 1 }}
+        end  ={{ x: 1, y: 1 }}
+      >
+        <Icon
+          name={props.iconName}
+          type={props.iconType}
+          iconStyle={[styles.iconStyle, props.iconStyle]}
+          containerStyle={styles.iconContainer}
+          color={PURPLE.A700}
+          size={26}
+        />
+        <View style={styles.headerTextContainer}>
+          <Text numberOfLines={1} style={styles.title   }>{title   }</Text>
+          <Text numberOfLines={1} style={styles.subtitle}>{subtitle}</Text>
+        </View>
+      </LinearGradient>
+    );
+  };
+
+  render(){
+    const { styles } = CardWithHeader;
+    return(
+      <Card
+        disableOverflow={true}
+        containerStyle={styles.cardContainer}
+      >
+        {this._renderHeader()}
+        <View style={styles.wrapperContainer}>
+          {this.props.children}
+        </View>
+      </Card>
+    );
+  };
+};
 
 //quiz results - icon button + value
 class ResultItem extends React.PureComponent {
@@ -106,7 +190,7 @@ class ResultItem extends React.PureComponent {
   });
 
   getStateFromModeKind(){
-    const { MODE } = ResultCard;
+    const { MODE } = ResultSummaryCard;
     const { kind } = this.props;
     switch (kind) {
       case MODE.CORRECT: return {
@@ -193,7 +277,7 @@ class ResultItem extends React.PureComponent {
 };
 
 //quiz results - shows correct, wrong etc. items + chart
-class ResultCard extends React.PureComponent {
+class ResultSummaryCard extends React.PureComponent {
   static propTypes = {
     results: PropTypes.object,
   };
@@ -206,9 +290,6 @@ class ResultCard extends React.PureComponent {
   };
 
   static styles = StyleSheet.create({
-    cardContainer: {
-      paddingBottom: 10,
-    },
     divider: {
       marginVertical: 10,
     },
@@ -231,6 +312,8 @@ class ResultCard extends React.PureComponent {
     pictureDescText: {
       flex: 1,
       textAlignVertical: 'center',
+      fontSize: 16,
+      fontWeight: '200',
     },
     pictureDescResultText: {
       color: PURPLE[900],
@@ -276,7 +359,7 @@ class ResultCard extends React.PureComponent {
 
   constructor(props){
     super(props);
-    const { MODE } = ResultCard;
+    const { MODE } = ResultSummaryCard;
 
     this.state = {
       mode: MODE.DEFAULT,
@@ -295,7 +378,7 @@ class ResultCard extends React.PureComponent {
   };
 
   getStateFromMode(){
-    const { MODE } = ResultCard;
+    const { MODE } = ResultSummaryCard;
     const { results } = this.props;
     const { mode, showPercentage } = this.state;
     //destruct percentages
@@ -334,7 +417,7 @@ class ResultCard extends React.PureComponent {
   };
 
   _handleOnPressResult = (type) => {
-    const { MODE } = ResultCard;
+    const { MODE } = ResultSummaryCard;
     const { mode } = this.state;
 
     this.animatedChart.pulse(500);
@@ -352,30 +435,8 @@ class ResultCard extends React.PureComponent {
     this.setState({showPercentage: !showPercentage});
   };
   
-  _renderHeader(){
-    const { desc: subtitle } = this.getStateFromMode();
-
-    return(
-      <ModalTitle
-        text={'Quiz Results'}
-        iconName={'clipboard'}
-        iconType={'feather'}
-        iconColor={'#512DA8'}
-        {...{subtitle}}
-      />
-    );
-
-    return(
-      <IconText
-        containerStyle={sharedStyles.titleContainer}
-        textStyle={sharedStyles.title}
-        
-      />
-    );
-  };
-
   _renderPictureDesc(){
-    const { styles } = ResultCard;
+    const { styles } = ResultSummaryCard;
     const { results } = this.props;
     const { perentageCorrect, perentageIncorrect, perentageUnanswered } = this.resultPercentages;
     //correct, total, incorrect, unaswered
@@ -416,7 +477,7 @@ class ResultCard extends React.PureComponent {
           duration={5000}
           useNativeDriver={true}
         />
-        <Text style={[styles.pictureDescText, sharedStyles.subtitle]}>
+        <Text style={[styles.pictureDescText]}>
           <Text style={styles.pictureDescResultText}>{result}</Text>
           {'. '}
           <Text>{resultDescription}</Text>
@@ -426,7 +487,7 @@ class ResultCard extends React.PureComponent {
   };
 
   _renderResults(){
-    const { styles, MODE } = ResultCard;
+    const { styles, MODE } = ResultSummaryCard;
     const { results } = this.props;
     const { mode } = this.state;
 
@@ -455,7 +516,7 @@ class ResultCard extends React.PureComponent {
   };
 
   _renderPieIcon(){
-    const { styles, MODE } = ResultCard;
+    const { styles, MODE } = ResultSummaryCard;
     const { mode } = this.state;
 
     const { color } = this.getStateFromMode();
@@ -487,7 +548,7 @@ class ResultCard extends React.PureComponent {
   };
 
   _renderPieChart(){
-    const { styles } = ResultCard;
+    const { styles } = ResultSummaryCard;
 
     const radius = 60;
     const innerRadius = 45;
@@ -533,17 +594,23 @@ class ResultCard extends React.PureComponent {
   };
 
   render(){
-    const { styles } = ResultCard;
+    const { styles } = ResultSummaryCard;
+    const { desc: subtitle } = this.getStateFromMode();
+
     return(
-      <Card style={styles.cardContainer}>
-        {this._renderHeader()}
-        <Divider style={styles.divider}/>
+      <CardWithHeader
+        title={'Quiz Results'}
+        iconName={'pie-chart'}
+        iconType={'feather'}
+        iconColor={'#512DA8'}
+        {...{subtitle}}
+      >
         {this._renderPictureDesc()}
         <View style={styles.resultPieContainer}>
           {this._renderResults ()}
           {this._renderPieChart()}
         </View>
-      </Card>
+      </CardWithHeader>
     );
   };
 };
@@ -626,22 +693,6 @@ class StatsCard extends React.PureComponent {
     return(value == 0? '' : `${value} ${plural(suffix, value)}` + seperator);
   };
 
-  _renderHeader(){
-    return(
-      <IconText
-        containerStyle={sharedStyles.titleContainer}
-        textStyle={sharedStyles.title}
-        text={'Quiz Statistics'}
-        subtitleStyle={sharedStyles.subtitle}
-        subtitle={"Information on how you took the quiz."}
-        iconName={'speedometer'}
-        iconType={'simple-line-icon'}
-        iconColor={'#512DA8'}
-        iconSize={26}
-      />
-    );
-  };
-
   _renderDetailsTime(){
     const { styles } = StatsCard;
     const { startTime, endTime } = this.props;
@@ -714,13 +765,16 @@ class StatsCard extends React.PureComponent {
   render(){
     const { styles } = StatsCard;
     return(
-      <Card>
-        {this._renderHeader()}
-        <Divider style={styles.divider}/>
+      <CardWithHeader
+        title   ={'Quiz Statistics'}
+        subtitle={"Stats on how well you did."}
+        iconName={'speedometer'}
+        iconType={'simple-line-icon'}
+      >
         {this._renderDetailsTime()}
         <Divider style={styles.divider}/>
         {this._renderDetailsComp()}
-      </Card>
+      </CardWithHeader>
     );
   };
 };
@@ -1140,14 +1194,18 @@ class AnswersListCard extends React.PureComponent {
     headerContainer: {
       flexDirection: 'row',
       marginBottom: 1,
-      marginTop: 5,
       alignItems: 'center',
+    },
+    headerImage: {
+      width: 90,
+      height: 90,
     },
     headerTitle: {
       flex: 1,
       marginLeft: 8,
     },
     headerSubtitle: {
+      flex: 1,
       fontSize: 16,
       fontWeight: '200',
     },
@@ -1168,7 +1226,7 @@ class AnswersListCard extends React.PureComponent {
 
   constructor(props){
     super(props);
-    //Clipboard.setString(JSON.stringify(props.questionAnswersList));
+    this.headerImage = require('../../assets/icons/book-tent.png');
   };
 
   _handleOnPressViewAllQuestions = () => {
@@ -1201,19 +1259,22 @@ class AnswersListCard extends React.PureComponent {
 
     return(
       <Fragment>
-        <View style={[styles.headerContainer, sharedStyles.titleContainer]}>
-          <Icon
-            name={'notebook'}
-            type={'simple-line-icon'}
-            color={'#512DA8'}
-            size={23}
+        <View style={styles.headerContainer}>
+          <Animatable.Image
+            source={this.headerImage}
+            style={styles.headerImage}
+            animation={'pulse'}
+            duration={20 * 1000}
+            iterationCount={'infinite'}
+            iterationDelay={1000}
+            delay={2000}
           />
-          <Text style={[styles.headerTitle, sharedStyles.title]}>{'Answers List'}</Text>
+          <Text style={styles.headerSubtitle}>
+            {"You can long press on a question or tap on it's number to show that item in the"}
+            <Text style={{fontWeight: '500'}}>{" View All Question "}</Text>
+            {"list."}
+          </Text>
         </View>
-        <Text style={styles.headerSubtitle}>
-          {"Long press on a question or tap on it's number to view all of it's details."}
-        </Text>
-
         <PlatformTouchableIconButton
           onPress={this._handleOnPressViewAllQuestions}
           wrapperStyle={[styles.buttonWrapper, STYLES.lightShadow]}
@@ -1231,14 +1292,19 @@ class AnswersListCard extends React.PureComponent {
   
   render(){
     return(
-      <Card>
+      <CardWithHeader
+        title={'Answers List'}
+        subtitle={'Questions and answer keys'}
+        iconName={'check-circle'}
+        iconType={'feather'}
+      >
         {this._renderHeader()}
         <FlatList
           data={this.props.questionAnswersList}
           renderItem={this._renderItem}
           keyExtractor={this._keyExtractor}
         />
-      </Card>
+      </CardWithHeader>
     );
   };
 };
@@ -1456,11 +1522,10 @@ export class CustomQuizExamResultScreen extends React.Component {
 
     return(
       <AnimateInView duration={500}>
-        <ResultCard results={quizResult.results}/>
+        <ResultSummaryCard results={quizResult.results}/>
         <StatsCard
           startTime={quizResult.startTime}
-          endTime={quizResult.endTime}
-          //timestamps={quizResult.}
+          endTime  ={quizResult.endTime  }
           {...quizResult.timeStats}  
         />
         <ScoreProgressCard

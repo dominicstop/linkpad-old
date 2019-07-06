@@ -142,6 +142,11 @@ export class IconText extends React.PureComponent {
 }
 
 export class Card extends React.PureComponent {
+  static propTypes = {
+    /** wraps to handle shadow + border radius overflow */
+    disableOverflow: PropTypes.bool
+  };
+
   static styles = StyleSheet.create({
     card: {
       overflow: 'visible', 
@@ -153,13 +158,37 @@ export class Card extends React.PureComponent {
       borderRadius: 10,
       backgroundColor: 'white', 
       elevation: 7,
-    }
+    },
+    wrapper: {
+      marginTop: 5, 
+      marginBottom: 12, 
+      marginHorizontal: 12, 
+      borderRadius: 10,
+      elevation: 7,
+    },
+    container: {
+      overflow: 'hidden',
+      paddingHorizontal: 15, 
+      paddingVertical: 10,
+      backgroundColor: 'white',
+      borderRadius: 10,
+    },
   });
 
   render(){
     const { styles } = Card;
-    const { style, ...viewProps } = this.props;
-    return(
+    const { style, wrapperStyle, containerStyle, disableOverflow, ...viewProps } = this.props;
+
+    return disableOverflow?(
+      <View
+        style={[styles.wrapper, STYLES.mediumShadow, wrapperStyle]}
+        {...viewProps}
+      >
+        <View style={[styles.container, containerStyle]}>
+          {this.props.children}
+        </View>
+      </View>
+    ):(
       <View
         style={[styles.card, STYLES.mediumShadow, style]}
         {...viewProps}
@@ -167,8 +196,8 @@ export class Card extends React.PureComponent {
         {this.props.children}
       </View>
     );
-  }
-}
+  };
+};
 
 //ios only: used woth react-nav for a blurred floating header
 export class ViewWithBlurredHeader extends React.PureComponent {
