@@ -509,11 +509,12 @@ export class ExamsScreen extends React.Component {
   _handleOnPressResultItem = ({result, index}) => {
     const { NAV_PARAMS } = CustomQuizExamResultScreen;
     const { navigation } = this.props;
+
     //goto exam results screen and pass params
     navigation && navigation.navigate(ROUTES.CustomQuizExamResultRoute, {
       [NAV_PARAMS.customQuizResult]: result,
       [NAV_PARAMS.saveResult      ]: false ,
-      [NAV_PARAMS.quiz            ]: quiz  ,
+      [NAV_PARAMS.quiz            ]: this.selectedQuiz,
     });
   };
 
