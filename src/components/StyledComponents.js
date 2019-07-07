@@ -296,17 +296,18 @@ export class DetailColumn extends React.PureComponent {
 
   _renderSubtitle(){
     const { styles } = DetailColumn;
-    const props = this.props;
+    const { children, ...props } = this.props;
 
-    const childrenCount = React.Children.count(props.children);
+    const style = [styles.subtitle, props.subtitleStyle];
+    const childrenCount = React.Children.count(children);
     const hasChildren = (childrenCount > 0);
 
     return hasChildren? (
-      props.children
+      React.cloneElement(children, {style})
     ):(
       <Text 
-        style={[styles.subtitle, props.subtitleStyle]}
-        numberOfLines={1}
+        numberOfLines={1} 
+        {...{style}}
       >
         {props.subtitle}
       </Text>
