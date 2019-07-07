@@ -33,30 +33,7 @@ const { interpolate, Value, timing, concat } = Animated;
 
 export class TestScreen extends React.Component {
 
-  _render(){
-    return(
-      <View style={{flex: 1}}>
-        <StickyCollapsableScrollView>
-          <StickyCollapseHeader
-            title={'Quiz Details'}
-            subtitle={'Details about the current quiz.'}
-            iconName={'message-circle'}
-            iconType={'feather'}
-          />
-          <ContentExpander>
-            <Text>Sed posuere consectetur est at lobortis. Donec sed odio dui. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Donec ullamcorper nulla non metus auctor fringilla. Maecenas faucibus mollis interdum.</Text>
-          </ContentExpander>
-          <StickyCollapseHeader
-            title={'Quiz Details'}
-            subtitle={'Details about the current quiz.'}
-            iconName={'message-circle'}
-            iconType={'feather'}
-          />
-          <ContentExpander>
-            <Text>Sed posuere consectetur est at lobortis. Donec sed odio dui. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Donec ullamcorper nulla non metus auctor fringilla. Maecenas faucibus mollis interdum.</Text>
-          </ContentExpander>
-        </StickyCollapsableScrollView>
-      </View>
-    );
+  render(){
+
   };
 };

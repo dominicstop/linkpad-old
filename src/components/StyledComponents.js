@@ -1,5 +1,5 @@
 import React, { Component, Fragment } from 'react';
-import { StyleSheet, View, Text, Platform, TouchableOpacity, Alert, Dimensions, ScrollView } from 'react-native';
+import { StyleSheet, View, Text, Platform, TouchableOpacity, Alert, Dimensions, ScrollView, ActivityIndicator } from 'react-native';
 import PropTypes from 'prop-types';
 
 import * as Animatable from 'react-native-animatable';
@@ -7,6 +7,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { isIphoneX, getBottomSpace } from 'react-native-iphone-x-helper';
 import { Icon, } from 'react-native-elements';
+import { Header } from 'react-navigation';
 
 import { FONT_STYLES, FONT_NAMES, STYLES } from '../Constants';
 import { PURPLE, GREY, RED, BLUE, INDIGO } from '../Colors';
@@ -826,10 +827,109 @@ export const ExpanderHeader = (props) => {
   );
 };
 
+export class LoadingPill extends React.PureComponent {
+  static propTypes = {
+
+  };
+
+  static styles = StyleSheet.create({
+    wrapper: {
+      position: 'absolute',
+      width: '100%',
+      marginTop: Header.HEIGHT,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    pillContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginTop: 10,
+      backgroundColor: PURPLE.A700,
+      borderColor: PURPLE.A100,
+      borderWidth: 1.5,
+      borderRadius: 20,
+      paddingVertical: 3,
+      paddingLeft: 7,
+      paddingRight: 15,
+    },
+    textContainer: {
+      marginLeft: 10,
+      justifyContent: 'center',
+    },
+    title: {
+      color: 'white',
+      fontWeight: '600',
+    },
+    subtitle: {
+      color: 'white',
+      fontWeight: '200',
+    },
+  });
+
+  constructor(props){
+    super(props);
+    this.state = {
+      visible: true,
+    };
+  };
+
+  setVisibility = async (visible) => {
+    if(visible){
+      this.setState({visible});
+    } else {
+      await this.wrapper.fadeOutUp(500);
+      await setStateAsync(this, {visible});
+    };
+  };
+
+  render(){
+    const { styles } = LoadingPill;
+    const props = this.props;
+    return(
+      <Animatable.View
+        ref={r => this.wrapper = r}
+        style={styles.wrapper}
+        animation={'fadeInDown'}
+        duration={500}
+        delay={500}
+        useNativeDriver={true}
+      >
+        <Animatable.View
+          style={STYLES.mediumShadow}
+          animation={'pulse'}
+          duration={1000 * 5}
+          delay={500}
+          iterationCount={'infinite'}
+          useNativeDriver={true}
+        >
+          <LinearGradient
+            style={styles.pillContainer}
+            colors={[PURPLE.A700, PURPLE.A200]}
+            start={{ x: 0, y: 1 }}
+            end={{ x: 1, y: 1 }}
+          >
+            <ActivityIndicator
+              size={'small'}
+              color={'white'}
+            />
+            <View style={styles.textContainer}>
+              <Text style={styles.title}>
+                {props.title || 'Loading'}
+              </Text>
+              <Text style={styles.subtitle}>
+                {props.subtitle || 'Please wait...'}
+              </Text>
+            </View>
+          </LinearGradient>
+        </Animatable.View>
+      </Animatable.View>
+    );
+  };
+};
+
 class TapToCycleText extends React.PureComponent {
 
 };
-
 
 export class PlatformButton extends React.PureComponent {
   static propTypes = {

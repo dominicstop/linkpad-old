@@ -651,7 +651,13 @@ class QuizResultsList extends React.PureComponent {
 
   _renderHeader = () => {
     const { styles } = QuizResultsList;
-    const { } = this.props;
+    const { results: _results } = this.props;
+    const results = CustomQuizResultItem.wrapArray(_results);
+
+    const [title, subtitle] = ((results.length == 0)
+      ? ["No results to show", "Nothing to see here! Whenever you take a quiz, your results will be listed here"]
+      : [`Showing ${results.length} results`, "You can tap on an item to view all of the result details and data."]
+    );
 
     return(
       <View style={styles.headerContainer}>
@@ -665,8 +671,8 @@ class QuizResultsList extends React.PureComponent {
           useNativeDriver={true}
         />
         <View style={styles.headerTextContainer}>
-          <Text style={styles.headerTitle   }>{'Showing last 10 results'}</Text>
-          <Text style={styles.headerSubtitle}>{'You can tap on an item to view all of the result details and data.'}</Text>
+          <Text style={styles.headerTitle   }>{title   }</Text>
+          <Text style={styles.headerSubtitle}>{subtitle}</Text>
         </View>
       </View>
     );

@@ -171,7 +171,6 @@ export class CustomQuizResults {
     return CustomQuizResultItem.wrap({
       //pass down other info
       endTime            : currentTime,
-      timestampSaved     : `${indexID_quiz}-${currentTime}`,
       questionAnswersList: QAList,
       //pass down properties
       results, indexID_quiz, timeStats, startTime
@@ -224,7 +223,10 @@ export class CustomQuizResultsStore {
   };
 
   static async insert(quizResult){
-    await store.push(CustomQuizResultsStore.KEY, quizResult);     
+    await store.push(CustomQuizResultsStore.KEY, {
+      ...quizResult,
+      timestampSaved: Date.now(),
+    });     
   };
 
   static clear(){

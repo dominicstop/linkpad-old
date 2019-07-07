@@ -27,6 +27,7 @@ import { plural, isEmpty, formatPercent, setStateAsync} from '../functions/Utils
 import { CustomQuizResultsStore,  CustomQuizResultItem, CustomQuizResults} from '../functions/CustomQuizResultsStore';
 
 import Animated, { Easing } from 'react-native-reanimated';
+import { LoadingPill } from '../components/StyledComponents';
 const { set, cond, block, Value, timing, interpolate, and, or, onChange, eq, call, Clock, clockRunning, startClock, stopClock, debug, divide, multiply } = Animated;
 
 //declare animations
@@ -1415,8 +1416,7 @@ export class CustomQuizExamResultScreen extends React.Component {
     //load prev. quiz results
     await this.loadQuizResults();
     //hide loading indicator
-    await this.animatedLoadingContainer.fadeOutUp(500);
-    this.setState({showLoading: false});
+    await this.loadingPill.setVisibility(false);
   };
 
   _handleOnPressViewAllQuestions = () => {
@@ -1480,28 +1480,6 @@ export class CustomQuizExamResultScreen extends React.Component {
     };
   };
 
-  _renderLoading(){
-    const { styles } = CustomQuizExamResultScreen;
-    const { showLoading } = this.state;
-    //do not render when not loading
-    if(!showLoading) return null;
-
-    return(
-      <Animatable.View
-        ref={r => this.animatedLoadingContainer = r}
-        style={styles.loadingContainer}
-        animation={'fadeInUp'}
-        duration={300}
-        useNativeDriver={true}
-      >
-        <ActivityIndicator
-          size={'large'}
-          color={PURPLE.A700}
-        />
-      </Animatable.View>
-    );
-  };
-
   _renderContents(){
     const { NAV_PARAMS } = CustomQuizExamResultScreen;
     const { navigation } = this.props;
@@ -1558,9 +1536,9 @@ export class CustomQuizExamResultScreen extends React.Component {
           contentInset ={{top: HEADER_HEIGHT}}
           contentOffset={{x: 0, y: -HEADER_HEIGHT}}
         >
-          {this._renderLoading ()}
           {this._renderContents()}
         </ScrollView>
+        <LoadingPill ref={r => this.loadingPill = r}/>
       </ViewWithBlurredHeader>
     );
   };

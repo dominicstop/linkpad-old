@@ -2139,7 +2139,7 @@ class ScoreProgressHeader extends React.PureComponent {
     const value = Math.round((correct / total * 100));
     const color = (value >= 50)? GREEN.A700 : RED.A400;
 
-    const time = result.timestampSaved || 0;
+    const time    = result.timestampSaved || 0;
     const date    = moment(time).format('ddd, MMM D YYYY');
     const timeStr = moment(time).format('LT');
 
