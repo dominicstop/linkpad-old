@@ -233,6 +233,10 @@ export class ModuleStore {
     };
   };
 
+  static readCached(){
+    return _modules;
+  };
+
   static async getImages(modules){
     const base64Images = {};
 

@@ -208,6 +208,11 @@ export default class SubjectListScreen extends React.Component {
     },
   });
 
+  static NAV_PARAMS = {
+    moduleData: 'moduleData',
+    modules   : 'modules'   ,
+  };
+
   componentDidFocus = () => {
     const { setDrawerSwipe } = this.props.screenProps;
     setDrawerSwipe(false);

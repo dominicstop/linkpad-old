@@ -19,6 +19,9 @@ import { Header, NavigationEvents } from 'react-navigation';
 import { PlatformButton, NumberIndicator } from '../components/StyledComponents';
 import { CustomQuizResultsStore, CustomQuizResultItem, CustomQuizResults } from '../functions/CustomQuizResultsStore';
 import { CustomQuizExamResultScreen } from './CustomQuizExamResultScreen';
+import SubjectListScreen from './SubjectListScreen';
+import { SubjectItem, ModuleItemModel } from '../models/ModuleModels';
+import { ModuleStore } from '../functions/ModuleStore';
 
 // shown when no exams have been created yet
 class EmptyCard extends React.PureComponent {
@@ -461,10 +464,67 @@ export class ExamsScreen extends React.Component {
     navigation && navigation.navigate(ROUTES.CreateQuizRoute);
   };
 
+  /** from ViewCustomQuizModal: 
+   *  gets called when the modal's footer start button is pressed
+   */
+  _handleOnPressStart = () => {
+    const { navigation } = this.props;
+    const quiz = CustomQuiz.wrap(this.selectedQuiz);
+
+    //randomize question order
+    const randomized = CustomQuiz.randomizeQuestionOrder(quiz);
+    //navigate to custom quiz exam screen
+    navigation && navigation.navigate(
+      ROUTES.CustomQuizExamScreen, 
+      { quiz: randomized }
+    );
+  };
+
+  /** from ViewCustomQuizModal: 
+   *  gets called when a quiz result is pressed in the modal
+   */
+  _handleOnPressSubjectItem = ({subject: _subject, index,}) => {
+    const { NAV_PARAMS } = SubjectListScreen;
+    const { navigation } = this.props;
+
+    const subject  = SubjectItem.wrap(_subject);
+    const moduleID = subject.indexID_module;
+
+    const _modules = ModuleStore.readCached();
+    const modules  = ModuleItemModel.wrapArray(_modules);
+
+    const module = modules.find(module => 
+      module.indexid == moduleID
+    );
+    
+    navigation && navigation.navigate(ROUTES.SubjectListRoute, {
+      [NAV_PARAMS.modules   ]: modules,
+      [NAV_PARAMS.moduleData]: module ,
+    });
+  };
+
+  /** from ViewCustomQuizModal: 
+   *  gets called when a quiz result is pressed in the modal
+   */
+  _handleOnPressResultItem = ({result, index}) => {
+    const { NAV_PARAMS } = CustomQuizExamResultScreen;
+    const { navigation } = this.props;
+    //goto exam results screen and pass params
+    navigation && navigation.navigate(ROUTES.CustomQuizExamResultRoute, {
+      [NAV_PARAMS.customQuizResult]: result,
+      [NAV_PARAMS.saveResult      ]: false ,
+      [NAV_PARAMS.quiz            ]: quiz  ,
+    });
+  };
+
   _handleOnPressQuiz = (_quiz) => {
-    const { screenProps, navigation } = this.props;
+    const { screenProps } = this.props;
     const { results: _results } = this.state;
+
+    //get a ref for ViewCustomQuizModal comp. from HomeScreen
     const modal = screenProps[SCREENPROPS_KEYS.getRefViewCustomQuizModal]();
+    //save a ref to the selected quiz
+    this.selectedQuiz = _quiz;
 
     const quiz    = CustomQuiz.wrap(_quiz);
     const results = CustomQuizResultItem.wrapArray(_results);
@@ -472,33 +532,13 @@ export class ExamsScreen extends React.Component {
     //get results related to this quiz
     const filtered = CustomQuizResults.filterByQuizID(quiz.indexID_quiz, results);
 
-    //gets called when the modal's footer start button is pressed
-    const onPressStart = () => {
-      //randomize question order
-      const randomized = CustomQuiz.randomizeQuestionOrder(quiz);
-      //navigate to custom quiz exam screen
-      navigation && navigation.navigate(
-        ROUTES.CustomQuizExamScreen, 
-        { quiz: randomized }
-      );
-    };
-
-    //gets called when a quiz result is pressed in the modal
-    const onPressResultItem = ({index, result}) => {
-      const { NAV_PARAMS } = CustomQuizExamResultScreen;
-      //goto exam results screen and pass params
-      navigation && navigation.navigate(ROUTES.CustomQuizExamResultRoute, {
-        [NAV_PARAMS.customQuizResult]: result,
-        [NAV_PARAMS.saveResult      ]: false ,
-        [NAV_PARAMS.quiz            ]: quiz  ,
-      });
-    };
-
     //show ViewCustomQuizModal
     modal.openModal({
       results: filtered, quiz,
       //pass down event callbacks 
-      onPressStart, onPressResultItem
+      onPressResultItem : this._handleOnPressResultItem , 
+      onPressStart      : this._handleOnPressStart      ,
+      onPressSubjectItem: this._handleOnPressSubjectItem,
     });
   };
 

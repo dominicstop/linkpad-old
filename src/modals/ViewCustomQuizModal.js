@@ -35,7 +35,6 @@ const Screen = {
   height: Dimensions.get('window').height,
 };
 
-
 class QuizDetails extends React.PureComponent {
   static propTypes = {
     quiz: PropTypes.object,
@@ -172,6 +171,112 @@ class QuizDetails extends React.PureComponent {
   };
 };
 
+class QuizSubjectItem extends React.PureComponent {
+  static styles = StyleSheet.create({
+    container: {
+      paddingVertical: 5,
+    },
+    titleContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    itemTitle: {
+      flex: 1,
+      marginLeft: 6,
+      color: PURPLE[1000],
+    },
+    detailsContainer: {
+      flexDirection: 'row',
+      marginTop: 3,
+      alignItems: 'center',
+    },
+    moduleName: {
+      flex: 1,
+      marginBottom: 5,
+      fontWeight: '200'
+    },
+    indicator: {
+      fontWeight: '600',
+      color: PURPLE[1000],
+    },
+    itemCountContainer: {
+      paddingHorizontal: 7,
+      paddingVertical: 3,
+      borderColor: PURPLE.A400,
+      borderWidth: 1,
+      borderRadius: 10,
+      marginBottom: 2,
+    },
+    itemCount: {
+      color: PURPLE.A400,
+      fontWeight: '400',
+    },
+  });
+
+  _handleOnPress = () => {
+    const { subject, onPress, index } = this.props;
+    onPress && onPress({subject, index});
+  };
+
+  _renderTitle(){
+    const { styles } = QuizSubjectItem;
+    const { subject, index } = this.props;
+
+    return (
+      <View style={styles.titleContainer}>
+        <NumberIndicator
+          value={index + 1}
+          initFontSize={14}
+          size={20}  
+        />
+        <Text 
+          style={[FONT_STYLES.heading7, styles.itemTitle]}
+          numberOfLines={1}
+        >
+          {subject.subjectname || 'subject name n/a'}
+        </Text>
+      </View>
+    );
+  };
+
+  _renderDetails(){
+    const { styles } = QuizSubjectItem;
+    const { subject } = this.props;
+
+    return (
+      <View style={styles.detailsContainer}>
+        <Text style={[FONT_STYLES.subtitle1, styles.moduleName]}>
+          <Text style={styles.indicator}>
+            {'Module: '}
+          </Text>
+          <Text>
+            {subject.modulename || 'module name n/a'}
+          </Text>
+        </Text>
+        <View style={styles.itemCountContainer}>
+          <Text style={styles.itemCount}>
+            {`${subject.allocatedItems || 0} items`}
+          </Text>
+        </View>
+      </View>
+    );
+  };
+
+  render(){
+    const { styles } = QuizSubjectItem;
+    return(
+      <TouchableOpacity 
+        style={styles.container}
+        activeOpacity={0.8}
+        onPress={this._handleOnPress}
+      >
+        {this._renderTitle  ()}
+        {this._renderDetails()}
+      </TouchableOpacity>
+    );
+  };
+};
+
 class QuizSubjectList extends React.PureComponent {
   static styles = StyleSheet.create({
     container: {
@@ -226,54 +331,16 @@ class QuizSubjectList extends React.PureComponent {
     return item.subjectID || index;
   };
 
-  _renderItem = ({item, index}) => {
+  _renderItem = ({item: subject, index}) => {
     const { styles } = QuizSubjectList;
-    const { quiz: _quiz } = this.props;
-
-    const quiz = CustomQuiz.wrap(_quiz);
-    const isLast = (index + 1) == quiz.subjects.length;
-
-    const TITLE = (
-      <View style={styles.titleContainer}>
-        <NumberIndicator
-          value={index + 1}
-          initFontSize={14}
-          size={20}  
-        />
-        <Text 
-          style={[FONT_STYLES.heading7, styles.itemTitle]}
-          numberOfLines={1}
-        >
-          {item.subjectname || 'subject name n/a'}
-        </Text>
-      </View>
-    );
-
-    const DETAILS = (
-      <View style={styles.detailsContainer}>
-        <Text style={[FONT_STYLES.subtitle1, styles.moduleName]}>
-          <Text style={styles.indicator}>
-            {'Module: '}
-          </Text>
-          <Text>
-            {item.modulename || 'module name n/a'}
-          </Text>
-        </Text>
-        <View style={styles.itemCountContainer}>
-          <Text style={styles.itemCount}>
-            {`${item.allocatedItems || 0} items`}
-          </Text>
-        </View>
-      </View>
-    );
+    const { onPressItem: onPress } = this.props;
 
     return(
       <Fragment>
         {(index != 0) && <Divider style={styles.divider}/>}
-        <View style={styles.itemContainer}>
-          {TITLE}
-          {DETAILS}
-        </View>
+        <QuizSubjectItem 
+          {...{subject, index, onPress}}
+        />
       </Fragment>
     );
   };
@@ -643,7 +710,7 @@ export class ViewCustomQuizModal extends React.Component {
   };
 
   //------ public functions ------
-  openModal = async ({quiz, results, onPressStart, onPressResultItem}) => {
+  openModal = async ({quiz, results, onPressStart, onPressResultItem, onPressSubjectItem}) => {
     //assign onpress callback to footer button
     this._handleOnPressStart = () => {
       onPressStart && onPressStart();
@@ -652,6 +719,12 @@ export class ViewCustomQuizModal extends React.Component {
     //assign onpress callback to
     this._handleOnPressResultItem = ({index, result}) => {
       onPressResultItem && onPressResultItem({index, result});
+    };
+
+    this._handleOnPressSubjectItem = async ({index, subject}) => {
+      const modal = this.modal.getModalRef();
+      await modal.hideModal();
+      onPressSubjectItem && onPressSubjectItem({index, subject});
     };
 
     await setStateAsync(this, {
@@ -703,7 +776,10 @@ export class ViewCustomQuizModal extends React.Component {
             iconName={'eye'}
             iconType={'feather'}
           />
-          <QuizSubjectList {...{quiz}}/>
+          <QuizSubjectList 
+            onPressItem={this._handleOnPressSubjectItem}
+            {...{quiz}}
+          />
           
           <StickyCollapseHeader
             title={'Results History'}
