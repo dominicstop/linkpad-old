@@ -323,18 +323,28 @@ class CustomQuizExamScreen extends React.Component {
     const { navigation } = this.props;
 
     //get data from previous screen: ExamScreen
-    const quiz = navigation.getParam('quiz' , null);
-    const { questions = [] } = quiz;
+    const quiz = CustomQuiz.wrap(
+      navigation.getParam('quiz' , null)
+    );
 
+    
     InteractionManager.runAfterInteractions(async () => {
+      const { questions } = quiz;
+
       //load base64 images from fs
       const { base64Images } = await CustomQuizStore.getImages(quiz);
       this.base64Images = base64Images;
 
       //set header title total
       References && References.HeaderTitle.setTotal(questions.length);
+
+      const questionID = (() => {
+        const q = questions[0];
+        return `${q.indexID_module}-${q.indexID_subject}-${q.indexID_question}`;
+      })();
+
       //start recording the first item
-      this.recordDuration(0);
+      this.recordDuration(0, questionID);
 
       //assign callbacks to header buttons
       References.CancelButton.onPress = this._handleOnPressHeaderCancel;
@@ -381,6 +391,10 @@ class CustomQuizExamScreen extends React.Component {
       questionID,
       timestamp: Date.now(),
     };
+
+    console.log(`index: ${index}`);
+    console.log(`questionID: ${questionID}`);
+    console.log('\n\n');
 
     if(this.prevSnap){
       const prevSnap = this.prevSnap;
@@ -473,7 +487,8 @@ class CustomQuizExamScreen extends React.Component {
 
     //record duration of last item
     const index = this._carousel.currentIndex;
-    this.recordDuration(index);
+    const { questionID } = this.indexIDMap[index];
+    this.recordDuration(index, questionID);
 
     //get data from previous screen: ExamScreen
     const quiz = navigation.getParam('quiz' , null);

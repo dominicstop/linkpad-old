@@ -1089,10 +1089,11 @@ export class CustomQuizList extends React.Component {
 
     //wrap custom quiz to prevent missing properties
     const custom_quiz = CustomQuiz.wrap(props.quiz);
-    //extract questions from custom quiz
-    const questions = custom_quiz.questions || [];
+    const { questions } = custom_quiz;
+    const reversed = questions.reverse(); 
+
     //assign questions as property
-    this.questions = [...questions];
+    this.questions = [...reversed];
 
     this.state = {
       // the current questions to display

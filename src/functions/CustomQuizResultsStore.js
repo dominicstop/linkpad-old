@@ -4,6 +4,7 @@ import store from 'react-native-simple-store';
 
 import { shuffleArray, getTimestamp, replacePropertiesWithNull } from './Utils';
 import { QuizAnswer, QuizQuestion } from '../models/Quiz';
+import { QuestionItem } from '../models/ModuleModels';
 
 let _quizResults = [];
 
@@ -91,30 +92,33 @@ export class CustomQuizResults {
     );
   };
 
-  /** maps the answers and durations to the corresponding question  */
-  static generateQAList({questions, answers, durations}){
-    let items = {};
-    durations.forEach(item => {
-      if(items[item.index]){
-        //append to index
-        const {totalTime, viewCount} = items[item.index];
-        //accumulate values 
-        items[item.index] = {
-          totalTime: item.duration + totalTime,
-          viewCount: viewCount + 1,
-        };
+  static processDurations({questions: _questions, durations = []}){
+    const questions = QuestionItem.wrapArray(_questions);
 
-      } else {
-        //initialize the counters
-        items[item.index] = {
-          totalTime: item.duration || 0,
-          viewCount: 1,
-        };
+    return durations = questions.map(question => {
+      const { questionID } = question;
+      //get all the durations that match this question
+      const matchDurations = durations.filter(
+        ({questionID: itemID}) => (itemID === questionID)
+      );
+
+      //add all the durations together
+      const totalDuration = matchDurations.reduce(
+        (acc, {duration}) => (acc + (duration || 0)), 0
+      );
+
+      return {
+        questionID: question.questionID,
+        totalTime : totalDuration,
+        viewCount : matchDurations.length,
       };
     });
+  };
 
-    //remove question from answer
-    const new_answers = answers.map((answer) => {
+  /** maps the answers and durations to the corresponding question  */
+  static generateQAList({questions, answers: _answers, durations}){
+    //remove question property from answer
+    const answers = _answers.map((answer) => {
       //extract questions
       const { question, ...otherProperties } = answer;
       //return answer without questions
@@ -125,22 +129,30 @@ export class CustomQuizResults {
       //used for checking if question matches answers
       const questionID = `${question.indexID_module}-${question.indexID_subject}-${question.indexID_question}`;
       
-      //find matching answer, otherwise returns undefined
-      const matchedAnswer = new_answers.find((answer) => questionID == answer.answerID);
+      //find matching items, otherwise returns undefined
+      const matchedAnswer    = answers  .find((answer  ) => (questionID === answer  .answerID  ));
+      const matchedDurations = durations.find((duration) => (questionID === duration.questionID));
+      
       //check if there is match
-      const hasMatchedAnswer = (matchedAnswer != undefined);
+      const hasMatchedAnswer   = (matchedAnswer    != undefined);
+      const hasMatchedDuration = (matchedDurations != undefined);
+
+      console.log(`hasMatchedDuration: ${hasMatchedDuration}`);
+      console.log(matchedDurations);
+      console.log('\n\n');
+      
 
       return({
         answer: matchedAnswer, //contains: timestampAnswered, userAnswer etc.
         hasMatchedAnswer     , //used to check if there's a matching answer
         questionID           , //used as unique id in list
-        question             , //question dewtails
+        question             , //pass down question object
         //append computed durations
         durations: {
-          data: durations, //save the raw data
-          hasDuration: items[index] != undefined,
-          ...(items[index] || {totalTime: null, viewCount: null}),
-        }
+          hasDuration: hasMatchedDuration,
+          totalTime  : matchedDurations.totalTime,
+          viewCount  : matchedDurations.viewCount,
+        },
       });
     });
   };
@@ -161,12 +173,17 @@ export class CustomQuizResults {
     return({correct, incorrect, unaswered, total});
   };
 
-  static createCustomQuizResult({quiz: _quiz, timeStats, startTime, questions, answers, durations}){
+  static createCustomQuizResult({quiz: _quiz, timeStats, startTime, questions, answers, durations: _durations}){
     const { indexID_quiz } = CustomQuizResultItem.wrap(_quiz);
     const currentTime = Date.now();
 
-    const QAList  = CustomQuizResults.generateQAList({questions, answers, durations});
-    const results = CustomQuizResults.generateResultFromQAList(QAList);
+
+    const durations = CustomQuizResults.processDurations({questions, durations: _durations});
+    const QAList    = CustomQuizResults.generateQAList({questions, answers, durations});
+    const results   = CustomQuizResults.generateResultFromQAList(QAList);
+
+    Clipboard.setString(JSON.stringify({_quiz, _durations, durations, QAList, results}));
+
 
     return CustomQuizResultItem.wrap({
       //pass down other info
