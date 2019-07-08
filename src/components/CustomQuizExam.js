@@ -433,14 +433,6 @@ class QuestionImage extends React.PureComponent {
 
   render(){
     const { loading, } = this.state;
-
-    /**
-    console.log('loading: ' + loading);
-    console.log('base64Image: ' + (this.state.base64Image || '').slice(0, 30));
-    console.log('showImage: ' + this.state.showImage);
-    console.log('loadImage: ' + this.state.loadImage);
-    console.log('\n');
-    */
     
     switch (loading) {
       case LOAD_STATE.LOADING: return this._renderLoading();

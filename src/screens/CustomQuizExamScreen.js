@@ -1,8 +1,6 @@
 import React, { Fragment } from 'react';
-import { View, LayoutAnimation, ScrollView, ViewPropTypes, Text, TouchableOpacity, AsyncStorage, StyleSheet, Platform , Alert, TouchableNativeFeedback, Clipboard, ActivityIndicator, InteractionManager} from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Platform , Alert, ActivityIndicator, InteractionManager } from 'react-native';
 import PropTypes from 'prop-types';
-
-import { timeout, getTimestamp} from '../functions/Utils';
 
 import { ViewWithBlurredHeader } from '../components/Views';
 import { RippleBorderButton } from '../components/Buttons';
@@ -10,19 +8,24 @@ import { AndroidHeader, AndroidBackButton } from '../components/AndroidHeader';
 import { CustomQuizList } from '../components/CustomQuizExam';
 
 import { ViewImageScreen } from './ViewImageScreen';
-import { QuizExamDoneModal} from '../modals/QuizExamDoneModal';
 import { CustomQuizExamResultScreen } from './CustomQuizExamResultScreen';
+
+import { QuizExamDoneModal } from '../modals/QuizExamDoneModal';
 
 import Constants, { LOAD_STATE } from '../Constants'
 import { ROUTES, STYLES } from '../Constants';
-import { PURPLE, RED } from '../Colors';
+import { PURPLE } from '../Colors';
 
-import { createStackNavigator } from 'react-navigation';
-import * as Animatable from 'react-native-animatable';
-import { Icon } from 'react-native-elements';
-import {CustomQuiz, CustomQuizStore} from '../functions/CustomQuizStore';
 import { QuizQuestion } from '../models/Quiz';
+
+import { timeout, getTimestamp} from '../functions/Utils';
 import { CustomQuizResults } from '../functions/CustomQuizResultsStore';
+import { CustomQuiz, CustomQuizStore } from '../functions/CustomQuizStore';
+
+import * as Animatable from 'react-native-animatable';
+import { createStackNavigator } from 'react-navigation';
+import { Icon } from 'react-native-elements';
+
 
 //custom header left component
 class CancelButton extends React.PureComponent {
@@ -327,7 +330,6 @@ class CustomQuizExamScreen extends React.Component {
       navigation.getParam('quiz' , null)
     );
 
-    
     InteractionManager.runAfterInteractions(async () => {
       const { questions } = quiz;
 
@@ -338,13 +340,8 @@ class CustomQuizExamScreen extends React.Component {
       //set header title total
       References && References.HeaderTitle.setTotal(questions.length);
 
-      const questionID = (() => {
-        const q = questions[0];
-        return `${q.indexID_module}-${q.indexID_subject}-${q.indexID_question}`;
-      })();
-
       //start recording the first item
-      this.recordDuration(0, questionID);
+      this.recordDuration(0, questions[0].questionID);
 
       //assign callbacks to header buttons
       References.CancelButton.onPress = this._handleOnPressHeaderCancel;
@@ -391,10 +388,6 @@ class CustomQuizExamScreen extends React.Component {
       questionID,
       timestamp: Date.now(),
     };
-
-    console.log(`index: ${index}`);
-    console.log(`questionID: ${questionID}`);
-    console.log('\n\n');
 
     if(this.prevSnap){
       const prevSnap = this.prevSnap;

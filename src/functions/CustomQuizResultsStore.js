@@ -135,12 +135,7 @@ export class CustomQuizResults {
       
       //check if there is match
       const hasMatchedAnswer   = (matchedAnswer    != undefined);
-      const hasMatchedDuration = (matchedDurations != undefined);
-
-      console.log(`hasMatchedDuration: ${hasMatchedDuration}`);
-      console.log(matchedDurations);
-      console.log('\n\n');
-      
+      const hasMatchedDuration = (matchedDurations != undefined);      
 
       return({
         answer: matchedAnswer, //contains: timestampAnswered, userAnswer etc.
@@ -177,13 +172,9 @@ export class CustomQuizResults {
     const { indexID_quiz } = CustomQuizResultItem.wrap(_quiz);
     const currentTime = Date.now();
 
-
     const durations = CustomQuizResults.processDurations({questions, durations: _durations});
     const QAList    = CustomQuizResults.generateQAList({questions, answers, durations});
     const results   = CustomQuizResults.generateResultFromQAList(QAList);
-
-    Clipboard.setString(JSON.stringify({_quiz, _durations, durations, QAList, results}));
-
 
     return CustomQuizResultItem.wrap({
       //pass down other info
