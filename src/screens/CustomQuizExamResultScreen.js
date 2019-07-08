@@ -1507,6 +1507,7 @@ export class CustomQuizExamResultScreen extends React.Component {
           {...quizResult.timeStats}  
         />
         <ScoreProgressCard
+          {...{navigation}}
           results={quizResults}
         />
         <AnswersListCard 

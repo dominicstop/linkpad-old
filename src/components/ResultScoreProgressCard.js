@@ -2042,7 +2042,7 @@ class WrongTab extends React.PureComponent {
   };
 };
 
-export const ScoreProgressCardNavigator = createMaterialTopTabNavigator({
+const ScoreProgressCardNavigator = createMaterialTopTabNavigator({
     [TAB_ROUTES.SUMMARY]: SummaryTab,
     [TAB_ROUTES.CORRECT]: CorrectTab,
     [TAB_ROUTES.WRONG  ]: WrongTab  ,
@@ -2262,6 +2262,8 @@ class ScoreProgressHeader extends React.PureComponent {
 };
 
 export class ScoreProgressCard extends React.PureComponent {
+  static router = ScoreProgressCardNavigator.router;
+
   static propTypes = {
     results: PropTypes.array,
   };
