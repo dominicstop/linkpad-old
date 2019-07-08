@@ -2,8 +2,7 @@ import React, { Fragment } from 'react';
 import { View, LayoutAnimation, ScrollView, ViewPropTypes, Text, TouchableOpacity, AsyncStorage, StyleSheet, Platform , Alert, TouchableNativeFeedback, Clipboard, ActivityIndicator, InteractionManager} from 'react-native';
 import PropTypes from 'prop-types';
 
-import { plural , timeout, getTimestamp} from '../functions/Utils';
-import { SubjectItem } from '../functions/ModuleStore';
+import { timeout, getTimestamp} from '../functions/Utils';
 
 import { ViewWithBlurredHeader } from '../components/Views';
 import { RippleBorderButton } from '../components/Buttons';
@@ -22,7 +21,6 @@ import { createStackNavigator } from 'react-navigation';
 import * as Animatable from 'react-native-animatable';
 import { Icon } from 'react-native-elements';
 import {CustomQuiz, CustomQuizStore} from '../functions/CustomQuizStore';
-import { CustomQuizExamResultQAScreen } from './CustomQuizExamResultQAScreen';
 import { QuizQuestion } from '../models/Quiz';
 import { CustomQuizResults } from '../functions/CustomQuizResultsStore';
 
@@ -561,8 +559,6 @@ class CustomQuizExamScreen extends React.Component {
 const CustomQuizExamStack = createStackNavigator({
     [ROUTES.CustomQuizExamRoute        ]: CustomQuizExamScreen,
     [ROUTES.CustomQuizViewImageRoute   ]: ViewImageScreen, 
-    [ROUTES.CustomQuizExamResultRoute  ]: CustomQuizExamResultScreen,
-    [ROUTES.CustomQuizExamResultQARoute]: CustomQuizExamResultQAScreen 
   }, {
     headerMode: 'float',
     headerTransitionPreset: 'uikit',
@@ -577,6 +573,10 @@ const CustomQuizExamStack = createStackNavigator({
 //container for the stacknav: CustomQuizExamStack
 export class CustomQuizExamStackContainer extends React.PureComponent {
   static router = CustomQuizExamStack.router;
+
+  static navigationOptions = {
+    header: null,
+  };
 
   static styles = StyleSheet.create({
     rootContainer: {

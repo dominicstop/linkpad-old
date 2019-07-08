@@ -246,6 +246,10 @@ export const PracticeExamStack = createStackNavigator({
 export class PracticeExamStackContainer extends React.Component {
   static router = PracticeExamStack.router;
 
+  static navigationOptions = {
+    header: null,
+  };
+
   constructor(props){
     super(props);
 

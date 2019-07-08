@@ -1,5 +1,5 @@
 import React, { Fragment } from 'react';
-import { View, ScrollView, Text, TouchableOpacity, StyleSheet, Platform , Alert, FlatList, ActivityIndicator, Dimensions } from 'react-native';
+import { View, ScrollView, Text, TouchableOpacity, StyleSheet, Platform , Alert, FlatList, ActivityIndicator, Dimensions, InteractionManager } from 'react-native';
 import PropTypes from 'prop-types';
 
 import _ from 'lodash';
@@ -1410,13 +1410,15 @@ export class CustomQuizExamResultScreen extends React.Component {
     };
   };
 
-  async componentDidMount(){
-    //save quiz result
-    await this.saveResults();
-    //load prev. quiz results
-    await this.loadQuizResults();
-    //hide loading indicator
-    await this.loadingPill.setVisibility(false);
+  componentDidMount(){
+    InteractionManager.runAfterInteractions(async () => {
+      //save quiz result
+      await this.saveResults();
+      //load prev. quiz results
+      await this.loadQuizResults();
+      //hide loading indicator
+      await this.loadingPill.setVisibility(false);
+    });
   };
 
   _handleOnPressViewAllQuestions = () => {

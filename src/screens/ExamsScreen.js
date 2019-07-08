@@ -475,7 +475,7 @@ export class ExamsScreen extends React.Component {
     const randomized = CustomQuiz.randomizeQuestionOrder(quiz);
     //navigate to custom quiz exam screen
     navigation && navigation.navigate(
-      ROUTES.CustomQuizExamScreen, 
+      ROUTES.CustomQuizExamRoute, 
       { quiz: randomized }
     );
   };

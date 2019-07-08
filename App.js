@@ -1,5 +1,5 @@
 import React from 'react';
-import { StatusBar, UIManager } from 'react-native';
+import { StatusBar, UIManager, Platform } from 'react-native';
 import ExpoConstants from 'expo-constants';
 
 import { createSwitchNavigator, createStackNavigator } from 'react-navigation';
@@ -17,6 +17,8 @@ import { TestScreen                   } from './src/screens/TestScreen';
 import AuthLoadingScreen from './src/screens/AuthLoadingScreen';
 import AuthScreen        from './src/screens/AuthScreen';
 import NavigationService from './src/NavigationService';
+import { CustomQuizExamResultScreen } from './src/screens/CustomQuizExamResultScreen';
+import { CustomQuizExamResultQAScreen } from './src/screens/CustomQuizExamResultQAScreen';
 
 const expoVersion = ExpoConstants.expoVersion;
 const version     = parseFloat(expoVersion.slice(0,4));
@@ -38,17 +40,37 @@ UIManager.setLayoutAnimationEnabledExperimental(true);
 
 //main stack for app screens
 const AppStack = createStackNavigator({
-    [ROUTES.HomeRoute           ]: DrawerStackContainer,
-    [ROUTES.PracticeExamRoute   ]: PracticeExamStackContainer,
-    [ROUTES.CustomQuizExamScreen]: CustomQuizExamStackContainer,
-    [ROUTES.TesterRoute         ]: TestScreen,
+    [ROUTES.HomeRoute                  ]: DrawerStackContainer,
+    [ROUTES.PracticeExamRoute          ]: PracticeExamStackContainer,
+    [ROUTES.CustomQuizExamScreen       ]: CustomQuizExamStackContainer,
+    [ROUTES.CustomQuizExamResultRoute  ]: CustomQuizExamResultScreen,
+    [ROUTES.CustomQuizExamResultQARoute]: CustomQuizExamResultQAScreen,
+    [ROUTES.TesterRoute                ]: TestScreen,
   },{
-    headerMode: 'hidden',
     initialRouteName: ROUTES.HomeRoute,
     navigationOptions: {
       gesturesEnabled: false,
     },
-    ...Constants.STACKNAV_PROPS
+    ...Constants.STACKNAV_PROPS,
+    ...Platform.select({
+      ios: {
+        navigationOptions: Constants.HEADER_PROPS, 
+        headerMode: 'float',
+        headerTransitionPreset: 'uikit',
+        headerTransparent: true,
+      },
+      android: {
+        //overriden in tabnav
+        navigationOptions: {
+          headerTransparent: false,
+          headerTintColor: 'white',
+          headerTitleStyle: {
+            fontWeight: 'bold',
+            color: 'white'
+          },
+        },
+      }
+    })
   }
 );
 

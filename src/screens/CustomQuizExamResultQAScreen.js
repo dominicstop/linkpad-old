@@ -1473,8 +1473,9 @@ class ResultItem extends React.PureComponent {
   };
 };
 
-export class CustomQuizExamResultQAScreen extends React.PureComponent {
+export class CustomQuizExamResultQAScreen extends React.PureComponent {  
   static navigationOptions = {
+    headerMode: 'float',
     title: 'Answers',
     headerTitle,
     //custom android header

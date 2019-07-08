@@ -121,6 +121,10 @@ const DrawerStack = createDrawerNavigator({
 export class DrawerStackContainer extends React.Component {
   static router = DrawerStack.router;
 
+  static navigationOptions = {
+    header: null,
+  };
+
   //used in boardexamscreen
   _renderModal(){
     return(
