@@ -258,6 +258,14 @@ export function countOccurences(item = '', items = []){
   return items.filter(i => i === item).length;
 };
 
+//returns undefined if property does not exist
+export function getProperty(obj, key) {
+  return key.split(".").reduce((o, x) => 
+    ((typeof o == "undefined" || o === null)? o : o[x]), obj
+  );
+};
+
+
 function lerp(a, b, n) {
   return (1 - n) * a + n * b;
 };

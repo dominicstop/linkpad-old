@@ -50,7 +50,7 @@ export class TransitionAB extends React.PureComponent {
 
     this.layoutHeightA = -1;
     this.layoutHeightB = -1;
-    this.inital = showLastFirst;
+    this.initial = showLastFirst;
 
     this.state = {
       mountA: true,
@@ -58,13 +58,13 @@ export class TransitionAB extends React.PureComponent {
     };
   };
 
-  async transition(inital){
+  async transition(initial){
     const { handlePointerEvents, onTransition } = this.props;
 
-    if(this.inital != inital){
+    if(this.initial != initial){
       const config = {
         duration: 300,
-        toValue : this.inital? 0 : 100,
+        toValue : this.initial? 0 : 100,
         easing  : Easing.inOut(Easing.ease),
       };
 
@@ -76,19 +76,23 @@ export class TransitionAB extends React.PureComponent {
       //start animation
       const animation = timing(this.progress, config);
       animation.start();
-      this.inital = !this.inital;
+      this.initial = !this.initial;
 
       //call callback
-      onTransition && onTransition(this.inital);
+      onTransition && onTransition(this.initial);
 
       if(handlePointerEvents){
         await timeout(300);
         this.setState({
-          mountA: !inital,
-          mountB:  inital,
+          mountA: !initial,
+          mountB:  initial,
         });
       };
     };
+  };
+
+  toggle(){
+    this.transition(!this.initial);
   };
 
   async componentDidMount(){

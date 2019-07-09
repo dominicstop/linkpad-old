@@ -117,8 +117,8 @@ class HeaderTitle extends React.PureComponent {
   constructor(props){
     super(props);
     this.state = {
-      index: 1,
-      total: 1,
+      index: props.index || 1,
+      total: props.total || 1,
     };
   };
 
@@ -248,17 +248,27 @@ let References = {
 
 //header components
 const headerLeft  = <CancelButton ref={r => References.CancelButton = r}/>
-const headerTitle = <HeaderTitle  ref={r => References.HeaderTitle  = r}/>
 const headerRight = <DoneButton   ref={r => References.DoneButton   = r}/>
 
 class CustomQuizExamScreen extends React.Component {
   static navigationOptions = ({ navigation }) => {
-    const { state } = navigation;
+    const quiz = CustomQuiz.wrap(
+      navigation.getParam('quiz' , null)
+    );
+
+    const HEADER_TITLE = (
+      <HeaderTitle
+        total={quiz.questions.length}
+        ref={r => References.HeaderTitle  = r}
+      />
+    );
 
     return ({
       title: 'Custom Quiz',
-      headerTitle, headerRight, headerLeft,
+      headerTitle: HEADER_TITLE, 
       headerTitleStyle: STYLES.glow,
+      //pass down header buttons
+      headerRight, headerLeft,
       //custom android header
       ...Platform.select({
         android: { header: props => 
@@ -281,7 +291,6 @@ class CustomQuizExamScreen extends React.Component {
       justifyContent: 'center',
     },
   });
-  
   
   static mapQuestionIDtoIndex(questions){
     const questionItems = QuizQuestion.wrapArray(questions);

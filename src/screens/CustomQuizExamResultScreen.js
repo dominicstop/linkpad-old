@@ -17,7 +17,7 @@ import { CustomHeader } from '../components/Header' ;
 import { PlatformTouchableIconButton } from '../components/Buttons';
 import { ScoreProgressCard } from '../components/ResultScoreProgressCard';
 
-import { GREY, PURPLE, RED, GREEN} from '../Colors';
+import { GREY, PURPLE, RED, GREEN, BLUE} from '../Colors';
 import { STYLES, ROUTES, HEADER_HEIGHT, LOAD_STATE} from '../Constants';
 
 import { QuestionItem } from '../models/ModuleModels';
@@ -27,7 +27,9 @@ import { plural, isEmpty, formatPercent, setStateAsync} from '../functions/Utils
 import { CustomQuizResultsStore,  CustomQuizResultItem, CustomQuizResults} from '../functions/CustomQuizResultsStore';
 
 import Animated, { Easing } from 'react-native-reanimated';
-import { LoadingPill } from '../components/StyledComponents';
+import { LoadingPill, PlatformButton, NumberIndicator, DetailColumn, DetailRow } from '../components/StyledComponents';
+import { TransitionAB } from '../components/Transitioner';
+import { QuizAnswer } from '../models/Quiz';
 const { set, cond, block, Value, timing, interpolate, and, or, onChange, eq, call, Clock, clockRunning, startClock, stopClock, debug, divide, multiply } = Animated;
 
 //declare animations
@@ -39,12 +41,6 @@ Animatable.initializeRegistryWithDefinitions({
   },
 });
 
-const headerTitle = (props) => <CustomHeader 
-  name={'info'}
-  type={'simple-line-icon'}
-  size={22}
-  {...props}  
-/>
 
 class CardWithHeader extends React.PureComponent {
   static propTypes = {
@@ -196,21 +192,21 @@ class ResultItem extends React.PureComponent {
     switch (kind) {
       case MODE.CORRECT: return {
         label: 'Correct',
-        color: '#1B5E20',
+        color: GREEN.A700,
         //icon props
         name: 'check-circle', 
         type: 'font-awesome', 
       };
       case MODE.INCORRECT: return {
         label: 'Wrong',
-        color: RED[900],
+        color: RED.A700,
         //icon props
         name: 'times-circle', 
         type: 'font-awesome', 
       };
       case MODE.UNANSWERED: return {
         label: 'Skipped',
-        color: GREY[900],
+        color: GREY[700],
         //icon props
         name: 'question-circle', 
         type: 'font-awesome', 
@@ -659,40 +655,7 @@ class StatsCard extends React.PureComponent {
       fontSize: 17,
       fontWeight: '200'
     },
-    detailTitle: Platform.select({
-      ios: {
-        fontSize: 17,
-        fontWeight: '600',
-        color: PURPLE[1000]
-      },
-      android: {
-        fontSize: 17,
-        fontWeight: '900'
-      }
-    }),
-    detailSubtitle: Platform.select({
-      ios: {
-        fontSize: 21,
-        fontWeight: '200'
-      },
-      android: {
-        fontSize: 21,
-        fontWeight: '100',
-        color: '#424242'
-      },
-    }),
-    //details comp styles
-    detailsCompContainer: {
-    },
-    detailsCompRowContainer: {
-      flexDirection: 'row', 
-      marginTop: 10,
-    },
   });
-
-  addSuffix(value, suffix, seperator = ''){
-    return(value == 0? '' : `${value} ${plural(suffix, value)}` + seperator);
-  };
 
   _renderDetailsTime(){
     const { styles } = StatsCard;
@@ -701,27 +664,32 @@ class StatsCard extends React.PureComponent {
     const diffTime = endTime - startTime;
     const duration = moment.duration(diffTime, 'milliseconds');
 
-    const hrs = this.addSuffix(duration.hours  (), 'Hr' , ' ');
-    const min = this.addSuffix(duration.minutes(), 'Min', ' ');
-    const sec = this.addSuffix(duration.seconds(), 'Sec'     );
-
     const timeStarted = moment(startTime).format('LT');
     const timeEnded   = moment(endTime  ).format('LT');
-    const durationStr = (hrs + min + sec);
-    
+    const durationStr = moment.utc(diffTime).format("HH:mm:ss");
+
     return(
-      <Fragment>
-        <View style={{flexDirection: 'row'}}>
-          <View style={{flex: 1}}>
-            <Text numberOfLines={1} style={styles.detailTitle   }>{'Started: '}</Text>
-            <Text numberOfLines={1} style={styles.detailSubtitle}>{timeStarted}</Text>
-          </View>
-          <View style={{flex: 1}}>
-            <Text numberOfLines={1} style={styles.detailTitle   }>{'Duration: '}</Text>
-            <Text numberOfLines={1} style={styles.detailSubtitle}>{durationStr}</Text>
-          </View>
-        </View>
-      </Fragment>
+      <DetailRow>
+        <DetailColumn
+          title={'Started: '}
+          subtitle={timeStarted}
+          help={true}
+          helpTitle={'Started'}
+          helpSubtitle={'Tells you what time the quiz began.'}
+          backgroundColor={PURPLE.A400}
+          disableGlow={true}
+        />
+        <DetailColumn
+          title={'Duration: '}
+          subtitle={durationStr}
+          help={true}
+          helpTitle={'Elapsed'}
+          helpSubtitle={'Tells you how much time has elapsed.'}
+          backgroundColor={PURPLE.A400}
+          disableGlow={true}
+        >
+        </DetailColumn>
+      </DetailRow>
     );
   };
 
@@ -734,31 +702,53 @@ class StatsCard extends React.PureComponent {
     const minText = min? `${min.toFixed(1)} Seconds` : 'N/A';
     const maxText = max? `${max.toFixed(1)} Seconds` : 'N/A';
     const avgText = avg? `${avg.toFixed(1)} Seconds` : 'N/A';
+
+    const marginTop = 12;
     
     return(
       <View style={styles.detailsCompContainer}>
         <Text style={styles.title}>Time Per Answer</Text>
         <Text style={styles.subtitle}>Computes the amount of time it took to answer each question.</Text>
-        <View style={styles.detailsCompRowContainer}>
-          <View style={{flex: 1}}>
-            <Text numberOfLines={1} style={styles.detailTitle   }>{'Shortest:'}</Text>
-            <Text numberOfLines={1} style={styles.detailSubtitle}>{minText}</Text>
-          </View>
-          <View style={{flex: 1}}>
-            <Text numberOfLines={1} style={styles.detailTitle   }>{'Longest:'}</Text>
-            <Text numberOfLines={1} style={styles.detailSubtitle}>{maxText}</Text>
-          </View>
-        </View>
-        <View style={styles.detailsCompRowContainer}>
-          <View style={{flex: 1}}>
-            <Text numberOfLines={1} style={styles.detailTitle   }>{'Average:'}</Text>
-            <Text numberOfLines={1} style={styles.detailSubtitle}>{avgText}</Text>
-          </View>
-          <View style={{flex: 1}}>
-            <Text numberOfLines={1} style={styles.detailTitle   }>{'Answered:'}</Text>
-            <Text numberOfLines={1} style={styles.detailSubtitle}>{timesAnswered}</Text>
-          </View>
-        </View>
+        <DetailRow {...{marginTop}}>
+          <DetailColumn
+            title={'Shortest: '}
+            subtitle={minText}
+            help={true}
+            helpTitle={'Shortest Time'}
+            helpSubtitle={'Tells you what time the quiz began.'}
+            backgroundColor={BLUE.A400}
+            disableGlow={true}
+          />
+          <DetailColumn 
+            title={'Longest: '}
+            subtitle={maxText}
+            help={true}
+            helpTitle={'Longest Time'}
+            helpSubtitle={'Tells you what was the max. amount of time you spent on a question.'}
+            backgroundColor={BLUE.A400}
+            disableGlow={true}
+          />
+        </DetailRow>
+        <DetailRow {...{marginTop}}>
+          <DetailColumn
+            title={'Average: '}
+            subtitle={avgText}
+            help={true}
+            helpTitle={'Average Time'}
+            helpSubtitle={'Tells you the average amount of time you spent on a single question..'}
+            backgroundColor={BLUE.A400}
+            disableGlow={true}
+          />
+          <DetailColumn 
+            title={'Answered: '}
+            subtitle={timesAnswered}
+            help={true}
+            helpTitle={'Times Answered'}
+            helpSubtitle={'Tells you how many times you selected a choice across all of the questions in this quiz.'}
+            backgroundColor={BLUE.A400}
+            disableGlow={true}
+          />
+        </DetailRow>
       </View>
     );
   };
@@ -796,372 +786,234 @@ class Question extends React.PureComponent {
     divider: {
       margin: 10,
     },
-    container: {
-      flexDirection: 'row',
-      alignItems: 'flex-start',
-    },
-    //number indicator styles
-    numberIndicatorContainer: {
-      marginTop: 10,
-      width: 25,
-      height: 25,
-      borderRadius: 25/2,
-      alignItems: 'center',
-      justifyContent: 'center',
-      backgroundColor: PURPLE[400],
-    },
-    numberIndicatorText: {
-      fontSize: 15,
-      fontWeight: '500',
-      color: 'white',
-    },
-    //question styles
-    questionContainer: {
-      flex: 1,
-      marginLeft: 10,
-    },
-    questionText: {
-      fontSize: 17,
-      fontWeight: '500',
-      marginBottom: 5,
-      color: PURPLE[1000]
-    },
-    //answer styles
-    detailRow: {
-      flex: 1,
+    //#region - header styles
+    headerContainer: {
       flexDirection: 'row',
       alignItems: 'center',
       marginBottom: 2,
     },
-    detailIcon: {
-      width: 18,
-      marginRight: 3,
+    headerTextContainer: {
+      flex: 1,
+      marginLeft: 8,
     },
-    detailText: {
-      fontSize: 17,
-      fontWeight: '200',
-      textAlignVertical: 'center',
+    title: {
+      fontSize: 16,
+      fontWeight: '700',
+      color: PURPLE[900]
     },
-    detailLabel: {
-      fontSize: 17,
-      fontWeight: '500',
-      color: GREY[900],
-      minWidth: 100,
-    },
-    detailTextCount: {
-      fontSize: 15,
-      fontWeight: '100',
-      marginRight: 5,
-      color: GREY[700]
-    },
-    //time styles
-    timeContainer: {
+    subtitleContainer: {
       flexDirection: 'row',
-      marginLeft: 5,
+      alignItems: 'center',
+      marginTop: 2,
+    },
+    subtitleTime: {
+      flex: 1,
+      fontSize: 15,
+      fontWeight: '300',
+      color: GREY[600],
+      marginLeft: 3,
+    },
+    subtitleView: {
+      fontSize: 15,
+      fontWeight: '300',
+      color: GREY[600],
+      marginLeft: 8,
+      marginRight: 5,
+    },
+    //#endregion
+    //#region - answer styles
+    answerContainer: {
+      flexDirection: 'row',
       alignItems: 'center',
     },
-    timeText: {
-      fontSize: 15,
-      fontWeight: '100',
-      marginRight: 5,
-      color: GREY[700]
+    answerLabel: {
+      marginLeft: 5,
+      fontSize: 16,
+      fontWeight: '600',
     },
-    //
-    expandedContainer: {
-      width: '100%',
-      position: 'absolute',
-      overflow: 'hidden',
-      backgroundColor: 'white',
+    answer: {
+      flex: 1,
+      textAlign: 'right',
     },
+    //#endregion
   });
 
   constructor(props){
     super(props);
-
-    //animation values
-    this.heightExpanded  = new Value(-1);
-    this.heightCollapsed = new Value(0);
-    this.progress        = new Value(0);
-
-    this.height = interpolate(this.progress, {
-      inputRange : [0, 100],
-      outputRange: [0, this.heightExpanded],
-      extrapolate: 'clamp',
-    });
-    this.opacity = interpolate(this.progress, {
-      inputRange : [0, 100],
-      outputRange: [0, 1],
-      extrapolate: 'clamp',
-    });
-
-    this.isExpanded = false;
-    this.isHeightMeasured = false;
-    this.state = {
-      mountExpanded: false,
-    };
   };
 
-  expand = async (expand) => {
-    if(!this.isHeightMeasured){
-      //mount expanded
-      await setStateAsync(this, {mountExpanded: true});
-
-      //get current height of collapsed
-      const heightCollapsed = await new Promise(resolve => {
-        this.collapsedQuestionContainer.measure((x, y, w, h) => resolve(h));
-      });
-      
-      //get current height of expanded
-      const heightExpanded = await new Promise(resolve => {
-        this.expandedContainer.measure((x, y, w, h) => resolve(h));
-      });
-
-      console.log('heightCollapsed: ' + heightCollapsed);
-      console.log('heightExpanded: ' + heightExpanded);
-
-      //set height measured flag to true
-      this.isHeightMeasured = true;
-      //set animated height values
-      this.heightExpanded .setValue(heightExpanded - heightCollapsed);
-    };
-
-    const config = {
-      duration: 250,
-      toValue : expand? 100 : 0,
-      easing  : Easing.inOut(Easing.ease),
-    };
-
-    if(this.isExpanded != expand){
-      //start animation
-      const animation = timing(this.progress, config);
-      animation.start();
-      this.isExpanded = expand;
-    };
+  _handleOnPressQuestion = () => {
+    this.trans.toggle();
   };
 
-  _handleOnPressIndicator = () => {
+  _handleOnLongPressQuestion = () => {
     const { onPressNavigate, ...otherProps } = this.props;
     onPressNavigate && onPressNavigate({...otherProps});
   };
 
-  _handleOnPressQuestion = async () => {
-    this.expand(!this.isExpanded);
-  };
-
-  _handleOnLongPressQuestion = async () => {
-    const { onPressNavigate, ...otherProps } = this.props;
-    onPressNavigate && onPressNavigate({...otherProps});
-  };
-
-  _renderNumberIndicator(){
+  _renderInactive(){
     const { styles } = Question;
-    const { index } = this.props;
+    const { index, question: _question, answer: _answer, durations, hasMatchedAnswer } = this.props;
 
-    return(
-      <TouchableOpacity 
-        style={styles.numberIndicatorContainer}
-        onPress={this._handleOnPressIndicator}
-      >
-        <Text style={styles.numberIndicatorText}>{index + 1}</Text>
-      </TouchableOpacity>
+    const answer   = QuizAnswer  .wrap(_answer  );
+    const question = QuestionItem.wrap(_question);
+
+    const { totalTime = 0, viewCount = 0 } = durations;
+    const { timestampAnswered: time } = answer;
+
+    const timeAnswered  = moment(time     ).format('LT');
+    const totalDuration = moment(totalTime).format('m [min], s [sec]');
+
+    const subtitle = (hasMatchedAnswer
+      ? `${timeAnswered} (${totalDuration})`
+      : 'No Answer/Skipped'
+    );
+
+    const color = (
+      (!answer.userAnswer)? GREY[700]  :
+      ( answer.isCorrect )? GREEN.A700 : RED.A700
+    );
+
+    return (
+      <View style={styles.headerContainer}>
+        <NumberIndicator
+          value={index + 1}
+          initFontSize={14}
+          size={21}
+          {...{color}}
+        />
+        <View style={styles.headerTextContainer}>
+          <Text numberOfLines={1} style={styles.title}>
+            {question.question || 'Question N/A'}
+          </Text>
+          <View style={styles.subtitleContainer}>
+            <Icon
+              name={'clock'}
+              type={'feather'}
+              size={14}
+              color={GREY[700]}
+            />
+            <Text numberOfLines={1} style={styles.subtitleTime}>
+              {subtitle}
+            </Text>
+            <Text numberOfLines={1} style={styles.subtitleView}>
+              {viewCount}
+            </Text>
+            <Icon
+              name={'eye'}
+              type={'feather'}
+              size={14}
+              color={GREY[600]}
+            />
+          </View>
+        </View>
+      </View>
     );
   };
 
-  _renderExapndedDurations(){
+  _renderActive(){
     const { styles } = Question;
-    const { durations } = this.props;
-    
-    const totalTime = moment(durations.totalTime || 0).format('mm:ss');
-    const viewCount = durations.viewCount || 0;
+    const { index, question: _question, answer: _answer, durations, hasMatchedAnswer } = this.props;
 
-    return(
-      <View style={styles.detailRow}>
-        <View style={{flex: 1, flexDirection: 'row'}}>
+    const answer   = QuizAnswer  .wrap(_answer  );
+    const question = QuestionItem.wrap(_question);
+
+    const { totalTime = 0, viewCount = 0 } = durations;
+    const { timestampAnswered: time } = answer;
+
+    const timeAnswered  = moment(time     ).format('LT');
+    const totalDuration = moment(totalTime).format('m [min], s [sec]');
+
+    const subtitle = (hasMatchedAnswer
+      ? `${timeAnswered} (${totalDuration})`
+      : 'No Answer/Skipped'
+    );
+
+    const color = (
+      (!answer.userAnswer)? GREY[700]  :
+      ( answer.isCorrect )? GREEN.A700 : RED.A700
+    );
+    
+    //check if answer is wrong or skipped
+    const isWrong = (!answer.userAnswer || answer.isCorrect);
+
+    const HEADER = (
+      <View style={styles.headerContainer}>
+        <NumberIndicator
+          value={index + 1}
+          initFontSize={14}
+          size={22}
+          {...{color}}
+        />
+        <View style={styles.headerTextContainer}>
+          <Text numberOfLines={2} style={styles.title}>
+            {question.question || 'Question N/A'}
+          </Text>
+          <View style={[styles.subtitleContainer]}>
+            <Icon
+              name={'clock'}
+              type={'feather'}
+              size={14}
+              color={GREY[700]}
+            />
+            <Text numberOfLines={1} style={styles.subtitleTime}>
+              {subtitle}
+            </Text>
+            <Text numberOfLines={1} style={styles.subtitleView}>
+              {`${viewCount} views`}
+            </Text>
+            <Icon
+              name={'eye'}
+              type={'feather'}
+              size={14}
+              color={GREY[600]}
+            />
+          </View>
+        </View>
+      </View>
+    );
+    
+    const minWidth = 82;
+    const ANSWERS = (
+      <Fragment>
+        {!isWrong && <View style={styles.answerContainer}>
           <Icon
-            containerStyle={styles.detailIcon}
-            name={'clock'}
-            type={'feather'}
-            color={GREY[700]}
-            size={17}
+            iconStyle={{marginTop: 1}}
+            name={'md-close-circle'}
+            type={'ionicon'}
+            size={18}
+            color={RED.A400}
           />
-          <Text style={styles.detailText}>
-            <Text style={styles.detailLabel}>{'Duration: '}</Text>
-            {totalTime}
+          <Text style={[styles.answerLabel, {minWidth}]}>
+            {'Answered'}
+          </Text>
+          <Text style={styles.answer}>
+            {answer.userAnswer || 'No Answer'}
+          </Text>
+        </View>}
+        <View style={styles.answerContainer}>
+          <Icon
+            iconStyle={{marginTop: 1}}
+            name={'md-checkmark-circle'}
+            type={'ionicon'}
+            size={18}
+            color={GREEN.A400}
+          />
+          <Text style={[styles.answerLabel, {minWidth}]}>
+            {'Answer'}
+          </Text>
+          <Text style={styles.answer}>
+            {question.answer || 'Correct Answer N/A'}
           </Text>
         </View>
-        <View style={{flexDirection: 'row'}}>
-          <Text style={styles.detailTextCount}>{`Viewed: ${viewCount}`}</Text>
-          <Icon
-            name={'eye'}
-            type={'feather'}
-            color={GREY[700]}
-            size={17}
-          />
-        </View>
-      </View>
-    );
-  };
-
-  _renderExpandedAnswer(){
-    const { styles } = Question;
-    const { answer, hasMatchedAnswer, questionID, question, index } = this.props;
-    const questionItem = QuestionItem.wrap(question);
-
-    const isCorrect  = hasMatchedAnswer? answer.isCorrect  : false;
-    const answerText = hasMatchedAnswer? answer.userAnswer : 'No Answer';
-    
-    return (isCorrect?(
-      <View style={styles.detailRow}>
-        <Icon
-          containerStyle={styles.detailIcon}
-          size={17}
-          name={'check-circle'}
-          type={'font-awesome'}
-          color={'green'}
-        />
-        <Text numberOfLines={1} style={styles.detailText}>
-          {questionItem.answer || "No Data"}
-        </Text>
-      </View>
-    ):(
-      <View>
-        <View style={styles.detailRow}>
-          <Icon
-            containerStyle={styles.detailIcon}
-            size={17}
-            name={'circle-with-cross'}
-            type={'entypo'}
-            color={'red'}
-          />
-          <Text style={styles.detailText}>
-            <Text style={styles.detailLabel}>{'Answered: '}</Text>
-            {answerText}
-          </Text>
-        </View>
-        <View style={styles.detailRow}>
-          <Icon
-            containerStyle={styles.detailIcon}
-            size={17}
-            name={'check-circle'}
-            type={'font-awesome'}
-            color={'green'}
-          />
-          <Text style={styles.detailText}>
-            <Text style={styles.detailLabel}>{'Answer: '}</Text>
-            {questionItem.answer}
-          </Text>
-        </View>
-      </View>
-    ));
-  };
-
-  _renderExpanded(){
-    const { styles } = Question;
-    const { answer, hasMatchedAnswer, questionID, question, index } = this.props;
-    const { mountExpanded } = this.state;
-
-    const questionText = isEmpty(question.question)? 'No Question' : question.question; 
-    if(!mountExpanded) return null;
-
-    return(
-      <View ref={r => this.expandedContainer = r}>
-        <Text numberOfLines={3} style={styles.questionText}>{questionText}</Text>
-        {this._renderExapndedDurations()}
-        {this._renderExpandedAnswer()}
-      </View>
-    );
-  };
-
-  _renderCollpasedTime(){
-    const { styles } = Question;
-    const { answer, hasMatchedAnswer } = this.props;
-    if(!hasMatchedAnswer) return null;
-
-    const timeText = moment(answer.timestampAnswered).format('LTS');
-
-    return(
-      <View style={styles.timeContainer}>
-        <Text numberOfLines={1} style={styles.timeText}>
-          {timeText}
-        </Text>
-        <Icon
-          name={'clock'}
-          type={'feather'}
-          color={GREY[700]}
-          size={15}
-        />
-      </View>
-    );
-  };
-
-  _renderCollapsedAnswer(){
-    const { styles } = Question;
-    const { answer, hasMatchedAnswer, questionID, question, index } = this.props;
-
-    const isCorrect  = hasMatchedAnswer? answer.isCorrect  : false;
-    const answerText = hasMatchedAnswer? answer.userAnswer : 'No Answer';
-    
-    const iconProps = (isCorrect
-      ? { name: 'check-circle'     , type: 'font-awesome', color: 'green' }
-      : { name: 'circle-with-cross', type: 'entypo'      , color: 'red'   }
+      </Fragment>
     );
 
     return(
-      <View style={styles.detailRow}>
-        <Icon
-          containerStyle={styles.detailIcon}
-          size={17}
-          {...iconProps}
-        />
-        <Text numberOfLines={1} style={styles.detailText}>
-          {answerText}
-        </Text>
-      </View>
-    );
-  };
-
-  _renderCollapsed(){
-    const { styles } = Question;
-    const { answer, hasMatchedAnswer, questionID, question, index } = this.props;
-
-    const questionText = isEmpty(question.question)? 'No Question' : question.question; 
-
-    return(
-      <View ref={r => this.collapsedQuestionContainer = r}>
-        <Text numberOfLines={1} style={styles.questionText}>
-          {questionText}
-        </Text>
-        <View style={{flexDirection: 'row', alignItems: 'center'}}>
-          {this._renderCollapsedAnswer()}
-          {this._renderCollpasedTime  ()}
-        </View>
-      </View>
-    );
-  };
-
-  _renderQuestionDetails(){
-    const { styles } = Question;
-
-    const expandedContainerStyle = {
-      opacity: this.opacity,
-    };
-    const style = {
-      height: this.height,
-    };
-
-    return(
-      <TouchableOpacity 
-        style={styles.questionContainer}
-        onPress={this._handleOnPressQuestion}
-        onLongPress={this._handleOnLongPressQuestion}
-        activeOpacity={0.75}
-      >
-        {this._renderCollapsed()}
-        <Animated.View style={[styles.expandedContainer, expandedContainerStyle]}>
-          {this._renderExpanded()}
-        </Animated.View>
-        <Animated.View {...{style}}/>
-      </TouchableOpacity>
+      <Fragment>
+        {HEADER }
+        {ANSWERS}
+      </Fragment>
     );
   };
 
@@ -1172,10 +1024,18 @@ class Question extends React.PureComponent {
     return(
       <Fragment>
         {(index == 0) && <Divider style={styles.divider}/>}
-        <View style={styles.container}>
-          {this._renderNumberIndicator()}    
-          {this._renderQuestionDetails()}
-        </View>
+        <TouchableOpacity
+          onPress={this._handleOnPressQuestion}
+          onLongPress={this._handleOnLongPressQuestion}
+        >
+          <TransitionAB
+            ref={r => this.trans = r}
+            handlePointerEvents={false}
+          >
+            {this._renderInactive()}
+            {this._renderActive  ()}
+          </TransitionAB>
+        </TouchableOpacity>
         <Divider style={styles.divider}/>
       </Fragment>
     );
@@ -1209,20 +1069,12 @@ class AnswersListCard extends React.PureComponent {
       flex: 1,
       fontSize: 16,
       fontWeight: '200',
-    },
-    buttonWrapper: {
-      backgroundColor: PURPLE.A700,
-      marginTop: 12,
-      marginBottom: 5,
+      marginLeft: 8,
     },
     buttonContainer: {
-      padding: 12,
+      marginTop: 10,
+      marginBottom: 5,
     },
-    buttonText: {
-      color: 'white',
-      fontSize: 17,
-      fontWeight: '600',
-    }
   });
 
   constructor(props){
@@ -1271,21 +1123,21 @@ class AnswersListCard extends React.PureComponent {
             delay={2000}
           />
           <Text style={styles.headerSubtitle}>
-            {"You can long press on a question or tap on it's number to show that item in the"}
+            {"Tap on an item to expand/collapse or you can long press on a question to show that item in the"}
             <Text style={{fontWeight: '500'}}>{" View All Question "}</Text>
             {"list."}
           </Text>
         </View>
-        <PlatformTouchableIconButton
-          onPress={this._handleOnPressViewAllQuestions}
-          wrapperStyle={[styles.buttonWrapper, STYLES.lightShadow]}
-          containerStyle={styles.buttonContainer}
-          textStyle={styles.buttonText}
-          text={'View All Questions'}
-          iconName={'eye'}
-          iconColor={'white'}
+        <PlatformButton
+          title={'View All Questions'}
+          subtitle={"Show the full detailed list of Q&A's"}
+          iconDistance={12}
+          iconName={'list'}
           iconType={'feather'}
-          iconSize={23}
+          isBgGradient={true}
+          showChevron={true}
+          containerStyle={styles.buttonContainer}
+          onPress={this._handleOnPressViewAllQuestions}
         />
       </Fragment>
     );
@@ -1313,13 +1165,26 @@ class AnswersListCard extends React.PureComponent {
 export class CustomQuizExamResultScreen extends React.Component {
   static router = ScoreProgressCard.router;
 
-  static navigationOptions = {
-    title: 'Results',
-    headerTitle,
-    //custom android header
-    ...Platform.select({
-      android: { header: props => <AndroidHeader {...props}/> }
-    }),
+  static navigationOptions = ({navigation}) => {
+    const HEADER_TITLE = (props) => (
+      <CustomHeader 
+        name={'ios-information-circle'}
+        type={'ionicon'}
+        size={24}
+        {...props}  
+      />
+    );
+    
+    return({
+      title: 'Results',
+      headerTitle: HEADER_TITLE,
+      //custom android header
+      ...Platform.select({
+        android: { header: props => 
+          <AndroidHeader {...props}/> 
+        }
+      }),
+    });
   };
 
   static styles = StyleSheet.create({

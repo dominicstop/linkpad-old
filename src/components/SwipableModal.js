@@ -317,7 +317,7 @@ export class SwipableModal extends React.PureComponent {
     const { snapPoints, hitSlop } = this.props;
 
     const modalHeight = Screen.height - MODAL_DISTANCE_FROM_TOP;
-    const finalRadius = 22;
+    const finalRadius = ifIphoneX(30, 22);
 
     const panelStyle = {
       borderTopLeftRadius: this._deltaY.interpolate({

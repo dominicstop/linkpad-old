@@ -115,8 +115,8 @@ export class QuizAnswer {
       //remove all default values and replace w/ null
       ...replacePropertiesWithNull(QuizAnswer.structure),
       //create//append properties if not set yet or null
-      isCorrect: data.isCorrect || (data.userAnswer == data.question.answer),
-      answerID : data.answerID  || ((question) => `${question.indexID_module}-${question.indexID_subject}-${question.indexID_question}`)(data.question),
+      isCorrect: data.isCorrect || ((data.question)? data.userAnswer == data.question.answer : false ),
+      answerID : data.answerID  || ((data.question)? ((question) => `${question.indexID_module}-${question.indexID_subject}-${question.indexID_question}`)(data.question) : null),
       //combine with obj from param
       ...(data || {}),
     };
