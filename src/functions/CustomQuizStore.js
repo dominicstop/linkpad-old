@@ -52,48 +52,6 @@ export class CustomQuiz {
     };
   };
 
-  constructor(data = CustomQuiz.structure){
-    this.data = CustomQuiz.wrap(data);
-  };
-
-  /** set the timestamp of when this quiz was created */
-  setTimestampCreated(){
-    this.data.timestampCreated = getTimestamp();
-  };
-
-  //---- getters ----
-  /** get the quiz properties/data */
-  get quiz(){
-    return this.data;
-  };
-
-  /** Title of the custom quiz */
-  get title(){
-    return this.data.title;
-  };
-
-  /** Description of the custom quiz */
-  get description(){
-    return this.data.description;
-  };
-
-  /** Unique ID of the custom quiz */
-  get quizIndexID(){
-    return this.data.quizIndexID;
-  };
-
-  /** array of questions */
-  get questions(){
-    return this.data.questions;
-  };
-
-  /** time/date of when the quiz was created */
-  get createdTimestamp(){
-    return this.data.timestampCreated;
-  };
-};
-
-export class CreateCustomQuiz {
   static createQuiz({title = '', description = '', selected = [], itemsPerSubject = -1, maxItemsQuiz = -1, shouldDistributeEqually = false}){
     const selectedSubjs = SubjectItem.wrapArray(selected);
     
@@ -137,17 +95,15 @@ export class CreateCustomQuiz {
     const shuffled = shuffleArray(questions);
     const sliced   = shuffled.slice(0, maxItemsQuiz)
 
-    const customQuiz = new CustomQuiz({
-      questions   : sliced,
-      indexID_quiz: getTimestamp(),
-      subjects    : uniqueSubjects,
-      subjectIDs  : uniqueSubjectIDs,
+    return CustomQuiz.wrap({
+      questions       : sliced,
+      indexID_quiz    : Date.now(),
+      timestampCreated: Date.now(),
+      subjects        : uniqueSubjects,
+      subjectIDs      : uniqueSubjectIDs,
       //pass down items
       title, description, itemsPerSubject, maxItemsQuiz, shouldDistributeEqually
     });
-
-    customQuiz.setTimestampCreated();
-    return customQuiz;
   };
 };
 

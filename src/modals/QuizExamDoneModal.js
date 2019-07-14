@@ -22,7 +22,7 @@ import { Icon, Divider } from 'react-native-elements';
 import { QuizAnswer, QuizQuestion, QUIZ_LABELS } from '../models/Quiz';
 import { isIphoneX, getBottomSpace } from 'react-native-iphone-x-helper';
 
-import { BlurViewWrapper, StickyHeader, DetailRow, DetailColumn, ModalBottomTwoButton, ModalTitle, StickyHeaderCollapsable, ModalSection, ExpanderHeader, NumberIndicator, StickyCollapseHeader, StickyCollapsableScrollView, StyledSwipableModal } from '../components/StyledComponents';
+import { BlurViewWrapper, StickyHeader, DetailRow, DetailColumn, ModalBottomTwoButton, ModalTitle, StickyHeaderCollapsable, ModalSection, ExpanderHeader, NumberIndicator, StickyCollapseHeader, StickyCollapsableScrollView, StyledSwipableModal, Pill } from '../components/StyledComponents';
 
 import Animated, { Easing } from 'react-native-reanimated';
 import { ContentExpander } from '../components/Expander';
@@ -312,7 +312,7 @@ class QuizStats extends React.PureComponent {
             help={true}
             helpTitle={'Progress'}
             helpSubtitle={'Shows how many questions you have answered over the total questions in this quiz.'}
-            backgroundColor={PURPLE.A700}
+            backgroundColor={PURPLE.A400}
           />
           <DetailColumn
             title={'Questions: '}
@@ -320,7 +320,7 @@ class QuizStats extends React.PureComponent {
             help={true}
             helpTitle={'Remaining Questions'}
             helpSubtitle={'Shows how many questions are left for this quiz.'}
-            backgroundColor={PURPLE.A700}
+            backgroundColor={PURPLE.A400}
           />
         </DetailRow>
       </Fragment>
@@ -368,7 +368,7 @@ class QuizStats extends React.PureComponent {
             help={true}
             helpTitle={'Average Time'}
             helpSubtitle={'Tells you the average amount of time you spent on a single question..'}
-            backgroundColor={BLUE.A700}
+            backgroundColor={BLUE.A400}
           />
           <DetailColumn 
             title={'Answered: '}
@@ -376,7 +376,7 @@ class QuizStats extends React.PureComponent {
             help={true}
             helpTitle={'Times Answered'}
             helpSubtitle={'Tells you how many times you selected a choice across all of the questions in this quiz.'}
-            backgroundColor={BLUE.A700}
+            backgroundColor={BLUE.A400}
           />
         </DetailRow>
       </View>
@@ -605,8 +605,8 @@ class QuestionItem extends React.PureComponent {
         <NumberIndicator 
           value={index + 1}
           size={20}
-          initFontSize={15}
-          diffFontSize={1.5}
+          initFontSize={14}
+          diffFontSize={2}
           {...{color}}
         />
         <Text style={[styles.question, questionStyle]} numberOfLines={1}>
@@ -634,7 +634,7 @@ class QuestionItem extends React.PureComponent {
       }),
     };
 
-    const answerTime = moment(timestampAnswered).format('LTS');
+    const answerTime = moment(timestampAnswered).format('LT');
 
     return(
       <View style={styles.answerContainer}>
@@ -642,7 +642,12 @@ class QuestionItem extends React.PureComponent {
           <Text style={styles.answerLabel}>{'Answer: '}</Text>
           {isSkipped? 'Skipped' : userAnswer || 'N/A'}
         </Text>
-        <Text style={styles.answerTime}>{answerTime}</Text>
+        <Pill
+          hasFill={false}
+          hasBorder={true}
+          text={answerTime}
+          bgColor={null}
+        />
       </View>
     );
   };

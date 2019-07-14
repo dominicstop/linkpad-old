@@ -27,7 +27,7 @@ const Screen = {
   height: Dimensions.get('window').height,
 };
 
-const SPACING = 20;
+const SPACING = 35;
 export const MODAL_DISTANCE_FROM_TOP = Platform.select({
   ios: isIphoneX()? (getStatusBarHeight() + SPACING) : (20 + SPACING),
   android: StatusBar.currentHeight + SPACING,
@@ -317,7 +317,7 @@ export class SwipableModal extends React.PureComponent {
     const { snapPoints, hitSlop } = this.props;
 
     const modalHeight = Screen.height - MODAL_DISTANCE_FROM_TOP;
-    const finalRadius = ifIphoneX(30, 22);
+    const finalRadius = ifIphoneX(30, 20);
 
     const panelStyle = {
       borderTopLeftRadius: this._deltaY.interpolate({

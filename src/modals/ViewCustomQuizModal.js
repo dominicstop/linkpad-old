@@ -64,17 +64,21 @@ class QuizDetails extends React.PureComponent {
       fontWeight: '600',
     },
     date: {
-      fontSize: 17,
-      color: 'black',
-      fontWeight: '300',
+      fontSize: 16,
+      fontWeight: '400',
+      color: GREY[800],
+    },
+    dateLabel: {
+      fontWeight: '500',
+      color: GREY[900],
     },
     label: {
       color: PURPLE[1000],
-      fontWeight: '500',
+      fontWeight: '700',
     },
     dateString: {
-      color: 'rgb(80, 80, 80)',
-      fontWeight: '100',
+      color: GREY[700],
+      fontWeight: '200',
     },
     description: {
       fontSize: 17,
@@ -112,7 +116,7 @@ class QuizDetails extends React.PureComponent {
 
     return(
       <Text style={styles.date}>
-        <Text style={styles.label}>Created: </Text>
+        <Text style={styles.dateLabel}>Created: </Text>
         <TimeAgo {...{time}}/>
         <Text style={styles.dateString}>{` (${dateString})`}</Text>
       </Text>
@@ -131,7 +135,7 @@ class QuizDetails extends React.PureComponent {
     );
 
     return(
-      <DetailRow marginTop={7}>
+      <DetailRow marginTop={8}>
         <DetailColumn
           title={'Questions:'}
           subtitle={`${questionCount} items`}
@@ -285,7 +289,8 @@ class QuizSubjectList extends React.PureComponent {
       paddingTop: 0,
     },
     itemContainer: {
-      paddingVertical: 5,
+      paddingTop: 12,
+      paddingBottom: 5,
     },
     titleContainer: {
       flexDirection: 'row',
@@ -759,7 +764,7 @@ export class ViewCustomQuizModal extends React.Component {
       <StyledSwipableModal
         ref={r => this.modal = r}
         //header styles
-        headerSubtitle={'Press start to begin quiz'}
+        headerSubtitle={'Press start to take the quiz'}
         headerIconName={'ios-book'}
         headerIconType={'ionicon'}
         headerIconStyle={{marginTop: 2}}
@@ -778,7 +783,7 @@ export class ViewCustomQuizModal extends React.Component {
 
           <StickyCollapseHeader
             title={'Coverage'}
-            subtitle={'list of the selected subjects.'}
+            subtitle={'List of the selected subjects.'}
             iconName={'eye'}
             iconType={'feather'}
           />

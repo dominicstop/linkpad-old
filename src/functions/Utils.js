@@ -266,6 +266,11 @@ export function getProperty(obj, key) {
 };
 
 
+export function capitalize(string = '') {
+  return string.charAt(0).toUpperCase() + string.slice(1);
+};
+
+
 function lerp(a, b, n) {
   return (1 - n) * a + n * b;
 };

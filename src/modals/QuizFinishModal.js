@@ -6,7 +6,7 @@ import { STYLES , ROUTES} from '../Constants';
 import { PURPLE } from '../Colors';
 
 import { plural , setStateAsync, timeout, isEmpty } from '../functions/Utils';
-import { CreateCustomQuiz, CustomQuizStore } from '../functions/CustomQuizStore';
+import { CustomQuiz, CustomQuizStore } from '../functions/CustomQuizStore';
 
 import { MODAL_DISTANCE_FROM_TOP, MODAL_EXTRA_HEIGHT, SwipableModal, ModalBackground, ModalTopIndicator } from '../components/SwipableModal';
 import { IconText, AnimateInView, Card } from '../components/Views';
@@ -465,8 +465,7 @@ export class QuizFinishModal extends React.PureComponent {
   _handleOnPressCreateQuiz = async () => {
     const { title, description, selected, itemsPerSubject, maxItemsQuiz, shouldDistributeEqually } = this.state;
 
-    const customQuiz = CreateCustomQuiz.createQuiz({title, description, selected, itemsPerSubject, maxItemsQuiz, shouldDistributeEqually});
-    const new_quiz = customQuiz.quiz;
+    const new_quiz = CustomQuiz.createQuiz({title, description, selected, itemsPerSubject, maxItemsQuiz, shouldDistributeEqually});
 
     const old_quizes = await CustomQuizStore.read() || [];
     const quizes = [...old_quizes, new_quiz];

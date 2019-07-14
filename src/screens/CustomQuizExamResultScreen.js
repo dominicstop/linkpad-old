@@ -176,9 +176,10 @@ class ResultItem extends React.PureComponent {
       borderWidth: 1,
     },
     label: {
-      fontSize: 16,
       marginLeft: 7,
       width: 72,
+      fontSize: 16,
+      fontWeight: '500',
       textAlign: 'center',
     },
     result: {
@@ -228,7 +229,13 @@ class ResultItem extends React.PureComponent {
 
     const iconColor = isSelected? 'white' : color;
 
+
     const labelStyle = (isSelected
+      ? { color: 'white'  , fontWeight: '700' }
+      : { color: GREY[700], fontWeight: '500' }
+    );
+
+    const resultStyle = (isSelected
       ? { color: 'white'  , fontWeight: '500' }
       : { color: GREY[900], fontWeight: '300' }
     );
@@ -243,7 +250,7 @@ class ResultItem extends React.PureComponent {
         <Text style={[styles.label, labelStyle]}>
           {label}
         </Text>
-        <Text style={[styles.result, labelStyle]}>
+        <Text style={[styles.result, resultStyle]}>
           {value}
         </Text>
       </Fragment>
@@ -288,7 +295,7 @@ class ResultSummaryCard extends React.PureComponent {
 
   static styles = StyleSheet.create({
     divider: {
-      marginVertical: 10,
+      marginTop: 5,
     },
     headerTextContainer: {
       flex: 1, 
@@ -607,6 +614,7 @@ class ResultSummaryCard extends React.PureComponent {
           {this._renderResults ()}
           {this._renderPieChart()}
         </View>
+        <Divider style={styles.divider}/>
       </CardWithHeader>
     );
   };
@@ -645,6 +653,9 @@ class StatsCard extends React.PureComponent {
       height: 1,
       margin: 10,
       backgroundColor: 'rgba(0,0,0, 0.12)'
+    },
+    dividerFooter: {
+      marginTop: 15,
     },
     title: {
       fontWeight: '600',
@@ -765,6 +776,7 @@ class StatsCard extends React.PureComponent {
         {this._renderDetailsTime()}
         <Divider style={styles.divider}/>
         {this._renderDetailsComp()}
+        <Divider style={styles.dividerFooter}/>
       </CardWithHeader>
     );
   };

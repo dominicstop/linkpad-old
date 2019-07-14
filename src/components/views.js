@@ -13,6 +13,7 @@ import {timeout} from '../functions/Utils';
 import * as FileSystem from 'expo-file-system';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
+import { GREY, PURPLE } from '../Colors';
 
 const overlayOpacity = 0.4
 //declare animations
@@ -159,6 +160,17 @@ export class Card extends React.PureComponent {
       backgroundColor: 'white', 
       elevation: 7,
     },
+    shadow: {
+      borderWidth: 1,
+      borderColor: GREY[200],
+      shadowColor: 'black',
+      shadowRadius: 5,
+      shadowOpacity: 0.25,
+      shadowOffset: {  
+        width: 2,  
+        height: 3,  
+      },
+    },
     wrapper: {
       marginTop: 5, 
       marginBottom: 12, 
@@ -181,7 +193,7 @@ export class Card extends React.PureComponent {
 
     return disableOverflow?(
       <View
-        style={[styles.wrapper, STYLES.mediumShadow, wrapperStyle]}
+        style={[styles.wrapper, styles.shadow, wrapperStyle]}
         {...viewProps}
       >
         <View style={[styles.container, containerStyle]}>
@@ -190,7 +202,7 @@ export class Card extends React.PureComponent {
       </View>
     ):(
       <View
-        style={[styles.card, STYLES.mediumShadow, style]}
+        style={[styles.card, styles.shadow, style]}
         {...viewProps}
       >
         {this.props.children}
@@ -220,7 +232,7 @@ export class ViewWithBlurredHeader extends React.PureComponent {
     
 
     return(
-      <View style={{position: 'absolute', width: '100%', height}}>
+      <View style={{position: 'absolute', width: '100%', height, borderBottomColor: PURPLE[900], borderBottomWidth: 0.75}}>
         <BlurView intensity={100} tint='default'>
           <LinearGradient
             style={{width: '100%', height: '100%', opacity: 0.7}}
@@ -282,7 +294,6 @@ export class AnimatedListItem extends React.PureComponent {
     delay     : PropTypes.number,
     multiplier: PropTypes.number,
     last      : PropTypes.number,
-    animated  : PropTypes.bool  ,
   };
 
   static defaultProps = {
@@ -290,50 +301,32 @@ export class AnimatedListItem extends React.PureComponent {
     delay     : 0  ,
     multiplier: 100,
     last      : 3  ,
-    animated  : true,
-  };
-
-  constructor(props){
-    super(props);
-    this.state = {
-      animated: true,
-    };
-  };
-
-  _handleOnAnimationEnd = () => {
-    const { animated } = this.props;
-    if(!animated){
-      this.setState({animated: false});
-    };
   };
 
   _renderAnimateIn(){
-    const { index, delay, multiplier, last, ...otherProps } = this.props;
-    if(index > last) return this.props.children;
+    const { index, duration, delay, multiplier, children, ...props } = this.props;
+    const offset = (index * (multiplier/2));
     return(
       <Animatable.View
-        onAnimationEnd={this._handleOnAnimationEnd}
-        delay={(index + 1) * multiplier + delay}
-        animation='fadeInUp'
-        easing='ease-in-out'
+        ref={props.innerRef}
+        duration={(duration + offset)}
+        delay={(delay + offset)}
+        animation={'fadeInUp'}
+        easing={'ease-in-out'}
         useNativeDriver={true}
         collapsable={true}
-        {...otherProps}
+        {...props}
       >
-        {this.props.children}
+        {children}
       </Animatable.View>
     );
   };
 
-  _renderNormal(){
-    return this.props.children;
-  };
-
   render(){
-    const { animated } = this.state;
-    return (animated
+    const { index, last } = this.props;
+    return ((index < last)
       ? this._renderAnimateIn() 
-      : this._renderNormal   ()
+      : this.props.children
     );
   };
 }

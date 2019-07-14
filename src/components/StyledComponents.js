@@ -5,7 +5,7 @@ import PropTypes from 'prop-types';
 import * as Animatable from 'react-native-animatable';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
-import { isIphoneX, getBottomSpace } from 'react-native-iphone-x-helper';
+import { isIphoneX, getBottomSpace, ifIphoneX, getStatusBarHeight } from 'react-native-iphone-x-helper';
 import { Icon, } from 'react-native-elements';
 import { Header } from 'react-navigation';
 
@@ -233,8 +233,8 @@ export class DetailColumn extends React.PureComponent {
   static styles = StyleSheet.create({
     title: {
       ...FONT_STYLES.detailTitle,  
-      color: 'black',
-      fontWeight: '500',
+      color: PURPLE[1100],
+      fontWeight: '700',
     },
     subtitleContainer: {
       marginTop: 3,
@@ -384,7 +384,7 @@ export class NumberIndicator extends React.PureComponent {
 
   static defaultProps = {
     size          : 22         ,
-    color         : PURPLE.A700,
+    color         : PURPLE.A200,
     adjustFontSize: true       ,
     initFontSize  : 15         ,
     diffFontSize  : 2          ,
@@ -837,7 +837,12 @@ export class LoadingPill extends React.PureComponent {
     wrapper: {
       position: 'absolute',
       width: '100%',
-      marginTop: Header.HEIGHT,
+      marginTop: Platform.select({
+        ios: ifIphoneX(
+          (Header.HEIGHT + getStatusBarHeight()),
+          (Header.HEIGHT)
+        ),
+      }),
       alignItems: 'center',
       justifyContent: 'center',
     },
@@ -925,6 +930,71 @@ export class LoadingPill extends React.PureComponent {
         </Animatable.View>
       </Animatable.View>
     );
+  };
+};
+
+export class Pill extends React.PureComponent {
+  static propTypes = {
+    borderColor : PropTypes.string,
+    bgColor     : PropTypes.string,
+    borderRadius: PropTypes.number,
+    gradientBG  : PropTypes.bool  ,
+    colors      : PropTypes.array ,
+  };
+
+  static defaultProps = {
+    hasFill     : true,
+    hasBorder   : false,
+    gradientBG  : false,
+    borderRadius: 15,
+    borderColor : PURPLE.A400,
+    bgColor     : PURPLE.A700,
+  };
+
+  static styles = StyleSheet.create({
+    container: {
+      alignItems: 'center',
+      paddingHorizontal: 10,
+      paddingVertical: 2.25,
+    },
+    border: {
+      borderWidth: 1,
+    },
+    text: {
+      fontSize: 14,
+      color: 'white',
+    },
+  });
+
+  render(){
+    const { styles } = Pill;
+    const { children, hasFill, hasBorder, borderColor, bgColor, borderRadius, ...props} = this.props;
+
+    const childCount = React.Children.count(children);
+    const hasChild   = (childCount > 0);
+
+    const containerStyle = {
+      ...(hasFill   && {backgroundColor: bgColor}),
+      ...(hasBorder && styles.border),
+      //pass down style props
+      borderColor, borderRadius,
+    };
+
+    const textStyle = {
+      ...((!hasFill && hasBorder) && {color: borderColor}),
+    };
+
+    return (hasChild? (
+      <View style={[styles.container, containerStyle, props.containerStyle]}>
+        {this.props.children}
+      </View>
+    ):(
+      <View style={[styles.container, containerStyle, props.containerStyle]}>
+        <Text style={[styles.text, textStyle, props.textStyle]}>
+          {props.text}
+        </Text>
+      </View>
+    ));
   };
 };
 
