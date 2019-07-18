@@ -2,8 +2,61 @@ import store from 'react-native-simple-store';
 import _ from 'lodash';
 import { fetchWithProgress, replacePropertiesWithNull } from './Utils';
 
-
 let _preboardData = null;
+
+function processPreboard(data = {}){
+  const preboard = PreboardExam.wrap(data);
+
+  return {
+    ...preboard,
+    exams: (preboard.exams || []).map(exam => ({
+      ...exam,
+      exammodules: (exam.exammodules || []).map(module => {
+        const examModuleID = `${exam.indexid}-${module.indexid}`;
+        return {
+          ...module, examModuleID,
+          questions: (module.questions || []).map((question, indexQuestion) => {
+            const questionID = `${exam.indexid}-${module.indexid}-${indexQuestion}`;
+            
+            //extract choice strings from object array
+            const choiceStrings = question.choices.map(
+              choice => (choice || {}).value //returns undefined
+            );
+    
+            //shared properties for each of the choiceItems
+            const choiceItemsSharedValues = {
+              indexid_premodule: module.indexid,
+              indexid_question : indexQuestion ,
+              //pass down
+              questionID, examModuleID
+            };
+    
+            return {
+              ...question, questionID, examModuleID,
+              indexid_premodule: module.indexid,
+              choiceItems: [
+                //create the correct choice
+                PreboardExamChoice.wrap({
+                  ...choiceItemsSharedValues ,
+                  choiceID: `${questionID}-0`,
+                  value   : question.answer  ,
+                  isAnswer: true             ,
+                }),
+                //create the other choices
+                ...choiceStrings.map((choice, indexChoice) => PreboardExamChoice.wrap({
+                  ...choiceItemsSharedValues,
+                  choiceID: `${questionID}-${indexChoice + 1}`,
+                  value   : choice,
+                  isAnswer: false ,
+                })),
+              ],
+            };
+          }),
+        };
+      })
+    })),
+  };
+};
 
 export class PreboardExamChoice {
   static structure = {
@@ -72,28 +125,29 @@ export class PreboardExamAnswer {
 export class PreboardExamQuestion {
   static structure = {
     answer     : '',
-    choices    : PreboardExamChoice.wrapArray([]),
+    choices    : [],
     explanation: '',
     question   : '',
     //added after processing
     indexid_premodule: -1, //which premodule this question belongs to
     questionID       : '', //unique id for use in lists and comparison
+    choiceItems      : PreboardExamChoice.wrapArray([]), //contains both the answer and choices
   };
 
-  static wrap(data = PreboardExamChoice.structure){
+  static wrap(data = PreboardExamQuestion.structure){
     return {
       //assign default properties w/ default values (so that vscode can infer types)
-      ...PreboardExamChoice.structure,
+      ...PreboardExamQuestion.structure,
       //overwrite all default values and replace w/ null (for assigning default values with ||)
-      ...replacePropertiesWithNull(PreboardExamChoice.structure),
+      ...replacePropertiesWithNull(PreboardExamQuestion.structure),
       //combine with obj from param
       ...(data || {}),
     };
   };
 
-  static wrapArray(items = [PreboardExamChoice.structure]){
+  static wrapArray(items = [PreboardExamQuestion.structure]){
     return items.map((item) => 
-      PreboardExamChoice.wrap(item)
+      PreboardExamQuestion.wrap(item)
     );
   };
 };
@@ -104,6 +158,8 @@ export class PreboardExamModule {
     premodulename: '',
     description  : '',
     questions    : PreboardExamQuestion.wrapArray([]),
+    //added after processing
+    examModuleID: '',
   };
 
   static wrap(data = PreboardExamModule.structure){
@@ -136,16 +192,6 @@ export class PreboardExamItem {
     exammodules: PreboardExamModule.wrapArray([]),
   };
 
-  static structure = {
-    answer     : '',
-    choices    : PreboardExamChoice.wrapArray([]),
-    explanation: '',
-    question   : '',
-    //added after processing
-    indexid_premodule: -1, //which premodule this question belongs to
-    questionID       : '', //unique id for use in lists and comparison
-  };
-
   static wrap(data = PreboardExamItem.structure){
     return {
       //assign default properties w/ default values (so that vscode can infer types)
@@ -173,18 +219,17 @@ export class PreboardExam {
     exams  : PreboardExamItem.wrapArray([]),
   };
 
-  static wrap(data = PreboardExamItem.structure){
+  static wrap(data = PreboardExam.structure){
     return {
       //assign default properties w/ default values (so that vscode can infer types)
-      ...PreboardExamItem.structure,
+      ...PreboardExam.structure,
       //overwrite all default values and replace w/ null (for assigning default values with ||)
-      ...replacePropertiesWithNull(PreboardExamItem.structure),
+      ...replacePropertiesWithNull(PreboardExam.structure),
       //combine with obj from param
       ...(data || {}),
     };
   };
 };
-
 
 export class PreboardExamstore {
   static get KEY(){
