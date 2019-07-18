@@ -1,8 +1,13 @@
+import * as FileSystem from 'expo-file-system';
 import store from 'react-native-simple-store';
 import _ from 'lodash';
-import { fetchWithProgress, replacePropertiesWithNull } from './Utils';
+
+import { fetchWithProgress, replacePropertiesWithNull, createFolderIfDoesntExist, isBase64Image } from './Utils';
 
 let _preboardData = null;
+
+const BASE_DIR   = FileSystem.documentDirectory;
+const FOLDER_KEY = 'preboard_images';
 
 //response structure
 const response = {
@@ -36,7 +41,7 @@ const response = {
   }],
 };
 
-function processPreboard(data = {}){
+function _processPreboard(data = {}){
   const preboard = PreboardExam.wrap(data);
 
   return {
@@ -89,6 +94,65 @@ function processPreboard(data = {}){
         };
       })
     })),
+  };
+};
+
+/** store Base64 images to storage and replace with URI */
+async function _saveBase64ToStorage(preboard = PreboardExam.structure){
+  const { exams, ...restPreboard } = PreboardExam.wrap(preboard);
+
+  try {
+    //create folder if does not exist
+    await createFolderIfDoesntExist(BASE_DIR + FOLDER_KEY);
+
+    for (const exam of exams){
+      for (const module of exam.exammodules) {
+        for (const question of module.questions) {
+          const { photouri, photofilename } = question;
+
+          //check if uri is image
+          const isImage = isBase64Image(photouri);
+          //remove space from file name 
+          const filename = photofilename.replace(/\ /g, '');
+          //construct the uri for where the image is saved
+          const img_uri = `${BASE_DIR}${FOLDER_KEY}/${filename}`;
+
+          try {
+            if(isImage){
+              //save the base64 image to the fs
+              await FileSystem.writeAsStringAsync(img_uri, photouri);
+              //update tip uri
+              question.photouri = img_uri;
+
+            } else {
+              //debug
+              console.log('invalid base64 uri');
+              console.log(tip.photouri.slice(0, 15));
+
+              //replace with null if invalid uri
+              question.photouri = null;
+            };
+
+          } catch(error){
+            //debug
+            console.log(`Unable to save image ${photofilename}`);
+            console.log(`photouri: ${question.photouri.slice(0, 20)}`);
+            console.log(error);
+
+            //replace with null if cannot be saved to fs
+            question.photouri = null;
+          };
+        };
+      };
+    };
+
+    //resolve preboard
+    return { exams, ...restPreboard };
+
+  } catch(error){
+    console.log('Unable to save images.');
+    console.log(error);
+    throw error;
   };
 };
 
@@ -299,6 +363,28 @@ export class PreboardExamstore {
     } catch(error) {
       console.log('Failed to fetch preboard from server.');
       console.log(error);
+      throw error;
+    };
+  };
+
+  static async fetchAndSave(){
+    try {
+      //pipeline i.e: a -> b -> c
+      const pb_raw       = await PreboardExamstore.fetch();
+      const pb_processed = _processPreboard(pb_raw);
+      const pb_imgsSaved = await _saveBase64ToStorage(pb_processed);
+
+      //write to storage
+      await store.save(PreboardExamstore.KEY, pb_imgsSaved);
+      //update cache var
+      _preboardData = pb_imgsSaved;
+      //resolve
+      return pb_imgsSaved;
+
+    } catch(error){
+      console.log('Failed to fetchAndSave preboard');
+      console.log(error);
+      console.log('\n');
       throw error;
     };
   };
