@@ -2,7 +2,7 @@ import * as FileSystem from 'expo-file-system';
 import store from 'react-native-simple-store';
 import _ from 'lodash';
 
-import { fetchWithProgress, replacePropertiesWithNull, createFolderIfDoesntExist, isBase64Image } from './Utils';
+import { fetchWithProgress, replacePropertiesWithNull, createFolderIfDoesntExist, isBase64Image, shuffleArray } from './Utils';
 
 let _preboardData = null;
 
@@ -333,6 +333,21 @@ export class PreboardExam {
       //combine with obj from param
       ...(data || {}),
     };
+  };
+
+  static createQuestionList(examItem = PreboardExamItem.structure){
+    const exam = PreboardExamItem.wrap(examItem);
+    let questions = [];
+
+    //exract all of the questions from each module
+    for (const module of exam.exammodules) {
+      for (const question of module.questions) {
+        questions.push(question);        
+      };
+    };
+
+    //shuffle and return questions
+    return shuffleArray(questions);
   };
 };
 

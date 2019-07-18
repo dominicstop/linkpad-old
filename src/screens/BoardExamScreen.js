@@ -215,9 +215,11 @@ class BoardExamMainScreen extends React.Component {
   _handleOnPressTakePreboard = () => {
     const { navigation } = this.props;
     const exam = this.getActiveExam();
+    const questions = PreboardExam.createQuestionList(exam);
 
     navigation && navigation.navigate(
-      ROUTES.PreboardExamTestRoute, { exam }
+      ROUTES.PreboardExamTestRoute, 
+      { exam, questions }
     );
   };
 
