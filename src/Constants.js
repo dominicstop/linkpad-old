@@ -31,7 +31,8 @@ export const ROUTES = {
   CustomQuizExamResultRoute  : 'CustomQuizExamResultRoute'  ,
   CustomQuizExamResultQARoute: 'CustomQuizExamResultQARoute',
   //preboard exam routes
-  PreboardExamRoute: 'PreboardExamRoute',
+  PreboardExamRoute    : 'PreboardExamRoute'    ,
+  PreboardExamTestRoute: 'PreboardExamTestRoute',
   //tabscreen routes
   TabModuleListRoute: 'TabModuleListRoute',
   TabExamsRoute     : 'TabExamsRoute'     ,

@@ -33,17 +33,4 @@ export class BoardExamTestScreen extends React.Component {
       </ViewWithBlurredHeader>
     );
   }
-}
-
-export const BoardExamTestStack = createStackNavigator({
-   BoardExamTestRoute: {
-      screen: BoardExamTestScreen,
-    },
-  }, {
-    headerMode: 'float',
-    headerTransitionPreset: 'uikit',
-    headerTransparent: true,
-    navigationOptions: Constants.HEADER_PROPS,
-    ...Constants.STACKNAV_PROPS
-  }
-);
+};

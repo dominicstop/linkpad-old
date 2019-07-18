@@ -6,7 +6,7 @@ import   NavigationService      from '../NavigationService';
 import Constants, { HEADER_PROPS, STYLES, ROUTES, LOAD_STATE, FONT_STYLES, HEADER_HEIGHT } from '../Constants';
 
 import { PreboardExamListScreen } from './BoardExamListScreen';
-import { BoardExamTestStack     } from './BoardExamTestScreen';
+import { BoardExamTestStack, BoardExamTestScreen     } from './BoardExamTestScreen';
 
 import   LottieCircle    from '../components/LottieCircle';
 import { setStateAsync, plural } from '../functions/Utils';
@@ -25,6 +25,7 @@ import { Surface } from 'react-native-paper';
 
 import moment from 'moment';
 import { GREY } from '../Colors';
+import { PlatformButton } from '../components/StyledComponents';
 
 class PreboardHeader extends React.PureComponent {
   static propTypes = {
@@ -131,7 +132,7 @@ class BoardExamMainScreen extends React.Component {
 
   static styles = StyleSheet.create({
     title: {
-      fontSize: 18,
+      fontSize: 19,
       fontWeight: '800'
     },
     description: {
@@ -159,10 +160,35 @@ class BoardExamMainScreen extends React.Component {
 
     },
     //#endregion
+    //#region 
+    footer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: 7,
+    },
+    footerTitle: {
+      fontSize: 17,
+      fontWeight: '500',
+    },
+    footerSubtile: {
+      fontSize: 15,
+      fontWeight: '200',
+    },
+    image: {
+      width: 75, 
+      height: 75,
+      marginRight: 12,
+      marginVertical: 12,
+    },
+    footerTextContainer: {
+      flex: 1, 
+    },
+    //#endregion
   });
 
   constructor(props){
     super(props);
+    this.imageFooter = require('../../assets/icons/notes-pencil.png');    
     this.state = {
       loading : LOAD_STATE.LOADING,
       preboard: null,
@@ -186,6 +212,15 @@ class BoardExamMainScreen extends React.Component {
     );
   };
 
+  _handleOnPressTakePreboard = () => {
+    const { navigation } = this.props;
+    const exam = this.getActiveExam();
+
+    navigation && navigation.navigate(
+      ROUTES.PreboardExamTestRoute, { exam }
+    );
+  };
+
   _renderLoading(){
 
   };
@@ -206,6 +241,17 @@ class BoardExamMainScreen extends React.Component {
 
     const startDate = moment(exam.startdate, formatInput).format(formatOutput);
     const enddate   = moment(exam.enddate  , formatInput).format(formatOutput);
+
+    const TITLE = (
+      <Fragment>
+        <Text style={styles.title}>
+          {exam.examname || 'Exam Name N/A'}
+        </Text>
+        <Text style={styles.description}>
+          {exam.description || 'Description N/A'}
+        </Text>
+      </Fragment>
+    );
 
     const DETAILS = (
       <View style={styles.detailContainer}>
@@ -236,16 +282,45 @@ class BoardExamMainScreen extends React.Component {
       </View>
     );
 
+    const FOOTER = (
+      <View style={styles.footer}>
+        <Animatable.Image
+          source={this.imageFooter}
+          style={styles.image}
+          animation={'pulse'}
+          easing={'ease-in-out'}
+          iterationCount={"infinite"}
+          duration={5000}
+          useNativeDriver={true}
+        />
+        <View style={styles.footerTextContainer}>
+          <Text style={styles.footerTitle}>
+            {'Preboard Exam Available'}
+          </Text>
+          <Text style={styles.footerSubtile}>
+            {"It looks like you haven't taken the exam yet, be sure to take it before the specified end date."}
+          </Text>
+        </View>
+      </View>
+    );
+
     return(
       <Card>
-        <Text style={styles.title}>
-          {exam.examname || 'Exam Name N/A'}
-        </Text>
-        <Text style={styles.description}>
-          {exam.description || 'Description N/A'}
-        </Text>
+        {TITLE}
         <Divider style={styles.divider}/>
         {DETAILS}
+        <Divider style={styles.divider}/>
+        {FOOTER}
+        <PlatformButton
+          title={'Take Preboard'}
+          subtitle={'Start the preboard exam'}
+          onPress={this._handleOnPressTakePreboard}
+          iconName={'clipboard'}
+          iconType={'feather'}
+          iconDistance={10}
+          isBgGradient={true}
+          showChevron={true}
+        />
       </Card>
     );
   };
@@ -258,8 +333,6 @@ class BoardExamMainScreen extends React.Component {
     const { loading, preboard: _preboard } = this.state;
     const preboard = PreboardExam.wrap(_preboard);
     
-    Clipboard.setString(JSON.stringify(preboard));
-
     const body = (() => {
       switch (loading) {
         case LOAD_STATE.LOADING: return this._renderLoading();
@@ -286,7 +359,8 @@ class BoardExamMainScreen extends React.Component {
 };
 
 const CustomQuizExamStack = createStackNavigator({
-    [ROUTES.PreboardExamRoute]: BoardExamMainScreen,
+    [ROUTES.PreboardExamRoute    ]: BoardExamMainScreen,
+    [ROUTES.PreboardExamTestRoute]: BoardExamTestScreen,
   }, {
     headerMode: 'float',
     headerTransitionPreset: 'uikit',
