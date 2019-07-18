@@ -4,6 +4,38 @@ import { fetchWithProgress, replacePropertiesWithNull } from './Utils';
 
 let _preboardData = null;
 
+//response structure
+const response = {
+  active : false,
+  success: false,
+  examkey: -1   ,
+  message: ''   ,
+  exams  : [{
+    indexid    : -1,
+    timelimit  : -1,
+    examname   : '',
+    description: '',
+    dateposted : '',
+    startdate  : '',
+    enddate    : '',
+    exammodules: [{
+      description  : '',
+      indexid      : -1,
+      premodulename: '',
+      questions    : [{
+        question     : '',
+        explanation  : '',
+        photofilename: '',
+        photouri     : '',
+        answer       : '',
+        choices      : [{
+          value: '',
+        }],
+      }],
+    }],
+  }],
+};
+
 function processPreboard(data = {}){
   const preboard = PreboardExam.wrap(data);
 
@@ -14,7 +46,8 @@ function processPreboard(data = {}){
       exammodules: (exam.exammodules || []).map(module => {
         const examModuleID = `${exam.indexid}-${module.indexid}`;
         return {
-          ...module, examModuleID,
+          ...module, examModuleID, 
+          indexid_exam: exam.indexid,
           questions: (module.questions || []).map((question, indexQuestion) => {
             const questionID = `${exam.indexid}-${module.indexid}-${indexQuestion}`;
             
@@ -25,6 +58,7 @@ function processPreboard(data = {}){
     
             //shared properties for each of the choiceItems
             const choiceItemsSharedValues = {
+              indexid_exam     : exam.indexid  ,
               indexid_premodule: module.indexid,
               indexid_question : indexQuestion ,
               //pass down
@@ -64,9 +98,11 @@ export class PreboardExamChoice {
     //added afer processing
     choiceID         : -1   , //unique id for use in lists and comparison (in case the choices are falsy i.e null/undef etc.) or have the same exact string
     isAnswer         : false, //is the correct answer (choices and answers are merged together, or in cases where there are mult. correct answers)
-    indexid_question : -1   , //passed down from question - which question  this choice belongs to
-    indexid_premodule: -1   , //passed down from question - which premodule this choice belongs to
-    questionID       : ''   , //passed down from question (used for reconciling when they are separated)
+    indexid_exam     : -1   , //passed down - which exam      this choice belongs to    
+    indexid_question : -1   , //passed down - which question  this choice belongs to
+    indexid_premodule: -1   , //passed down - which premodule this choice belongs to
+    questionID       : ''   , //passed down - used for reconciling to question when they are separated
+    examModuleID     : ''   , //passed down - used for reconciling to exam     when they are separated
   };
 
   static wrap(data = PreboardExamChoice.structure){
@@ -129,9 +165,11 @@ export class PreboardExamQuestion {
     explanation: '',
     question   : '',
     //added after processing
-    indexid_premodule: -1, //which premodule this question belongs to
-    questionID       : '', //unique id for use in lists and comparison
     choiceItems      : PreboardExamChoice.wrapArray([]), //contains both the answer and choices
+    indexid_exam     : -1, //passed down - which exam      this question belongs to
+    indexid_premodule: -1, //passed down - which premodule this question belongs to
+    questionID       : '', //passed down - unique id for use in lists and comparison
+    examModuleID     : '', //passed down - used for reconciling to exam
   };
 
   static wrap(data = PreboardExamQuestion.structure){
@@ -159,7 +197,8 @@ export class PreboardExamModule {
     description  : '',
     questions    : PreboardExamQuestion.wrapArray([]),
     //added after processing
-    examModuleID: '',
+    indexid_exam: '', //passed down - which exam this module belongs to
+    examModuleID: '', //unique id for use in list
   };
 
   static wrap(data = PreboardExamModule.structure){
