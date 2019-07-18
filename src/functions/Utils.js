@@ -140,8 +140,6 @@ export async function createFolderIfDoesntExist(folder_uri){
     const info = await FileSystem.getInfoAsync(folder_uri, {size: false, md5: false});
     const { exists, isDirectory } = info;
 
-    console.log(info);
-
     const shouldMakeDirectory = (!exists && !isDirectory);
     if(shouldMakeDirectory){
       //create direcory

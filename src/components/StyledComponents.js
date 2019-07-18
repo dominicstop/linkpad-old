@@ -240,7 +240,7 @@ export class DetailColumn extends React.PureComponent {
       marginTop: 3,
       alignSelf: 'flex-start',
       paddingHorizontal: 12,
-      paddingVertical: 3.75,
+      paddingVertical: 4,
       backgroundColor: PURPLE.A700,
       borderRadius: 15,
       alignItems: 'center',
@@ -259,7 +259,7 @@ export class DetailColumn extends React.PureComponent {
     },
     subtitle: {
       ...FONT_STYLES.detailSubtitle,
-      fontSize: 18,
+      fontSize: 16,
       color: 'white',
       ...Platform.select({
         ios: {

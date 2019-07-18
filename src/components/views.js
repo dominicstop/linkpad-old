@@ -14,6 +14,7 @@ import * as FileSystem from 'expo-file-system';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { GREY, PURPLE } from '../Colors';
+import { Surface } from 'react-native-paper';
 
 const overlayOpacity = 0.4
 //declare animations
@@ -150,40 +151,24 @@ export class Card extends React.PureComponent {
 
   static styles = StyleSheet.create({
     card: {
-      overflow: 'visible', 
-      marginTop: 5, 
-      marginBottom: 12, 
-      marginHorizontal: 12, 
-      paddingHorizontal: 15, 
-      paddingVertical: 10, 
-      borderRadius: 10,
-      backgroundColor: 'white', 
-      elevation: 7,
-    },
-    shadow: {
-      borderWidth: 1,
-      borderColor: GREY[200],
-      shadowColor: 'black',
-      shadowRadius: 5,
-      shadowOpacity: 0.25,
-      shadowOffset: {  
-        width: 2,  
-        height: 3,  
-      },
+      paddingHorizontal: 10,
+      paddingVertical: 12,
+      marginHorizontal: 8,
+      marginBottom: 10,
+      borderRadius: 12,
+      elevation: 5,
     },
     wrapper: {
-      marginTop: 5, 
-      marginBottom: 12, 
-      marginHorizontal: 12, 
-      borderRadius: 10,
-      elevation: 7,
+      marginHorizontal: 8,
+      marginBottom: 10,
+      borderRadius: 12,
+      elevation: 5,
     },
     container: {
       overflow: 'hidden',
-      paddingHorizontal: 15, 
-      paddingVertical: 10,
-      backgroundColor: 'white',
-      borderRadius: 10,
+      paddingHorizontal: 10,
+      paddingVertical: 12,
+      borderRadius: 12,
     },
   });
 
@@ -192,21 +177,21 @@ export class Card extends React.PureComponent {
     const { style, wrapperStyle, containerStyle, disableOverflow, ...viewProps } = this.props;
 
     return disableOverflow?(
-      <View
-        style={[styles.wrapper, styles.shadow, wrapperStyle]}
+      <Surface
+        style={[styles.wrapper, wrapperStyle]}
         {...viewProps}
       >
         <View style={[styles.container, containerStyle]}>
           {this.props.children}
         </View>
-      </View>
+      </Surface>
     ):(
-      <View
-        style={[styles.card, styles.shadow, style]}
+      <Surface
+        style={[styles.card, style]}
         {...viewProps}
       >
         {this.props.children}
-      </View>
+      </Surface>
     );
   };
 };

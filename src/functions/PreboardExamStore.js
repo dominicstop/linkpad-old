@@ -108,7 +108,7 @@ async function _saveBase64ToStorage(preboard = PreboardExam.structure){
     for (const exam of exams){
       for (const module of exam.exammodules) {
         for (const question of module.questions) {
-          const { photouri, photofilename } = question;
+          const { photouri = '', photofilename = '' } = question;
 
           //check if uri is image
           const isImage = isBase64Image(photouri);
@@ -121,13 +121,15 @@ async function _saveBase64ToStorage(preboard = PreboardExam.structure){
             if(isImage){
               //save the base64 image to the fs
               await FileSystem.writeAsStringAsync(img_uri, photouri);
-              //update tip uri
+              //update question uri
               question.photouri = img_uri;
 
             } else {
               //debug
-              console.log('invalid base64 uri');
-              console.log(tip.photouri.slice(0, 15));
+              if(__DEV__){
+                console.log('invalid base64 uri, skipping...');
+                console.log((question.photouri || '').slice(0, 15));
+              };
 
               //replace with null if invalid uri
               question.photouri = null;
@@ -136,7 +138,7 @@ async function _saveBase64ToStorage(preboard = PreboardExam.structure){
           } catch(error){
             //debug
             console.log(`Unable to save image ${photofilename}`);
-            console.log(`photouri: ${question.photouri.slice(0, 20)}`);
+            console.log(`photouri: ${(question.photouri || '').slice(0, 20)}`);
             console.log(error);
 
             //replace with null if cannot be saved to fs

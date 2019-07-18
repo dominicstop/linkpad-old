@@ -52,7 +52,7 @@ const DrawerStack = createDrawerNavigator({
   [ROUTES.DrawerBoardExamRoute]: {
       screen: BoardExamScreen,
       navigationOptions: {
-        drawerLabel: 'Board Exam',
+        drawerLabel: 'PreBoard Exam',
         drawerIcon: (
           <DrawerIcon
             iconName={'ios-clipboard'}
