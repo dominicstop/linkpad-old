@@ -19,11 +19,19 @@ export const ROUTES = {
   ViewImageRoute      : 'ViewImageRoute'      ,
   PracticeExamRoute   : 'PracticeExamRoute'   ,
   CustomQuizExamScreen: 'CustomQuizExamScreen',
+  //drawer routes
+  DrawerHomeRoute     : 'DrawerHomeRoute'     ,
+  DrawerBoardExamRoute: 'DrawerBoardExamRoute',
+  DrawerPaymentRoute  : 'DrawerPaymentRoute'  ,
+  DrawerAboutRoute    : 'DrawerAboutRoute'    ,
+  DrawerSettingsRoute : 'DrawerSettingsRoute' ,
   //custom quiz exam routes
   CustomQuizExamRoute        : 'CustomQuizExamRoute'        ,
   CustomQuizViewImageRoute   : 'CustomQuizViewImageRoute'   ,
   CustomQuizExamResultRoute  : 'CustomQuizExamResultRoute'  ,
   CustomQuizExamResultQARoute: 'CustomQuizExamResultQARoute',
+  //preboard exam routes
+  PreboardExamRoute: 'PreboardExamRoute',
   //tabscreen routes
   TabModuleListRoute: 'TabModuleListRoute',
   TabExamsRoute     : 'TabExamsRoute'     ,

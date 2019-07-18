@@ -156,6 +156,8 @@ export class ModuleListScreen extends React.Component {
   };
 
   componentDidFocus = () => {
+    //TODO: fix later
+    return;
     //enable drawer when this screen is active
     const { setDrawerSwipe, getRefSubjectModal } = this.props.screenProps;
     setDrawerSwipe(true);

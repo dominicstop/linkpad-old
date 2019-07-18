@@ -1,10 +1,10 @@
 import React, { Fragment } from 'react';
 import { Dimensions, Platform } from 'react-native';
 
-import { STYLES          } from '../Constants';
+import { STYLES, ROUTES } from '../Constants';
 import { CustomDrawer    } from '../components/CustomDrawer';
 import { MoreStack       } from './MoreScreen';
-import { BoardExamStack  } from './BoardExamScreen';
+import { BoardExamScreen } from './BoardExamScreen';
 import { PaymentStack    } from './PaymentScreen';
 import { AboutStack      } from './AboutScreen';
 import { Homescreen      } from './Homescreen';
@@ -23,88 +23,76 @@ const drawerBackgroundColor = Platform.select({
   android: 'rgb(255, 255, 255)',
 });
 
-class DrawerIcon extends React.PureComponent {
-  render(){
-    const { color } = this.props;
-    const shouldGlow = color == 'white';
-    return(
-      <Icon 
-        {...this.props}
-        containerStyle={shouldGlow? [STYLES.glow, {shadowOpacity: 0.35}] : null}
-      />
-    );
-  }
-}
+const DrawerIcon = (props) => {
+  return (
+    <Icon
+      name ={props.iconName}
+      type ={props.iconType}
+      color={'white'}
+      size={28}
+      containerStyle={[STYLES.glow, {shadowOpacity: 0.25}]}
+    />
+  );
+};
 
 //side drawer navigation
 const DrawerStack = createDrawerNavigator({
-    DrawerHomeRoute: {
+    [ROUTES.DrawerHomeRoute]: {
       screen: Homescreen,
       navigationOptions: {
         drawerLabel: 'Home',
-        drawerIcon: ({ tintColor }) => (
+        drawerIcon: (
           <DrawerIcon
-            name='ios-people'
-            type='ionicon'
-            size={28}
-            color={tintColor}
+            iconName={'ios-people'}
+            iconType={'ionicon'}
           />
         ),
       }
     },
-    DrawerBoardExamRoute: {
-      screen: BoardExamStack,
+  [ROUTES.DrawerBoardExamRoute]: {
+      screen: BoardExamScreen,
       navigationOptions: {
         drawerLabel: 'Board Exam',
-        drawerIcon: ({ tintColor }) => (
+        drawerIcon: (
           <DrawerIcon
-            name='ios-clipboard'
-            type='ionicon'
-            size={28}
-            color={tintColor}
+            iconName={'ios-clipboard'}
+            iconType={'ionicon'}
           />
         ),
       }
     },
-    DrawerPaymentRoute: {
+    [ROUTES.DrawerPaymentRoute]: {
       screen: PaymentStack,
       navigationOptions: {
         drawerLabel: 'Payment',
-        drawerIcon: ({ tintColor }) => (
+        drawerIcon: (
           <DrawerIcon
-            name='ios-cash'
-            type='ionicon'
-            containerStyle={tintColor == 'white'? STYLES.glow : null}
-            size={28}
-            color={tintColor}
+            iconName={'ios-cash'}
+            iconType={'ionicon'}
           />
         ),
       }
     },
-    DrawerAboutRoute: {
+    [ROUTES.DrawerAboutRoute]: {
       screen: AboutStack,
       navigationOptions: {
         drawerLabel: 'About',
         drawerIcon: ({ tintColor }) => (
           <DrawerIcon
-            name='ios-information-circle'
-            type='ionicon'
-            size={28}
-            color={tintColor}
+            iconName={'ios-information-circle'}
+            iconType={'ionicon'}
           />
         ),
       }
     },
-    DrawerSettingsRoute: {
+    [ROUTES.DrawerSettingsRoute]: {
       screen: MoreStack,
       navigationOptions: {
         drawerLabel: 'Settings',
         drawerIcon: ({ tintColor }) => (
           <DrawerIcon
-            name='ios-settings'
-            type='ionicon'
-            size={28}
-            color={tintColor}
+            iconName={'ios-settings'}
+            iconType={'ionicon'}
           />
         ),
       }
@@ -153,4 +141,4 @@ export class DrawerStackContainer extends React.Component {
       </Fragment>
     );
   }
-}
+};

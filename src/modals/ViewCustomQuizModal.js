@@ -106,19 +106,17 @@ class QuizDetails extends React.PureComponent {
   _renderDate(){
     const { styles } = QuizDetails;
     const quiz = CustomQuiz.wrap(this.props.quiz);
-    const timestampCreated = quiz.timestampCreated || 0; 
+    const ts = quiz.timestampCreated || 0; 
 
-    const time = timestampCreated * 1000;
-    const date = new Date(time);
-
-    const options = { year: 'numeric', month: 'short', day: 'numeric' };
-    const dateString = date.toLocaleDateString('en-US', options);
+    const timeCreated  = moment(ts).format("LT");
+    const dateCreated  = moment(ts).format("MMM D ddd YYYY");
+    const dateRelative = moment(ts).fromNow();
 
     return(
       <Text style={styles.date}>
-        <Text style={styles.dateLabel}>Created: </Text>
-        <TimeAgo {...{time}}/>
-        <Text style={styles.dateString}>{` (${dateString})`}</Text>
+        <Text style={styles.dateLabel}>{'Created: '}</Text>
+        {dateRelative}
+        <Text style={styles.dateString}>{` (${dateCreated})`}</Text>
       </Text>
     );
   };

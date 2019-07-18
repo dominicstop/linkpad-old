@@ -1348,8 +1348,8 @@ export class StyledSwipableModal extends React.PureComponent {
   };
 
   openModal = async () => {
+    await this.modal.showModal();
     await setStateAsync(this, {mountContent: true});
-    this.modal.showModal();
   };
 
   //#region ------ events/handlers ------
@@ -1370,11 +1370,6 @@ export class StyledSwipableModal extends React.PureComponent {
     if(footerHeight == -1){
       this.setState({footerHeight: height});
     };
-  };
-
-  /** from _renderContent: scrolllview */
-  _handleOnEndReached = () => {
-    this.footer.show();
   };
 
   _handleOnModalHide = () => {
@@ -1455,18 +1450,18 @@ export class StyledSwipableModal extends React.PureComponent {
     };
 
     return(
-      <Animatable.View
-        style={{flex: 1}}
-        animation={'fadeInUp'}
-        duration={500}
-        useNativeDriver={true}
-      >
-        <Animated.View {...{style}}>
-          {(mountContent && childCount > 0) && 
-            React.cloneElement(children, scrollviewProps)
-          }
-        </Animated.View>
-      </Animatable.View>
+      (mountContent && childCount > 0) && (
+        <Animatable.View
+          style={{flex: 1}}
+          animation={'fadeInUp'}
+          duration={300}
+          useNativeDriver={true}
+        >
+          <Animated.View {...{style}}>
+            {React.cloneElement(children, scrollviewProps)}
+          </Animated.View>
+        </Animatable.View>
+      )
     );
   };
 
@@ -1478,7 +1473,7 @@ export class StyledSwipableModal extends React.PureComponent {
       <Animatable.View
         style={styles.footerWrapper}
         animation={'fadeInUp'}
-        duration={500}
+        duration={300}
         delay={300}
         useNativeDriver={true}
       >
@@ -1510,7 +1505,7 @@ export class StyledSwipableModal extends React.PureComponent {
       <SwipableModal 
         ref={r => this.modal = r}
         onModalShow={props.onModalShow}
-        onModalHide={props.onModalHide}
+        onModalHide={this._handleOnModalHide}
         snapPoints ={props.snapPoints }
         {...props}
       >

@@ -27,9 +27,6 @@ import { ModuleStore } from '../functions/ModuleStore';
 import { Surface, Card } from 'react-native-paper';
 import { TransitionAB } from '../components/Transitioner';
 
-//last item to animate in the list
-const LAST_INDEX = 5;
-
 // shown when no exams have been created yet
 class EmptyCard extends React.PureComponent {
   static styles = StyleSheet.create({
@@ -167,17 +164,6 @@ class ExamHeader extends React.PureComponent {
 
   _renderDescription(){
     const { styles } = ExamHeader;
-
-    const title = (global.usePlaceholder
-      ? 'Lorum Ipsum'
-      : 'Custom Quiz'
-    );
-
-    const description = (global.usePlaceholder
-      ? 'Duis mollis, est non commodo luctus, nisi erat porttitor ligula, eget lacinia odio sem.'
-      : 'Combine different modules and subjects together to create a unique set of questions.'
-    ); 
-
     return(
       <View style={{flexDirection: 'row'}}>
         <Animatable.Image
@@ -190,8 +176,12 @@ class ExamHeader extends React.PureComponent {
           useNativeDriver={true}
         />
         <View style={styles.headerTextContainer}>
-          <Text style={styles.headerTitle   }>{title}</Text>
-          <Text style={styles.headerSubtitle}>{description}</Text>
+          <Text style={styles.headerTitle}>
+            {'Custom Quiz'}
+          </Text>
+          <Text style={styles.headerSubtitle}>
+            {'Combine different modules and subjects together to create a unique set of questions.'}
+          </Text>
         </View>
       </View>
     );
@@ -199,7 +189,6 @@ class ExamHeader extends React.PureComponent {
 
   render() {
     const { styles } = ExamHeader;
-  
 
     return(
       <View style={styles.container}>
@@ -303,7 +292,7 @@ class SortOptionItem extends React.PureComponent {
 
 class SortOptions extends React.PureComponent {
   static propTypes = {
-    activeSort     : PropTypes.number,
+    sortBy     : PropTypes.number,
     sortEnum       : PropTypes.object,
     sortKeyValueMap: PropTypes.object,
     //events/callbacks
@@ -363,14 +352,14 @@ class SortOptions extends React.PureComponent {
 
   _renderOptions(){
     const { styles } = SortOptions;
-    const { activeSort, sortEnum, sortKeyValueMap, isAsc, onPressOption, } = this.props;
+    const { sortBy, sortEnum, sortKeyValueMap, isAsc, onPressOption, } = this.props;
     const keyValue = Object.entries(sortEnum);
 
     return(
       <View style={styles.optionContainer}>
         {keyValue.map(([key, value], index) => {
           const { title, desc } = (sortKeyValueMap[value] || {});
-          const isSelected = (activeSort === value);
+          const isSelected = (sortBy === value);
           return(
             <SortOptionItem 
               key={`${key}-${value}`}
@@ -393,7 +382,7 @@ class SortOptions extends React.PureComponent {
   };
 };
 
-class ExamStickyHeader extends React.PureComponent {
+class SortHeader extends React.PureComponent {
   static styles = StyleSheet.create({
     container: {
       marginBottom: 12,
@@ -544,7 +533,7 @@ class ExamStickyHeader extends React.PureComponent {
   };
 
   _renderTitle(){
-    const { styles } = ExamStickyHeader;
+    const { styles } = SortHeader;
     const { quizes } = this.props;
     const count = quizes.length;
 
@@ -596,7 +585,7 @@ class ExamStickyHeader extends React.PureComponent {
 
   _renderSortPill(){
     const { SORT_BY } = ExamsScreen;
-    const { styles } = ExamStickyHeader;
+    const { styles } = SortHeader;
     const { sortBy, isAsc } = this.props;
 
     const sortStrings = Object.keys(SORT_BY);
@@ -636,21 +625,13 @@ class ExamStickyHeader extends React.PureComponent {
   };
   
   render(){
-    const { styles } = ExamStickyHeader;
+    const { styles } = SortHeader;
     const { SORT_BY } = ExamsScreen;
-    const { sortBy: activeSort, isAsc } = this.props;
-
-    const sortKeyValueMap = {
-      [SORT_BY.title     ]: {title: 'Quiz Title'     , desc: 'Sort by title alphabetically'   },
-      [SORT_BY.created   ]: {title: 'Date Created'   , desc: 'Sort by quiz creation date'     },
-      [SORT_BY.last_taken]: {title: 'Date Last Taken', desc: 'Sort by date last taken'        },
-      [SORT_BY.questions ]: {title: 'Question Count' , desc: 'Sort by the number of questions'},
-      [SORT_BY.subjects  ]: {title: 'Subject Count'  , desc: 'Sort by the number of subjects' },
-    };
+    const { sortBy, isAsc, sortKeyValueMap } = this.props;
 
     return(
       <Animatable.View 
-        style={styles.container}
+        style={[styles.container]}
         ref={r => this.container = r}
         useNativeDriver={true}
       >
@@ -666,7 +647,7 @@ class ExamStickyHeader extends React.PureComponent {
             sortEnum={SORT_BY}
             onPressOption={this._handleOnPressOption}
             onPressCancel={this._handleOnPressCancel}
-            {...{isAsc, activeSort, sortKeyValueMap}}
+            {...{isAsc, sortBy, sortKeyValueMap}}
           />
         </TransitionAB>
       </Animatable.View>
@@ -762,9 +743,9 @@ class CustomQuizItem extends React.PureComponent {
 
   componentDidMount(){
     const { EVENTS } = ExamsScreen;
-    const { emitter, index } = this.props;
+    const { emitter, index, lastIndex } = this.props;
 
-    if(emitter && (index < LAST_INDEX)){
+    if(emitter && (index <= lastIndex)){
       emitter.addListener(
         EVENTS.animateOutItems,
         this._handleEventOnAnimateOut
@@ -906,7 +887,7 @@ class CustomQuizItem extends React.PureComponent {
   render(){
     const { styles } = CustomQuizItem;
 
-    const {index, quiz: _quiz, results } = this.props;
+    const {index, quiz: _quiz, ...props } = this.props;
     const quiz = CustomQuiz.wrap(_quiz);
 
     const animation = Platform.select({
@@ -918,7 +899,7 @@ class CustomQuizItem extends React.PureComponent {
       <AnimatedListItem
         innerRef={r => this.container = r}
         duration={300}
-        last={LAST_INDEX}
+        last={props.lastIndex}
         {...{index, animation}}
       >
         <Surface  style={styles.container}>
@@ -1012,11 +993,11 @@ export class ExamsScreen extends React.Component {
     const results = CustomQuizResultItem.wrapArray(_results);
 
     const data = this.combineQuizesAndResults({quizes, results});
-
+    
     const hasQuiz = (quizes.length > 0);
-    this.setState({
+    hasQuiz && this.setState({
       //fitst item is the sticky header
-      data: [(hasQuiz && null), ...data], 
+      data: [null, ...data], 
       //pass down to state
       quizes, results
     });
@@ -1054,6 +1035,7 @@ export class ExamsScreen extends React.Component {
 
     //show sort button
     this.stickyHeader.show(true);
+
     
     const hasQuiz = (quizes.length > 0);
     this.setState({
@@ -1074,7 +1056,7 @@ export class ExamsScreen extends React.Component {
     );
   };
 
-  _handleOnPressSort = async () => {
+  _handleOnPressSort = () => {
     const nextSort = this.getNextSort();
     this.sortItems(nextSort);
   };
@@ -1183,6 +1165,28 @@ export class ExamsScreen extends React.Component {
     );
   };
 
+  _renderStickyHeader = () => {
+    const { SORT_BY } = ExamsScreen;
+    const { quizes, sortBy, isAsc } = this.state;
+
+    const sortKeyValueMap = {
+      [SORT_BY.title     ]: {title: 'Quiz Title'     , desc: 'Sort by title alphabetically'   },
+      [SORT_BY.created   ]: {title: 'Date Created'   , desc: 'Sort by quiz creation date'     },
+      [SORT_BY.last_taken]: {title: 'Date Last Taken', desc: 'Sort by date last taken'        },
+      [SORT_BY.questions ]: {title: 'Question Count' , desc: 'Sort by the number of questions'},
+      [SORT_BY.subjects  ]: {title: 'Subject Count'  , desc: 'Sort by the number of subjects' },
+    };
+
+    return(
+      <SortHeader
+        ref={r => this.stickyHeader = r}
+        onPressSort={this._handleOnPressSort}
+        onPressOption={this._handleOnPressOption}
+        {...{quizes, sortBy, isAsc, sortKeyValueMap}}  
+      />
+    );
+  };
+
   _renderFooter(){
     return(
       <IconFooter hide={false}/>
@@ -1196,26 +1200,22 @@ export class ExamsScreen extends React.Component {
   };
 
   _renderItem = ({item, index: _index}) => {
-    const { quizes, sortBy, isAsc } = this.state;
-
     const { quiz, results } = (item || {});
-    const isLast = (_index == LAST_INDEX)
+    //last item to animate in/out the list
+    const lastIndex = 5;
+    
     const index  = (_index - 1);
+    const isLast = (index == lastIndex);
 
-    return (item == null)? (
-      <ExamStickyHeader
-        ref={r => this.stickyHeader = r}
-        onPressSort={this._handleOnPressSort}
-        onPressOption={this._handleOnPressOption}
-        {...{quizes, sortBy, isAsc}}  
-      />
+    return ((!item && index == -1)? (
+      this._renderStickyHeader()
     ):(
       <CustomQuizItem 
         onPressQuiz={this._handleOnPressQuiz}
         emitter={this.emitter}
-        {...{index, quiz, results, isLast}}
+        {...{index, quiz, results, isLast, lastIndex}}
       />
-    );
+    ));
   };
 
   render(){

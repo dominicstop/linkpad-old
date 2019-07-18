@@ -15,7 +15,7 @@ import { UserStore, UserModel } from '../functions/UserStore'        ;
 
 import { ROUTES, FONT_NAMES } from '../Constants';
 
-import PreboardExamStore from '../functions/PreboardExamStore';
+import { PreboardExamstore } from '../functions/PreboardExamStore';
 import { FlatList } from 'react-native-gesture-handler';
 import { ModulesLastUpdated, ResourcesLastUpdated , TipsLastUpdated} from '../functions/MiscStore';
 
@@ -91,7 +91,7 @@ export default class AuthLoadingScreen extends React.Component {
         ModuleStore      .get(),
         TipsStore        .get(),
         ResourcesStore   .get(),
-        PreboardExamStore.get(),
+        PreboardExamstore.read(),
       ]);
       await Promise.all([
         //load lastupdated from store

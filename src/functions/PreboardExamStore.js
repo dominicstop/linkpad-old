@@ -9,7 +9,7 @@ let _preboardData = null;
 const BASE_DIR   = FileSystem.documentDirectory;
 const FOLDER_KEY = 'preboard_images';
 
-//response structure
+//raw response
 const response = {
   active : false,
   success: false,
