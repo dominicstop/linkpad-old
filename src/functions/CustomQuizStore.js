@@ -5,7 +5,8 @@ import store from 'react-native-simple-store';
 
 import { shuffleArray, getTimestamp, replacePropertiesWithNull } from './Utils';
 import { QuizQuestion } from '../models/Quiz';
-import { SubjectItem, IMAGE_TYPE } from '../models/ModuleModels';
+import { SubjectItem } from '../models/ModuleModels';
+import { IMAGE_TYPE } from '../Constants';
 
 let _quizes = [];
 

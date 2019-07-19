@@ -4,7 +4,8 @@ import store from 'react-native-simple-store';
 import _ from 'lodash';
 
 import { createFolderIfDoesntExist, isBase64Image , fetchWithProgress} from './Utils';
-import { ModuleItemModel, SubjectItem, QuestionItem, IMAGE_TYPE } from '../models/ModuleModels';
+import { ModuleItemModel, SubjectItem, QuestionItem } from '../models/ModuleModels';
+import { IMAGE_TYPE } from '../Constants';
 
 //save a copy of modules
 let _modules = null;

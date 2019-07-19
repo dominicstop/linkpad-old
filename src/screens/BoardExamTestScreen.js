@@ -25,7 +25,7 @@ import { CustomQuiz, CustomQuizStore } from '../functions/CustomQuizStore';
 import * as Animatable from 'react-native-animatable';
 import { createStackNavigator } from 'react-navigation';
 import { Icon } from 'react-native-elements';
-import { PreboardExamItem } from '../functions/PreboardExamStore';
+import { PreboardExamItem, PreboardExamQuestion } from '../functions/PreboardExamStore';
 
 
 //custom header left component
@@ -249,14 +249,15 @@ let References = {
 
 export class BoardExamTestScreen extends React.Component {
   static navigationOptions = ({ navigation }) => {
-    const exam = PreboardExamItem.wrap(
-      navigation.getParam('ExamScreen' , null)
+    const { NAV_PARAMS } = BoardExamTestScreen;
+    const questions = PreboardExamQuestion.wrapArray(
+      navigation.getParam(NAV_PARAMS.questions , null)
     );
 
     const headerTitle = (
       <HeaderTitle
         ref={r => References.HeaderTitle = r}
-        total={0}
+        total={questions.length}
       />
     );
 
@@ -295,30 +296,19 @@ export class BoardExamTestScreen extends React.Component {
     },
 
   });
-  
-  static mapQuestionIDtoIndex(questions){
-    const questionItems = QuizQuestion.wrapArray(questions);
 
-    return questionItems.map((question, index) => {
-      const { indexID_module, indexID_subject, indexID_question } = question;
-      return ({
-        index, 
-        questionID: `${indexID_module}-${indexID_subject}-${indexID_question}`,
-      });
-    });
+  static NAV_PARAMS = {
+    exam    : 'exam'     , 
+    questions: 'questions',
   };
   
   constructor(props){
     super(props)
-    const { mapQuestionIDtoIndex } = BoardExamTestScreen;
+    const { NAV_PARAMS } = BoardExamTestScreen;
     const { navigation } = props;
 
     //get data from previous screen: ExamScreen
-    const quiz = navigation.getParam('quiz' , {});
-    //wrap quiz to make sure all properties exists
-    this.quiz = CustomQuiz.wrap(quiz);
-    //map each question's index to it's corresponding question id
-    this.indexIDMap = mapQuestionIDtoIndex(quiz.questions);
+    const quiz = navigation.getParam(NAV_PARAMS.questions);
 
     this.didShowAlert = false;
     this.durations = [];
@@ -571,7 +561,6 @@ export class BoardExamTestScreen extends React.Component {
   render(){  
     return (
       <ViewWithBlurredHeader hasTabBar={false}>
-        {this._renderContent()}
       </ViewWithBlurredHeader>
     );
   };

@@ -3,6 +3,7 @@ import store from 'react-native-simple-store';
 import _ from 'lodash';
 
 import { fetchWithProgress, replacePropertiesWithNull, createFolderIfDoesntExist, isBase64Image, shuffleArray } from './Utils';
+import { IMAGE_TYPE } from '../Constants';
 
 let _preboardData = null;
 
@@ -55,6 +56,12 @@ function _processPreboard(data = {}){
           indexid_exam: exam.indexid,
           questions: (module.questions || []).map((question, indexQuestion) => {
             const questionID = `${exam.indexid}-${module.indexid}-${indexQuestion}`;
+
+            //if has photouri or photofilename, assume it's base64
+            const imageType = ((question.photouri || question.photofilename)
+              ? IMAGE_TYPE.BASE64 
+              : IMAGE_TYPE.NONE
+            );
             
             //extract choice strings from object array
             const choiceStrings = question.choices.map(
@@ -71,7 +78,8 @@ function _processPreboard(data = {}){
             };
     
             return {
-              ...question, questionID, examModuleID,
+              //pass down properties
+              ...question, questionID, examModuleID, imageType,
               indexid_premodule: module.indexid,
               choiceItems: [
                 //create the correct choice
@@ -108,7 +116,10 @@ async function _saveBase64ToStorage(preboard = PreboardExam.structure){
     for (const exam of exams){
       for (const module of exam.exammodules) {
         for (const question of module.questions) {
-          const { photouri = '', photofilename = '' } = question;
+          const { photouri, photofilename, imageType } = question;
+          const hasImage = (photouri || photofilename || imageType != IMAGE_TYPE.NONE);
+          //skip if doesn't have an image
+          if(!hasImage) continue;
 
           //check if uri is image
           const isImage = isBase64Image(photouri);
@@ -122,7 +133,8 @@ async function _saveBase64ToStorage(preboard = PreboardExam.structure){
               //save the base64 image to the fs
               await FileSystem.writeAsStringAsync(img_uri, photouri);
               //update question uri
-              question.photouri = img_uri;
+              question.photouri  = img_uri;
+              question.imageType = IMAGE_TYPE.FS_URI;
 
             } else {
               //debug
@@ -132,7 +144,8 @@ async function _saveBase64ToStorage(preboard = PreboardExam.structure){
               };
 
               //replace with null if invalid uri
-              question.photouri = null;
+              question.photouri  = null;
+              question.imageType = IMAGE_TYPE.FAILED;
             };
 
           } catch(error){
@@ -142,7 +155,8 @@ async function _saveBase64ToStorage(preboard = PreboardExam.structure){
             console.log(error);
 
             //replace with null if cannot be saved to fs
-            question.photouri = null;
+            question.photouri  = null;
+            question.imageType = IMAGE_TYPE.FAILED;
           };
         };
       };
@@ -226,12 +240,15 @@ export class PreboardExamAnswer {
 
 export class PreboardExamQuestion {
   static structure = {
-    answer     : '',
-    choices    : [],
-    explanation: '',
-    question   : '',
+    answer       : '',
+    choices      : [],
+    explanation  : '',
+    question     : '',
+    photouri     : '',
+    photofilename: '',
     //added after processing
     choiceItems      : PreboardExamChoice.wrapArray([]), //contains both the answer and choices
+    imageType        : '', //Constants - IMAGE_TYPE enum
     indexid_exam     : -1, //passed down - which exam      this question belongs to
     indexid_premodule: -1, //passed down - which premodule this question belongs to
     questionID       : '', //passed down - unique id for use in lists and comparison
@@ -497,5 +514,27 @@ export class PreboardExamstore {
   static async delete(){
     _preboardData = null;
     await store.delete(PreboardExamstore.KEY);
+  };
+
+  /** get the base64Images from the question's URI's */
+  static async getImages(questionItems = [PreboardExamQuestion.structure]){
+    const questions = PreboardExamQuestion.wrap(questionItems);
+    const base64Images = {};
+
+    for(const question of quiz.questions){
+      const { imageType, photouri } = question;
+      
+      try {
+        if(imageType == IMAGE_TYPE.FS_URI){
+          const base64Image = await FileSystem.readAsStringAsync(photouri);
+          base64Images[photouri] = base64Image;
+        };
+      } catch(error){
+        console.log('Preboard: Unable to getImages');
+        console.log(error);
+      };
+    };
+
+    return { quiz, base64Images };
   };
 };

@@ -56,6 +56,13 @@ export const SCREENPROPS_KEYS = {
   setDrawerSwipe           : 'setDrawerSwipe'           ,
 };
 
+export const IMAGE_TYPE = {
+  'BASE64': 'BASE64',
+  'FS_URI': 'FS_URI',
+  'NONE'  : 'NONE'  ,
+  'FAILED': 'FAILED',
+};
+
 export const HEADER_HEIGHT = Header.HEIGHT + (
   isIphoneX()? getStatusBarHeight(false) : 0
 );
