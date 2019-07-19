@@ -574,8 +574,8 @@ class CustomQuizExamScreen extends React.Component {
 };
 
 const CustomQuizExamStack = createStackNavigator({
-    [ROUTES.CustomQuizExamRoute        ]: CustomQuizExamScreen,
-    [ROUTES.CustomQuizViewImageRoute   ]: ViewImageScreen, 
+    [ROUTES.CustomQuizExamRoute     ]: CustomQuizExamScreen,
+    [ROUTES.CustomQuizViewImageRoute]: ViewImageScreen, 
   }, {
     headerMode: 'float',
     headerTransitionPreset: 'uikit',

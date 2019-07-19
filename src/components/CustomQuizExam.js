@@ -440,7 +440,7 @@ class QuestionImage extends React.PureComponent {
       case LOAD_STATE.ERROR  : return this._loadError    ();
     };
   };
-}
+};
 
 /** Used in QuestionItem: shows the question text + image */
 class Question extends React.PureComponent {

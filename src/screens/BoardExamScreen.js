@@ -190,39 +190,36 @@ class BoardExamMainScreen extends React.Component {
     super(props);
     this.imageFooter = require('../../assets/icons/notes-pencil.png');    
     this.state = {
-      loading : LOAD_STATE.LOADING,
-      preboard: null,
+      loading   : LOAD_STATE.LOADING,
+      preboard  : null,
+      activeExam: null,
+      questions : [], 
     };
   };
 
   async componentDidMount(){
-    const preboard = await PreboardExamstore.fetchAndSave();
+    const preboard  = await PreboardExamstore.fetchAndSave();
+    const activeExam = preboard.exams.find(exam => 
+      (exam.indexid === preboard.examkey)
+    );
+
+    const questions = PreboardExam.createQuestionList(activeExam);
 
     this.setState({
-      preboard,
       loading: LOAD_STATE.SUCCESS,
+      preboard, questions, activeExam,
     });
-  };
-
-  getActiveExam(){
-    const { preboard: _preboard } = this.state;
-    const { examkey, exams } = PreboardExam.wrap(_preboard);
-    return exams.find(exam => 
-      (exam.indexid === examkey)
-    );
   };
 
   _handleOnPressTakePreboard = () => {
     const { NAV_PARAMS } = BoardExamTestScreen;
     const { navigation } = this.props;
+    const { activeExam, questions } = this.state;
     
-    const exam = this.getActiveExam();
-    const questions = PreboardExam.createQuestionList(exam);
-
     navigation && navigation.navigate(
       ROUTES.PreboardExamTestRoute, { 
-        [NAV_PARAMS.exam    ]: exam     , 
-        [NAV_PARAMS.questions]: questions, 
+        [NAV_PARAMS.exam    ] : activeExam, 
+        [NAV_PARAMS.questions]: questions , 
     });
   };
 
@@ -236,10 +233,7 @@ class BoardExamMainScreen extends React.Component {
 
   _renderActive(){
     const { styles } = BoardExamMainScreen;
-    const { preboard: _preboard } = this.state;
-    const preboard = PreboardExam.wrap(_preboard);
-
-    const {timelimit, ...exam} = this.getActiveExam();
+    const { questions, activeExam: {timelimit, ...exam} } = this.state;
 
     const formatInput  = 'YYYY-MM-DD';
     const formatOutput = 'ddd, MMMM D YYYY';
@@ -284,6 +278,14 @@ class BoardExamMainScreen extends React.Component {
             {timelimit? `${timelimit} ${plural('Hour', timelimit)}` : 'N/A'}
           </Text>
         </View>
+        <View style={styles.detailRow}>
+          <Text style={styles.detailLabel}>
+            {'Questions'}
+          </Text>
+          <Text style={styles.detail}>
+            {`${questions.length} ${plural('Item', questions.length)}`}
+          </Text>
+        </View>
       </View>
     );
 
@@ -300,7 +302,7 @@ class BoardExamMainScreen extends React.Component {
         />
         <View style={styles.footerTextContainer}>
           <Text style={styles.footerTitle}>
-            {'Preboard Exam Available'}
+            {'Preboard Available'}
           </Text>
           <Text style={styles.footerSubtile}>
             {"It looks like you haven't taken the exam yet, be sure to take it before the specified end date."}
@@ -332,7 +334,6 @@ class BoardExamMainScreen extends React.Component {
 
   _renderInactive(){
   };
-
 
   render(){
     const { loading, preboard: _preboard } = this.state;
