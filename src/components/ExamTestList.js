@@ -20,17 +20,17 @@ import { QuizAnswer , QuizQuestion, QUIZ_LABELS } from '../models/Quiz';
 import { CustomQuiz } from '../functions/CustomQuizStore';
 import { LOAD_STATE, FONT_STYLES } from '../Constants';
 import { BlurViewWrapper } from './StyledComponents';
+import { TestQuestion, TestAnswer, TestChoice } from '../models/TestModels';
 
 /** Used in Choices: shows a single choice item */
 class ChoiceItem extends React.PureComponent {
   static propTypes = {
-    choice        : PropTypes.string, 
-    answer        : PropTypes.string, 
-    index         : PropTypes.number,
-    isLast        : PropTypes.bool,
-    selected      : PropTypes.string,
-    selectedInex  : PropTypes.number,
-    onPressChoice : PropTypes.func,
+    choice       : PropTypes.object, 
+    index        : PropTypes.number,
+    isLast       : PropTypes.bool,
+    selected     : PropTypes.string,
+    selectedIndex: PropTypes.number,
+    onPressChoice: PropTypes.func,
   };
 
   static styles = StyleSheet.create({
@@ -67,17 +67,12 @@ class ChoiceItem extends React.PureComponent {
   ];
 
   _handleOnPress = () => {
-    const { onPressChoice, choice, answer, selected, index } = this.props;
-    const isCorrect = choice === answer;
+    const { onPressChoice, choice, selected, index } = this.props;
 
     //call callback with params
     onPressChoice && onPressChoice({
-      choice, answer, isCorrect, selected, index
+      choice, selected, index
     });
-  };
-
-  _handleOnLongPress = () => {
-
   };
 
   _renderChoiceText(){
@@ -85,12 +80,12 @@ class ChoiceItem extends React.PureComponent {
     const { index, selectedIndex, choice } = this.props;
 
     const answerKey  = getLetter(index);
-    const isSelected = index == selectedIndex;
+    const isSelected = (index == selectedIndex);
 
     return(
       <Text style={isSelected? styles.choiceTextSelected : styles.choiceText}>
         <Text style={styles.keyText}>{answerKey}. </Text>
-        {choice || 'N/A'}
+        {choice.value || 'N/A'}
       </Text>
     );
   };
@@ -120,8 +115,7 @@ class ChoiceItem extends React.PureComponent {
   render(){
     const { styles, colors } = ChoiceItem;
     const { index, selectedIndex } = this.props;
-
-    const isSelected = index == selectedIndex;
+    const isSelected = (index == selectedIndex);
 
     const containerStyle = {
       //diff bg color based on index
@@ -148,10 +142,10 @@ class ChoiceItem extends React.PureComponent {
 /** Used in QuestionItem: shows a list of choices */
 class Choices extends React.PureComponent {
   static propTypes = {
-    choices       : PropTypes.array ,
-    answer        : PropTypes.string,
-    matchedAnswer : PropTypes.object,
-    onPressChoice : PropTypes.func  ,
+    index        : PropTypes.number,
+    answers      : PropTypes.array ,
+    quesion      : PropTypes.object,
+    onPressChoice: PropTypes.func  ,
   };
 
   static styles =  StyleSheet.create({
@@ -175,60 +169,56 @@ class Choices extends React.PureComponent {
 
   constructor(props){
     super(props);
+    const question = TestQuestion.wrap(props.question);
+    const choices  = question.choiceItems || [];
 
-    const { choices, answer } = props;
-    //extract choices nested inside object
-    const extracted = (choices || []).map(choice => choice.value);
-    //filter out empty string
-    const filtered = (extracted || []).filter(choice => !isEmpty(choice));
+    const filtered = choices.filter(choice => choice.value);
+    const shuffled = shuffleArray(filtered);
 
-    //combine ans/choices then random order
-    const combined = [answer, ...filtered];
-    const shuffled = shuffleArray(combined);
+    const matchAnswer = props.answers[props.index];
+    const hasMatch    = (matchAnswer != undefined);
+    const answer      = TestAnswer.wrap(matchAnswer);
 
-    //used as initial value  for selected just in case this view unmounts
-    const matchedAnswer = QuizAnswer.wrap(props.matchedAnswer);
-    //set selected index if there's a matched answer otherwise -1 if none
-    const selectedIndex = (props.matchedAnswer != undefined
-      ? shuffled.findIndex(choice => choice == matchedAnswer.userAnswer) 
-      : -1
-    );
-  
+    const selectedIndex = (!hasMatch? -1 : shuffled.findIndex(choice => 
+      (choice.choiceID === answer.answerID) 
+    ));
+
+    console.log(`selectedIndex: ${selectedIndex}`);
+    
     this.state = {
       choices : shuffled,
-      selected: matchedAnswer.userAnswer || null,
+      selected: null,
       selectedIndex,
     };
   };
 
-  _handleOnPressChoice = ({choice, answer, isCorrect, index}) => {
+  _handleOnPressChoice = ({index, choice, selected}) => {
     const { onPressChoice } = this.props;
+    const { selected: prevSelected } = this.state;
 
     //store prev selected and update selected
-    const prevSelected = this.state.selected;
     this.setState({selected: choice, selectedIndex: index});
 
     //pass params to callback prop
     onPressChoice && onPressChoice({
       selectedIndex: index,
       //pass down
-      prevSelected, choice, answer, isCorrect
+      prevSelected, choice
     });
   };
 
   _renderChoices(){
-    const { answer } = this.props;
-    const { selected, selectedIndex, choices } = this.state;
+    const { selected, selectedIndex, choices: _choices } = this.state;
+    const choices = TestChoice.wrapArray(_choices);
 
-    return (choices || []).map((choice, index) => {
-      //component must have unique key
-      const key = `${index}-${answer}-${choice}`;
+    return choices.map((choice, index) => {
       const isLast = (index == (choices.length - 1));
 
       return(
         <ChoiceItem
+          key={choice.choiceID}
           onPressChoice={this._handleOnPressChoice}
-          {...{choice, key, index, answer, isLast, selected, selectedIndex}}
+          {...{index, choice, isLast, selected, selectedIndex}}
         />
       );
     });
@@ -275,7 +265,7 @@ class Choices extends React.PureComponent {
       );
     };
   };
-}
+};
 
 /** Used in Question: shows the quesion's image */
 class QuestionImage extends React.PureComponent {
@@ -445,10 +435,7 @@ class QuestionImage extends React.PureComponent {
 /** Used in QuestionItem: shows the question text + image */
 class Question extends React.PureComponent {
   static propTypes = {
-    question      : PropTypes.string,
-    index         : PropTypes.number,
-    photofilename : PropTypes.string,
-    photouri      : PropTypes.string,
+    question: PropTypes.object,
     //events
     onPressImage: PropTypes.func,
     onLongPress : PropTypes.func,
@@ -511,7 +498,8 @@ class Question extends React.PureComponent {
 
   _renderQuestion(){
     const { styles } = Question;
-    const { question, index } = this.props;
+    const { index, question: _question } = this.props;
+    const question = TestQuestion.wrap(_question);
 
     return(
       <Fragment>
@@ -521,7 +509,7 @@ class Question extends React.PureComponent {
           suppressHighlighting={true}
         >
           <Text style={styles.number}>{index + 1}. </Text>
-          {question || '( No question to display )'}
+          {question.question || '( No question to display )'}
         </Text>
       </Fragment>
     );
@@ -552,16 +540,16 @@ class Question extends React.PureComponent {
         {...PlatformProps}
       >
         {this._renderQuestion()}
-        <QuestionImage 
+        {false && <QuestionImage 
           onPressImage={this._handleOnPressImage}
           onLongPressImage={this._handleOnLongPress}
           {...{photofilename, photouri, base64Images}}
-        />
+        />}
         <View style={styles.spacer}/>
       </ScrollView>
     );
   };
-}
+};
 
 class Option extends React.PureComponent {
   static styles = StyleSheet.create({
@@ -647,7 +635,7 @@ class Option extends React.PureComponent {
       </TouchableOpacity>
     );
   };
-}
+};
 
 class QuestionOverlay extends React.PureComponent {
   static styles = StyleSheet.create({
@@ -839,9 +827,9 @@ class QuestionOverlay extends React.PureComponent {
       </TouchableWithoutFeedback>
     );
   };
-}
+};
 
-/** Used in PreboardExam: shows a card w/ question text + image */
+/** Used in ExamTestList: shows a card w/ question text + image */
 class QuestionItem extends React.PureComponent {
   static propTypes = {
     question      : PropTypes.object,
@@ -1008,30 +996,19 @@ class QuestionItem extends React.PureComponent {
 
   _renderContents(){
     const { styles } = QuestionItem;
-    const { index, onPressImage, base64Images } = this.props;
-
-    //wrap question object prop to prevent missing properties + vscode intellisense
-    const question = QuizQuestion.wrap(this.props.question);
-    //destruct/extract properties from question object
-    const { choices, answer, photofilename, photouri } = question;
-    //extract question text to variable
-    const questionText = question.question;
-
-    //used as initial value for choices when it's mounted
-    const matchedAnswer = this.getMatchedAnswer();
+    const { index, question, onPressImage, base64Images, answers } = this.props;
+    const { choicesHeight: bottomSpace } = this.state;
 
     return(
       <Fragment>
         <Question
-          question={questionText}
           onLongPress={this._handleOnLongPress}
-          bottomSpace={this.state.choicesHeight}
-          {...{index, photofilename, photouri, onPressImage, base64Images}}
+          {...{index, question, onPressImage, base64Images, bottomSpace}}
         />
         <Choices
           onPressChoice={this._handleOnPressChoice}
           onLayout={this._handleChoicesOnLayout}
-          {...{choices, answer, matchedAnswer}}
+          {...{index, question, answers}}
         />
       </Fragment>
     );
@@ -1045,7 +1022,7 @@ class QuestionItem extends React.PureComponent {
         <View style={styles.wrapper}>
           <View style={styles.container}>
             {this._renderContents()}
-            {this._renderOverlay()}
+            {this._renderOverlay ()}
           </View>
         </View>
       );
@@ -1056,11 +1033,11 @@ class QuestionItem extends React.PureComponent {
       );
     };
   };  
-}
+};
 
-export class PreboardExam extends React.Component {
+export class ExamTestList extends React.Component {
   static propTypes = {
-    quiz                   : PropTypes.object,
+    questions              : PropTypes.array ,
     base64Images           : PropTypes.object,
     onAnsweredAllQuestions : PropTypes.func  ,
     onNewAnswerSelected    : PropTypes.func  ,
@@ -1077,25 +1054,21 @@ export class PreboardExam extends React.Component {
     super(props);
 
     //store user answers
-    this.answers = QuizAnswer.wrapArray([]);
+    this.answers = TestAnswer.wrapArray([]);
 
     //wrap custom quiz to prevent missing properties
-    const custom_quiz = CustomQuiz.wrap(props.quiz);
-    const { questions } = custom_quiz;
-    const reversed = questions.reverse(); 
-
+    const questions = TestQuestion.wrapArray(props.questions || []);
     //assign questions as property
-    this.questions = [...reversed];
+    this.questions = [...questions.reverse()];    
 
     this.state = {
-      // the current questions to display
-      // initialize question list with first item from quiz
-      questionList: [this.questions.pop()],
+      //the current questions to display
+      questionList : [this.questions.pop()],
       scrollEnabled: true,
     };
   };
 
-  //---- getters -----
+  //#region ---- getters -----
   /** get a copy of the remaining questions */
   getQuestions = () =>  {
     return (_.cloneDeep(this.questions));
@@ -1116,8 +1089,9 @@ export class PreboardExam extends React.Component {
   getCarouselRef = () => {
     return this._carousel;
   };
+  //#endregion
 
-  //---- functions -----
+  //#region ---- functions -----
   /** gets a question and appends it to questionlist state*/
   async addQuestionToList(){
     const { questionList } = this.state;
@@ -1266,33 +1240,30 @@ export class PreboardExam extends React.Component {
       this.setState({scrollEnabled: true});
     };
   };
+  //#endregion
 
-  //----- render -----
-  _renderItem = ({item, index}) => {
-    const { onPressImage, quiz, base64Images } = this.props;
-
-    //wrap quiz and extract questions
-    const { questions } = CustomQuiz.wrap(quiz);
-    //check if last item to be rendered
-    const isLast = (index == questions.length - 1);
+  //#region ----- render -----
+  _renderItem = ({item: question, index}) => {
+    const { questions, onPressImage, base64Images } = this.props;
+    //check if last item to be shown
+    const isLast = (index == (questions || []).length - 1);
     
     return (
       <QuestionItem
-        question={item}
         onPressChoice={this._handleOnPressChoice}
         onPressSkip={this._handleOnPressSkip}
         onPressBookmark={this._handleOnPressBookmark}
         onOverlayShow={this._handleOnOverlayShow}
         onOverlayHide={this._handleOnOverlayHide}
         answers={this.answers}
-        {...{isLast, index, onPressImage, base64Images}}
+        {...{question, isLast, index, onPressImage, base64Images}}
       />
     );
   };
 
   render(){
-    const { styles } = PreboardExam;
-    const { scrollEnabled } = this.state;
+    const { styles } = ExamTestList;
+    const { scrollEnabled, questionList: data } = this.state;
     const { ...otherProps } = this.props;
 
     //get screen height/width
@@ -1337,16 +1308,16 @@ export class PreboardExam extends React.Component {
       <View style={styles.container}>
         <Carousel
           ref={r => this._carousel = r }
-          data={this.state.questionList}
           renderItem={this._renderItem}
           //scrollview props
           showsHorizontalScrollIndicator={true}
           bounces={this.state.scrollEnabled}
           lockScrollWhileSnapping={true}
           //pass down props
-          {...{scrollEnabled, ...carouseProps}}
+          {...{data, scrollEnabled, ...carouseProps}}
         />
       </View>
     );
   };
-}
+  //#endregion
+};

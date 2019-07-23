@@ -2,21 +2,21 @@ import React, { Fragment } from 'react';
 import { View, ScrollView, RefreshControl, Text, TouchableOpacity, Platform, Image, StyleSheet, Clipboard } from 'react-native';
 import PropTypes from 'prop-types';
 
-import   NavigationService      from '../NavigationService';
+import NavigationService      from '../NavigationService';
 import Constants, { HEADER_PROPS, STYLES, ROUTES, LOAD_STATE, FONT_STYLES, HEADER_HEIGHT } from '../Constants';
 
 import { PreboardExamListScreen } from './BoardExamListScreen';
-import { BoardExamTestStack, BoardExamTestScreen     } from './BoardExamTestScreen';
+import { ExamTestScreen } from './ExamTestScreen';
 
 import   LottieCircle    from '../components/LottieCircle';
 import { setStateAsync, plural } from '../functions/Utils';
 import { AndroidHeader } from '../components/AndroidHeader';
 import { CustomHeader  } from '../components/Header';
-import { ExamDetails   } from '../components/PreboardExam';
 
 import { ViewWithBlurredHeader, IconText, Card, AnimateInView } from '../components/Views';
 import { DrawerButton, PlatformTouchableIconButton } from '../components/Buttons';
-import { PreboardExamstore, PreboardExam } from '../functions/PreboardExamStore';
+import { PreboardExamStore } from '../functions/PreboardExamStore';
+import { PreboardExam, PreboardExamQuestion } from '../models/PreboardModel';
 
 import { Header, createStackNavigator } from 'react-navigation';
 import * as Animatable from 'react-native-animatable';
@@ -198,7 +198,8 @@ class BoardExamMainScreen extends React.Component {
   };
 
   async componentDidMount(){
-    const preboard  = await PreboardExamstore.fetchAndSave();
+    return
+    const preboard  = await PreboardExamStore.fetchAndSave();
     const activeExam = preboard.exams.find(exam => 
       (exam.indexid === preboard.examkey)
     );
@@ -212,7 +213,7 @@ class BoardExamMainScreen extends React.Component {
   };
 
   _handleOnPressTakePreboard = () => {
-    const { NAV_PARAMS } = BoardExamTestScreen;
+    const { NAV_PARAMS } = ExamTestScreen;
     const { navigation } = this.props;
     const { activeExam, questions } = this.state;
     
@@ -336,6 +337,7 @@ class BoardExamMainScreen extends React.Component {
   };
 
   render(){
+    return null;
     const { loading, preboard: _preboard } = this.state;
     const preboard = PreboardExam.wrap(_preboard);
     
@@ -364,9 +366,9 @@ class BoardExamMainScreen extends React.Component {
   };
 };
 
-const CustomQuizExamStack = createStackNavigator({
-    [ROUTES.PreboardExamRoute    ]: BoardExamMainScreen,
-    [ROUTES.PreboardExamTestRoute]: BoardExamTestScreen,
+const ExamTestStack = createStackNavigator({
+    //[ROUTES.PreboardExamRoute    ]: BoardExamMainScreen,
+    [ROUTES.PreboardExamTestRoute]: ExamTestScreen,
   }, {
     headerMode: 'float',
     headerTransitionPreset: 'uikit',
@@ -378,9 +380,9 @@ const CustomQuizExamStack = createStackNavigator({
   }
 );
 
-//container for the stacknav: CustomQuizExamStack
+//container for the stacknav: ExamTestStack
 export class BoardExamScreen extends React.PureComponent {
-  static router = CustomQuizExamStack.router;
+  static router = ExamTestStack.router;
 
   static navigationOptions = {
     header: null,
@@ -397,7 +399,7 @@ export class BoardExamScreen extends React.PureComponent {
 
   _renderContents(){
     return(
-      <CustomQuizExamStack
+      <ExamTestStack
         navigation={this.props.navigation}
         screenProps={{
           ...this.props.screenProps,

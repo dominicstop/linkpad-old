@@ -1,6 +1,6 @@
 import React from 'react';
 import * as Font from 'expo-font';
-import { StyleSheet, Text, View, ActivityIndicator, AsyncStorage, Dimensions, Alert, Image } from 'react-native';
+import { StyleSheet, Text, View, ActivityIndicator, AsyncStorage, Dimensions, Alert, Image, Clipboard } from 'react-native';
 import PropTypes from 'prop-types';
 
 import * as Animatable from 'react-native-animatable';
@@ -15,9 +15,12 @@ import { UserStore, UserModel } from '../functions/UserStore'        ;
 
 import { ROUTES, FONT_NAMES } from '../Constants';
 
-import { PreboardExamstore } from '../functions/PreboardExamStore';
+import { PreboardExamStore } from '../functions/PreboardExamStore';
 import { FlatList } from 'react-native-gesture-handler';
 import { ModulesLastUpdated, ResourcesLastUpdated , TipsLastUpdated} from '../functions/MiscStore';
+import { TestQuestion, EXAM_TYPE } from '../models/TestModels';
+import { PreboardExam } from '../models/PreboardModel';
+import { ExamTestScreen } from './ExamTestScreen';
 
 Animatable.initializeRegistryWithDefinitions({
   zoomInTransition: {
@@ -50,12 +53,33 @@ export default class AuthLoadingScreen extends React.Component {
       //load modules and tips if logged in
       if(isLoggedIn) await this._loadData();
 
+      //test
+      const { NAV_PARAMS } = ExamTestScreen;
+      const preboard = await PreboardExamStore.read();
+      const pb = PreboardExam.wrap(preboard);
+      const exam = pb.exams[pb.examkey];
+      const questions_pb = PreboardExam.createQuestionList(exam);
+      const questions_test = TestQuestion.createFromPreboardQuestions(questions_pb);
+
+      Clipboard.setString(JSON.stringify({
+        preboard        : preboard,
+        preboard_wrapped: pb      ,
+        exam, questions_pb, questions_test
+      }));
+
+
       this.animateOut();
       navigation.navigate(isLoggedIn
-        //? ROUTES.TesterRoute//
-        //: ROUTES.TesterRoute//
-        ? ROUTES.AppRoute 
-        : ROUTES.AuthRoute
+        ? ROUTES.PreboardExamTestRoute
+        : ROUTES.PreboardExamTestRoute,
+        //? ROUTES.TesterRoute
+        //: ROUTES.TesterRoute
+        //? ROUTES.AppRoute 
+        //: ROUTES.AuthRoute
+        { 
+          [NAV_PARAMS.questions]: questions_test    ,
+          [NAV_PARAMS.examType ]: EXAM_TYPE.preboard,
+        }
       );
 
     } catch(error) {
@@ -91,7 +115,7 @@ export default class AuthLoadingScreen extends React.Component {
         ModuleStore      .get(),
         TipsStore        .get(),
         ResourcesStore   .get(),
-        PreboardExamstore.read(),
+        PreboardExamStore.read(),
       ]);
       await Promise.all([
         //load lastupdated from store

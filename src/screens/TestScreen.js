@@ -34,6 +34,6 @@ const { interpolate, Value, timing, concat } = Animated;
 export class TestScreen extends React.Component {
 
   render(){
-
+    return null
   };
 };

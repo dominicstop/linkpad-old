@@ -2,8 +2,9 @@ import * as FileSystem from 'expo-file-system';
 import store from 'react-native-simple-store';
 import _ from 'lodash';
 
-import { fetchWithProgress, replacePropertiesWithNull, createFolderIfDoesntExist, isBase64Image, shuffleArray } from './Utils';
+import { fetchWithProgress, createFolderIfDoesntExist, isBase64Image } from './Utils';
 import { IMAGE_TYPE } from '../Constants';
+import { PreboardExam, PreboardExamChoice, PreboardExamQuestion } from '../models/PreboardModel';
 
 let _preboardData = null;
 
@@ -172,203 +173,7 @@ async function _saveBase64ToStorage(preboard = PreboardExam.structure){
   };
 };
 
-export class PreboardExamChoice {
-  static structure = {
-    value: '',
-    //added afer processing
-    choiceID         : -1   , //unique id for use in lists and comparison (in case the choices are falsy i.e null/undef etc.) or have the same exact string
-    isAnswer         : false, //is the correct answer (choices and answers are merged together, or in cases where there are mult. correct answers)
-    indexid_exam     : -1   , //passed down - which exam      this choice belongs to    
-    indexid_question : -1   , //passed down - which question  this choice belongs to
-    indexid_premodule: -1   , //passed down - which premodule this choice belongs to
-    questionID       : ''   , //passed down - used for reconciling to question when they are separated
-    examModuleID     : ''   , //passed down - used for reconciling to exam     when they are separated
-  };
-
-  static wrap(data = PreboardExamChoice.structure){
-    return {
-      //assign default properties w/ default values (so that vscode can infer types)
-      ...PreboardExamChoice.structure,
-      //overwrite all default values and replace w/ null (for assigning default values with ||)
-      ...replacePropertiesWithNull(PreboardExamChoice.structure),
-      //combine with obj from param
-      ...(data || {}),
-    };
-  };
-
-  static wrapArray(items = [PreboardExamChoice.structure]){
-    return items.map((item) => 
-      PreboardExamChoice.wrap(item)
-    );
-  };
-};
-
-export class PreboardExamAnswer {
-  static structure = {
-    answer   : PreboardExamChoice.structure, //the selected answer
-    isCorrect: false, //true when matches the correct answer
-    timestamp: -1   , //timestamp of when the answer was made
-    answerID : -1   , //derived from choiceID
-  };
-
-  static wrap(data = PreboardExamAnswer.structure){
-    return {
-      //assign default properties w/ default values (so that vscode can infer types)
-      ...PreboardExamAnswer.structure,
-      //overwrite all default values and replace w/ null (for assigning default values with ||)
-      ...replacePropertiesWithNull(PreboardExamAnswer.structure),
-      //combine with obj from param
-      ...(data || {}),
-    };
-  };
-
-  static wrapArray(items = [PreboardExamAnswer.structure]){
-    return items.map((item) => 
-      PreboardExamAnswer.wrap(item)
-    );
-  };
-
-  /** create an answer */
-  static create(choice = PreboardExamChoice.structure, isCorrect = false){
-    return PreboardExamAnswer.wrap({
-      choice, isCorrect,
-      timestamp: Date.now(),
-      answerID : choice.choiceID,
-    });
-  };
-};
-
-export class PreboardExamQuestion {
-  static structure = {
-    answer       : '',
-    choices      : [],
-    explanation  : '',
-    question     : '',
-    photouri     : '',
-    photofilename: '',
-    //added after processing
-    choiceItems      : PreboardExamChoice.wrapArray([]), //contains both the answer and choices
-    imageType        : '', //Constants - IMAGE_TYPE enum
-    indexid_exam     : -1, //passed down - which exam      this question belongs to
-    indexid_premodule: -1, //passed down - which premodule this question belongs to
-    questionID       : '', //passed down - unique id for use in lists and comparison
-    examModuleID     : '', //passed down - used for reconciling to exam
-  };
-
-  static wrap(data = PreboardExamQuestion.structure){
-    return {
-      //assign default properties w/ default values (so that vscode can infer types)
-      ...PreboardExamQuestion.structure,
-      //overwrite all default values and replace w/ null (for assigning default values with ||)
-      ...replacePropertiesWithNull(PreboardExamQuestion.structure),
-      //combine with obj from param
-      ...(data || {}),
-    };
-  };
-
-  static wrapArray(items = [PreboardExamQuestion.structure]){
-    return items.map((item) => 
-      PreboardExamQuestion.wrap(item)
-    );
-  };
-};
-
-export class PreboardExamModule {
-  static structure = {
-    indexid      : -1, 
-    premodulename: '',
-    description  : '',
-    questions    : PreboardExamQuestion.wrapArray([]),
-    //added after processing
-    indexid_exam: '', //passed down - which exam this module belongs to
-    examModuleID: '', //unique id for use in list
-  };
-
-  static wrap(data = PreboardExamModule.structure){
-    return {
-      //assign default properties w/ default values (so that vscode can infer types)
-      ...PreboardExamModule.structure,
-      //overwrite all default values and replace w/ null (for assigning default values with ||)
-      ...replacePropertiesWithNull(PreboardExamModule.structure),
-      //combine with obj from param
-      ...(data || {}),
-    };
-  };
-
-  static wrapArray(items = [PreboardExamModule.structure]){
-    return items.map((item) => 
-      PreboardExamModule.wrap(item)
-    );
-  };
-};
-
-export class PreboardExamItem {
-  static structure = {
-    indexid    : '',
-    examname   : '',
-    description: '',
-    dateposted : '',
-    startdate  : '',
-    enddate    : '',
-    timelimit  : -1,
-    exammodules: PreboardExamModule.wrapArray([]),
-  };
-
-  static wrap(data = PreboardExamItem.structure){
-    return {
-      //assign default properties w/ default values (so that vscode can infer types)
-      ...PreboardExamItem.structure,
-      //overwrite all default values and replace w/ null (for assigning default values with ||)
-      ...replacePropertiesWithNull(PreboardExamItem.structure),
-      //combine with obj from param
-      ...(data || {}),
-    };
-  };
-
-  static wrapArray(items = [PreboardExamItem.structure]){
-    return items.map((item) => 
-      PreboardExamItem.wrap(item)
-    );
-  };
-};
-
-export class PreboardExam {
-  static structure = {
-    message: ''   ,
-    success: false,
-    active : false,
-    examkey: -1   , 
-    exams  : PreboardExamItem.wrapArray([]),
-  };
-
-  static wrap(data = PreboardExam.structure){
-    return {
-      //assign default properties w/ default values (so that vscode can infer types)
-      ...PreboardExam.structure,
-      //overwrite all default values and replace w/ null (for assigning default values with ||)
-      ...replacePropertiesWithNull(PreboardExam.structure),
-      //combine with obj from param
-      ...(data || {}),
-    };
-  };
-
-  static createQuestionList(examItem = PreboardExamItem.structure){
-    const exam = PreboardExamItem.wrap(examItem);
-    let questions = [];
-
-    //exract all of the questions from each module
-    for (const module of exam.exammodules) {
-      for (const question of module.questions) {
-        questions.push(question);        
-      };
-    };
-
-    //shuffle and return questions
-    return shuffleArray(questions);
-  };
-};
-
-export class PreboardExamstore {
+export class PreboardExamStore {
   static get KEY(){
     return 'preboard';
   };
@@ -389,7 +194,7 @@ export class PreboardExamstore {
   static async fetch(){
     try {
       //get preboard from server
-      let results = await fetch(PreboardExamstore.URL);
+      let results = await fetch(PreboardExamStore.URL);
       let json    = await results.json();
       //resolve
       return (json);
@@ -404,12 +209,12 @@ export class PreboardExamstore {
   static async fetchAndSave(){
     try {
       //pipeline i.e: a -> b -> c
-      const pb_raw       = await PreboardExamstore.fetch();
+      const pb_raw       = await PreboardExamStore.fetch();
       const pb_processed = _processPreboard(pb_raw);
       const pb_imgsSaved = await _saveBase64ToStorage(pb_processed);
 
       //write to storage
-      await store.save(PreboardExamstore.KEY, pb_imgsSaved);
+      await store.save(PreboardExamStore.KEY, pb_imgsSaved);
       //update cache var
       _preboardData = pb_imgsSaved;
       //resolve
@@ -425,7 +230,7 @@ export class PreboardExamstore {
 
   static async fetchAndSaveWithProgress(callback){
     try {
-      const { STATUS } = PreboardExamstore;
+      const { STATUS } = PreboardExamStore;
       const progressCallback = (loaded) => {
         //subtract 5% from the total percentage
         const percent = Math.round((loaded/105) * 100);
@@ -433,7 +238,7 @@ export class PreboardExamstore {
       };
 
       //fetch data from server
-      const response = await fetchWithProgress(PreboardExamstore.URL, progressCallback);
+      const response = await fetchWithProgress(PreboardExamStore.URL, progressCallback);
       const json = response.data;
 
       //makes sure all of the properties exists and has a default value
@@ -445,7 +250,7 @@ export class PreboardExamstore {
       
       callback && callback(97, STATUS.WRITING);
       //write to storage
-      await store.save(PreboardExamstore.KEY, json);
+      await store.save(PreboardExamStore.KEY, json);
 
       callback && callback(100, STATUS.FINISHED);    
       return json;
@@ -461,7 +266,7 @@ export class PreboardExamstore {
   static async read(){
     try {
       //read from store
-      const data = await store.get(PreboardExamstore.KEY);
+      const data = await store.get(PreboardExamStore.KEY);
 
       //update cache var
       _preboardData = data;
@@ -476,21 +281,21 @@ export class PreboardExamstore {
   };
 
   static async refresh(status){
-    const { STATUS } = PreboardExamstore;
+    const { STATUS } = PreboardExamStore;
 
     try {
       status && status(STATUS.FETCHING);
       //fetch preboard from server
-      const new_preboard = await PreboardExamstore.fetch();
+      const new_preboard = await PreboardExamStore.fetch();
 
       //check for changes
       const ispreboardNew = !_.isEqual(_preboardData, new_preboard);
 
       status && status(STATUS.WRITING);      
       //delete previous preboard stored
-      await PreboardExamstore.delete();
+      await PreboardExamStore.delete();
       //write preboard to storage
-      await store.save(PreboardExamstore.KEY, preboard_wrapped);
+      await store.save(PreboardExamStore.KEY, preboard_wrapped);
 
       //update cache var
       _preboardData = new_preboard;
@@ -513,15 +318,15 @@ export class PreboardExamstore {
 
   static async delete(){
     _preboardData = null;
-    await store.delete(PreboardExamstore.KEY);
+    await store.delete(PreboardExamStore.KEY);
   };
 
   /** get the base64Images from the question's URI's */
   static async getImages(questionItems = [PreboardExamQuestion.structure]){
-    const questions = PreboardExamQuestion.wrap(questionItems);
+    const questions = PreboardExamQuestion.wrapArray(questionItems);
     const base64Images = {};
 
-    for(const question of quiz.questions){
+    for(const question of questions){
       const { imageType, photouri } = question;
       
       try {
@@ -535,6 +340,6 @@ export class PreboardExamstore {
       };
     };
 
-    return { quiz, base64Images };
+    return base64Images;
   };
 };

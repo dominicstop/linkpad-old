@@ -830,7 +830,11 @@ export const ExpanderHeader = (props) => {
 
 export class LoadingPill extends React.PureComponent {
   static propTypes = {
+    initialVisible: PropTypes.bool,
+  };
 
+  static defaultProps = {
+    initialVisible: true,
   };
 
   static styles = StyleSheet.create({
@@ -875,7 +879,7 @@ export class LoadingPill extends React.PureComponent {
   constructor(props){
     super(props);
     this.state = {
-      visible: true,
+      visible: props.initialVisible,
     };
   };
 
@@ -890,8 +894,10 @@ export class LoadingPill extends React.PureComponent {
 
   render(){
     const { styles } = LoadingPill;
+    const { visible } = this.state;
     const props = this.props;
-    return(
+
+    return visible? (
       <Animatable.View
         ref={r => this.wrapper = r}
         style={styles.wrapper}
@@ -929,6 +935,8 @@ export class LoadingPill extends React.PureComponent {
           </LinearGradient>
         </Animatable.View>
       </Animatable.View>
+    ):(
+      null
     );
   };
 };

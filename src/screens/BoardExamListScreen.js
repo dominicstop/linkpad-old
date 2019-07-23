@@ -10,8 +10,8 @@ import { DrawerButton, IconButton          } from '../components/Buttons';
 
 import PreboardExamStore from '../functions/PreboardExamStore';
 import LottieCircle from '../components/LottieCircle';
-import { PreboardExamList } from '../components/PreboardExam';
-import { PreboardExam, PreboardExamManager, PreboardExamItem, PreboardExamModuleItem } from '../functions/PreboardExamStore';
+import { ExamTestList } from '../components/ExamTestList';
+import { PreboardExam, PreboardExamManager, PreboardExamItem, PreboardExamModuleItem } from '../models/PreboardModel';
 import { setStateAsync } from '../functions/Utils';
 
 import * as Animatable from 'react-native-animatable';
@@ -35,16 +35,16 @@ const CloseButton = (props) => {
   )
 }
 
-const PreboardExamListHeader = (props) => <CustomHeader {...props}
+const ExamTestListHeader = (props) => <CustomHeader {...props}
   iconName='clipboard-pencil'
   iconType='foundation'
   iconSize={22}
 />
 
-export class PreboardExamListScreen extends React.Component {
+export class ExamTestListScreen extends React.Component {
   static navigationOptions=({navigation, screenProps}) => ({
     title: 'Preboard Exam',
-    headerTitle: PreboardExamListHeader,
+    headerTitle: ExamTestListHeader,
   });
 
   constructor(props){
@@ -71,7 +71,7 @@ export class PreboardExamListScreen extends React.Component {
   render(){
     return(
       <ViewWithBlurredHeader hasTabBar={false}>
-        <PreboardExamList
+        <ExamTestList
           contentInset={{top: Header.HEIGHT}}
           contentOffset={{x: 0, y: -70}}
           onPressModule={this._handleOnPressModule}

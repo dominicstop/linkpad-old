@@ -143,7 +143,7 @@ class ChoiceItem extends React.PureComponent {
       </TouchableOpacity>
     );
   };
-}
+};
 
 /** Used in QuestionItem: shows a list of choices */
 class Choices extends React.PureComponent {
@@ -275,7 +275,7 @@ class Choices extends React.PureComponent {
       );
     };
   };
-}
+};
 
 /** Used in Question: shows the quesion's image */
 class QuestionImage extends React.PureComponent {
