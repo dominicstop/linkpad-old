@@ -106,11 +106,12 @@ export class TestAnswer {
   };
 
   /** create an answer */
-  static create(choice = PreboardExamChoice.structure, isCorrect = false){
+  static create(choice = TestChoice.structure){
     return TestAnswer.wrap({
-      choice, isCorrect,
-      timestamp: Date.now(),
-      answerID : choice.choiceID,
+      userAnswer: choice, 
+      timestamp : Date.now()     ,
+      isCorrect : choice.isAnswer,
+      answerID  : choice.choiceID,
     });
   };
 };

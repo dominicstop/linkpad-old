@@ -27,10 +27,10 @@ class ChoiceItem extends React.PureComponent {
   static propTypes = {
     choice       : PropTypes.object, 
     index        : PropTypes.number,
-    isLast       : PropTypes.bool,
-    selected     : PropTypes.string,
+    isLast       : PropTypes.bool  ,
+    selected     : PropTypes.object,
     selectedIndex: PropTypes.number,
-    onPressChoice: PropTypes.func,
+    onPressChoice: PropTypes.func  ,
   };
 
   static styles = StyleSheet.create({
@@ -58,6 +58,14 @@ class ChoiceItem extends React.PureComponent {
     }
   });
 
+  static CB_PARAMS = {
+    onPressChoice: {
+      choice: 'choice', 
+      index : 'index' ,
+      isLast: 'isLast',
+    },
+  };
+
   static colors = [
     PURPLE[800],
     PURPLE[900],
@@ -67,11 +75,15 @@ class ChoiceItem extends React.PureComponent {
   ];
 
   _handleOnPress = () => {
-    const { onPressChoice, choice, selected, index } = this.props;
-
+    const { CB_PARAMS } = ChoiceItem;
+    const { onPressChoice, index, choice, isLast } = this.props;
+    const PARAM_KEYS = CB_PARAMS.onPressChoice;
+    
     //call callback with params
     onPressChoice && onPressChoice({
-      choice, selected, index
+      [PARAM_KEYS.index   ]: index ,
+      [PARAM_KEYS.choice  ]: choice,
+      [PARAM_KEYS.isLast  ]: isLast,
     });
   };
 
@@ -167,6 +179,16 @@ class Choices extends React.PureComponent {
     },
   });
 
+  static CB_PARAMS = {
+    onPressChoice: {
+      isLast           : 'isLast'           ,
+      selected         : 'selected    '     ,
+      selectedIndex    : 'selectedIndex'    ,
+      prevSelected     : 'prevSelected'     ,
+      prevSelectedIndex: 'prevSelectedIndex',
+    },
+  };
+
   constructor(props){
     super(props);
     const question = TestQuestion.wrap(props.question);
@@ -179,31 +201,47 @@ class Choices extends React.PureComponent {
     const hasMatch    = (matchAnswer != undefined);
     const answer      = TestAnswer.wrap(matchAnswer);
 
+    //in case of unmount, find the prev answers
     const selectedIndex = (!hasMatch? -1 : shuffled.findIndex(choice => 
       (choice.choiceID === answer.answerID) 
     ));
 
-    console.log(`selectedIndex: ${selectedIndex}`);
+    const selected = ((selectedIndex != -1)
+      ? choices[selectedIndex]
+      : null
+    );
     
     this.state = {
       choices : shuffled,
-      selected: null,
-      selectedIndex,
+      //pass down
+      selected, selectedIndex,
     };
   };
 
-  _handleOnPressChoice = ({index, choice, selected}) => {
-    const { onPressChoice } = this.props;
-    const { selected: prevSelected } = this.state;
+  _handleOnPressChoice = (params) => {
+    const {CB_PARAMS:{ onPressChoice: CB_KEYS    }} = Choices;
+    const {CB_PARAMS:{ onPressChoice: PARAM_KEYS }} = ChoiceItem;
 
-    //store prev selected and update selected
-    this.setState({selected: choice, selectedIndex: index});
+    const { onPressChoice } = this.props;
+    const { selected: prevSelected, selectedIndex: prevSelectedIndex } = this.state;
+
+    const index  = params[PARAM_KEYS.index ] || ''   ;
+    const isLast = params[PARAM_KEYS.isLast] || false;
+    const choice = params[PARAM_KEYS.choice] || {}   ;
+
+    this.setState({
+      selected     : choice, 
+      selectedIndex: index ,
+    });
 
     //pass params to callback prop
     onPressChoice && onPressChoice({
-      selectedIndex: index,
-      //pass down
-      prevSelected, choice
+      [CB_KEYS.prevSelected     ]: prevSelected     , 
+      [CB_KEYS.prevSelectedIndex]: prevSelectedIndex,
+      //pass down prev. callback params
+      [CB_KEYS.selectedIndex]: index ,
+      [CB_KEYS.isLast       ]: isLast,
+      [CB_KEYS.selected     ]: choice,
     });
   };
 
@@ -891,6 +929,17 @@ class QuestionItem extends React.PureComponent {
     }
   });
 
+  static CB_PARAMS = {
+    onPressChoice: {
+      isLast           : 'isLast'           ,
+      question         : 'question'         ,
+      selected         : 'selected    '     ,
+      selectedIndex    : 'selectedIndex'    ,
+      prevSelected     : 'prevSelected'     ,
+      prevSelectedIndex: 'prevSelectedIndex',
+    },
+  };
+
   constructor(props){
     super(props);
     // note: sometimes questionItem is unmounted when list becomes to big
@@ -938,10 +987,21 @@ class QuestionItem extends React.PureComponent {
   };
 
   /** Choices: Called when a choice has been selected */
-  _handleOnPressChoice = (choicesProps = {prevSelected, choice, answer, isCorrect}) => {
-    const { onPressChoice, ...questionItemProps } = this.props;
+  _handleOnPressChoice = (params) => {
+    const {CB_PARAMS:{ onPressChoice: PARAM_KEYS }} = Choices;
+    const {CB_PARAMS:{ onPressChoice: CB_KEYS    }} = QuestionItem;
+    const { onPressChoice, quesion } = this.props;
+
     //pass props to callback
-    onPressChoice && onPressChoice({...choicesProps, ...questionItemProps});
+    onPressChoice && onPressChoice({
+      quesion,
+      //pass down prev. callback params
+      [CB_KEYS.isLast           ]: params[PARAM_KEYS.isLast           ],
+      [CB_KEYS.selected         ]: params[PARAM_KEYS.selected         ],
+      [CB_KEYS.selectedIndex    ]: params[PARAM_KEYS.selectedIndex    ],
+      [CB_KEYS.prevSelected     ]: params[PARAM_KEYS.prevSelected     ], 
+      [CB_KEYS.prevSelectedIndex]: params[PARAM_KEYS.prevSelectedIndex],
+    });
   };
 
   _handleOnLongPress = () => {
@@ -1111,58 +1171,52 @@ export class ExamTestList extends React.Component {
   };
 
   /** inserts a new answer to the list, otherwise overwrites prev answer */
-  addAnswer({question, userAnswer, isCorrect, label}){
-    //wrap object for vscode types/autocomplete
-    const new_answer = QuizAnswer.wrap({
-      //set timestamp of when question was answered
-      timestampAnswered: getTimestamp(true),
-      //if skipped and has answer, remover label
-      label: (userAnswer && label == QUIZ_LABELS.SKIPPPED)? null : label,
-      //append params to object
-      question, userAnswer, isCorrect,
-    });
-    
-    //wrap array for vscode autocomplete
-    const answers = QuizAnswer.wrapArray(this.answers);
-    //find matching answer, otherwise return -1 if no match
-    const matchIndex = answers.findIndex(item => 
-      item.answerID == new_answer.answerID
+  addAnswer({question, label, choice: _choice}){
+    const choice = TestChoice.wrap(_choice);
+    const answer = TestAnswer.create(choice)
+
+    const matchIndex = this.answers.findIndex(item => 
+      item.answerID == answer.answerID
     );
 
     if(matchIndex != -1){
-      const prevLabel = answers[matchIndex].label;
+      const prevLabel = this.answers[matchIndex].label;
       const isMarked  = (label     == QUIZ_LABELS.MARKED);
       const wasMarked = (prevLabel == QUIZ_LABELS.MARKED);
+      const noMark    = (isMarked && wasMarked);
 
       //replace existing answer
-      answers[matchIndex] = {
-        ...new_answer,
+      this.answers[matchIndex] = ((!isMarked)? answer : {
         //append the prev. answer if only marking
-        ...(isMarked && { userAnswer: answers[matchIndex].userAnswer }),
-        //append prev. marked 
-        ...(wasMarked && { label: QUIZ_LABELS.MARKED }),
-        //remove label if marking and already marked
-        ...(isMarked && wasMarked && { label: null }),
-      };
-      //update answers
-      this.answers = answers;
+        ...this.answers[matchIndex], ...(
+          (noMark   )? {label: null  } :
+          (wasMarked)? {label: QUIZ_LABELS.MARKED} : {}
+        ),
+      });
 
     } else {
       //append new answer to answers
-      this.answers = [...answers, new_answer]
+      this.answers.push(answer);
     };
   };
 
   //----- event handlers -----
   /** QuestionItem - choices: called when a choice has been selected */
-  _handleOnPressChoice = async ({prevSelected, choice, answer, isCorrect, question, isLast, index}) => {
+  _handleOnPressChoice = async (params) => {
+    const { CB_PARAMS:{ onPressChoice: PARAM_KEYS }} = QuestionItem;
     const { onAnsweredAllQuestions, onNewAnswerSelected } = this.props;
 
+    //callback chain: ChoiceItem -> Choices -> QuestionItem
+    const isLast       = params[PARAM_KEYS.isLast      ];
+    const question     = params[PARAM_KEYS.question    ];
+    const selected     = params[PARAM_KEYS.selected    ];
+    const prevSelected = params[PARAM_KEYS.prevSelected];
+    
     if(isLast){
       //event: last question has been answered
       onAnsweredAllQuestions && onAnsweredAllQuestions();
 
-    } else if(prevSelected == null){
+    } else if(!prevSelected){
       //event: new answer, no prev choice selected
       onNewAnswerSelected && onNewAnswerSelected();
       
@@ -1176,7 +1230,7 @@ export class ExamTestList extends React.Component {
       !isLast && this._carousel.snapToNext();
     };
 
-    this.addAnswer({question, userAnswer: choice, isCorrect});
+    this.addAnswer({question, choice: selected});
   };
 
   /** QuestionItem - overlay: */
