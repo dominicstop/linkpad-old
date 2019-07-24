@@ -33,6 +33,34 @@ export class TestChoice {
     );
   };
 
+  //#region - Validation
+  static isValidItem(choice = TestChoice.structure){
+    try {
+      const { value } = (choice || {});
+      
+      return ((choice && value) && (
+        value !== ''        ||
+        value !== null      ||
+        value !== undefined 
+      ));
+    } catch(error){
+      return false;
+    };
+  };
+
+  static isValidItems(choices = [TestChoice.structure]){
+    return (choices && (choices.length > 0) &&
+      choices.every(choice => TestChoice.isValidItem(choice))
+    );
+  };
+
+  static filterInvalidItems(items = [TestChoice.structure]){
+    return (items || []).filter((item = {}) => 
+      TestChoice.isValidItem(item)
+    );
+  };
+  //#endregion 
+
   //#region - Conversion: PreboardChoice 
   static createFromPreboardChoice(choice = PreboardExamChoice.structure){
     return TestChoice.wrap({
@@ -49,10 +77,10 @@ export class TestChoice {
     });
   };
 
-  /**converts am array of PreboardQuestion item into TestQuestion items */
+  /**converts am array of PreboardQuestion item into TestQuestion items and removes invalid items*/
   static createFromPreboardChoices(choices = [PreboardExamChoice.structure]){
-    return (choices || []).map(choice =>
-      TestChoice.createFromPreboardChoice(choice)  
+    return TestChoice.filterInvalidItems((choices || [])
+      .map(choice => TestChoice.createFromPreboardChoice(choice))
     );
   };
 
@@ -144,6 +172,44 @@ export class TestQuestion {
       TestQuestion.wrap(item)
     );
   };
+
+  //#region - Validation Helper Functions
+  /** returns true if item is valid */
+  static isValidItem(item = TestQuestion.structure){
+    try {
+      const { question, explanation } = item;
+      return (item && (
+          question !== ''        ||
+          question !== null      ||
+          question !== undefined 
+        ) && (
+          explanation !== ''        ||
+          explanation !== null      ||
+          explanation !== undefined 
+        ) && (
+          TestChoice.isValidItems(item.choiceItems)
+        )
+      );
+    } catch(error){
+      return false;
+    };
+  };
+
+  /** returns true if all items are valid */
+  static isValidItems(items = [TestQuestion.structure]){
+    return ((items && items.length > 0) &&
+      items.every(item => TestQuestion.isValidItem(item))
+    );
+  };
+
+  /** filter out invalid question items */
+  static filterInvalidItems(items = [TestQuestion.structure]){
+    return (items || []).filter((item = {}) => 
+      TestQuestion.isValidItem(item)
+    );
+  };
+  //#endregion 
+
   //#region - Conversion: PreboardQuestion
   /**converts a PreboardQuestion item into TestQuestion item */
   static createFromPreboardQuestion(question = PreboardExamQuestion.structure){
@@ -167,11 +233,11 @@ export class TestQuestion {
     });
   };
 
-  /**converts am array of PreboardQuestion item into TestQuestion items */
+  /**converts an array of PreboardQuestion item into TestQuestion items and removes invalid items */
   static createFromPreboardQuestions(questions = [PreboardExamQuestion.structure]){
-    return questions.map(question => 
-      TestQuestion.createFromPreboardQuestion(question)
-    );
+    return TestQuestion.filterInvalidItems((questions || []).map(
+      question => TestQuestion.createFromPreboardQuestion(question)
+    ));
   };
   
   /**converts a TestQuestion item back into PreboardQuestion item */

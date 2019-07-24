@@ -252,9 +252,8 @@ let References = {
 
 export class ExamTestScreen extends React.Component {
   static navigationOptions = ({ navigation }) => {
-    return;
     const { NAV_PARAMS } = ExamTestScreen;
-    const questions = PreboardExamQuestion.wrapArray(
+    const questions = TestQuestion.wrapArray(
       navigation.getParam(NAV_PARAMS.questions, [])
     );
 
@@ -313,6 +312,8 @@ export class ExamTestScreen extends React.Component {
     super(props);
     this.base64Images = {};
 
+    this.didShowLastQuestionAlert = false;
+
     this.state = {
       loading: LOAD_STATE.LOADING,
     };
@@ -351,6 +352,32 @@ export class ExamTestScreen extends React.Component {
     };
   };
 
+  //#region ----- EVENT HANDLERS -----
+  _handleOnSnapToItem = (index) => {
+    //update header title index
+    const header = References.HeaderTitle;
+    header && header.setIndex(index + 1);
+  };
+
+  _handleOnAnsweredLastQuestion = async () => {
+    //only show this once
+    if(this.didShowLastQuestionAlert) return;
+    this.didShowLastQuestionAlert = true;
+
+    const choice = await new Promise(res => Alert.alert(
+      "Last Question Answered",
+      "If you're done answering, press 'OK', if not press 'Cancel' (You can press 'Done' on the upper right corner later when you're finished.)",
+      [
+        {onPress: () => res(true ), text: 'OK' },
+        {onPress: () => res(false), text: 'Cancel', style: 'cancel'},
+      ],
+      {cancelable: false},
+    ));
+
+    //todo: open done modal
+  };
+  //#endregion
+
   render(){
     const { NAV_PARAMS } = ExamTestScreen;
     const { navigation } = this.props;
@@ -364,6 +391,8 @@ export class ExamTestScreen extends React.Component {
         case LOAD_STATE.SUCCESS: return(
           <ExamTestList
             ref={r => this.examList = r}
+            onSnapToItem={this._handleOnSnapToItem}
+            onAnsweredLastQuestion={this._handleOnAnsweredLastQuestion}
             {...{questions, examType}}
           />
         );

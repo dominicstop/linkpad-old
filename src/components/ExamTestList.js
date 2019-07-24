@@ -1099,7 +1099,7 @@ export class ExamTestList extends React.Component {
   static propTypes = {
     questions              : PropTypes.array ,
     base64Images           : PropTypes.object,
-    onAnsweredAllQuestions : PropTypes.func  ,
+    onAnsweredLastQuestion : PropTypes.func  ,
     onNewAnswerSelected    : PropTypes.func  ,
     onPressImage           : PropTypes.func  ,
   };
@@ -1204,7 +1204,7 @@ export class ExamTestList extends React.Component {
   /** QuestionItem - choices: called when a choice has been selected */
   _handleOnPressChoice = async (params) => {
     const { CB_PARAMS:{ onPressChoice: PARAM_KEYS }} = QuestionItem;
-    const { onAnsweredAllQuestions, onNewAnswerSelected } = this.props;
+    const { onAnsweredLastQuestion, onNewAnswerSelected } = this.props;
 
     //callback chain: ChoiceItem -> Choices -> QuestionItem
     const isLast       = params[PARAM_KEYS.isLast      ];
@@ -1214,7 +1214,7 @@ export class ExamTestList extends React.Component {
     
     if(isLast){
       //event: last question has been answered
-      onAnsweredAllQuestions && onAnsweredAllQuestions();
+      onAnsweredLastQuestion && onAnsweredLastQuestion();
 
     } else if(!prevSelected){
       //event: new answer, no prev choice selected
