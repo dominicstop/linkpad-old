@@ -29,3 +29,40 @@ Explanation for the weird code i write for future reference
 	* `a = () => {}` means that  the function’s scope is binded to the current instance and is intended to be called somewhere else (from outside the func. as a public function, inside a callback etc.)
 	* `static a(){}` means that it’s a pure function and its functionality is only useful in the current class.
 * A collection of functions that are semi-related. (kase nasanay ako to create a static class in java and c# that just contains util funcs).
+
+#### About the use of Enums
+1. In Relation to State: 
+	* Used to make things more predictable and simple by encompassing multiple state values into a single enum i.e modeling it like a state machine. Reduces the number of state variables/re-renders, and makes debugging easier (only changing one state to change the UI, identify what’s going on, etc.)
+	* Example - Conditional Rendering :
+```javascript
+//ex a
+switch(loading){
+	case LOAD_STATE.LOADING: return (<A/>);
+	case LOAD_STATE.SUCCESS: return (<B/>);
+	case LOAD_STATE.ERROR  : return (<C/>);
+	//...
+};
+//ex b
+return (
+	(loading === LOAD_STATE.LOADING)? <A/> :
+	(loading === LOAD_STATE.SUCCESS)? <B/> :
+	//...
+);
+```
+	* Example - Deriving State: 
+```javascript
+deriveStateFromLoaing(){
+	switch(this.state.loading){
+		case LOAD_STATE.LOADING: { showA: false, title: 'loading', ...};
+		case LOAD_STATE.SUCCESS: { showA: true , title: 'abc'    , ...};
+		case LOAD_STATE.ERROR  : { showA: false, title: 'error'  , ...};
+	};
+};
+```
+2. In Relation to Using it As A Key: 
+	* Boilerplate that’s used to define the param names of a callback so that they remain consistent when used somewhere else and eliminate copy & paste and guessing\remembering what the param names are.
+		* `const a = params[PARAM_KEYS.a] || ‘’;`
+		* `const b = params[PARAM_KEYS.b] || -1;`
+	* Boilerplate that’s used for defining, emitting and handling the different events.
+		* `emitter.addListener(EVENTS.onA, this._handleA);`
+		* `emitter.emit(EVENTS.onA)`
