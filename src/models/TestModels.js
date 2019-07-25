@@ -313,7 +313,7 @@ export class TestInformation {
 
   /**converts a TestInformation item back into PreboardExamItem item */
   static convertToPreboardExamItem(info = TestInformation.structure){
-    const extraData = (question.extraData || {});
+    const extraData = (info.extraData || {});
     return PreboardExamItem.wrap({
       examname   : info.title        ,
       description: info.description  ,

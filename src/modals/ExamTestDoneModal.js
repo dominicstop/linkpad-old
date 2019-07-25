@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 
 import { STYLES, FONT_STYLES } from '../Constants';
 import { PURPLE, GREY, BLUE, GREEN, RED, ORANGE, AMBER } from '../Colors';
-import { setStateAsync, timeout, addLeadingZero } from '../functions/Utils';
+import { setStateAsync, timeout, addLeadingZero, plural } from '../functions/Utils';
 
 import { MODAL_DISTANCE_FROM_TOP, MODAL_EXTRA_HEIGHT, SwipableModal, ModalBackground, ModalTopIndicator } from '../components/SwipableModal';
 import { IconFooter } from '../components/Views';
@@ -27,7 +27,7 @@ import { BlurViewWrapper, StickyHeader, DetailRow, DetailColumn, ModalBottomTwoB
 import Animated, { Easing } from 'react-native-reanimated';
 import { ContentExpander } from '../components/Expander';
 import { CustomQuiz } from '../functions/CustomQuizStore';
-import { TestInformation } from '../models/TestModels';
+import { TestInformation, EXAM_TYPE } from '../models/TestModels';
 const { interpolate, Value } = Animated; 
 
 const Screen = {
@@ -425,74 +425,124 @@ class ExamDetails extends React.PureComponent {
       fontSize: 20,
       color: PURPLE[600],
       fontWeight: '600',
-    },
+    }, 
+    //#region - Date Styles
     date: {
-      fontSize: 17,
-      color: 'black',
-      fontWeight: '300',
+      fontSize: 16,
+      fontWeight: '400',
+      color: GREY[800],
     },
-    label: {
-      color: PURPLE[1000],
+    dateLabel: {
       fontWeight: '500',
+      color: GREY[900],
     },
     dateString: {
-      color: 'rgb(80, 80, 80)',
-      fontWeight: '100',
+      color: GREY[700],
+      fontWeight: '200',
     },
+    //#endregion 
+    //#region - Desc Styles
     description: {
-      fontSize: 18,
+      fontSize: 17,
       fontWeight: '300'
     },
     descriptionLabel: {
       fontWeight: '400'      
-    }
+    },
+    //#endregion
+    //#region Extra Details styles
+    extraDetailContainer: {
+      paddingTop: 10,
+    },
+    extraDetailRow: {
+      flexDirection: 'row',
+      paddingVertical: 2,
+    },
+    extraDetailLabel: {
+      flex: 1,
+      fontSize: 15,
+      fontWeight: '500',
+    },
+    extraDetail: {
+      fontSize: 15,
+      fontWeight: '200',
+
+    },
+    //#endregion
   });
 
-  _renderDate(){
+  _renderPreboardDetails(){
     const { styles } = ExamDetails;
-    const quiz = CustomQuiz.wrap(this.props.quiz);
-    const timestampCreated = quiz.timestampCreated || 0; 
+    const { testInfo } = this.props;
 
-    const time = timestampCreated * 1000;
-    const date = new Date(time);
+    //dont render if not preboard
+    const isPreboard = (testInfo.examType === EXAM_TYPE.preboard);
+    if(!isPreboard) return null;
 
-    const options = { year: 'numeric', month: 'short', day: 'numeric' };
-    const dateString = date.toLocaleDateString('en-US', options);
+    const exam = TestInformation.convertToPreboardExamItem(testInfo);
+    const { timelimit } = exam;
+
+    const startDate = moment(exam.startdate, 'YYYY-MM-DD').format('ddd, MMMM D YYYY');
+    const enddate   = moment(exam.enddate  , 'YYYY-MM-DD').format('ddd, MMMM D YYYY');
 
     return(
-      <Text style={styles.date}>
-        <Text style={styles.label}>Created: </Text>
-        <TimeAgo {...{time}}/>
-        <Text style={styles.dateString}>{` (${dateString})`}</Text>
-      </Text>
-    );
-  };
-
-  _renderDescription(){
-    const { styles } = ExamDetails;
-    const quiz = CustomQuiz.wrap(this.props.quiz);
-
-    return(
-      <Text style={styles.description}>
-        <Text style={styles.label}>Description: </Text>
-        {quiz.description || 'No Description Available'}
-      </Text>
+      <View style={styles.extraDetailContainer}>
+        <View style={styles.extraDetailRow}>
+          <Text style={styles.extraDetailLabel}>
+            {'Start Date'}
+          </Text>
+          <Text style={styles.extraDetail}>
+            {exam.startdate? startDate : 'N/A'}
+          </Text>
+        </View>
+        <View style={styles.extraDetailRow}>
+          <Text style={styles.extraDetailLabel}>
+            {'End Date'}
+          </Text>
+          <Text style={styles.extraDetail}>
+            {exam.enddate? enddate : 'N/A'}
+          </Text>
+        </View>
+        <View style={styles.extraDetailRow}>
+          <Text style={styles.extraDetailLabel}>
+            {'Time Limit'}
+          </Text>
+          <Text style={styles.extraDetail}>
+            {timelimit? `${timelimit} ${plural('Hour', timelimit)}` : 'N/A'}
+          </Text>
+        </View>
+      </View>
     );
   };
 
   render(){
     const { styles } = ExamDetails;
     const { testInfo: _testInfo } = this.props;
+
     const testInfo = TestInformation.wrap(_testInfo);
+    const ts = testInfo.timestampDate;
+
+    //convert dates to string
+    const timeCreated  = moment.unix(ts).format("LT");
+    const dateCreated  = moment.unix(ts).format("MMM D ddd YYYY");
+    const dateRelative = moment.unix(ts).fromNow();
 
     return(
       <ModalSection>
         <Text style={styles.title} numberOfLines={1}>
           {testInfo.title || 'Unknown Title'}
         </Text>
-        {false && this._renderDate()}
+        <Text style={styles.date}>
+          <Text style={styles.dateLabel}>{'Created: '}</Text>
+          {dateRelative}
+          <Text style={styles.dateString}>{` (${dateCreated})`}</Text>
+        </Text>
+        {this._renderPreboardDetails()}
         <View style={styles.divider}/>
-        {false && this._renderDescription()}
+        <Text style={styles.description}>
+          <Text style={styles.descriptionLabel}>Description: </Text>
+          {testInfo.description || 'No Description Available'}
+        </Text>
       </ModalSection>
     );
   };
@@ -950,10 +1000,30 @@ export class ExamTestDoneModal extends React.PureComponent {
     this.onPressQuestionItem = null;
   };
 
+  getTitleDescs(){
+    const { testInfo: _testInfo } = this.state;
+
+    const testInfo = TestInformation.wrap(_testInfo); 
+    const examType = testInfo.examType || EXAM_TYPE.preboard;
+
+    switch (examType) {
+      case EXAM_TYPE.preboard: return ({
+        modal: { 
+          title : 'Preboard Exam',
+          desc  : 'Press "End Session" to save/end the exam.',
+          button: 'End Session'
+        },
+        detail: {
+          title: 'Preboard Details',
+          desc : 'Details about the current exam.',
+        },
+      });
+    }
+  };
+
   //------ public functions ------
   openModal = async (params) => {
     const { openModal: PARAM_KEYS } = ExamTestDoneModal.PARAM_KEYS;
-    alert();
     await setStateAsync(this, {
       //pass down params to state
       testInfo: (params[PARAM_KEYS.testInfo] || {}),
@@ -1020,7 +1090,8 @@ export class ExamTestDoneModal extends React.PureComponent {
   render(){
     const { styles } = ExamTestDoneModal;
     const { testInfo } = this.state;
-    
+
+    const { modal, detail } = this.getTitleDescs();
     //const maxIndex = (questions || []).length + (questionList || []).length;
 
     return(
@@ -1028,24 +1099,23 @@ export class ExamTestDoneModal extends React.PureComponent {
         ref={r => this.modal = r}
         renderOverlay={this._renderOverlay}
         //header styles
-        headerTitle={'Custom Quiz'}
-        headerSubtitle={'Press "End Quiz" to save and end this session'}
+        headerTitle={modal.title}
+        headerSubtitle={modal.desc}
         headerIconName={'ios-book'}
         headerIconType={'ionicon'}
         headerIconStyle={{marginTop: 2}}
         //footer buttons
-        buttonLeftTitle={'End Quiz'}
+        buttonLeftTitle={modal.button}
         onPressLeft={this._handleOnPressFinish}
       >
         <StickyCollapsableScrollView>
           <StickyCollapseHeader
-            title={'Quiz Details'}
-            subtitle={'Details about the current quiz.'}
+            title={detail.title}
+            subtitle={detail.desc}
             iconName={'message-circle'}
             iconType={'feather'}
           />
           <ExamDetails {...{testInfo}}/>
-
      
         </StickyCollapsableScrollView>
       </StyledSwipableModal>

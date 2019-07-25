@@ -371,15 +371,17 @@ export class ExamTestScreen extends React.Component {
   //#region ----- EVENT HANDLERS -----
   /** From header navbar done button */
   _handleOnPressHeaderDone = () => {
+    const { openModal: PARAM_KEYS } = ExamTestDoneModal.PARAM_KEYS;
     const { NAV_PARAMS } = ExamTestScreen;
     const { navigation } = this.props;
 
     const testInfo = TestInformation.wrap(
       navigation.getParam(NAV_PARAMS.testInfo)
     );
-
+    
+    //open ExamTestDoneModal and pass params
     this.doneModal.openModal({
-      testInfo,
+      [PARAM_KEYS.testInfo]: testInfo,
     });
   };
 
