@@ -1,5 +1,6 @@
-import { PreboardExamQuestion, PreboardExamChoice } from "./PreboardModel";
+import { PreboardExamQuestion, PreboardExamChoice, PreboardExamItem } from "./PreboardModel";
 import { replacePropertiesWithNull } from "../functions/Utils";
+import moment from 'moment';
 
 export const EXAM_TYPE = {
   preboard  : 'preboard'  ,
@@ -256,6 +257,74 @@ export class TestQuestion {
       indexid_exam     : extraData.indexid_exam     ,
       indexid_premodule: extraData.indexid_premodule,
       examModuleID     : extraData.examModuleID     ,
+    });
+  };
+  //#endregion
+};
+
+export class TestInformation {
+  static structure = {
+    title        : '',
+    description  : '',
+    timestampDate: -1, 
+    examType     : '', //EXAM_TYPE enum value,
+    extraData    : {},
+    //preboard specific properties
+    preboardTimeLimit: -1,
+    preboardStartdate: '',
+    preboardEnddate  : '',
+  };
+
+  static wrap(data = TestInformation.structure){
+    return {
+      //assign default properties w/ default values (so that vscode can infer types)
+      ...TestInformation.structure,
+      //overwrite all default values and replace w/ null (for assigning default values with ||)
+      ...replacePropertiesWithNull(TestInformation.structure),
+      //combine with obj from param
+      ...(data || {}),
+    };
+  };
+
+  //#region - Conversion: Preboard
+  /**converts a PreboardExamItem item into TestInformation item */
+  static createFromPreboardExamItem(exam = PreboardExamItem.structure){
+    //convert date string into timestamp
+    const timestampDate = moment(exam.dateposted, 'YYYY-MM-DD').unix();
+
+    return TestInformation.wrap({
+      examType     : EXAM_TYPE.preboard,
+      title        : exam.examname     ,
+      description  : exam.description  ,
+      //pass down converted date
+      timestampDate,
+      //assign preboard specific data
+      preboardTimeLimit: exam.timelimit,
+      preboardStartdate: exam.startdate,
+      preboardEnddate  : exam.enddate  ,
+      //store all of the values not needed
+      extraData: {
+        indexid    : exam.indexid    ,
+        exammodules: exam.exammodules,
+        dateposted : exam.dateposted  ,
+      },
+    });
+  };
+
+  /**converts a TestInformation item back into PreboardExamItem item */
+  static convertToPreboardExamItem(info = TestInformation.structure){
+    const extraData = (question.extraData || {});
+    return PreboardExamItem.wrap({
+      examname   : info.title        ,
+      description: info.description  ,
+      //reassign preboard specific data
+      timelimit: info.preboardTimeLimit,
+      startdate: info.preboardStartdate,
+      enddate  : info.preboardEnddate  ,
+      //reassign extraData
+      indexid    : extraData.indexid    ,
+      exammodules: extraData.exammodules,
+      dateposted : extraData.dateposted ,
     });
   };
   //#endregion

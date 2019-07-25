@@ -27,7 +27,7 @@ import { createStackNavigator } from 'react-navigation';
 import { Icon } from 'react-native-elements';
 import { PreboardExamStore } from '../functions/PreboardExamStore';
 import { PreboardExamItem, PreboardExamQuestion, PreboardExam } from '../models/PreboardModel';
-import { EXAM_TYPE, TestQuestion } from '../models/TestModels';
+import { EXAM_TYPE, TestQuestion, TestInformation } from '../models/TestModels';
 import { LoadingPill } from '../components/StyledComponents';
 import { ExamTestList } from '../components/ExamTestList';
 import { ExamTestDoneModal } from '../modals/ExamTestDoneModal';
@@ -304,9 +304,7 @@ export class ExamTestScreen extends React.Component {
   static NAV_PARAMS = {
     questions: 'questions', //TestQuestion item
     examType : 'examType' , //EXAM_TYPE enum
-    //needed if examType is EXAM_TYPE.preboard
-    //needed if examType is EXAM_TYPE.practice
-    //needed if examType is EXAM_TYPE.customQuiz  
+    testInfo : 'testInfo' , //TestInformation item
   };
   
   constructor(props){
@@ -373,8 +371,16 @@ export class ExamTestScreen extends React.Component {
   //#region ----- EVENT HANDLERS -----
   /** From header navbar done button */
   _handleOnPressHeaderDone = () => {
-    //open modal and pass current state of quizlist
-    this.doneModal.openModal({});
+    const { NAV_PARAMS } = ExamTestScreen;
+    const { navigation } = this.props;
+
+    const testInfo = TestInformation.wrap(
+      navigation.getParam(NAV_PARAMS.testInfo)
+    );
+
+    this.doneModal.openModal({
+      testInfo,
+    });
   };
 
   _handleOnSnapToItem = (index) => {
@@ -471,7 +477,6 @@ export class ExamTestStackContainer extends React.PureComponent {
 
     return (
       <View style={styles.rootContainer}>
-        <ExamTestDoneModal ref={r => this.testExamDoneModal = r}/>    
         <ExamTestStack
           navigation={this.props.navigation}
           screenProps={{
@@ -479,6 +484,9 @@ export class ExamTestStackContainer extends React.PureComponent {
             [SCREENPROPS_KEYS.getRefTestExamDoneModal]: () => this.testExamDoneModal,
           }}
         />
+        <ExamTestDoneModal 
+          ref={r => this.testExamDoneModal = r}
+        />    
       </View>
     );
   };

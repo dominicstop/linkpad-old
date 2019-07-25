@@ -18,7 +18,7 @@ import { ROUTES, FONT_NAMES } from '../Constants';
 import { PreboardExamStore } from '../functions/PreboardExamStore';
 import { FlatList } from 'react-native-gesture-handler';
 import { ModulesLastUpdated, ResourcesLastUpdated , TipsLastUpdated} from '../functions/MiscStore';
-import { TestQuestion, EXAM_TYPE } from '../models/TestModels';
+import { TestQuestion, EXAM_TYPE, TestInformation } from '../models/TestModels';
 import { PreboardExam } from '../models/PreboardModel';
 import { ExamTestScreen } from './ExamTestScreen';
 
@@ -60,11 +60,12 @@ export default class AuthLoadingScreen extends React.Component {
       const exam = pb.exams[pb.examkey];
       const questions_pb = PreboardExam.createQuestionList(exam);
       const questions_test = TestQuestion.createFromPreboardQuestions(questions_pb);
+      const testInfo = TestInformation.createFromPreboardExamItem(exam);
 
       Clipboard.setString(JSON.stringify({
         preboard        : preboard,
         preboard_wrapped: pb      ,
-        exam, questions_pb, questions_test
+        exam, questions_pb, questions_test, testInfo
       }));
 
 
@@ -79,6 +80,7 @@ export default class AuthLoadingScreen extends React.Component {
         { 
           [NAV_PARAMS.questions]: questions_test    ,
           [NAV_PARAMS.examType ]: EXAM_TYPE.preboard,
+          [NAV_PARAMS.testInfo ]: testInfo          ,
         }
       );
 

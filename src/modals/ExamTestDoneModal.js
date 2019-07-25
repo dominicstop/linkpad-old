@@ -27,6 +27,7 @@ import { BlurViewWrapper, StickyHeader, DetailRow, DetailColumn, ModalBottomTwoB
 import Animated, { Easing } from 'react-native-reanimated';
 import { ContentExpander } from '../components/Expander';
 import { CustomQuiz } from '../functions/CustomQuizStore';
+import { TestInformation } from '../models/TestModels';
 const { interpolate, Value } = Animated; 
 
 const Screen = {
@@ -397,9 +398,9 @@ class QuizStats extends React.PureComponent {
   };
 };
 
-class QuizDetails extends React.PureComponent {
+class ExamDetails extends React.PureComponent {
   static propTypes = {
-    quiz: PropTypes.object,
+    testInfo: PropTypes.object,
   };
 
   static styles = StyleSheet.create({
@@ -447,22 +448,8 @@ class QuizDetails extends React.PureComponent {
     }
   });
 
-  _renderTitle(){
-    const { styles } = QuizDetails;
-    const quiz = CustomQuiz.wrap(this.props.quiz);
-
-    return(
-      <Text 
-        style={styles.title}
-        numberOfLines={1}
-      >
-        {quiz.title || 'Unknown Title'}
-      </Text>
-    );
-  };
-
   _renderDate(){
-    const { styles } = QuizDetails;
+    const { styles } = ExamDetails;
     const quiz = CustomQuiz.wrap(this.props.quiz);
     const timestampCreated = quiz.timestampCreated || 0; 
 
@@ -482,7 +469,7 @@ class QuizDetails extends React.PureComponent {
   };
 
   _renderDescription(){
-    const { styles } = QuizDetails;
+    const { styles } = ExamDetails;
     const quiz = CustomQuiz.wrap(this.props.quiz);
 
     return(
@@ -494,13 +481,18 @@ class QuizDetails extends React.PureComponent {
   };
 
   render(){
-    const { styles } = QuizDetails;
+    const { styles } = ExamDetails;
+    const { testInfo: _testInfo } = this.props;
+    const testInfo = TestInformation.wrap(_testInfo);
+
     return(
       <ModalSection>
-        {this._renderTitle()}
-        {this._renderDate()}
+        <Text style={styles.title} numberOfLines={1}>
+          {testInfo.title || 'Unknown Title'}
+        </Text>
+        {false && this._renderDate()}
         <View style={styles.divider}/>
-        {this._renderDescription()}
+        {false && this._renderDescription()}
       </ModalSection>
     );
   };
@@ -940,17 +932,17 @@ export class ExamTestDoneModal extends React.PureComponent {
     },
   });
 
+  static PARAM_KEYS = {
+    openModal: {
+      testInfo: 'testInfo', //TestInformation item
+    },
+  };
+
   constructor(props){
     super(props);
 
     this.state = {
-      //data from openModal
-      currentIndex: -1,
-      startTime: -1,
-      questionList: [], 
-      answers: [],
-      questions: [], 
-      quiz: null,
+      testInfo: null, //TestInformation item
     };
 
     //callbacks
@@ -959,22 +951,15 @@ export class ExamTestDoneModal extends React.PureComponent {
   };
 
   //------ public functions ------
-  openModal = async ({}) => {
+  openModal = async (params) => {
+    const { openModal: PARAM_KEYS } = ExamTestDoneModal.PARAM_KEYS;
+    alert();
     await setStateAsync(this, {
-      mountContent: true, 
-      //pass down to state
+      //pass down params to state
+      testInfo: (params[PARAM_KEYS.testInfo] || {}),
     });
 
     this.modal.openModal();    
-  };
-
-  _openModal = async ({currentIndex, questionList, answers, questions, quiz, startTime}) => {
-    await setStateAsync(this, {
-      //pass down to state
-      currentIndex, questionList, answers, questions, quiz, startTime
-    });
-    
-    this.modal.openModal();
   };
 
   resetPrevTimestamps = () => {
@@ -1034,10 +1019,9 @@ export class ExamTestDoneModal extends React.PureComponent {
 
   render(){
     const { styles } = ExamTestDoneModal;
-    const { quiz: _quiz, startTime, answers, questions, currentIndex, questionList } = this.state;
+    const { testInfo } = this.state;
     
-    const quiz = CustomQuiz.wrap(_quiz);
-    const maxIndex = (questions || []).length + (questionList || []).length;
+    //const maxIndex = (questions || []).length + (questionList || []).length;
 
     return(
       <StyledSwipableModal
@@ -1053,37 +1037,17 @@ export class ExamTestDoneModal extends React.PureComponent {
         buttonLeftTitle={'End Quiz'}
         onPressLeft={this._handleOnPressFinish}
       >
-        {false && <StickyCollapsableScrollView>
+        <StickyCollapsableScrollView>
           <StickyCollapseHeader
             title={'Quiz Details'}
             subtitle={'Details about the current quiz.'}
             iconName={'message-circle'}
             iconType={'feather'}
           />
-          <QuizDetails {...{quiz}}/>
+          <ExamDetails {...{testInfo}}/>
 
-          <StickyCollapseHeader
-            title={'Quiz Statistics'}
-            subtitle={'How well are you doing so far?'}
-            iconName={'eye'}
-            iconType={'feather'}
-          />
-          <QuizStats
-            ref={r => this.quizStats = r}
-            {...{quiz, startTime, answers, questions}}
-          />
-          
-          <StickyCollapseHeader
-            title={'Questions & Answers'}
-            subtitle ={'Overview of your answer.'}
-            iconName={'list'}
-            iconType={'feather'}
-          />
-          <QuestionList
-            onPressQuestion={this._handleOnPressQuestion}
-            {...{currentIndex, maxIndex, answers}}
-          />
-        </StickyCollapsableScrollView>}
+     
+        </StickyCollapsableScrollView>
       </StyledSwipableModal>
     );
   };
