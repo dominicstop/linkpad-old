@@ -908,7 +908,7 @@ class QuestionList extends React.PureComponent {
   };
 };
 
-export class QuizExamDoneModal extends React.PureComponent {
+export class ExamTestDoneModal extends React.PureComponent {
   static propTypes = {
     onPressQuestionItem: PropTypes.func,
   };
@@ -959,9 +959,17 @@ export class QuizExamDoneModal extends React.PureComponent {
   };
 
   //------ public functions ------
-  openModal = async ({currentIndex, questionList, answers, questions, quiz, startTime}) => {
+  openModal = async ({}) => {
     await setStateAsync(this, {
       mountContent: true, 
+      //pass down to state
+    });
+
+    this.modal.openModal();    
+  };
+
+  _openModal = async ({currentIndex, questionList, answers, questions, quiz, startTime}) => {
+    await setStateAsync(this, {
       //pass down to state
       currentIndex, questionList, answers, questions, quiz, startTime
     });
@@ -1005,7 +1013,7 @@ export class QuizExamDoneModal extends React.PureComponent {
   //#endregion 
   //#region ------ render functions ------  
   _renderOverlay = () => {
-    const { styles } = QuizExamDoneModal;
+    const { styles } = ExamTestDoneModal;
     
     return (
       <View 
@@ -1025,7 +1033,7 @@ export class QuizExamDoneModal extends React.PureComponent {
   };
 
   render(){
-    const { styles } = QuizExamDoneModal;
+    const { styles } = ExamTestDoneModal;
     const { quiz: _quiz, startTime, answers, questions, currentIndex, questionList } = this.state;
     
     const quiz = CustomQuiz.wrap(_quiz);
@@ -1045,7 +1053,7 @@ export class QuizExamDoneModal extends React.PureComponent {
         buttonLeftTitle={'End Quiz'}
         onPressLeft={this._handleOnPressFinish}
       >
-        <StickyCollapsableScrollView>
+        {false && <StickyCollapsableScrollView>
           <StickyCollapseHeader
             title={'Quiz Details'}
             subtitle={'Details about the current quiz.'}
@@ -1075,7 +1083,7 @@ export class QuizExamDoneModal extends React.PureComponent {
             onPressQuestion={this._handleOnPressQuestion}
             {...{currentIndex, maxIndex, answers}}
           />
-        </StickyCollapsableScrollView>
+        </StickyCollapsableScrollView>}
       </StyledSwipableModal>
     );
   };

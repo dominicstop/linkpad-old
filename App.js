@@ -18,6 +18,7 @@ import AuthScreen        from './src/screens/AuthScreen';
 import NavigationService from './src/NavigationService';
 import { CustomQuizExamResultScreen } from './src/screens/CustomQuizExamResultScreen';
 import { CustomQuizExamResultQAScreen } from './src/screens/CustomQuizExamResultQAScreen';
+import { ExamTestStackContainer } from './src/screens/ExamTestScreen';
 
 useScreens();
 
@@ -29,9 +30,11 @@ UIManager.setLayoutAnimationEnabledExperimental(true);
 const AppStack = createStackNavigator({
     [ROUTES.HomeRoute                  ]: DrawerStackContainer,
     [ROUTES.PracticeExamRoute          ]: PracticeExamStackContainer,
-    [ROUTES.CustomQuizExamScreen       ]: CustomQuizExamStackContainer,
-    [ROUTES.CustomQuizExamResultRoute  ]: CustomQuizExamResultScreen,
-    [ROUTES.CustomQuizExamResultQARoute]: CustomQuizExamResultQAScreen,
+    [ROUTES.ExamTestRoute              ]: ExamTestStackContainer,
+    //todo: wip
+    //[ROUTES.CustomQuizExamScreen       ]: CustomQuizExamStackContainer,
+    //[ROUTES.CustomQuizExamResultRoute  ]: CustomQuizExamResultScreen,
+    //[ROUTES.CustomQuizExamResultQARoute]: CustomQuizExamResultQAScreen,
     [ROUTES.TesterRoute                ]: TestScreen,
   },{
     initialRouteName: ROUTES.HomeRoute,

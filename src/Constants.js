@@ -30,9 +30,12 @@ export const ROUTES = {
   CustomQuizViewImageRoute   : 'CustomQuizViewImageRoute'   ,
   CustomQuizExamResultRoute  : 'CustomQuizExamResultRoute'  ,
   CustomQuizExamResultQARoute: 'CustomQuizExamResultQARoute',
+
+  ExamTestRoute: 'ExamTestRoute',
+
+
   //preboard exam routes
   PreboardExamRoute    : 'PreboardExamRoute'    ,
-  PreboardExamTestRoute: 'PreboardExamTestRoute',
   //tabscreen routes
   TabModuleListRoute: 'TabModuleListRoute',
   TabExamsRoute     : 'TabExamsRoute'     ,
@@ -54,6 +57,7 @@ export const SCREENPROPS_KEYS = {
   getRefViewCustomQuizModal: 'getRefViewCustomQuizModal',
   getAppStackNavigation    : 'getAppStackNavigation'    ,
   setDrawerSwipe           : 'setDrawerSwipe'           ,
+  getRefTestExamDoneModal  : 'getRefTestExamDoneModal'  ,
 };
 
 export const IMAGE_TYPE = {

@@ -12,7 +12,7 @@ import { CustomQuizExamResultScreen } from './CustomQuizExamResultScreen';
 
 import { QuizExamDoneModal } from '../modals/QuizExamDoneModal';
 
-import Constants, { LOAD_STATE } from '../Constants'
+import Constants, { LOAD_STATE, SCREENPROPS_KEYS } from '../Constants'
 import { ROUTES, STYLES } from '../Constants';
 import { PURPLE } from '../Colors';
 
@@ -30,6 +30,7 @@ import { PreboardExamItem, PreboardExamQuestion, PreboardExam } from '../models/
 import { EXAM_TYPE, TestQuestion } from '../models/TestModels';
 import { LoadingPill } from '../components/StyledComponents';
 import { ExamTestList } from '../components/ExamTestList';
+import { ExamTestDoneModal } from '../modals/ExamTestDoneModal';
 
 //custom header left component
 class CancelButton extends React.PureComponent {
@@ -310,18 +311,35 @@ export class ExamTestScreen extends React.Component {
   
   constructor(props){
     super(props);
-    this.base64Images = {};
 
+    this.base64Images = {};
     this.didShowLastQuestionAlert = false;
+    this.testExamDoneModal = null;
 
     this.state = {
       loading: LOAD_STATE.LOADING,
     };
   };
 
-  async componentDidMount(){
+  componentDidMount = async () => {
+    const { screenProps } = this.props;
+
+    //show loading indicator
     await this.loadingPill.setVisibility(true);
-    this.loadData();
+
+    //get modal ref from screenprops
+    const key = SCREENPROPS_KEYS.getRefTestExamDoneModal;
+    this.doneModal = (screenProps[key])();
+
+    //assign callbacks to header buttons
+    References.CancelButton.onPress = this._handleOnPressHeaderCancel;
+    References.DoneButton  .onPress = this._handleOnPressHeaderDone;
+
+    //wait for animations to finish
+    InteractionManager.runAfterInteractions(async () => {
+      //load images and data
+      await this.loadData();
+    });    
   };
 
   async loadData(){
@@ -353,6 +371,12 @@ export class ExamTestScreen extends React.Component {
   };
 
   //#region ----- EVENT HANDLERS -----
+  /** From header navbar done button */
+  _handleOnPressHeaderDone = () => {
+    //open modal and pass current state of quizlist
+    this.doneModal.openModal({});
+  };
+
   _handleOnSnapToItem = (index) => {
     //update header title index
     const header = References.HeaderTitle;
@@ -401,12 +425,61 @@ export class ExamTestScreen extends React.Component {
     
     return (
       <ViewWithBlurredHeader hasTabBar={false}>
+        {content}
         <LoadingPill 
           ref={r => this.loadingPill = r}
           initialVisible={false}
         />
-        {content}
       </ViewWithBlurredHeader>
+    );
+  };
+};
+
+const ExamTestStack = createStackNavigator({
+  [ROUTES.TestExamRoute]: ExamTestScreen,
+  //[ROUTES.CustomQuizViewImageRoute]: ViewImageScreen, 
+  }, {
+    headerMode: 'float',
+    headerTransitionPreset: 'uikit',
+    headerTransparent: true,
+    navigationOptions: {
+      gesturesEnabled: false,
+      ...Constants.HEADER_PROPS
+    },
+  }
+);
+
+//container for the stacknav: ExamTestStack
+export class ExamTestStackContainer extends React.PureComponent {
+  static router = ExamTestStack.router;
+
+  static navigationOptions = {
+    header: null,
+  };
+
+  static styles = StyleSheet.create({
+    rootContainer: {
+      flex: 1, 
+      height: '100%', 
+      width: '100%', 
+      backgroundColor: 'rgb(233, 232, 239)'
+    },
+  });
+
+  render = () => {
+    const { styles } = ExamTestStackContainer;
+
+    return (
+      <View style={styles.rootContainer}>
+        <ExamTestDoneModal ref={r => this.testExamDoneModal = r}/>    
+        <ExamTestStack
+          navigation={this.props.navigation}
+          screenProps={{
+            ...this.props.screenProps,
+            [SCREENPROPS_KEYS.getRefTestExamDoneModal]: () => this.testExamDoneModal,
+          }}
+        />
+      </View>
     );
   };
 };

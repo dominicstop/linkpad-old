@@ -367,8 +367,9 @@ class BoardExamMainScreen extends React.Component {
 };
 
 const ExamTestStack = createStackNavigator({
-    //[ROUTES.PreboardExamRoute    ]: BoardExamMainScreen,
-    [ROUTES.PreboardExamTestRoute]: ExamTestScreen,
+    //todo: wip
+    [ROUTES.PreboardExamRoute]: BoardExamMainScreen,
+    //[ROUTES.PreboardExamTestRoute]: ExamTestScreen,
   }, {
     headerMode: 'float',
     headerTransitionPreset: 'uikit',

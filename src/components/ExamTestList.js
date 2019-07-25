@@ -1189,7 +1189,7 @@ export class ExamTestList extends React.Component {
       this.answers[matchIndex] = ((!isMarked)? answer : {
         //append the prev. answer if only marking
         ...this.answers[matchIndex], ...(
-          (noMark   )? {label: null  } :
+          (noMark   )? {label: null } :
           (wasMarked)? {label: QUIZ_LABELS.MARKED} : {}
         ),
       });
