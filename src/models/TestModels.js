@@ -8,6 +8,12 @@ export const EXAM_TYPE = {
   customQuiz: 'customQuiz',
 };
 
+export const EXAM_LABELS = {
+  'NONE'    : 'NONE'    ,
+  'SKIPPPED': 'SKIPPPED',
+  'MARKED'  : 'MARKED'  ,
+};
+
 export class TestChoice {
   static structure = {
     value     : ''   , //answer string
@@ -108,12 +114,12 @@ export class TestChoice {
 
 export class TestAnswer {
   static structure = {
-    answerID  : ''   , //derived from choiceID
-    questionID: ''   , //for reconcilation - tells which question this belongs to
-    isCorrect : false, //true when matches the correct answer
-    label     : ''   , //special label for marking this answer
-    timestamp : -1   , //timestamp of when the answer was made
-    //the selected choice
+    answerID  : ''   , // derived from choiceID
+    questionID: ''   , // for reconcilation - tells which question this belongs to
+    isCorrect : false, // true when matches the correct answer
+    label     : ''   , // EXAM_LABELS enum - used for marking this answer
+    timestamp : -1   , // timestamp of when the answer was made
+    // the selected choice
     userAnswer: [TestChoice.structure], 
   };
 
@@ -142,6 +148,15 @@ export class TestAnswer {
       isCorrect : choice.isAnswer,
       answerID  : choice.choiceID,
     });
+  };
+
+  /** counts the number of answers that are skipped or has no answer */
+  static countAnswered(items = [TestAnswer.structure]){
+    const filtered = items.filter((answer = {}) => (
+      (!answer.userAnswer                    ) || 
+      ( answer.label === EXAM_LABELS.SKIPPPED)
+    ));
+    return filtered.length;
   };
 };
 

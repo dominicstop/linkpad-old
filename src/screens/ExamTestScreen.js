@@ -310,9 +310,10 @@ export class ExamTestScreen extends React.Component {
   constructor(props){
     super(props);
 
+    this.startTime = (new Date()).getTime();
     this.base64Images = {};
-    this.didShowLastQuestionAlert = false;
     this.testExamDoneModal = null;
+    this.didShowLastQuestionAlert = false;
 
     this.state = {
       loading: LOAD_STATE.LOADING,
@@ -375,13 +376,18 @@ export class ExamTestScreen extends React.Component {
     const { NAV_PARAMS } = ExamTestScreen;
     const { navigation } = this.props;
 
-    const testInfo = TestInformation.wrap(
-      navigation.getParam(NAV_PARAMS.testInfo)
-    );
+    const testInfo  = navigation.getParam(NAV_PARAMS.testInfo );
+    const questions = navigation.getParam(NAV_PARAMS.questions);
     
     //open ExamTestDoneModal and pass params
     this.doneModal.openModal({
-      [PARAM_KEYS.testInfo]: testInfo,
+      [PARAM_KEYS.testInfo ]: testInfo      ,
+      [PARAM_KEYS.questions]: questions     ,
+      [PARAM_KEYS.startTime]: this.startTime,
+      //pass down examlist state/data
+      [PARAM_KEYS.answersList       ]: this.examList.getAnswerList        (),
+      [PARAM_KEYS.questionsList     ]: this.examList.getQuestionList      (),
+      [PARAM_KEYS.questionsRemaining]: this.examList.getRemainingQuestions(),
     });
   };
 

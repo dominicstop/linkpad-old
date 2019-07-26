@@ -1130,19 +1130,19 @@ export class ExamTestList extends React.Component {
 
   //#region ---- getters -----
   /** get a copy of the remaining questions */
-  getQuestions = () =>  {
+  getRemainingQuestions = () =>  {
     return (_.cloneDeep(this.questions));
   };
 
   /** get a copy of all the current answers */
-  getAnswers = () => {
+  getAnswerList = () => {
     return _.cloneDeep(this.answers);
   };
 
   /** get the current questions being displayed */
   getQuestionList = () => {
     const { questionList } = this.state;
-    return questionList;
+    return (_.cloneDeep(this.questions));
   };
 
   /** returns a reference to the carousel component */

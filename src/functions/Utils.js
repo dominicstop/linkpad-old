@@ -268,6 +268,12 @@ export function capitalize(string = '') {
   return string.charAt(0).toUpperCase() + string.slice(1);
 };
 
+export function convertHoursToMS(hours){
+  const minutes = hours   * 60;
+  const seconds = minutes * 60;
+  return (seconds * 1000);
+};
+
 
 function lerp(a, b, n) {
   return (1 - n) * a + n * b;

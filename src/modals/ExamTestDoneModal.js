@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 
 import { STYLES, FONT_STYLES } from '../Constants';
 import { PURPLE, GREY, BLUE, GREEN, RED, ORANGE, AMBER } from '../Colors';
-import { setStateAsync, timeout, addLeadingZero, plural } from '../functions/Utils';
+import { setStateAsync, timeout, addLeadingZero, plural, convertHoursToMS } from '../functions/Utils';
 
 import { MODAL_DISTANCE_FROM_TOP, MODAL_EXTRA_HEIGHT, SwipableModal, ModalBackground, ModalTopIndicator } from '../components/SwipableModal';
 import { IconFooter } from '../components/Views';
@@ -27,7 +27,7 @@ import { BlurViewWrapper, StickyHeader, DetailRow, DetailColumn, ModalBottomTwoB
 import Animated, { Easing } from 'react-native-reanimated';
 import { ContentExpander } from '../components/Expander';
 import { CustomQuiz } from '../functions/CustomQuizStore';
-import { TestInformation, EXAM_TYPE } from '../models/TestModels';
+import { TestInformation, EXAM_TYPE, TestAnswer } from '../models/TestModels';
 const { interpolate, Value } = Animated; 
 
 const Screen = {
@@ -124,7 +124,9 @@ class CheckOverlay extends React.PureComponent {
 
 class TimeElasped extends React.PureComponent {
   static propTypes = {
-    startTime: PropTypes.number,
+    startTime  : PropTypes.number,
+    timeLimit  : PropTypes.number,
+    isCountdown: PropTypes.bool  ,
   };
 
   constructor(props){
@@ -141,10 +143,14 @@ class TimeElasped extends React.PureComponent {
   };
 
   getTimeElapsed = () => {
-    const { startTime } = this.props;
+    const { startTime = 0, timeLimit = 1, isCountdown } = this.props;
     const currentTime = new Date().getTime();
 
-    const diffTime = currentTime - startTime;
+    const diffTime = (isCountdown
+      ? ((startTime + timeLimit) - currentTime)
+      : (currentTime - startTime)
+    );
+
     const duration = moment.duration(diffTime, 'milliseconds');
 
     const hours    = addLeadingZero(duration.hours  ());
@@ -185,12 +191,15 @@ class TimeElasped extends React.PureComponent {
   };
 };
 
-class QuizStats extends React.PureComponent {
+class ExamStats extends React.PureComponent {
   static propTypes = {
+    testInfo : PropTypes.object,
     startTime: PropTypes.number,
-    answers  : PropTypes.array ,
     questions: PropTypes.array ,
-    quiz     : PropTypes.object,
+    //passed down from exam list comp.
+    answersList       : PropTypes.array, 
+    questionsList     : PropTypes.array, 
+    questionsRemaining: PropTypes.array,
   };
 
   static styles = StyleSheet.create({
@@ -276,14 +285,19 @@ class QuizStats extends React.PureComponent {
   };
 
   _renderDetailsTime(){
-    const { styles } = QuizStats;
-    const { startTime, answers, quiz, questions } = this.props;
+    const { styles } = ExamStats;
+    const { testInfo: _testInfo, startTime, ...props } = this.props;
+
+    const { examType, preboardTimeLimit } = TestInformation.wrap(_testInfo);
+    const isCountdown = (examType == EXAM_TYPE.preboard);
+    const timeLimit   = convertHoursToMS(preboardTimeLimit || 0);
 
     const timeStarted = moment(startTime).format('LT');
-    const total = quiz.questions.length || 'N/A';
+    const answerCount = TestAnswer.countAnswered(props.answersList || []);
+    const total       = (props.questions || []).length;
 
-    const progress  = `${answers.length}/${total} items`;
-    const remaining = `${total - answers.length} remaining`;
+    const progress  = `${answerCount}/${total} items`;
+    const remaining = `${total - answerCount} remaining`;
 
     return(
       <Fragment>
@@ -303,7 +317,9 @@ class QuizStats extends React.PureComponent {
             helpSubtitle={'Tells you how much time has elapsed.'}
             backgroundColor={PURPLE.A400}
           >
-            <TimeElasped {...{startTime}}/>
+            <TimeElasped 
+              {...{startTime, isCountdown, timeLimit}}
+            />
           </DetailColumn>
         </DetailRow>
         <DetailRow marginTop={10}>
@@ -312,7 +328,7 @@ class QuizStats extends React.PureComponent {
             subtitle={progress}
             help={true}
             helpTitle={'Progress'}
-            helpSubtitle={'Shows how many questions you have answered over the total questions in this quiz.'}
+            helpSubtitle={'Shows how many questions you have answered over the total questions in this exam.'}
             backgroundColor={PURPLE.A400}
           />
           <DetailColumn
@@ -320,7 +336,7 @@ class QuizStats extends React.PureComponent {
             subtitle={remaining}
             help={true}
             helpTitle={'Remaining Questions'}
-            helpSubtitle={'Shows how many questions are left for this quiz.'}
+            helpSubtitle={'Shows how many questions are left for this exam.'}
             backgroundColor={PURPLE.A400}
           />
         </DetailRow>
@@ -329,7 +345,7 @@ class QuizStats extends React.PureComponent {
   };
 
   _renderDetailsComp(){
-    const { styles } = QuizStats;
+    const { styles } = ExamStats;
     const { min, max, avg, sum, timestamps } = this.state;
 
     const timesAnswered = `${timestamps.length} times`;
@@ -385,14 +401,13 @@ class QuizStats extends React.PureComponent {
   };
 
   render(){
-    const { styles } = QuizStats;
-    const { startTime } = this.props;
+    const { styles } = ExamStats;
 
     return(
       <ModalSection>
         {this._renderDetailsTime()}
         <View style={styles.divider}/>
-        {this._renderDetailsComp()}
+        {false && this._renderDetailsComp()}
       </ModalSection>
     );
   };
@@ -951,10 +966,6 @@ class QuestionList extends React.PureComponent {
 };
 
 export class ExamTestDoneModal extends React.PureComponent {
-  static propTypes = {
-    onPressQuestionItem: PropTypes.func,
-  };
-
   static styles = StyleSheet.create({
     //overlay styles
     overlayWrapper: {
@@ -984,7 +995,13 @@ export class ExamTestDoneModal extends React.PureComponent {
 
   static PARAM_KEYS = {
     openModal: {
-      testInfo: 'testInfo', //TestInformation item
+      testInfo : 'testInfo' , // TestInformation item
+      questions: 'questions', // TestQuestion array
+      startTime: 'startTime', // start timestamp
+      //taken from from examlist state/data
+      answersList       : 'answersList'       , // array of TestAnswer   - selected answers
+      questionsList     : 'questionsList'     , // array of TestQuestion - visible questions
+      questionsRemaining: 'questionsRemaining', // array of TestQuestion - remaining questions
     },
   };
 
@@ -992,7 +1009,15 @@ export class ExamTestDoneModal extends React.PureComponent {
     super(props);
 
     this.state = {
-      testInfo: null, //TestInformation item
+      //#region received from openModal
+      testInfo : {}, // TestInformation item
+      questions: [], // TestQuestion array
+      startTime: 0 , // start timestamp
+      //taken from from examlist state/data
+      answersList       : [], // selected answers
+      questionsList     : [], // visible questions
+      questionsRemaining: [], // remaining questions    
+      //#endregion
     };
 
     //callbacks
@@ -1014,19 +1039,30 @@ export class ExamTestDoneModal extends React.PureComponent {
           button: 'End Session'
         },
         detail: {
-          title: 'Preboard Details',
+          title: 'Exam Details',
           desc : 'Details about the current exam.',
         },
+        stats: {
+          title: 'Exam Stats',
+          desc : 'How well are you doing so far?',
+        },
       });
-    }
+    };
   };
 
   //------ public functions ------
   openModal = async (params) => {
     const { openModal: PARAM_KEYS } = ExamTestDoneModal.PARAM_KEYS;
+
     await setStateAsync(this, {
       //pass down params to state
-      testInfo: (params[PARAM_KEYS.testInfo] || {}),
+      startTime: (params[PARAM_KEYS.startTime] || 0 ),
+      testInfo : (params[PARAM_KEYS.testInfo ] || {}),
+      questions: (params[PARAM_KEYS.questions] || []),
+      //pass down examlist comp. state/data
+      answersList       : (params[PARAM_KEYS.answersList       ] || []),
+      questionsList     : (params[PARAM_KEYS.questionsList     ] || []),
+      questionsRemaining: (params[PARAM_KEYS.questionsRemaining] || []),
     });
 
     this.modal.openModal();    
@@ -1089,10 +1125,10 @@ export class ExamTestDoneModal extends React.PureComponent {
 
   render(){
     const { styles } = ExamTestDoneModal;
-    const { testInfo } = this.state;
+    const { testInfo, startTime, questions, answersList, questionsList, questionsRemaining } = this.state;
 
-    const { modal, detail } = this.getTitleDescs();
-    //const maxIndex = (questions || []).length + (questionList || []).length;
+    const { modal, detail, stats } = this.getTitleDescs();
+    const maxIndex = (questions || []).length;
 
     return(
       <StyledSwipableModal
@@ -1115,8 +1151,23 @@ export class ExamTestDoneModal extends React.PureComponent {
             iconName={'message-circle'}
             iconType={'feather'}
           />
-          <ExamDetails {...{testInfo}}/>
-     
+          <ExamDetails 
+            {...{testInfo}}  
+          />
+
+          <StickyCollapseHeader
+            title={stats.title}
+            subtitle={stats.desc}
+            iconName={'eye'}
+            iconType={'feather'}
+          />
+          <ExamStats 
+            {...{
+              //pass down as props
+              testInfo , questions  , questionsList     , 
+              startTime, answersList, questionsRemaining,
+            }}
+          />
         </StickyCollapsableScrollView>
       </StyledSwipableModal>
     );
