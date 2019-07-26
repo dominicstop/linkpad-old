@@ -344,3 +344,76 @@ export class TestInformation {
   };
   //#endregion
 };
+
+export class TestDuration {
+  static structure = {
+    questionID: '', // passed down from TestQuestion
+    index     : -1, // corresponds to the snap/question index
+    duration  : -1, // duration in ms
+    timestamp : -1, // when the snap occured
+    //extra data - useful for debug/verifying the 'linkedlist'
+    timestampPrev: -1, // prev TestDuration timestamp
+    timestampNext: -1, // next TestDuration timestamp
+    indexPrev    : -1, // prev TestDuration index
+  };
+
+  static wrap(data = TestDuration.structure){
+    return {
+      //assign default properties w/ default values (so that vscode can infer types)
+      ...TestDuration.structure,
+      //overwrite all default values and replace w/ null (for assigning default values with ||)
+      ...replacePropertiesWithNull(TestDuration.structure),
+      //combine with obj from param
+      ...(data || {}),
+    };
+  };
+
+  static wrapArray(items = [TestDuration.structure]){
+    return items.map((item) => 
+      TestDuration.wrap(item)
+    );
+  };
+};
+
+export class TestStat {
+  static structure = {
+    avg: -1,
+    sum: -1,
+    min: -1,
+    max: -1,
+  };
+
+  static wrap(data = TestStat.structure){
+    return {
+      //assign default properties w/ default values (so that vscode can infer types)
+      ...TestStat.structure,
+      //overwrite all default values and replace w/ null (for assigning default values with ||)
+      ...replacePropertiesWithNull(TestStat.structure),
+      //combine with obj from param
+      ...(data || {}),
+    };
+  };
+
+  static wrapArray(items = [TestStat.structure]){
+    return items.map((item) => 
+      TestStat.wrap(item)
+    );
+  };
+  
+  static computeAvgFromDurations(testDurations = [TestDuration.structure]){
+    //extract durations
+    const durations = (testDurations || []).map(({duration = 0}) => duration);
+  
+    const sum = durations.reduce((acc, value) => acc + value, 0);
+    const avg = Math.floor(sum / durations.length);
+  
+    const min = Math.min(...durations); 
+    const max = Math.max(...durations);
+  
+    return({ 
+      avg, sum, 
+      min: isFinite(min)? min : null,
+      max: isFinite(max)? max : null, 
+    });
+  };
+};

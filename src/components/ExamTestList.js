@@ -62,7 +62,6 @@ class ChoiceItem extends React.PureComponent {
     onPressChoice: {
       choice: 'choice', 
       index : 'index' ,
-      isLast: 'isLast',
     },
   };
 
@@ -76,14 +75,13 @@ class ChoiceItem extends React.PureComponent {
 
   _handleOnPress = () => {
     const { CB_PARAMS } = ChoiceItem;
-    const { onPressChoice, index, choice, isLast } = this.props;
+    const { onPressChoice, index, choice } = this.props;
     const PARAM_KEYS = CB_PARAMS.onPressChoice;
     
     //call callback with params
     onPressChoice && onPressChoice({
       [PARAM_KEYS.index   ]: index ,
       [PARAM_KEYS.choice  ]: choice,
-      [PARAM_KEYS.isLast  ]: isLast,
     });
   };
 
@@ -154,6 +152,7 @@ class ChoiceItem extends React.PureComponent {
 /** Used in QuestionItem: shows a list of choices */
 class Choices extends React.PureComponent {
   static propTypes = {
+    isLast       : PropTypes.bool  ,
     index        : PropTypes.number,
     answers      : PropTypes.array ,
     quesion      : PropTypes.object,
@@ -222,11 +221,10 @@ class Choices extends React.PureComponent {
     const {CB_PARAMS:{ onPressChoice: CB_KEYS    }} = Choices;
     const {CB_PARAMS:{ onPressChoice: PARAM_KEYS }} = ChoiceItem;
 
-    const { onPressChoice } = this.props;
+    const { onPressChoice, isLast } = this.props;
     const { selected: prevSelected, selectedIndex: prevSelectedIndex } = this.state;
 
     const index  = params[PARAM_KEYS.index ] || ''   ;
-    const isLast = params[PARAM_KEYS.isLast] || false;
     const choice = params[PARAM_KEYS.choice] || {}   ;
 
     this.setState({
@@ -239,9 +237,9 @@ class Choices extends React.PureComponent {
       [CB_KEYS.prevSelected     ]: prevSelected     , 
       [CB_KEYS.prevSelectedIndex]: prevSelectedIndex,
       //pass down prev. callback params
-      [CB_KEYS.selectedIndex]: index ,
       [CB_KEYS.isLast       ]: isLast,
       [CB_KEYS.selected     ]: choice,
+      [CB_KEYS.selectedIndex]: index ,
     });
   };
 
@@ -1056,7 +1054,7 @@ class QuestionItem extends React.PureComponent {
 
   _renderContents(){
     const { styles } = QuestionItem;
-    const { index, question, onPressImage, base64Images, answers } = this.props;
+    const { index, question, onPressImage, base64Images, answers, isLast } = this.props;
     const { choicesHeight: bottomSpace } = this.state;
 
     return(
@@ -1068,7 +1066,7 @@ class QuestionItem extends React.PureComponent {
         <Choices
           onPressChoice={this._handleOnPressChoice}
           onLayout={this._handleChoicesOnLayout}
-          {...{index, question, answers}}
+          {...{index, question, answers, isLast}}
         />
       </Fragment>
     );
@@ -1114,7 +1112,8 @@ export class ExamTestList extends React.Component {
     super(props);
 
     //store user answers
-    this.answers = TestAnswer.wrapArray([]);
+    this.answers       = TestAnswer.wrapArray([]);
+    this.answerHistory = TestAnswer.wrapArray([]);
 
     //wrap custom quiz to prevent missing properties
     const questions = TestQuestion.wrapArray(props.questions || []);
@@ -1137,6 +1136,11 @@ export class ExamTestList extends React.Component {
   /** get a copy of all the current answers */
   getAnswerList = () => {
     return _.cloneDeep(this.answers);
+  };
+
+  /** get a copy of all the current answers */
+  getAnswerHistoryList = () => {
+    return _.cloneDeep(this.answerHistory);
   };
 
   /** get the current questions being displayed */
@@ -1173,8 +1177,11 @@ export class ExamTestList extends React.Component {
   /** inserts a new answer to the list, otherwise overwrites prev answer */
   addAnswer({question, label, choice: _choice}){
     const choice = TestChoice.wrap(_choice);
-    const answer = TestAnswer.create(choice)
+    const answer = TestAnswer.create(choice);
 
+    //insert a copy to answer history
+    this.answerHistory.push(answer);
+    //find the prev matching ans, if any
     const matchIndex = this.answers.findIndex(item => 
       item.answerID == answer.answerID
     );

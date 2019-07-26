@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 
 import { STYLES, FONT_STYLES } from '../Constants';
 import { PURPLE, GREY, BLUE, GREEN, RED, ORANGE, AMBER } from '../Colors';
-import { setStateAsync, timeout, addLeadingZero, plural, convertHoursToMS } from '../functions/Utils';
+import { setStateAsync, timeout, addLeadingZero, plural, convertHoursToMS, formatMsToDuration } from '../functions/Utils';
 
 import { MODAL_DISTANCE_FROM_TOP, MODAL_EXTRA_HEIGHT, SwipableModal, ModalBackground, ModalTopIndicator } from '../components/SwipableModal';
 import { IconFooter } from '../components/Views';
@@ -27,7 +27,7 @@ import { BlurViewWrapper, StickyHeader, DetailRow, DetailColumn, ModalBottomTwoB
 import Animated, { Easing } from 'react-native-reanimated';
 import { ContentExpander } from '../components/Expander';
 import { CustomQuiz } from '../functions/CustomQuizStore';
-import { TestInformation, EXAM_TYPE, TestAnswer } from '../models/TestModels';
+import { TestInformation, EXAM_TYPE, TestAnswer, TestStat } from '../models/TestModels';
 const { interpolate, Value } = Animated; 
 
 const Screen = {
@@ -37,40 +37,6 @@ const Screen = {
 
 prevTimestamps = [];
 
-
-function getAverage(nums = []){
-  const numbers = [...nums];
-
-  //remove duplicates
-  const filtered = numbers.filter((number, index, array) => 
-    array.indexOf(number) === index
-  );
-
-  //sort timestamps
-  filtered.sort((a, b) => a - b);
-
-  //subtract diff
-  const diffs = filtered.map((value, index, array) => {
-    //if not last item
-    if(index < array.length - 1){
-      const nextValue = array[index + 1];
-      return Math.abs(value - nextValue);
-    };
-    //remove undefined values
-  }).filter(item => item != undefined);
-
-  const sum = diffs.reduce((acc, value) => acc + value, 0);
-  const avg = Math.floor(sum / diffs.length);
-
-  const min = Math.min(...diffs); 
-  const max = Math.max(...diffs);
-
-  return({ 
-    avg, sum, 
-    min: isFinite(min)? min : null,
-    max: isFinite(max)? max : null, 
-  });
-};
 
 class CheckOverlay extends React.PureComponent {
   constructor(props){
@@ -194,11 +160,13 @@ class TimeElasped extends React.PureComponent {
 class ExamStats extends React.PureComponent {
   static propTypes = {
     testInfo : PropTypes.object,
+    testStats: PropTypes.object,
     startTime: PropTypes.number,
     questions: PropTypes.array ,
     //passed down from exam list comp.
     answersList       : PropTypes.array, 
     questionsList     : PropTypes.array, 
+    answerHistoryList : PropTypes.array,
     questionsRemaining: PropTypes.array,
   };
 
@@ -256,30 +224,6 @@ class ExamStats extends React.PureComponent {
     }),
   });
 
-  constructor(props){
-    super(props);
-
-    const answers = QuizAnswer.wrapArray(props.answers);
-    
-    //extract timestamps
-    const new_timestamps = answers.map(answer => answer.timestampAnswered);
-    const timestamps = [...new Set([...prevTimestamps, ...new_timestamps])];
-
-    //update old timestamps
-    prevTimestamps = [...timestamps];
-
-    //compute avg time to answer
-    const { min, max, avg, sum } = getAverage(timestamps);
-
-    this.state = { 
-      min: min? min / 1000 : null, 
-      max: max? max / 1000 : null, 
-      avg: avg? avg / 1000 : null, 
-      sum: sum? sum / 1000 : null,
-      timestamps,
-    };
-  };
-
   getState = () => {
     return(this.state);
   };
@@ -289,8 +233,13 @@ class ExamStats extends React.PureComponent {
     const { testInfo: _testInfo, startTime, ...props } = this.props;
 
     const { examType, preboardTimeLimit } = TestInformation.wrap(_testInfo);
-    const isCountdown = (examType == EXAM_TYPE.preboard);
-    const timeLimit   = convertHoursToMS(preboardTimeLimit || 0);
+    const timeLimit = convertHoursToMS(preboardTimeLimit || 0);
+
+    // TimeElasped prop + title/subtitle specific to preboard
+    const [isCountdown, elapsed] = (examType == EXAM_TYPE.preboard
+      ? [true , {title: 'Remaining', desc: 'Tells you how much time is remaining.'}]
+      : [false, {title: 'Elapsed'  , desc: 'Tells you how much time has elapsed.' }]
+    );
 
     const timeStarted = moment(startTime).format('LT');
     const answerCount = TestAnswer.countAnswered(props.answersList || []);
@@ -311,10 +260,10 @@ class ExamStats extends React.PureComponent {
             backgroundColor={PURPLE.A400}
           />
           <DetailColumn 
-            title={'Elapsed: '}
+            title={`${elapsed.title}: `}
             help={true}
-            helpTitle={'Elapsed'}
-            helpSubtitle={'Tells you how much time has elapsed.'}
+            helpTitle={elapsed.title}
+            helpSubtitle={elapsed.desc}
             backgroundColor={PURPLE.A400}
           >
             <TimeElasped 
@@ -346,15 +295,16 @@ class ExamStats extends React.PureComponent {
 
   _renderDetailsComp(){
     const { styles } = ExamStats;
-    const { min, max, avg, sum, timestamps } = this.state;
-
-    const timesAnswered = `${timestamps.length} times`;
-
-    const minText = min? `${min.toFixed(1)} Seconds` : 'N/A';
-    const maxText = max? `${max.toFixed(1)} Seconds` : 'N/A';
-    const avgText = avg? `${avg.toFixed(1)} Seconds` : 'N/A';
+    const { answerHistoryList, testStats: _testStats } = this.props;
+    const { min, max, avg } = TestStat.wrap(_testStats);
 
     const marginTop = 12;
+    const timesAnswered = `${answerHistoryList.length} times`;
+
+
+    const minText = min? formatMsToDuration(min) : 'N/A';
+    const maxText = max? formatMsToDuration(max) : 'N/A';
+    const avgText = avg? formatMsToDuration(avg) : 'N/A';
 
     return(
       <View style={styles.detailsCompContainer}>
@@ -407,7 +357,7 @@ class ExamStats extends React.PureComponent {
       <ModalSection>
         {this._renderDetailsTime()}
         <View style={styles.divider}/>
-        {false && this._renderDetailsComp()}
+        {this._renderDetailsComp()}
       </ModalSection>
     );
   };
@@ -996,11 +946,13 @@ export class ExamTestDoneModal extends React.PureComponent {
   static PARAM_KEYS = {
     openModal: {
       testInfo : 'testInfo' , // TestInformation item
+      testStats: 'testStats', // TestStat item
       questions: 'questions', // TestQuestion array
       startTime: 'startTime', // start timestamp
       //taken from from examlist state/data
       answersList       : 'answersList'       , // array of TestAnswer   - selected answers
       questionsList     : 'questionsList'     , // array of TestQuestion - visible questions
+      answerHistoryList : 'answerHistoryList' , // array of TestAnswer   - all selected answers
       questionsRemaining: 'questionsRemaining', // array of TestQuestion - remaining questions
     },
   };
@@ -1011,12 +963,14 @@ export class ExamTestDoneModal extends React.PureComponent {
     this.state = {
       //#region received from openModal
       testInfo : {}, // TestInformation item
+      testStats: {}, // TestStat item
       questions: [], // TestQuestion array
       startTime: 0 , // start timestamp
       //taken from from examlist state/data
       answersList       : [], // selected answers
       questionsList     : [], // visible questions
-      questionsRemaining: [], // remaining questions    
+      answerHistoryList : [], // all selected answers
+      questionsRemaining: [], // remaining questions
       //#endregion
     };
 
@@ -1056,12 +1010,14 @@ export class ExamTestDoneModal extends React.PureComponent {
 
     await setStateAsync(this, {
       //pass down params to state
-      startTime: (params[PARAM_KEYS.startTime] || 0 ),
       testInfo : (params[PARAM_KEYS.testInfo ] || {}),
+      testStats: (params[PARAM_KEYS.testStats] || {}),
       questions: (params[PARAM_KEYS.questions] || []),
+      startTime: (params[PARAM_KEYS.startTime] || 0 ),
       //pass down examlist comp. state/data
       answersList       : (params[PARAM_KEYS.answersList       ] || []),
       questionsList     : (params[PARAM_KEYS.questionsList     ] || []),
+      answerHistoryList : (params[PARAM_KEYS.answerHistoryList ] || []),
       questionsRemaining: (params[PARAM_KEYS.questionsRemaining] || []),
     });
 
@@ -1125,7 +1081,7 @@ export class ExamTestDoneModal extends React.PureComponent {
 
   render(){
     const { styles } = ExamTestDoneModal;
-    const { testInfo, startTime, questions, answersList, questionsList, questionsRemaining } = this.state;
+    const { testInfo, startTime, questions, answersList, questionsList, questionsRemaining, answerHistoryList, testStats } = this.state;
 
     const { modal, detail, stats } = this.getTitleDescs();
     const maxIndex = (questions || []).length;
@@ -1164,8 +1120,9 @@ export class ExamTestDoneModal extends React.PureComponent {
           <ExamStats 
             {...{
               //pass down as props
-              testInfo , questions  , questionsList     , 
-              startTime, answersList, questionsRemaining,
+              questionsList     , testInfo , questions  ,
+              answerHistoryList , testStats, answersList,
+              questionsRemaining, startTime,
             }}
           />
         </StickyCollapsableScrollView>

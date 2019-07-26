@@ -274,6 +274,17 @@ export function convertHoursToMS(hours){
   return (seconds * 1000);
 };
 
+export function formatMsToDuration(mills) {
+  const seconds = Math.floor(mills   / 1000);
+  const minutes = Math.floor(seconds / 60  );
+  const hours   = Math.floor(minutes / 60  );
+
+  const modSec = (seconds % 60);
+  const modMin = (minutes % 60);
+
+  const pad = (num) => ("0"+num).slice(-2);
+  return `${pad(hours)}:${pad(modMin)}:${pad(modSec)}`
+};
 
 function lerp(a, b, n) {
   return (1 - n) * a + n * b;

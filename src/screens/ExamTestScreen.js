@@ -27,7 +27,7 @@ import { createStackNavigator } from 'react-navigation';
 import { Icon } from 'react-native-elements';
 import { PreboardExamStore } from '../functions/PreboardExamStore';
 import { PreboardExamItem, PreboardExamQuestion, PreboardExam } from '../models/PreboardModel';
-import { EXAM_TYPE, TestQuestion, TestInformation } from '../models/TestModels';
+import { EXAM_TYPE, TestQuestion, TestInformation, TestDuration, TestStat } from '../models/TestModels';
 import { LoadingPill } from '../components/StyledComponents';
 import { ExamTestList } from '../components/ExamTestList';
 import { ExamTestDoneModal } from '../modals/ExamTestDoneModal';
@@ -306,22 +306,30 @@ export class ExamTestScreen extends React.Component {
     examType : 'examType' , //EXAM_TYPE enum
     testInfo : 'testInfo' , //TestInformation item
   };
+
+  static createQuestionIDIndexMap(questions = [TestQuestion.structure]){
+    return (questions || []).map((question = {}, index) => 
+      question.questionID || '',
+    );
+  };
   
   constructor(props){
     super(props);
 
-    this.startTime = (new Date()).getTime();
-    this.base64Images = {};
-    this.testExamDoneModal = null;
-    this.didShowLastQuestionAlert = false;
-
+    this.initialize();
     this.state = {
       loading: LOAD_STATE.LOADING,
     };
   };
 
   componentDidMount = async () => {
-    const { screenProps } = this.props;
+    const { NAV_PARAMS } = ExamTestScreen;
+    const { navigation, screenProps } = this.props;
+
+    //get questions passed from prev. screen
+    const questions = TestQuestion.wrapArray(
+      navigation.getParam(NAV_PARAMS.questions, [])
+    );
 
     //show loading indicator
     await this.loadingPill.setVisibility(true);
@@ -338,7 +346,30 @@ export class ExamTestScreen extends React.Component {
     InteractionManager.runAfterInteractions(async () => {
       //load images and data
       await this.loadData();
+
+      //initialize durations with first q item
+      this.recordDuration(0, questions[0].questionID);
     });    
+  };
+
+  initialize(){
+    const { createQuestionIDIndexMap, NAV_PARAMS } = ExamTestScreen;
+    const { navigation } = this.props;
+
+    //get questions passed from prev. screen
+    const questions = navigation.getParam(NAV_PARAMS.questions, []);
+
+    //record exam start timestamp
+    this.startTime = (new Date()).getTime();
+    //create an array of questionIDs from the questions
+    this.indexIDMap = createQuestionIDIndexMap(questions);    
+
+    //used for recording durations
+    this.prevSnap  = null;
+    this.durations = [];
+
+    this.base64Images = {};
+    this.didShowLastQuestionAlert = false;
   };
 
   async loadData(){
@@ -369,6 +400,33 @@ export class ExamTestScreen extends React.Component {
     };
   };
 
+  /** record how much time is spend on each item */
+  recordDuration(index, questionID){
+    const nextSnap = { 
+      index, questionID,
+      timestamp: Date.now(),
+    };
+
+    if(this.prevSnap){
+      const prevSnap = this.prevSnap;
+      this.prevSnap = nextSnap;
+
+      this.durations.push(TestDuration.wrap({
+        questionID,
+        index    : prevSnap.index,
+        timestamp: nextSnap.timestamp,
+        duration : (nextSnap.timestamp - prevSnap.timestamp),
+        //extra/misc data 
+        indexNext    : index,
+        timestampPrev: prevSnap.timestamp,
+        timestampNext: nextSnap.timestamp,
+      }));
+
+    } else {
+      this.prevSnap = nextSnap;
+    };
+  };
+
   //#region ----- EVENT HANDLERS -----
   /** From header navbar done button */
   _handleOnPressHeaderDone = () => {
@@ -378,15 +436,20 @@ export class ExamTestScreen extends React.Component {
 
     const testInfo  = navigation.getParam(NAV_PARAMS.testInfo );
     const questions = navigation.getParam(NAV_PARAMS.questions);
+
+    //compute avg, min, max etc. time spent
+    const testStats = TestStat.computeAvgFromDurations(this.durations);
     
     //open ExamTestDoneModal and pass params
     this.doneModal.openModal({
       [PARAM_KEYS.testInfo ]: testInfo      ,
+      [PARAM_KEYS.testStats]: testStats     ,
       [PARAM_KEYS.questions]: questions     ,
       [PARAM_KEYS.startTime]: this.startTime,
       //pass down examlist state/data
       [PARAM_KEYS.answersList       ]: this.examList.getAnswerList        (),
       [PARAM_KEYS.questionsList     ]: this.examList.getQuestionList      (),
+      [PARAM_KEYS.answerHistoryList ]: this.examList.getAnswerHistoryList (),
       [PARAM_KEYS.questionsRemaining]: this.examList.getRemainingQuestions(),
     });
   };
@@ -395,6 +458,10 @@ export class ExamTestScreen extends React.Component {
     //update header title index
     const header = References.HeaderTitle;
     header && header.setIndex(index + 1);
+
+    const questionID = this.indexIDMap[index];
+    this.recordDuration(index, questionID);
+    
   };
 
   _handleOnAnsweredLastQuestion = async () => {
