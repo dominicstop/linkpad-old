@@ -120,7 +120,7 @@ export class TestAnswer {
     label     : ''   , // EXAM_LABELS enum - used for marking this answer
     timestamp : -1   , // timestamp of when the answer was made
     // the selected choice
-    userAnswer: [TestChoice.structure], 
+    userAnswer: TestChoice.structure, 
   };
 
   static wrap(data = TestAnswer.structure){
@@ -141,12 +141,14 @@ export class TestAnswer {
   };
 
   /** create an answer */
-  static create(choice = TestChoice.structure){
+  static create({question = TestQuestion.structure, choice = TestChoice.structure}){
     return TestAnswer.wrap({
       userAnswer: choice, 
       timestamp : Date.now()     ,
       isCorrect : choice.isAnswer,
       answerID  : choice.choiceID,
+      //pass dowm questionid
+      questionID: question.questionID,
     });
   };
 
@@ -272,6 +274,22 @@ export class TestQuestion {
       indexid_exam     : extraData.indexid_exam     ,
       indexid_premodule: extraData.indexid_premodule,
       examModuleID     : extraData.examModuleID     ,
+    });
+  };
+  //#endregion
+
+  //#region - Helper Functions
+  static combineQuestionsAndAnswers({questions = [TestQuestion.structure], answers = [TestAnswer.structure] }){
+    return (questions || []).map(question => {
+      const match = answers.find(answer => 
+        (answer.questionID == question.questionID)  
+      );
+
+      return {
+        question,
+        answer  : match,
+        hasMatch: match !== undefined,
+      };
     });
   };
   //#endregion

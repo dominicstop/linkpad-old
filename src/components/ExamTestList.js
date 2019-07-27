@@ -224,8 +224,8 @@ class Choices extends React.PureComponent {
     const { onPressChoice, isLast } = this.props;
     const { selected: prevSelected, selectedIndex: prevSelectedIndex } = this.state;
 
-    const index  = params[PARAM_KEYS.index ] || ''   ;
-    const choice = params[PARAM_KEYS.choice] || {}   ;
+    const index  = params[PARAM_KEYS.index ] || '';
+    const choice = params[PARAM_KEYS.choice] || {};
 
     this.setState({
       selected     : choice, 
@@ -234,10 +234,10 @@ class Choices extends React.PureComponent {
 
     //pass params to callback prop
     onPressChoice && onPressChoice({
-      [CB_KEYS.prevSelected     ]: prevSelected     , 
+      [CB_KEYS.isLast           ]: isLast           ,
+      [CB_KEYS.prevSelected     ]: prevSelected     ,
       [CB_KEYS.prevSelectedIndex]: prevSelectedIndex,
       //pass down prev. callback params
-      [CB_KEYS.isLast       ]: isLast,
       [CB_KEYS.selected     ]: choice,
       [CB_KEYS.selectedIndex]: index ,
     });
@@ -988,11 +988,11 @@ class QuestionItem extends React.PureComponent {
   _handleOnPressChoice = (params) => {
     const {CB_PARAMS:{ onPressChoice: PARAM_KEYS }} = Choices;
     const {CB_PARAMS:{ onPressChoice: CB_KEYS    }} = QuestionItem;
-    const { onPressChoice, quesion } = this.props;
+    const { onPressChoice, question } = this.props;
 
     //pass props to callback
     onPressChoice && onPressChoice({
-      quesion,
+      [CB_KEYS.question]: question,
       //pass down prev. callback params
       [CB_KEYS.isLast           ]: params[PARAM_KEYS.isLast           ],
       [CB_KEYS.selected         ]: params[PARAM_KEYS.selected         ],
@@ -1146,7 +1146,7 @@ export class ExamTestList extends React.Component {
   /** get the current questions being displayed */
   getQuestionList = () => {
     const { questionList } = this.state;
-    return (_.cloneDeep(this.questions));
+    return (_.cloneDeep(questionList));
   };
 
   /** returns a reference to the carousel component */
@@ -1177,7 +1177,7 @@ export class ExamTestList extends React.Component {
   /** inserts a new answer to the list, otherwise overwrites prev answer */
   addAnswer({question, label, choice: _choice}){
     const choice = TestChoice.wrap(_choice);
-    const answer = TestAnswer.create(choice);
+    const answer = TestAnswer.create({question, choice});
 
     //insert a copy to answer history
     this.answerHistory.push(answer);
@@ -1236,7 +1236,7 @@ export class ExamTestList extends React.Component {
       //show next question if it's not the last item
       !isLast && this._carousel.snapToNext();
     };
-
+    
     this.addAnswer({question, choice: selected});
   };
 

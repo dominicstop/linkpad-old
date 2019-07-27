@@ -316,7 +316,7 @@ export class ExamTestScreen extends React.Component {
   constructor(props){
     super(props);
 
-    this.initialize();
+    this.initValues();
     this.state = {
       loading: LOAD_STATE.LOADING,
     };
@@ -324,7 +324,7 @@ export class ExamTestScreen extends React.Component {
 
   componentDidMount = async () => {
     const { NAV_PARAMS } = ExamTestScreen;
-    const { navigation, screenProps } = this.props;
+    const { navigation } = this.props;
 
     //get questions passed from prev. screen
     const questions = TestQuestion.wrapArray(
@@ -334,25 +334,20 @@ export class ExamTestScreen extends React.Component {
     //show loading indicator
     await this.loadingPill.setVisibility(true);
 
-    //get modal ref from screenprops
-    const key = SCREENPROPS_KEYS.getRefTestExamDoneModal;
-    this.doneModal = (screenProps[key])();
-
-    //assign callbacks to header buttons
-    References.CancelButton.onPress = this._handleOnPressHeaderCancel;
-    References.DoneButton  .onPress = this._handleOnPressHeaderDone;
-
     //wait for animations to finish
     InteractionManager.runAfterInteractions(async () => {
       //load images and data
       await this.loadData();
+
+      //init. refs to comps
+      this.initRefs();
 
       //initialize durations with first q item
       this.recordDuration(0, questions[0].questionID);
     });    
   };
 
-  initialize(){
+  initValues(){
     const { createQuestionIDIndexMap, NAV_PARAMS } = ExamTestScreen;
     const { navigation } = this.props;
 
@@ -368,8 +363,23 @@ export class ExamTestScreen extends React.Component {
     this.prevSnap  = null;
     this.durations = [];
 
+    this.carousel = null;
     this.base64Images = {};
     this.didShowLastQuestionAlert = false;
+  };
+
+  initRefs(){
+    const { screenProps } = this.props;
+
+    //get modal ref from screenprops
+    const key = SCREENPROPS_KEYS.getRefTestExamDoneModal;
+    this.doneModal = (screenProps[key])();
+    //get SnapCarousel ref
+    this.carousel = this.examList.getCarouselRef();
+
+    //assign callbacks to header buttons
+    References.CancelButton.onPress = this._handleOnPressHeaderCancel;
+    References.DoneButton  .onPress = this._handleOnPressHeaderDone;
   };
 
   async loadData(){
@@ -451,6 +461,8 @@ export class ExamTestScreen extends React.Component {
       [PARAM_KEYS.questionsList     ]: this.examList.getQuestionList      (),
       [PARAM_KEYS.answerHistoryList ]: this.examList.getAnswerHistoryList (),
       [PARAM_KEYS.questionsRemaining]: this.examList.getRemainingQuestions(),
+      //pass down from examlist carousel
+      [PARAM_KEYS.currentIndex]: this.carousel.currentIndex,
     });
   };
 
@@ -461,7 +473,6 @@ export class ExamTestScreen extends React.Component {
 
     const questionID = this.indexIDMap[index];
     this.recordDuration(index, questionID);
-    
   };
 
   _handleOnAnsweredLastQuestion = async () => {

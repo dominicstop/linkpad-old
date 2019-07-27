@@ -1,5 +1,5 @@
 import React, { Fragment } from 'react';
-import { StyleSheet, View, Text, TouchableOpacity, Platform, Animated as NativeAnimated, Dimensions, ScrollView, FlatList } from 'react-native';
+import { StyleSheet, View, Text, TouchableOpacity, Platform, Animated as NativeAnimated, Dimensions, ScrollView, FlatList, Clipboard } from 'react-native';
 import PropTypes from 'prop-types';
 
 import { STYLES, FONT_STYLES } from '../Constants';
@@ -27,7 +27,7 @@ import { BlurViewWrapper, StickyHeader, DetailRow, DetailColumn, ModalBottomTwoB
 import Animated, { Easing } from 'react-native-reanimated';
 import { ContentExpander } from '../components/Expander';
 import { CustomQuiz } from '../functions/CustomQuizStore';
-import { TestInformation, EXAM_TYPE, TestAnswer, TestStat } from '../models/TestModels';
+import { TestInformation, EXAM_TYPE, TestAnswer, TestStat, TestQuestion, EXAM_LABELS } from '../models/TestModels';
 const { interpolate, Value } = Animated; 
 
 const Screen = {
@@ -515,20 +515,14 @@ class ExamDetails extends React.PureComponent {
 
 class QuestionItem extends React.PureComponent {
   static propTypes = {
-    //indexes
-    maxIndex    : PropTypes.number,
-    currentIndex: PropTypes.number,
-    //time answered
-    timestampAnswered: PropTypes.number,
-    //style
-    indicatorColor: PropTypes.string,
-    //data - QuizAnswer
-    answerID  : PropTypes.string,
-    userAnswer: PropTypes.string,
-    label     : PropTypes.string,
-    question  : PropTypes.object,
-    isCorrect : PropTypes.bool  ,
-    isLast    : PropTypes.bool  ,
+    index         : PropTypes.number, // index 
+    answer        : PropTypes.object, // TestAnswer item
+    isLast        : PropTypes.bool  , // last in the current list
+    isFinal       : PropTypes.bool  , // last question in list
+    hasMatch      : PropTypes.bool  , // has a matching answer
+    question      : PropTypes.object, // TestQuestion item
+    currentIndex  : PropTypes.number, // current active question
+    indicatorColor: PropTypes.string, // NumberIndicator color
     //events
     onPressItem: PropTypes.func,
   };
@@ -553,20 +547,23 @@ class QuestionItem extends React.PureComponent {
       flexDirection: 'row',
       alignItems: 'center',
     },
+    textContainer: {
+      flex: 1,
+      marginLeft: 7,
+    },
     question: {
       flex: 1,
-      marginLeft: 5,
-      fontSize: 18,
+      fontSize: 17,
       fontWeight: '400'
     },
     answerContainer: {
       flexDirection: 'row',
-      marginTop: 2,
       alignItems: 'center',
+      marginTop: 2,
     },
     answer: {
       flex: 1,
-      fontSize: 18,
+      fontSize: 16,
       fontWeight: '400',
       color: 'rgb(50, 50, 50)',
     },
@@ -586,46 +583,12 @@ class QuestionItem extends React.PureComponent {
     onPressItem && onPressItem({index});
   };
 
-  _renderQuestion(){
-    const { styles } = QuestionItem;
-    const { index, label, currentIndex, indicatorColor } = this.props;
-    const question = QuizQuestion.wrap(this.props.question);
-
-    const isSelected = (index == currentIndex);
-    const isSkipped  = (label == QUIZ_LABELS.SKIPPPED);
-    const isMarked   = (label == QUIZ_LABELS.MARKED  );
-
-    const color = (
-      isSelected? BLUE .A700 : 
-      isSkipped ? RED  .A700 : 
-      isMarked  ? AMBER.A700 : indicatorColor
-    );
-
-    const questionStyle = {
-      ...(isSelected && {
-        fontSize: 19,
-      }),
-    };
-
-    return(
-      <View style={styles.questionContainer}>
-        <NumberIndicator 
-          value={index + 1}
-          size={20}
-          initFontSize={14}
-          diffFontSize={2}
-          {...{color}}
-        />
-        <Text style={[styles.question, questionStyle]} numberOfLines={1}>
-          {question.question || 'No question to show...'}
-        </Text>
-      </View>
-    );
-  };
-
   _renderDetails(){
     const { styles } = QuestionItem;
-    const { userAnswer, index, label, currentIndex, timestampAnswered } = this.props;
+    const { index, currentIndex, isLast, ...props } = this.props;
+
+    const { label, ...answer } = TestAnswer.wrap(props.answer);
+    const userAnswer = (answer.userAnswer || 'Answer N/A');
 
     const isSelected = (index == currentIndex);
     const isSkipped  = (label == QUIZ_LABELS.SKIPPPED);
@@ -661,15 +624,79 @@ class QuestionItem extends React.PureComponent {
 
   render(){
     const { styles } = QuestionItem;
-    const { index, currentIndex, isLast } = this.props;
+    const { index, currentIndex, isLast, indicatorColor, hasMatch, ...props } = this.props;
 
+    const answer   = TestAnswer  .wrap(props.answer  );
+    const question = TestQuestion.wrap(props.question);
+
+    const { label, userAnswer } = answer;
+    const answerText = (userAnswer.value || 'N/A');
+
+    const isJumpBtn  = (isLast && !hasMatch);
     const isSelected = (index == currentIndex);
+    const isSkipped  = (label == EXAM_LABELS.SKIPPPED);
+    const isMarked   = (label == EXAM_LABELS.MARKED  );
+
+    console.log(`\n\n
+      //---------------------
+      isJumpBtn : ${isJumpBtn}
+      isSelected: ${isSelected}
+      isSkipped : ${isSkipped}
+      isMarked  : ${isMarked}
+    `);
+
+    const color = (
+      isSelected? BLUE .A700 :
+      isJumpBtn ? GREEN.A700 : 
+      isSkipped ? RED  .A700 : 
+      isMarked  ? AMBER.A700 : indicatorColor
+    );
 
     const containerStyle = {
-      ...(isSelected ? {
+      ...(isSelected && {
         backgroundColor: BLUE[50],
-      } : null),
+      }),
     };
+
+    const questionStyle = {
+      ...(isSelected && {
+        fontWeight: '500',
+      }),
+    };
+
+    const answerStyle = (
+      (isJumpBtn && isSelected)? {
+        color: BLUE[900],
+        fontWeight: '500',
+      }:(isSelected)? {
+        color: BLUE[900],
+      }:(isSkipped)? {
+        color: RED[700],
+        fontWeight: '700',
+      }:{}
+    );
+
+    const subtitleProps = {
+      style: [styles.answer, answerStyle],
+      numberOfLines: 1,
+    };
+
+    const SUBTITLE = (
+      (isJumpBtn && isSelected)? (
+        <Text {...subtitleProps}>
+          {'Not answered yet...'}
+        </Text>
+      ):(isJumpBtn && !isSelected)? (
+        <Text {...subtitleProps}>
+          {'Tap here to jump to this question.'}
+        </Text>
+      ):(
+        <Text {...subtitleProps}>
+          <Text style={styles.answerLabel}>{'Answer: '}</Text>
+          {isSkipped? 'Skipped' : answerText}
+        </Text>
+      )
+    );
 
     return (
       <TouchableOpacity 
@@ -677,8 +704,31 @@ class QuestionItem extends React.PureComponent {
         onPress={this._handleOnPress}
         activeOpacity={0.75}
       >
-        {this._renderQuestion()}
-        {this._renderDetails()}
+        <View style={styles.questionContainer}>
+          <NumberIndicator 
+            value={index + 1}
+            size={19}
+            initFontSize={15}
+            diffFontSize={2}
+            {...{color}}
+          />
+          <View style={styles.textContainer}>
+            <Text style={[styles.question, questionStyle]} numberOfLines={1}>
+              {question.question || 'No question to show...'}
+            </Text>
+            <View style={styles.answerContainer}>
+              {SUBTITLE}
+              {!isJumpBtn && (
+                <Pill
+                  hasFill={false}
+                  hasBorder={true}
+                  text={'answerTime'}
+                  bgColor={null}
+                />
+              )}
+            </View>
+          </View>
+        </View>
       </TouchableOpacity>
     );
   };
@@ -686,9 +736,10 @@ class QuestionItem extends React.PureComponent {
 
 class QuestionList extends React.PureComponent {
   static propTypes = {
-    currentIndex: PropTypes.number,
+    QAList      : PropTypes.array ,
     maxIndex    : PropTypes.number,
-    answers     : PropTypes.array ,
+    questions   : PropTypes.array , 
+    currentIndex: PropTypes.number, 
     //events
     onPressQuestion: PropTypes.func,
   };
@@ -784,7 +835,8 @@ class QuestionList extends React.PureComponent {
 
   /** from _renderQuestionList FlatList */
   _handleKeyExtractor = (item, index) => {
-    return (`${item.questionID || index}`);
+    const { question } = (item || {}); 
+    return (`${question.questionID || index}`);
   };
 
   _renderEmptyQuestion = () => {
@@ -885,15 +937,21 @@ class QuestionList extends React.PureComponent {
 
   /** for _renderQuestionList */
   _renderItem = ({item, index}) => {
-    const { currentIndex, maxIndex, answers } = this.props;
-    const answersCount = (answers || []).length;
-    const isLast = (index == (answersCount - 1));
+    const { currentIndex, maxIndex, QAList } = this.props;
+    const { question, answer, hasMatch } = (item || {});
+
+    const isLast  = (index >= ((QAList || []).length - 1));
+    const isFinal = (index >= maxIndex);
 
     return(
       <QuestionItem
         onPressItem={this.props.onPressQuestion}
         indicatorColor={this.colors[index]}
-        {...{index, currentIndex, isLast, ...item}}
+        {...{
+          //pass down as props
+          index , isLast , question, currentIndex,
+          answer, isFinal, hasMatch,
+        }}
       />
     );
   };
@@ -903,7 +961,7 @@ class QuestionList extends React.PureComponent {
     return(
       <ModalSection containerStyle={styles.container}>
         <FlatList
-          data={this.props.answers}
+          data={this.props.QAList}
           keyExtractor={this._handleKeyExtractor}
           renderItem={this._renderItem}
           ListEmptyComponent={this._renderEmptyQuestion}
@@ -954,6 +1012,8 @@ export class ExamTestDoneModal extends React.PureComponent {
       questionsList     : 'questionsList'     , // array of TestQuestion - visible questions
       answerHistoryList : 'answerHistoryList' , // array of TestAnswer   - all selected answers
       questionsRemaining: 'questionsRemaining', // array of TestQuestion - remaining questions
+      //taken from examlist carousel
+      currentIndex: 'currentIndex', //current active index
     },
   };
 
@@ -961,7 +1021,7 @@ export class ExamTestDoneModal extends React.PureComponent {
     super(props);
 
     this.state = {
-      //#region received from openModal
+      //#region - received from openModal
       testInfo : {}, // TestInformation item
       testStats: {}, // TestStat item
       questions: [], // TestQuestion array
@@ -971,6 +1031,11 @@ export class ExamTestDoneModal extends React.PureComponent {
       questionsList     : [], // visible questions
       answerHistoryList : [], // all selected answers
       questionsRemaining: [], // remaining questions
+      //taken from examlist carousel
+      currentIndex: -1, //current active index
+      //#endregion
+      //#region - derived values
+      QAList: [],
       //#endregion
     };
 
@@ -1000,6 +1065,11 @@ export class ExamTestDoneModal extends React.PureComponent {
           title: 'Exam Stats',
           desc : 'How well are you doing so far?',
         },
+        qlist: {
+          title: 'Questions & Answers',
+          desc : 'An overview of your answer.',
+
+        }
       });
     };
   };
@@ -1008,17 +1078,30 @@ export class ExamTestDoneModal extends React.PureComponent {
   openModal = async (params) => {
     const { openModal: PARAM_KEYS } = ExamTestDoneModal.PARAM_KEYS;
 
+    const answersList   = (params[PARAM_KEYS.answersList  ] || []);
+    const questionsList = (params[PARAM_KEYS.questionsList] || []);
+
+    //combine questions and answer together
+    const QAList = TestQuestion.combineQuestionsAndAnswers({
+      answers  : answersList  ,
+      questions: questionsList,
+    });
+
     await setStateAsync(this, {
+      //pass down derived values
+      QAList,
       //pass down params to state
       testInfo : (params[PARAM_KEYS.testInfo ] || {}),
       testStats: (params[PARAM_KEYS.testStats] || {}),
       questions: (params[PARAM_KEYS.questions] || []),
       startTime: (params[PARAM_KEYS.startTime] || 0 ),
       //pass down examlist comp. state/data
-      answersList       : (params[PARAM_KEYS.answersList       ] || []),
-      questionsList     : (params[PARAM_KEYS.questionsList     ] || []),
+      questionsList, answersList,
+      //get and pass down examlist comp. state/data
       answerHistoryList : (params[PARAM_KEYS.answerHistoryList ] || []),
       questionsRemaining: (params[PARAM_KEYS.questionsRemaining] || []),
+      //get and pass down from examlist carousel
+      currentIndex: (params[PARAM_KEYS.currentIndex] || 0),
     });
 
     this.modal.openModal();    
@@ -1081,9 +1164,10 @@ export class ExamTestDoneModal extends React.PureComponent {
 
   render(){
     const { styles } = ExamTestDoneModal;
-    const { testInfo, startTime, questions, answersList, questionsList, questionsRemaining, answerHistoryList, testStats } = this.state;
+    const { testInfo, questions, questionsList } = this.state;
+    const state = this.state;
 
-    const { modal, detail, stats } = this.getTitleDescs();
+    const { modal, detail, stats, qlist } = this.getTitleDescs();
     const maxIndex = (questions || []).length;
 
     return(
@@ -1118,12 +1202,25 @@ export class ExamTestDoneModal extends React.PureComponent {
             iconType={'feather'}
           />
           <ExamStats 
-            {...{
-              //pass down as props
-              questionsList     , testInfo , questions  ,
-              answerHistoryList , testStats, answersList,
-              questionsRemaining, startTime,
-            }}
+            startTime={state.startTime}
+            testStats={state.testStats}
+            answersList={state.answersList}
+            answerHistoryList={state.answerHistoryList}
+            questionsRemaining={state.questionsRemaining}
+            {...{testInfo, questions, questionsList}}
+          />
+
+          <StickyCollapseHeader
+            title={qlist.title}
+            subtitle ={qlist.desc}
+            iconName={'list'}
+            iconType={'feather'}
+          />
+          <QuestionList
+            QAList={state.QAList}
+            currentIndex={state.currentIndex}
+            onPressQuestion={this._handleOnPressQuestion}
+            {...{testInfo, questions, maxIndex}}
           />
         </StickyCollapsableScrollView>
       </StyledSwipableModal>
