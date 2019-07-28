@@ -37,7 +37,6 @@ const Screen = {
 
 prevTimestamps = [];
 
-
 class CheckOverlay extends React.PureComponent {
   constructor(props){
     super(props);
@@ -119,9 +118,9 @@ class TimeElasped extends React.PureComponent {
 
     const duration = moment.duration(diffTime, 'milliseconds');
 
-    const hours    = addLeadingZero(duration.hours  ());
-    const minutes  = addLeadingZero(duration.minutes());
-    const seconds  = addLeadingZero(duration.seconds());
+    const hours   = addLeadingZero(duration.hours  ());
+    const minutes = addLeadingZero(duration.minutes());
+    const seconds = addLeadingZero(duration.seconds());
 
     return(`${hours}:${minutes}:${seconds}`);
   };
@@ -629,21 +628,14 @@ class QuestionItem extends React.PureComponent {
     const answer   = TestAnswer  .wrap(props.answer  );
     const question = TestQuestion.wrap(props.question);
 
-    const { label, userAnswer } = answer;
+    const { label, userAnswer, timestamp } = answer;
     const answerText = (userAnswer.value || 'N/A');
+    const answerTime = moment(timestamp).format('LT');
 
     const isJumpBtn  = (isLast && !hasMatch);
     const isSelected = (index == currentIndex);
     const isSkipped  = (label == EXAM_LABELS.SKIPPPED);
     const isMarked   = (label == EXAM_LABELS.MARKED  );
-
-    console.log(`\n\n
-      //---------------------
-      isJumpBtn : ${isJumpBtn}
-      isSelected: ${isSelected}
-      isSkipped : ${isSkipped}
-      isMarked  : ${isMarked}
-    `);
 
     const color = (
       isSelected? BLUE .A700 :
@@ -663,6 +655,14 @@ class QuestionItem extends React.PureComponent {
         fontWeight: '500',
       }),
     };
+
+    const answerLabelStyle = (
+      (isSelected)? {
+        color: BLUE[900]
+      }:{ 
+        color: PURPLE[900]
+      }
+    );
 
     const answerStyle = (
       (isJumpBtn && isSelected)? {
@@ -684,7 +684,7 @@ class QuestionItem extends React.PureComponent {
     const SUBTITLE = (
       (isJumpBtn && isSelected)? (
         <Text {...subtitleProps}>
-          {'Not answered yet...'}
+          {"You haven't answered this one yet..."}
         </Text>
       ):(isJumpBtn && !isSelected)? (
         <Text {...subtitleProps}>
@@ -692,7 +692,9 @@ class QuestionItem extends React.PureComponent {
         </Text>
       ):(
         <Text {...subtitleProps}>
-          <Text style={styles.answerLabel}>{'Answer: '}</Text>
+          <Text style={[styles.answerLabel, answerLabelStyle]}>
+            {'Answer: '}
+          </Text>
           {isSkipped? 'Skipped' : answerText}
         </Text>
       )
@@ -707,7 +709,7 @@ class QuestionItem extends React.PureComponent {
         <View style={styles.questionContainer}>
           <NumberIndicator 
             value={index + 1}
-            size={19}
+            size={21}
             initFontSize={15}
             diffFontSize={2}
             {...{color}}
@@ -720,10 +722,9 @@ class QuestionItem extends React.PureComponent {
               {SUBTITLE}
               {!isJumpBtn && (
                 <Pill
-                  hasFill={false}
+                  hasFill={isSelected}
                   hasBorder={true}
-                  text={'answerTime'}
-                  bgColor={null}
+                  text={answerTime}
                 />
               )}
             </View>
@@ -862,13 +863,14 @@ class QuestionList extends React.PureComponent {
 
   _renderHeader = () => {
     const { styles } = QuestionList;
-    const { currentIndex, maxIndex, answers } = this.props;
+    const { currentIndex, maxIndex, QAList } = this.props;
+    const itemCount = (QAList || []).length;
 
-    const answersCount = (answers || []).length;
-    if(answersCount == 0) return null;
+    //dont render if empty
+    if(itemCount == 0) return null;
 
-    const isSelected = (currentIndex <  answersCount);
-    const isMaxed    = (answersCount >= maxIndex    );
+    const isSelected = (currentIndex <  itemCount);
+    const isMaxed    = (itemCount    >= maxIndex );
 
     const textActive   = {title: "Here's a Tip" , subtitle: "The active question is marked blue. Tap on 'Current Question' to jump to latest item."};
     const textInactive = {title: "Tap to Jump"  , subtitle: "Tap on a item in the list to jump and naviagte to that question."};
@@ -895,43 +897,6 @@ class QuestionList extends React.PureComponent {
           <Text style={styles.description}>{text.subtitle}</Text>
         </View>
       </View>
-    );
-  };
-
-  _renderFooter = () => {
-    const { styles } = QuestionList;
-    const { currentIndex, maxIndex, answers } = this.props;
-    const answersCount = (answers || []).length;
-
-    const isSelected = (currentIndex <  answersCount);
-    const isMaxed    = (currentIndex >= maxIndex - 1);
-
-    // dont show if no more questions remaining \
-    // or when at the last index
-    if(!isSelected || isMaxed) return null;
-
-    return(
-      <TouchableOpacity 
-        style={styles.footerContainer}
-        onPress={this._handleOnPressFooter}
-        activeOpacity={0.75}
-      >
-        <View style={styles.footerTitleContainer}>
-          <NumberIndicator 
-            value={answersCount + 1}
-            size={20}
-            initFontSize={15}
-            diffFontSize={1.5}
-            color={GREEN.A700}
-          />
-          <Text numberOfLines={1} style={styles.footerTitle}>
-            {'Current Question'}
-          </Text>
-        </View>
-        <Text numberOfLines={1} style={styles.footerSubtitle}>
-          {'Tap here to jump to your last unanswered question.'}
-        </Text>
-      </TouchableOpacity>
     );
   };
 
@@ -966,7 +931,6 @@ class QuestionList extends React.PureComponent {
           renderItem={this._renderItem}
           ListEmptyComponent={this._renderEmptyQuestion}
           ListHeaderComponent={this._renderHeader}
-          ListFooterComponent={this._renderFooter}
         />
       </ModalSection>
     );
@@ -1072,6 +1036,10 @@ export class ExamTestDoneModal extends React.PureComponent {
         }
       });
     };
+  };
+
+  startTimer(){
+
   };
 
   //------ public functions ------

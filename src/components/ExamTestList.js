@@ -33,6 +33,10 @@ class ChoiceItem extends React.PureComponent {
     onPressChoice: PropTypes.func  ,
   };
 
+  static defaultProps = {
+    selectedIndex: -1,
+  };
+
   static styles = StyleSheet.create({
     container: {
       minHeight: 38,
@@ -201,7 +205,7 @@ class Choices extends React.PureComponent {
     const answer      = TestAnswer.wrap(matchAnswer);
 
     //in case of unmount, find the prev answers
-    const selectedIndex = (!hasMatch? -1 : shuffled.findIndex(choice => 
+    const selectedIndex = ((!hasMatch)? -1 : shuffled.findIndex(choice => 
       (choice.choiceID === answer.answerID) 
     ));
 
@@ -224,7 +228,7 @@ class Choices extends React.PureComponent {
     const { onPressChoice, isLast } = this.props;
     const { selected: prevSelected, selectedIndex: prevSelectedIndex } = this.state;
 
-    const index  = params[PARAM_KEYS.index ] || '';
+    const index  = params[PARAM_KEYS.index ];
     const choice = params[PARAM_KEYS.choice] || {};
 
     this.setState({
@@ -360,7 +364,6 @@ class QuestionImage extends React.PureComponent {
       ),
     };
   };
-
 
   async componentDidMount(){
     const { photouri } = this.props;
@@ -1183,10 +1186,10 @@ export class ExamTestList extends React.Component {
     this.answerHistory.push(answer);
     //find the prev matching ans, if any
     const matchIndex = this.answers.findIndex(item => 
-      item.answerID == answer.answerID
+      (item.questionID === answer.questionID)
     );
 
-    if(matchIndex != -1){
+    if(matchIndex != -1){      
       const prevLabel = this.answers[matchIndex].label;
       const isMarked  = (label     == QUIZ_LABELS.MARKED);
       const wasMarked = (prevLabel == QUIZ_LABELS.MARKED);
@@ -1236,7 +1239,7 @@ export class ExamTestList extends React.Component {
       //show next question if it's not the last item
       !isLast && this._carousel.snapToNext();
     };
-    
+
     this.addAnswer({question, choice: selected});
   };
 

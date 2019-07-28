@@ -18,7 +18,7 @@ import { PURPLE } from '../Colors';
 
 import { QuizQuestion } from '../models/Quiz';
 
-import { timeout, getTimestamp} from '../functions/Utils';
+import { timeout, getTimestamp, convertHoursToMS, hexToRgbA, plural} from '../functions/Utils';
 import { CustomQuizResults } from '../functions/CustomQuizResultsStore';
 import { CustomQuiz, CustomQuizStore } from '../functions/CustomQuizStore';
 
@@ -95,27 +95,43 @@ class CancelButton extends React.PureComponent {
 //custom header title
 class HeaderTitle extends React.PureComponent {
   static styles = StyleSheet.create({
+    wrapper: {
+      shadowOffset:{ height: 0, width: 0 },
+      shadowColor: PURPLE[50],
+      shadowRadius: 8,
+      shadowOpacity: 0.1,
+    },
     container: Platform.select({
       ios: {
-        paddingHorizontal: 7,
-        paddingVertical: 4,
+        overflow: 'hidden',
         borderRadius: 10,
-        backgroundColor: 'rgba(255, 255, 255, 0.8)'
+        backgroundColor: 'rgba(255, 255, 255, 0.75)',
+        borderColor: PURPLE.A700,
+        borderWidth: 1,
       }
     }),
-    title: Platform.select({
-      ios: {
-        fontSize: 16,
-        fontWeight: '200',
-      },
-      android: {
-        fontSize: 19,
-        fontWeight: '400',
-        color: 'white',
-      },
-    }),
+    title: {
+      paddingHorizontal: 7,
+      paddingVertical: 4,
+      ...Platform.select({
+        ios: {
+          fontSize: 16,
+          fontWeight: '200',
+        },
+        android: {
+          fontSize: 19,
+          fontWeight: '400',
+          color: 'white',
+        },
+      })
+    },
     titleCount: {
       fontWeight: '700'
+    },
+    bgContainer: {
+      position: 'absolute',
+      height: '100%',
+      backgroundColor: hexToRgbA(PURPLE.A700, 0.15),
     },
   });
 
@@ -124,15 +140,23 @@ class HeaderTitle extends React.PureComponent {
     this.state = {
       index: props.index || 1,
       total: props.total || 1,
+      percent: 0,
     };
   };
 
   setIndex = (index) => {
+    this.wrapper.pulse(300);
     this.setState({index});
   };
   
   setTotal = (total) => {
     this.setState({total});
+  };
+
+  setPercentage = (percent) => {
+    this.setState({
+      percent: isNaN(percent)? 0 : percent
+    });
   };
 
   _renderText(){
@@ -149,11 +173,28 @@ class HeaderTitle extends React.PureComponent {
     );
   };
 
+  _renderBG(){
+    const { styles } = HeaderTitle;
+    const { percent } = this.state;
+
+    const bgContainerStyle = {
+      width: `${percent}%`,
+    };
+
+    return(
+      <View style={[styles.bgContainer, bgContainerStyle]}>
+
+      </View>
+    );
+  };
+
   render(){
     const { styles } = HeaderTitle;
 
     return(
       <Animatable.View
+        style={styles.wrapper}
+        ref={r => this.wrapper = r}
         animation={'fadeIn'}
         duration={750}
         delay={500}
@@ -162,12 +203,13 @@ class HeaderTitle extends React.PureComponent {
         <Animatable.View 
           style={styles.container}
           animation={'pulse'}
-          duration={10000}
+          duration={15000}
           delay={3000}
           iterationCount={'infinite'}
-          iterationDelay={1000}
+          iterationDelay={2000}
           useNativeDriver={true}
         >
+          {this._renderBG()}
           {this._renderText()}
         </Animatable.View>
       </Animatable.View>
@@ -251,6 +293,81 @@ let References = {
   DoneButton  : null,
 };
 
+class CountdownTimer extends React.PureComponent {
+  static propTypes = {
+    startTime: PropTypes.number,
+    duration : PropTypes.number,
+    onTick   : PropTypes.func  ,
+  };
+
+  constructor(props){
+    super(props);
+
+    this.endTime = (props.startTime + props.duration);
+
+    this.isFinished = false;
+    this.interval   = null;
+  };
+
+  componentDidMount(){
+    this.start();
+  };
+
+  componentWillUnmount(){
+    this.stop();
+  };
+
+  start = () => {
+    const { onTimerEnd, onTick, duration } = this.props;
+    //stop if there's already a timer
+    if(this.interval) return;
+
+    this.interval = setInterval(() => {
+      const currentTime = new Date().getTime();
+
+      let remaining = (this.endTime - currentTime );
+      remaining = (remaining >= 0? remaining : 0);
+
+      const progress = (duration - remaining);
+
+      //progress  = (progress  >= 0? progress  : 0);
+
+      //compute progress percent
+      const percent = Math.ceil((progress / duration) * 100);
+
+      console.log(`currentTime: ${currentTime}`);
+      console.log(`progress   : ${progress   }`);
+      console.log(`remaining  : ${remaining  }`);
+      console.log(`percent    : ${percent    }\n\n`);
+      
+
+      onTick && onTick({
+        percent,
+        msRemaining: remaining,
+        msProgress : progress ,
+      });
+      
+      if(currentTime >= this.endTime){
+        onTimerEnd && onTimerEnd(currentTime);
+        
+        this.isFinished = true;
+        this.stop();
+      };
+    }, 1000);
+  };
+
+  stop(){
+    if(this.interval){
+      clearInterval(this.interval);
+      this.interval = null;
+    };
+  };
+
+  render(){
+    return null;
+  };
+};
+
 export class ExamTestScreen extends React.Component {
   static navigationOptions = ({ navigation }) => {
     const { NAV_PARAMS } = ExamTestScreen;
@@ -295,10 +412,9 @@ export class ExamTestScreen extends React.Component {
   };
 
   static styles = StyleSheet.create({
-    container: {
+    rootContainer: {
       flex: 1,
     },
-
   });
 
   static NAV_PARAMS = {
@@ -365,7 +481,9 @@ export class ExamTestScreen extends React.Component {
 
     this.carousel = null;
     this.base64Images = {};
+
     this.didShowLastQuestionAlert = false;
+    this.didShowTimerEndAlert     = false;
   };
 
   initRefs(){
@@ -380,6 +498,10 @@ export class ExamTestScreen extends React.Component {
     //assign callbacks to header buttons
     References.CancelButton.onPress = this._handleOnPressHeaderCancel;
     References.DoneButton  .onPress = this._handleOnPressHeaderDone;
+
+    //assign callbacks to modal
+    this.doneModal.onPressQuestionItem = this._handleOnPressQuestionItem;
+    this.doneModal.onPressFinishButton = this._handleOnPressFinishButton;
   };
 
   async loadData(){
@@ -466,15 +588,62 @@ export class ExamTestScreen extends React.Component {
     });
   };
 
-  _handleOnSnapToItem = (index) => {
-    //update header title index
+  _handleOnTick = ({percent, msRemaining, msProgress}) => {
+    //update header title progress
     const header = References.HeaderTitle;
-    header && header.setIndex(index + 1);
+    header && header.setPercentage(percent);
+  };
+
+  _handleOnTimerEnd = () => {
+    const { NAV_PARAMS } = ExamTestScreen;
+    const { navigation } = this.props;
+    const testInfo  = TestInformation.wrap(
+      navigation.getParam(NAV_PARAMS.testInfo, {})
+    );
+
+    const { examType, preboardTimeLimit: limit = 0 } = testInfo;
+    const timelimit = `${limit} ${plural('hour', limit)}`;
+
+    //only show this once and only if preboard
+    if(this.didShowTimerEndAlert && examType != EXAM_TYPE.preboard) return;
+    this.didShowTimerEndAlert = true;
+
+    Alert.alert(
+      "Time's Up",
+      `The time limit of ${timelimit} has been reached. The Preboard exam is now over.`,
+      {cancelable: false},
+    );
+
+    //todo: disable exam
+  };
+  
+  /** From ExamTestList */
+  _handleOnSnapToItem = (index) => {
+    const { NAV_PARAMS, styles } = ExamTestScreen;
+    const { navigation } = this.props;
+    const header = References.HeaderTitle;
+
+    const examType = navigation.getParam(NAV_PARAMS.examType , '');
+    const isPreboard = (examType == EXAM_TYPE.preboard);
+
+    if(header && isPreboard){
+      //update navbar header title
+      header.setIndex(index + 1);
+      
+    } else if(header && !isPreboard){
+      //update navbar header title + progress
+      const questions = navigation.getParam(NAV_PARAMS.questions, []);
+      const percent = Math.floor(((index + 1) / questions.length) * 100);
+
+      header.setIndex(index + 1);
+      header.setPercentage(percent);
+    };
 
     const questionID = this.indexIDMap[index];
     this.recordDuration(index, questionID);
   };
 
+  /** From ExamTestList */
   _handleOnAnsweredLastQuestion = async () => {
     //only show this once
     if(this.didShowLastQuestionAlert) return;
@@ -492,31 +661,71 @@ export class ExamTestScreen extends React.Component {
 
     //todo: open done modal
   };
+
+  /** From ExamTestList */
+  _handleOnNewAnswerSelected = () => {
+    if(this.rootContainer){
+      this.rootContainer.pulse(750);
+    };
+  };
+
+  /** From DoneModal - question item pressed */
+  _handleOnPressQuestionItem = async ({index}) => {
+    const container = this.rootContainer;
+    this.carousel.snapToItem(index, true);
+
+    await timeout(500);
+    await container && container.pulse(750);
+  };
   //#endregion
 
   render(){
-    const { NAV_PARAMS } = ExamTestScreen;
+    const { NAV_PARAMS, styles } = ExamTestScreen;
     const { navigation } = this.props;
     const { loading } = this.state;
 
-    const questions = navigation.getParam(NAV_PARAMS.questions, {});
+    const questions = navigation.getParam(NAV_PARAMS.questions, []);
     const examType  = navigation.getParam(NAV_PARAMS.examType , '');
+    const testInfo  = TestInformation.wrap(
+      navigation.getParam(NAV_PARAMS.testInfo , {})
+    );
+
+    const timelimit = (testInfo.preboardTimeLimit || 0);
+    const duration  = convertHoursToMS(timelimit); //10 * 1000
 
     const content = (() => {
       switch (loading) {
         case LOAD_STATE.SUCCESS: return(
+          <Animatable.View
+            ref={r => this.rootContainer = r}
+            style={styles.rootContainer}
+            animation={'fadeInUp'}
+            duration={500}
+            delay={750}
+            useNativeDriver={true}
+          >
           <ExamTestList
             ref={r => this.examList = r}
             onSnapToItem={this._handleOnSnapToItem}
+            onNewAnswerSelected={this._handleOnNewAnswerSelected}
             onAnsweredLastQuestion={this._handleOnAnsweredLastQuestion}
             {...{questions, examType}}
           />
+        </Animatable.View>
         );
       };
     })();
-    
+
     return (
       <ViewWithBlurredHeader hasTabBar={false}>
+        {(examType === EXAM_TYPE.preboard) && (
+          <CountdownTimer
+            startTime={this.startTime}
+            //onTick={this._handleOnTick}
+            onTimerEnd={this._handleOnTimerEnd}
+            {...{duration}}
+          />
+        )}
         {content}
         <LoadingPill 
           ref={r => this.loadingPill = r}
